@@ -302,14 +302,14 @@ export const POWERTRAIN_MAX_SEATS = 160;
 export const SOFTWARE_MAX_SEATS = 160;
 
 // Reopening & Closing window for Software track in IST
-export const SOFTWARE_REOPEN_TIME = '2026-10-05T08:00:00+05:30'; // Monday morning 8:00 AM IST
+export const SOFTWARE_REOPEN_TIME = '2026-10-05T06:00:00+05:30'; // Monday morning 6:00 AM IST
 export const SOFTWARE_CLOSE_DEADLINE = '2026-10-06T23:59:59+05:30'; // Tuesday night 11:59:59 PM IST
 
 export const SOFTWARE_PAUSE_REASON = 
-    "Software track registrations are temporarily paused while our team resolves a technical issue on the banking partner's side. Registrations will reopen tomorrow (Monday) morning at 8:00 AM.";
+    "Software track registrations are temporarily paused while our team resolves a technical issue on the banking partner's side. Registrations will reopen tomorrow (Monday) morning at 6:00 AM.";
 
 export const SOFTWARE_SCHEDULE_SUMMARY = 
-    "Registrations reopen Monday morning (8:00 AM) and end Tuesday, 6 October at 11:59 PM or when 160 seats are reached (whichever comes first).";
+    "Registrations reopen Monday morning (6:00 AM) and end Tuesday, 6 October at 11:59 PM or when 160 seats are reached (whichever comes first).";
 
 /**
  * Calculates current status of Software track registration based on time and paid count.

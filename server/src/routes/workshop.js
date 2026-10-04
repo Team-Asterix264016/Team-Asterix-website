@@ -180,7 +180,7 @@ export async function getPowertrainSeatStats() {
 
 /**
  * Calculates current confirmed paid participants and remaining seats for Software,
- * enforcing bank maintenance pause, Monday 8 AM reopening, Tuesday 11:59 PM deadline,
+ * enforcing bank maintenance pause, Monday 6 AM reopening, Tuesday 11:59 PM deadline,
  * and 160 max seats capacity limit.
  */
 export async function getSoftwareSeatStats() {
@@ -278,7 +278,8 @@ router.get('/packages', async (req, res) => {
         softwareSeats,
         comboSeats: {
             seatsLeft: comboSeatsLeft,
-            soldOut: comboSoldOut
+            soldOut: comboSoldOut,
+            isPaused: softwareSeats.isPaused
         }
     });
 });
@@ -346,7 +347,7 @@ router.post('/register', requireDb, async (req, res) => {
             const seatStats = await getSoftwareSeatStats();
             if (seatStats.isPaused) {
                 return res.status(503).json({
-                    error: seatStats.pauseMessage || 'Registrations are temporarily paused while our team resolves a technical issue on the banking partner\'s side. Registrations will reopen tomorrow (Monday) morning at 8:00 AM.',
+                    error: seatStats.pauseMessage || 'Registrations are temporarily paused while our team resolves a technical issue on the banking partner\'s side. Registrations will reopen tomorrow (Monday) morning at 6:00 AM.',
                     isPaused: true
                 });
             }
@@ -372,7 +373,8 @@ router.post('/register', requireDb, async (req, res) => {
             $or: [{ email: data.email }, { phone: data.phone }]
         });
         if (alreadyPaid) {
-            const canUpgrade = alreadyPaid.package !== 'combo';
+            const softwareSeatStats = await getSoftwareSeatStats();
+            const canUpgrade = alreadyPaid.package === 'powertrain' && !softwareSeatStats.isPaused && !softwareSeatStats.isClosed;
             return res.status(409).json({
                 error: `You are already registered for ${getWorkshopPackage(alreadyPaid.package)?.name || alreadyPaid.package} (receipt ${alreadyPaid.receiptNo || 'pending'}).`,
                 alreadyPaid: true,
@@ -481,19 +483,22 @@ router.post('/upgrade', requireDb, async (req, res) => {
 
         // Upgrading from Software to Combo claims a seat in Powertrain
         if (reg.package === 'software') {
-            const seatStats = await getPowertrainSeatStats();
-            if (seatStats.soldOut) {
-                return res.status(409).json({
-                    error: 'Electronics & Powertrain track has reached its maximum capacity of 160 participants. Upgrades to Combo are currently closed.',
-                    soldOut: true,
-                    seatsLeft: 0
-                });
-            }
+            return res.status(409).json({
+                error: 'Electronics & Powertrain track has reached full capacity (160 seats filled). Upgrades from Software to Combo are not available.',
+                soldOut: true,
+                seatsLeft: 0
+            });
         }
 
         // Upgrading from Powertrain to Combo claims a seat in Software
         if (reg.package === 'powertrain') {
             const seatStats = await getSoftwareSeatStats();
+            if (seatStats.isPaused) {
+                return res.status(409).json({
+                    error: seatStats.pauseMessage || 'Combo upgrades are temporarily paused while banking partner maintenance is underway. Upgrades will reopen tomorrow (Monday) at 6:00 AM alongside Software track registrations.',
+                    isPaused: true
+                });
+            }
             if (seatStats.isPastDeadline) {
                 return res.status(409).json({
                     error: 'Software & Autonomous Systems track upgrades closed on Tuesday, 6 October at 11:59 PM.',
