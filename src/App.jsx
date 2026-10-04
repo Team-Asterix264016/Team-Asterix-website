@@ -23,6 +23,7 @@ const SponsorPage = lazy(() => import("./components/SponsorPage"));
 const WorkshopPage = lazy(() => import("./components/WorkshopPage"));
 const WorkshopAttendanceProjector = lazy(() => import("./components/admin/WorkshopAttendanceProjector"));
 const WorkshopAttendanceCheckin = lazy(() => import("./components/WorkshopAttendanceCheckin"));
+const QuizRunner = lazy(() => import("./components/quiz/QuizRunner"));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -32,6 +33,7 @@ function MainApp() {
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
     const [isAttendancePage, setIsAttendancePage] = useState(() => window.location.hash.startsWith('#attendance') && !window.location.hash.startsWith('#attendance-projector'));
     const [isProjectorPage, setIsProjectorPage] = useState(() => window.location.hash.startsWith('#attendance-projector'));
+    const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
     const [lenisInstance, setLenisInstance] = useState(null);
 
     const scrollToTop = () => {
@@ -55,6 +57,7 @@ function MainApp() {
             setIsWorkshopPage(hash === '#workshop');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
+            setIsQuizPage(hash.startsWith('#quiz'));
             if (hash === '#model') setIsModelPage(true);
             scrollToTop();
         };
@@ -70,7 +73,7 @@ function MainApp() {
 
     useEffect(() => {
         scrollToTop();
-    }, [isSponsorPage, isWorkshopPage, isAttendancePage, isProjectorPage, selectedSubsystem, isModelPage, isAdminOpen]);
+    }, [isSponsorPage, isWorkshopPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
 
     useEffect(() => {
         // Readers who ask for reduced motion get the browser's native scroll.
@@ -208,6 +211,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <WorkshopAttendanceCheckin onGoHome={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isQuizPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <QuizRunner onBack={handleBackToHome} />
             </Suspense>
         );
     }

@@ -23,6 +23,7 @@ import uploadRoutes from './routes/upload.js';
 import submissionRoutes from './routes/submissions.js';
 import workshopRoutes from './routes/workshop.js';
 import attendanceRoutes from './routes/attendance.js';
+import quizRoutes from './routes/quiz.js';
 import { describeRazorpayStatus } from './lib/razorpay.js';
 
 const app = express();
@@ -110,6 +111,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/workshop', workshopRoutes);
 app.use('/api/workshop/attendance', attendanceRoutes);
+app.use('/api/quiz', quizRoutes);
 
 // Global error handler
 app.use((err, req, res, _next) => {

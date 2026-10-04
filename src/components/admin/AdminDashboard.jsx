@@ -6,6 +6,7 @@ import ImageField from './ImageField';
 import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
+import QuizAdmin from './QuizAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 export default function AdminDashboard({ onExit }) {
@@ -522,6 +523,7 @@ export default function AdminDashboard({ onExit }) {
         { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
         { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
         { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+        { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
         { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
         { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
         { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
@@ -743,6 +745,14 @@ export default function AdminDashboard({ onExit }) {
                                         className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
                                     >
                                         <span>Manage Workshop Details, Timings & Venue</span>
+                                        <span>→</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => setActiveTab('quiz-manager')}
+                                        className="press press-flat p-3 border-2 border-slate-900 bg-emerald-50 hover:bg-emerald-100 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                    >
+                                        <span>Manage MCQ Quizzes, Questions & Leaderboards</span>
                                         <span>→</span>
                                     </button>
 
@@ -1519,6 +1529,10 @@ export default function AdminDashboard({ onExit }) {
                                 window.location.hash = `#attendance-projector?track=${preferredTrack || 'software'}`;
                             }}
                         />
+                    )}
+
+                    {activeTab === 'quiz-manager' && (
+                        <QuizAdmin showStatus={showStatus} />
                     )}
 
                     {/* TAB 5: GALLERY & MEDIA */}
