@@ -58,7 +58,7 @@ function normalizePhone(phone) {
 }
 
 // Shown on the page as the deadline.
-const REGISTRATION_CLOSES = 'Tuesday, 6 October 2026 at 11:59 PM (or when 160 seats are reached)';
+const REGISTRATION_CLOSES = 'Tuesday, 6 October 2026 at 11:59 PM (or when remaining seats are filled)';
 
 function formatAmount(amount) {
     if (typeof amount !== 'number') return 'TBD';
@@ -171,13 +171,13 @@ function validate(form, { powertrainSoldOut = false, softwareSoldOut = false, so
     if (!pkg) errors.package = 'Choose a track.';
     else if (!isPriced(pkg)) errors.package = 'Pricing for this package is not announced yet.';
     else if (pkg.id === 'software' && softwarePaused) {
-        errors.package = "Software registrations are temporarily paused while we fix a technical issue on the bank's side. Registrations reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).";
+        errors.package = "Software registrations are temporarily paused while we fix a technical issue on the bank's side. Registrations reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when remaining seats are filled).";
     } else if (pkg.id === 'combo' && softwarePaused) {
         errors.package = "Dual-Track registrations are temporarily paused while we fix a technical issue on the bank's side. Registrations reopen tomorrow (Monday) morning at 6:00 AM.";
     } else if (pkg.id === 'powertrain' && powertrainSoldOut) {
         errors.package = 'Electronics & Powertrain is completely full! Only Software & Autonomous Systems track is available — learn the brains behind the vehicle (ROS, AI & Perception). Stay tuned for future workshops by our team.';
     } else if (pkg.id === 'software' && softwareSoldOut) {
-        errors.package = 'Software & Autonomous Systems workshop registrations are fully booked (160 seats reached). Stay tuned for future workshops by our team.';
+        errors.package = 'Software & Autonomous Systems workshop registrations are fully booked (no seats remaining). Stay tuned for future workshops by our team.';
     } else if (pkg.id === 'combo' && (powertrainSoldOut || softwareSoldOut)) {
         errors.package = powertrainSoldOut
             ? 'Dual-Track Combo is closed as Powertrain has reached its limit. Only the Software & Autonomous Systems track is available! Stay tuned for future workshops by our team.'
@@ -458,7 +458,7 @@ export default function WorkshopPage({ onBack }) {
 
     const openRegister = (packageId) => {
         if (softwareSeats.isPaused) {
-            setError(softwareSeats.pauseMessage || "We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).");
+            setError(softwareSeats.pauseMessage || "We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when remaining seats are filled).");
             setUpgradePrompt(null);
             setRegisterOpen(true);
             return;
@@ -805,12 +805,11 @@ export default function WorkshopPage({ onBack }) {
                                     Fixing a technical issue on the bank's side
                                 </h3>
                                 <p className="mt-2 text-sm sm:text-base font-bold text-slate-800 leading-relaxed max-w-3xl">
-                                    Registrations are temporarily paused while our team resolves a technical issue on the banking partner's end. Software &amp; Autonomous Systems registrations will resume tomorrow (Monday) morning at 6:00 AM and will close on Tuesday, 6 October at 11:59 PM (or when our 160-seat capacity is reached, whichever comes first).
+                                    Registrations are temporarily paused while our team resolves a technical issue on the banking partner's end. Software &amp; Autonomous Systems registrations will resume tomorrow (Monday) morning at 6:00 AM and will close on Tuesday, 6 October at 11:59 PM (or when remaining seats are filled, whichever comes first).
                                 </p>
                                 <div className="mt-3.5 flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs font-black text-slate-900">
-                                    <span className="inline-block border border-slate-900 bg-amber-100 px-2 py-1">✦ Current Seats Filled: 145 / 160</span>
-                                    <span className="inline-block border border-slate-900 bg-emerald-100 px-2 py-1">✦ Seats Remaining: {softwareSeats.seatsLeft ?? 15}</span>
-                                    <span className="inline-block border border-slate-900 bg-sky-100 px-2 py-1">✦ Final Deadline: Tuesday 11:59 PM</span>
+                                    <span className="inline-block border border-slate-900 bg-emerald-100 px-2.5 py-1">✦ Only {softwareSeats.seatsLeft ?? 15} Seats Left</span>
+                                    <span className="inline-block border border-slate-900 bg-sky-100 px-2.5 py-1">✦ Final Deadline: Tuesday 11:59 PM</span>
                                 </div>
                             </div>
                         )}
@@ -1141,7 +1140,7 @@ export default function WorkshopPage({ onBack }) {
                                     {softwareSeats.isPaused && (
                                         <div className="mb-4 border-2 border-slate-900 bg-amber-100 p-3 font-mono text-xs font-bold text-slate-800 space-y-1">
                                             <p className="font-black text-rose-700 uppercase">⏸ Registrations Temporarily Paused</p>
-                                            <p>We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).</p>
+                                            <p>We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 6:00 AM and close Tuesday at 11:59 PM (or when remaining seats are filled).</p>
                                         </div>
                                     )}
                                     {powertrainSeats?.soldOut && !softwareSeats?.soldOut && !softwareSeats?.isPaused && (
@@ -1405,10 +1404,10 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                         Fixing a technical issue on the bank's side
                     </h4>
                     <p className="text-xs sm:text-sm font-bold leading-relaxed text-slate-700">
-                        We are currently resolving a technical issue on our banking partner's end. Software &amp; Autonomous Systems registrations will reopen tomorrow (Monday) morning at 6:00 AM and will remain open until Tuesday, 6 October at 11:59 PM (or when our 160-seat capacity is reached, whichever comes first).
+                        We are currently resolving a technical issue on our banking partner's end. Software &amp; Autonomous Systems registrations will reopen tomorrow (Monday) morning at 6:00 AM and will remain open until Tuesday, 6 October at 11:59 PM (or when remaining seats are filled, whichever comes first).
                     </p>
                     <p className="text-xs font-mono font-bold text-slate-700">
-                        ★ Current count: 145 / 160 seats filled · <strong className="text-slate-950 font-black">Only {softwareSeats.seatsLeft ?? 15} seats remaining</strong>. Be ready when the window reopens!
+                        ★ <strong className="text-slate-950 font-black">Only {softwareSeats.seatsLeft ?? 15} seats left</strong>. Be ready when the window reopens!
                     </p>
                 </div>
             )}
@@ -1687,7 +1686,7 @@ function ClosingDate({ className = '', dark = false }) {
         <p className={`inline-flex flex-wrap items-center gap-2 border-2 px-3 py-1.5 font-mono text-xs font-black uppercase ${dark ? 'border-amber-300 text-amber-300' : 'border-slate-900 bg-white text-slate-900'
             } ${className}`}>
             <span aria-hidden="true">⏳</span>
-            <span>Software Reopens Mon 6:00 AM · Closes Tue 11:59 PM (or at 160 seats)</span>
+            <span>Software Reopens Mon 6:00 AM · Closes Tue 11:59 PM (or when remaining seats are filled)</span>
         </p>
     );
 }

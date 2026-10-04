@@ -359,7 +359,7 @@ router.post('/register', requireDb, async (req, res) => {
             }
             if (seatStats.soldOut) {
                 return res.status(409).json({
-                    error: `Software & Autonomous Systems workshop registrations are fully booked (${SOFTWARE_MAX_SEATS} seats filled).`,
+                    error: 'Software & Autonomous Systems workshop registrations are fully booked (no seats remaining).',
                     soldOut: true,
                     seatsLeft: 0
                 });
@@ -507,7 +507,7 @@ router.post('/upgrade', requireDb, async (req, res) => {
             }
             if (seatStats.soldOut || seatStats.seatsLeft <= 0) {
                 return res.status(409).json({
-                    error: `Software & Autonomous Systems track has reached its maximum capacity of ${SOFTWARE_MAX_SEATS} participants. Upgrades to Combo are currently closed.`,
+                    error: 'Software & Autonomous Systems track has reached maximum capacity. Upgrades to Combo are currently closed.',
                     soldOut: true,
                     seatsLeft: 0
                 });

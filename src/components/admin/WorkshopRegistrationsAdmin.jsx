@@ -446,7 +446,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                 {summary.softwareCapacity?.totalSoftwarePaid ?? 0}
                             </span>
                             <span className="text-sm font-mono font-bold text-slate-500">
-                                / {summary.softwareCapacity?.maxSeats ?? 160} cap
+                                / {summary.softwareCapacity?.maxSeats ?? 161} cap
                             </span>
                         </div>
 
