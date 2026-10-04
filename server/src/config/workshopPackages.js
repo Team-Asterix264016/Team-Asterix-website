@@ -273,7 +273,6 @@ export const WORKSHOP_TRACKS = {
     }
 };
 
-// Whole rupees. null = TBD (shown as TBD, payments refused).
 export const WORKSHOP_PACKAGES = [
     {
         id: 'software',
@@ -287,16 +286,60 @@ export const WORKSHOP_PACKAGES = [
         name: 'Electronics & Powertrain',
         price: 1000,
         tracksIncluded: ['powertrain'],
-        open: true
+        open: false
     },
     {
         id: 'combo',
         name: 'Combo: both tracks',
         price: 1750,
         tracksIncluded: ['software', 'powertrain'],
-        open: true
+        open: false
     }
 ];
+
+// Maximum seats cap for tracks
+export const POWERTRAIN_MAX_SEATS = 160;
+export const SOFTWARE_MAX_SEATS = 160;
+
+// Reopening & Closing window for Software track in IST
+export const SOFTWARE_REOPEN_TIME = '2026-10-05T08:00:00+05:30'; // Monday morning 8:00 AM IST
+export const SOFTWARE_CLOSE_DEADLINE = '2026-10-06T23:59:59+05:30'; // Tuesday night 11:59:59 PM IST
+
+export const SOFTWARE_PAUSE_REASON = 
+    "Software track registrations are temporarily paused while our team resolves a technical issue on the banking partner's side. Registrations will reopen tomorrow (Monday) morning at 8:00 AM.";
+
+export const SOFTWARE_SCHEDULE_SUMMARY = 
+    "Registrations reopen Monday morning (8:00 AM) and end Tuesday, 6 October at 11:59 PM or when 160 seats are reached (whichever comes first).";
+
+/**
+ * Calculates current status of Software track registration based on time and paid count.
+ */
+export function getSoftwareRegistrationState(nowMs = Date.now(), totalPaid = 0) {
+    const reopenMs = new Date(SOFTWARE_REOPEN_TIME).getTime();
+    const deadlineMs = new Date(SOFTWARE_CLOSE_DEADLINE).getTime();
+
+    const isPaused = nowMs < reopenMs;
+    const isPastDeadline = nowMs > deadlineMs;
+    const isCapacityFull = totalPaid >= SOFTWARE_MAX_SEATS;
+    const seatsLeft = Math.max(0, SOFTWARE_MAX_SEATS - totalPaid);
+
+    const isClosed = isPastDeadline || isCapacityFull;
+    const isOpen = !isPaused && !isClosed;
+
+    return {
+        isPaused,
+        isPastDeadline,
+        isCapacityFull,
+        isClosed,
+        isOpen,
+        seatsLeft,
+        maxSeats: SOFTWARE_MAX_SEATS,
+        reopenTime: SOFTWARE_REOPEN_TIME,
+        deadline: SOFTWARE_CLOSE_DEADLINE,
+        pauseReason: SOFTWARE_PAUSE_REASON,
+        scheduleSummary: SOFTWARE_SCHEDULE_SUMMARY
+    };
+}
 
 // Options for the Department dropdown, kept in alphabetical order. The server
 // only accepts these exact values.
@@ -320,3 +363,4 @@ export function getWorkshopPackage(id) {
 export function isPriced(pkg) {
     return Boolean(pkg) && Number.isFinite(pkg.price) && pkg.price > 0;
 }
+

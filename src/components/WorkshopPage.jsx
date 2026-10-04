@@ -9,6 +9,11 @@ import {
     WORKSHOP_TRACKS,
     WORKSHOP_PACKAGES,
     WORKSHOP_DEPARTMENTS,
+    SOFTWARE_MAX_SEATS,
+    POWERTRAIN_MAX_SEATS,
+    SOFTWARE_REOPEN_TIME,
+    SOFTWARE_CLOSE_DEADLINE,
+    getSoftwareRegistrationState,
     isPriced
 } from '../../server/src/config/workshopPackages.js';
 
@@ -53,7 +58,7 @@ function normalizePhone(phone) {
 }
 
 // Shown on the page as the deadline.
-const REGISTRATION_CLOSES = '3 October 2026';
+const REGISTRATION_CLOSES = 'Tuesday, 6 October 2026 at 11:59 PM (or when 160 seats are reached)';
 
 function formatAmount(amount) {
     if (typeof amount !== 'number') return 'TBD';
@@ -74,12 +79,35 @@ const COMBO_SAVING = isPriced(COMBO_PACKAGE) && SINGLE_PACKAGES.every(isPriced)
 
 /**
  * Computes badge text according to capacity and threshold rules:
+ * - When paused for technical maintenance: "Paused · Reopens Mon 8 AM"
+ * - When past Tuesday 11:59 PM deadline: "Closed"
  * - When remaining seats are <= 0 (or sold out): "Sold Out"
  * - When remaining seats are <= 25: "X seats left"
  * - When remaining seats are > 25: "Limited seats available"
  */
 function getSeatBadgeInfo(seatsInfo) {
-    if (!seatsInfo || seatsInfo.seatsLeft === null || seatsInfo.seatsLeft === undefined) {
+    if (!seatsInfo) {
+        return null;
+    }
+    if (seatsInfo.isPaused) {
+        return {
+            text: 'Paused · Reopens Mon 8 AM',
+            fullText: 'Temporarily Paused (Bank Issue) · Reopens Monday Morning',
+            isSoldOut: false,
+            isLimited: false,
+            isPaused: true
+        };
+    }
+    if (seatsInfo.isPastDeadline) {
+        return {
+            text: 'Closed',
+            fullText: 'Registration Closed (Deadline Passed)',
+            isSoldOut: true,
+            isLimited: false,
+            isPaused: false
+        };
+    }
+    if (seatsInfo.seatsLeft === null || seatsInfo.seatsLeft === undefined) {
         return null;
     }
     if (seatsInfo.soldOut || seatsInfo.seatsLeft <= 0) {
@@ -87,7 +115,8 @@ function getSeatBadgeInfo(seatsInfo) {
             text: 'Sold Out',
             fullText: 'Sold Out',
             isSoldOut: true,
-            isLimited: false
+            isLimited: false,
+            isPaused: false
         };
     }
     if (seatsInfo.seatsLeft <= 25) {
@@ -95,20 +124,22 @@ function getSeatBadgeInfo(seatsInfo) {
             text: `${seatsInfo.seatsLeft} seats left`,
             fullText: `${seatsInfo.seatsLeft} seats left`,
             isSoldOut: false,
-            isLimited: false
+            isLimited: false,
+            isPaused: false
         };
     }
     return {
         text: 'Limited seats available',
         fullText: 'Limited seats available',
         isSoldOut: false,
-        isLimited: true
+        isLimited: true,
+        isPaused: false
     };
 }
 
 // For a single-track choice: the other track and what adding it would cost.
-function upsellFor(pkg, { powertrainSoldOut = false, softwareSoldOut = false } = {}) {
-    if (powertrainSoldOut || softwareSoldOut) return null;
+function upsellFor(pkg, { powertrainSoldOut = false, softwareSoldOut = false, softwarePaused = false } = {}) {
+    if (powertrainSoldOut || softwareSoldOut || softwarePaused) return null;
     if (!pkg || !COMBO_PACKAGE || COMBO_SAVING <= 0 || pkg.tracksIncluded.length !== 1) return null;
     const other = SINGLE_PACKAGES.find(p => p.id !== pkg.id);
     if (!other) return null;
@@ -132,17 +163,21 @@ function loadRazorpayCheckout() {
     });
 }
 
-function validate(form, { powertrainSoldOut = false, softwareSoldOut = false } = {}) {
+function validate(form, { powertrainSoldOut = false, softwareSoldOut = false, softwarePaused = false } = {}) {
     // Checked in the order the fields appear on the page (track choice first),
     // so the first key is the topmost problem.
     const errors = {};
     const pkg = WORKSHOP_PACKAGES.find(p => p.id === form.package);
     if (!pkg) errors.package = 'Choose a track.';
     else if (!isPriced(pkg)) errors.package = 'Pricing for this package is not announced yet.';
-    else if (pkg.id === 'powertrain' && powertrainSoldOut) {
+    else if (pkg.id === 'software' && softwarePaused) {
+        errors.package = "Software registrations are temporarily paused while we fix a technical issue on the bank's side. Registrations reopen tomorrow (Monday) morning at 8:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).";
+    } else if (pkg.id === 'combo' && softwarePaused) {
+        errors.package = "Dual-Track registrations are temporarily paused while we fix a technical issue on the bank's side. Registrations reopen tomorrow (Monday) morning at 8:00 AM.";
+    } else if (pkg.id === 'powertrain' && powertrainSoldOut) {
         errors.package = 'Electronics & Powertrain is completely full! Only Software & Autonomous Systems track is available — learn the brains behind the vehicle (ROS, AI & Perception). Stay tuned for future workshops by our team.';
     } else if (pkg.id === 'software' && softwareSoldOut) {
-        errors.package = 'Software & Autonomous Systems workshop registrations are fully booked. Stay tuned for future workshops by our team.';
+        errors.package = 'Software & Autonomous Systems workshop registrations are fully booked (160 seats reached). Stay tuned for future workshops by our team.';
     } else if (pkg.id === 'combo' && (powertrainSoldOut || softwareSoldOut)) {
         errors.package = powertrainSoldOut
             ? 'Dual-Track Combo is closed as Powertrain has reached its limit. Only the Software & Autonomous Systems track is available! Stay tuned for future workshops by our team.'
@@ -340,6 +375,7 @@ export default function WorkshopPage({ onBack }) {
     const [activeTrack, setActiveTrack] = useState('software');
     const [registerOpen, setRegisterOpen] = useState(false);
     const [lookupOpen, setLookupOpen] = useState(false);
+    const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
     const [fieldErrors, setFieldErrors] = useState({});
     // form -> review -> paying -> verifying -> success | unconfirmed
@@ -363,22 +399,29 @@ export default function WorkshopPage({ onBack }) {
     const selectedPkg = WORKSHOP_PACKAGES.find(p => p.id === form.package) || null;
     const anyPriced = WORKSHOP_PACKAGES.some(isPriced);
 
+    const initialSoftwareState = getSoftwareRegistrationState(Date.now(), 145);
     const [powertrainSeats, setPowertrainSeats] = useState({
-        maxSeats: 160,
-        seatsLeft: null,
-        soldOut: false
+        maxSeats: POWERTRAIN_MAX_SEATS,
+        seatsLeft: 0,
+        soldOut: true
     });
     const [softwareSeats, setSoftwareSeats] = useState({
-        maxSeats: 160,
-        seatsLeft: null,
-        soldOut: false
+        maxSeats: SOFTWARE_MAX_SEATS,
+        seatsLeft: initialSoftwareState.seatsLeft,
+        soldOut: initialSoftwareState.soldOut,
+        isPaused: initialSoftwareState.isPaused,
+        isPastDeadline: initialSoftwareState.isPastDeadline,
+        open: initialSoftwareState.open,
+        pauseMessage: initialSoftwareState.pauseMessage,
+        scheduleSummary: initialSoftwareState.scheduleSummary
     });
 
     const comboSeats = useMemo(() => ({
         seatsLeft: (powertrainSeats.seatsLeft !== null && softwareSeats.seatsLeft !== null)
             ? Math.min(powertrainSeats.seatsLeft, softwareSeats.seatsLeft)
             : (powertrainSeats.seatsLeft ?? softwareSeats.seatsLeft ?? null),
-        soldOut: Boolean(powertrainSeats.soldOut || softwareSeats.soldOut)
+        soldOut: Boolean(powertrainSeats.soldOut || softwareSeats.soldOut || softwareSeats.isPaused),
+        isPaused: softwareSeats.isPaused
     }), [powertrainSeats, softwareSeats]);
 
     // Live fetch of seat counts
@@ -408,21 +451,27 @@ export default function WorkshopPage({ onBack }) {
 
     const isPackageSoldOut = (pkgId) => {
         if (pkgId === 'powertrain') return powertrainSeats.soldOut;
-        if (pkgId === 'software') return softwareSeats.soldOut;
-        if (pkgId === 'combo') return comboSeats.soldOut;
+        if (pkgId === 'software') return softwareSeats.soldOut || softwareSeats.isPaused;
+        if (pkgId === 'combo') return comboSeats.soldOut || softwareSeats.isPaused;
         return false;
     };
 
     const openRegister = (packageId) => {
+        if (softwareSeats.isPaused) {
+            setError(softwareSeats.pauseMessage || "We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 8:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).");
+            setUpgradePrompt(null);
+            setRegisterOpen(true);
+            return;
+        }
         if (typeof packageId === 'string' && packageId) {
             if (isPackageSoldOut(packageId)) {
                 if (packageId === 'powertrain' || packageId === 'combo') {
-                    if (!softwareSeats.soldOut) {
+                    if (!softwareSeats.soldOut && !softwareSeats.isPaused) {
                         setForm(prev => ({ ...prev, package: 'software' }));
                         setError('Electronics & Powertrain is fully booked! Only Software & Autonomous Systems track is available — learn ROS, Computer Vision, and autonomous vehicle stacks to master full vehicle intelligence! Stay tuned for future workshops by our team.');
                     } else {
                         setForm(prev => ({ ...prev, package: '' }));
-                        setError('Workshop registrations are fully booked. Stay tuned for future workshops by our team!');
+                        setError('Workshop registrations are currently not available. Stay tuned for future workshops by our team!');
                     }
                 } else if (packageId === 'software') {
                     if (!powertrainSeats.soldOut) {
@@ -466,7 +515,11 @@ export default function WorkshopPage({ onBack }) {
 
     const handleConfirm = (event) => {
         event.preventDefault();
-        const errors = validate(form, { powertrainSoldOut: powertrainSeats.soldOut, softwareSoldOut: softwareSeats.soldOut });
+        const errors = validate(form, {
+            powertrainSoldOut: powertrainSeats.soldOut,
+            softwareSoldOut: softwareSeats.soldOut,
+            softwarePaused: softwareSeats.isPaused
+        });
         setFieldErrors(errors);
         const keys = Object.keys(errors);
         if (keys.length > 0) {
@@ -482,7 +535,11 @@ export default function WorkshopPage({ onBack }) {
         }
         setError('');
         // One track picked: offer the combo once before moving on (if not sold out).
-        if (upsellFor(selectedPkg, { powertrainSoldOut: powertrainSeats.soldOut, softwareSoldOut: softwareSeats.soldOut }) && !upsellOpen) {
+        if (upsellFor(selectedPkg, {
+            powertrainSoldOut: powertrainSeats.soldOut,
+            softwareSoldOut: softwareSeats.soldOut,
+            softwarePaused: softwareSeats.isPaused
+        }) && !upsellOpen) {
             setUpsellOpen(true);
             return;
         }
@@ -491,7 +548,7 @@ export default function WorkshopPage({ onBack }) {
     };
 
     const acceptUpsell = () => {
-        if (powertrainSeats.soldOut || softwareSeats.soldOut) return;
+        if (powertrainSeats.soldOut || softwareSeats.soldOut || softwareSeats.isPaused) return;
         updateField('package', COMBO_PACKAGE.id);
         setStage('review');
     };
@@ -682,6 +739,18 @@ export default function WorkshopPage({ onBack }) {
                         <button type="button" onClick={onBack} className="press border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-400 sm:px-4">
                             ← Main<span className="hidden sm:inline"> Website</span>
                         </button>
+                        {/* Prominent Upgrade to Combo Button in Header */}
+                        <button
+                            type="button"
+                            onClick={() => setUpgradeModalOpen(true)}
+                            aria-haspopup="dialog"
+                            aria-label="Upgrade to Dual-Track Combo"
+                            className="press inline-flex items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-2.5 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-[3px_3px_0px_#0284c7] hover:bg-amber-300 sm:px-3.5 cursor-pointer"
+                        >
+                            <span className="text-amber-950">★</span>
+                            <span className="sm:hidden">Upgrade ₹750</span>
+                            <span className="hidden sm:inline">Upgrade to Combo (₹750)</span>
+                        </button>
                         {/* Check registration & receipt lookup button */}
                         <button
                             type="button"
@@ -720,9 +789,47 @@ export default function WorkshopPage({ onBack }) {
                         <p className="mt-2 max-w-3xl text-sm font-bold leading-relaxed text-slate-800 sm:text-base">
                             Choose one track, or take both with the combo package.
                         </p>
+
+                        {/* Prominent Bank Maintenance Notice */}
+                        {softwareSeats.isPaused && (
+                            <div className="mt-8 border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_#0f172a] sm:p-6">
+                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                    <span className="border-2 border-slate-900 bg-rose-500 text-white px-2.5 py-0.5 font-mono text-[11px] font-black uppercase">
+                                        ⏸ Registrations Temporarily Paused
+                                    </span>
+                                    <span className="border-2 border-slate-900 bg-amber-400 text-slate-950 px-2.5 py-0.5 font-mono text-[11px] font-black uppercase">
+                                        ⚡ Reopening Monday 8:00 AM
+                                    </span>
+                                </div>
+                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-950 leading-tight">
+                                    Fixing a technical issue on the bank's side
+                                </h3>
+                                <p className="mt-2 text-sm sm:text-base font-bold text-slate-800 leading-relaxed max-w-3xl">
+                                    Registrations are temporarily paused while our team resolves a technical issue on the banking partner's end. Software &amp; Autonomous Systems registrations will resume tomorrow (Monday) morning at 8:00 AM and will close on Tuesday, 6 October at 11:59 PM (or when our 160-seat capacity is reached, whichever comes first).
+                                </p>
+                                <div className="mt-3.5 flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs font-black text-slate-900">
+                                    <span className="inline-block border border-slate-900 bg-amber-100 px-2 py-1">✦ Current Seats Filled: 145 / 160</span>
+                                    <span className="inline-block border border-slate-900 bg-emerald-100 px-2 py-1">✦ Seats Remaining: {softwareSeats.seatsLeft ?? 15}</span>
+                                    <span className="inline-block border border-slate-900 bg-sky-100 px-2 py-1">✦ Final Deadline: Tuesday 11:59 PM</span>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="mt-8 flex flex-wrap gap-3">
-                            <button type="button" onClick={() => openRegister()} className="press border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800">
-                                Register now →
+                            <button
+                                type="button"
+                                onClick={() => openRegister()}
+                                className="press border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800"
+                            >
+                                {softwareSeats.isPaused ? '⏸ Registration Paused · Reopens Mon 8 AM' : 'Register now →'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setUpgradeModalOpen(true)}
+                                className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <span>★ Already in Powertrain? Upgrade for ₹750</span>
+                                <span>→</span>
                             </button>
                             <button type="button" onClick={() => scrollToEl(detailRef.current)} className="press border-2 border-slate-900 bg-white px-5 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] hover:bg-sky-100">
                                 Explore the tracks ↓
@@ -776,9 +883,11 @@ export default function WorkshopPage({ onBack }) {
                                                 <span className={`inline-flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black uppercase px-2 py-0.5 border-2 border-slate-900 ${
                                                     badgeInfo.isSoldOut
                                                         ? 'bg-rose-500 text-white'
-                                                        : 'bg-amber-400 text-slate-950 shadow-[2px_2px_0px_#0f172a]'
+                                                        : badgeInfo.isPaused
+                                                            ? 'bg-amber-300 text-slate-950 shadow-[2px_2px_0px_#0f172a]'
+                                                            : 'bg-amber-400 text-slate-950 shadow-[2px_2px_0px_#0f172a]'
                                                 }`}>
-                                                    <span>{badgeInfo.isSoldOut ? '✕' : '⚡'}</span>
+                                                    <span>{badgeInfo.isSoldOut ? '✕' : badgeInfo.isPaused ? '⏸' : '⚡'}</span>
                                                     <span>{badgeInfo.text}</span>
                                                 </span>
                                             </div>
@@ -798,6 +907,7 @@ export default function WorkshopPage({ onBack }) {
                             powertrainSeats={powertrainSeats}
                             softwareSeats={softwareSeats}
                             onRegister={openRegister}
+                            onOpenUpgrade={() => setUpgradeModalOpen(true)}
                             onPreviewSyllabus={(url, name) => setPreviewSyllabus({ url, name })}
                         />
 
@@ -809,36 +919,23 @@ export default function WorkshopPage({ onBack }) {
                                         <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] sm:text-xs font-black uppercase text-amber-300">
                                             ★ Flexible Upgrade Policy
                                         </span>
-                                        {(() => {
-                                            const comboBadge = getSeatBadgeInfo(comboSeats);
-                                            if (!comboBadge) return null;
-                                            return (
-                                                <span className={`inline-block border-2 border-slate-900 px-2 py-0.5 font-mono text-[10px] sm:text-xs font-black uppercase ${
-                                                    comboBadge.isSoldOut ? 'bg-rose-500 text-white' : 'bg-slate-900 text-amber-300'
-                                                }`}>
-                                                    {comboBadge.isSoldOut ? 'Combo Sold Out' : comboBadge.text}
-                                                </span>
-                                            );
-                                        })()}
+                                        <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] sm:text-xs font-black uppercase text-amber-300">
+                                            ₹750 to Upgrade
+                                        </span>
                                     </div>
                                     <h3 className="text-lg sm:text-2xl font-black uppercase leading-tight text-slate-900">
                                         You can upgrade anytime later for 750
                                     </h3>
                                     <p className="text-xs sm:text-sm font-bold text-slate-800 max-w-2xl">
-                                        Started with a single track? Once you realise both sessions are an absolute banger and want complete domain knowledge across the autonomous software stack and vehicle powertrain, you can upgrade to the Dual-Track Combo anytime later for just 750 directly from your receipt page.
+                                        Registered for a single track? Once you realise both sessions are an absolute banger and want complete domain knowledge across the autonomous software stack and vehicle powertrain, you can upgrade to the Dual-Track Combo anytime for just 750.
                                     </p>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => openRegister('combo')}
-                                    disabled={comboSeats.soldOut}
-                                    className={`press shrink-0 border-2 border-slate-900 px-5 py-3 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0284c7] ${
-                                        comboSeats.soldOut
-                                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                            : 'bg-slate-900 text-amber-300 hover:bg-slate-800 cursor-pointer'
-                                    }`}
+                                    onClick={() => setUpgradeModalOpen(true)}
+                                    className="press shrink-0 border-2 border-slate-900 bg-slate-900 text-amber-300 hover:bg-slate-800 px-6 py-3.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0284c7] cursor-pointer"
                                 >
-                                    {comboSeats.soldOut ? 'Combo Sold Out ✕' : 'Get Dual-Track (1,750) ✦'}
+                                    Upgrade to Combo for ₹750 ★
                                 </button>
                             </div>
                         </div>
@@ -991,18 +1088,29 @@ export default function WorkshopPage({ onBack }) {
                             </p>
                             <ClosingDate className="mt-4" dark />
                         </div>
-                        <button
-                            type="button"
-                            onClick={openRegister}
-                            aria-haspopup="dialog"
-                            className="press press-sky border-4 border-white bg-amber-300 px-8 py-4 text-lg font-black uppercase tracking-wide text-slate-900 shadow-[6px_6px_0px_#0ea5e9] hover:bg-amber-400"
-                        >
-                            Register ✦
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setUpgradeModalOpen(true)}
+                                aria-haspopup="dialog"
+                                className="press border-3 border-amber-400 bg-amber-400 px-6 py-4 text-base sm:text-lg font-black uppercase tracking-wide text-slate-950 shadow-[5px_5px_0px_#0284c7] hover:bg-amber-300 cursor-pointer"
+                            >
+                                ★ Upgrade to Combo (₹750)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openRegister}
+                                aria-haspopup="dialog"
+                                className="press press-sky border-4 border-white bg-white px-8 py-4 text-lg font-black uppercase tracking-wide text-slate-900 shadow-[6px_6px_0px_#0ea5e9] hover:bg-amber-300"
+                            >
+                                {softwareSeats.isPaused ? 'Registration Paused ⏸' : 'Register ✦'}
+                            </button>
+                        </div>
                     </div>
                 </section>
 
                 {lookupOpen && <ReceiptLookupDialog onClose={() => setLookupOpen(false)} />}
+                {upgradeModalOpen && <UpgradeModal onClose={() => setUpgradeModalOpen(false)} />}
 
                 {previewSyllabus && (
                     <SyllabusPreviewModal
@@ -1027,7 +1135,13 @@ export default function WorkshopPage({ onBack }) {
                                 {/* Package first: it is what they came here to pick. */}
                                 <fieldset data-field-wrap>
                                     <legend className="mb-2 font-mono text-xs font-black uppercase tracking-widest text-slate-700">1. Choose your track</legend>
-                                    {powertrainSeats?.soldOut && !softwareSeats?.soldOut && (
+                                    {softwareSeats.isPaused && (
+                                        <div className="mb-4 border-2 border-slate-900 bg-amber-100 p-3 font-mono text-xs font-bold text-slate-800 space-y-1">
+                                            <p className="font-black text-rose-700 uppercase">⏸ Registrations Temporarily Paused</p>
+                                            <p>We are currently fixing a technical issue on the bank's side. Software track registrations will reopen tomorrow (Monday) morning at 8:00 AM and close Tuesday at 11:59 PM (or when 160 seats are reached).</p>
+                                        </div>
+                                    )}
+                                    {powertrainSeats?.soldOut && !softwareSeats?.soldOut && !softwareSeats?.isPaused && (
                                         <div className="mb-3 border-2 border-slate-900 bg-amber-100 p-2.5 font-mono text-xs font-bold text-slate-800 space-y-1">
                                             <p className="font-black text-rose-700 uppercase">⚡ Powertrain seats are filled!</p>
                                             <p>Only the Software &amp; Autonomous Systems track is currently available. Learn ROS, Computer Vision, and autonomous algorithms. Stay tuned for future workshops by our team!</p>
@@ -1040,12 +1154,14 @@ export default function WorkshopPage({ onBack }) {
                                             const trackSeats = pkg.id === 'powertrain' ? powertrainSeats : pkg.id === 'software' ? softwareSeats : comboSeats;
                                             const badgeInfo = getSeatBadgeInfo(trackSeats);
                                             const isSoldOut = badgeInfo?.isSoldOut;
+                                            const isPaused = softwareSeats.isPaused && (pkg.id === 'software' || pkg.id === 'combo');
+                                            const isOptionDisabled = isSoldOut || isPaused;
 
                                             return (
                                                 <label
                                                     key={pkg.id}
                                                     className={`press flex min-h-14 items-center justify-between gap-3 border-2 p-3.5 ${
-                                                        isSoldOut
+                                                        isOptionDisabled
                                                             ? 'opacity-60 bg-slate-100 border-slate-300 cursor-not-allowed'
                                                             : 'cursor-pointer ' + (fieldErrors.package ? 'border-red-600' : 'border-slate-950') + ' ' + (selected ? 'bg-amber-300 shadow-[4px_4px_0px_#0f172a]' : 'bg-slate-50 hover:bg-amber-50')
                                                     }`}
@@ -1056,8 +1172,8 @@ export default function WorkshopPage({ onBack }) {
                                                             name="package"
                                                             value={pkg.id}
                                                             checked={selected}
-                                                            disabled={isSoldOut}
-                                                            onChange={() => !isSoldOut && updateField('package', pkg.id)}
+                                                            disabled={isOptionDisabled}
+                                                            onChange={() => !isOptionDisabled && updateField('package', pkg.id)}
                                                             data-field={index === 0 ? 'package' : undefined}
                                                             className="h-5 w-5 shrink-0 accent-slate-900 disabled:opacity-40"
                                                         />
@@ -1074,7 +1190,11 @@ export default function WorkshopPage({ onBack }) {
                                                                 {/* Show seats left badge for both tracks and combo */}
                                                                 {badgeInfo && (
                                                                     <span className={`border-2 border-slate-900 px-1.5 py-0.5 font-mono text-[10px] font-black uppercase ${
-                                                                        isSoldOut ? 'bg-rose-500 text-white' : 'bg-amber-400 text-slate-950'
+                                                                        isSoldOut
+                                                                            ? 'bg-rose-500 text-white'
+                                                                            : badgeInfo.isPaused
+                                                                                ? 'bg-amber-300 text-slate-950'
+                                                                                : 'bg-amber-400 text-slate-950'
                                                                     }`}>
                                                                         {isSoldOut ? 'Sold Out' : badgeInfo.text}
                                                                     </span>
@@ -1083,6 +1203,7 @@ export default function WorkshopPage({ onBack }) {
                                                             <span className="block text-sm font-black uppercase">
                                                                 {pkg.name}
                                                                 {isSoldOut && <span className="ml-2 text-xs font-black text-rose-600">(SOLD OUT)</span>}
+                                                                {isPaused && !isSoldOut && <span className="ml-2 text-xs font-black text-amber-700">(PAUSED)</span>}
                                                             </span>
                                                             {pkg.tracksIncluded.length > 1 && (
                                                                 <span className="block font-mono text-[11px] font-bold text-slate-600">
@@ -1151,7 +1272,11 @@ export default function WorkshopPage({ onBack }) {
                             <div className="relative border-t-4 border-slate-900 bg-slate-50 p-3 sm:p-4">
                                 {upsellOpen && stage === 'form' && (
                                     <UpsellPopover
-                                        offer={upsellFor(selectedPkg, { powertrainSoldOut: powertrainSeats.soldOut, softwareSoldOut: softwareSeats.soldOut })}
+                                        offer={upsellFor(selectedPkg, {
+                                            powertrainSoldOut: powertrainSeats.soldOut,
+                                            softwareSoldOut: softwareSeats.soldOut,
+                                            softwarePaused: softwareSeats.isPaused
+                                        })}
                                         onAccept={acceptUpsell}
                                         onDecline={() => { setUpsellOpen(false); setStage('review'); }}
                                         onDismiss={() => setUpsellOpen(false)}
@@ -1160,8 +1285,16 @@ export default function WorkshopPage({ onBack }) {
                                 {error && stage === 'form' && (
                                     <p className="mb-3 border-2 border-red-600 bg-red-50 p-2.5 font-mono text-xs font-black text-red-700">{error}</p>
                                 )}
-                                <button type="submit" className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800">
-                                    Review &amp; continue →
+                                <button
+                                    type="submit"
+                                    disabled={softwareSeats.isPaused}
+                                    className={`press min-h-12 w-full border-2 border-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase ${
+                                        softwareSeats.isPaused
+                                            ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
+                                            : 'bg-slate-900 text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800'
+                                    }`}
+                                >
+                                    {softwareSeats.isPaused ? '⏸ Registrations Reopen Monday 8:00 AM' : 'Review & continue →'}
                                 </button>
                             </div>
                         </form>
@@ -1194,7 +1327,7 @@ export default function WorkshopPage({ onBack }) {
     );
 }
 
-function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPreviewSyllabus }) {
+function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpenUpgrade, onPreviewSyllabus }) {
     const isSoftware = track.id === 'software';
     const isPowertrain = track.id === 'powertrain';
     const otherTrackName = isSoftware ? 'Powertrain' : 'Software';
@@ -1205,7 +1338,8 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
         seatsLeft: (powertrainSeats?.seatsLeft !== null && softwareSeats?.seatsLeft !== null)
             ? Math.min(powertrainSeats.seatsLeft, softwareSeats.seatsLeft)
             : (powertrainSeats?.seatsLeft ?? softwareSeats?.seatsLeft ?? null),
-        soldOut: Boolean(powertrainSeats?.soldOut || softwareSeats?.soldOut)
+        soldOut: Boolean(powertrainSeats?.soldOut || softwareSeats?.soldOut || softwareSeats?.isPaused),
+        isPaused: softwareSeats?.isPaused
     };
     const comboBadgeInfo = getSeatBadgeInfo(comboSeats);
 
@@ -1236,15 +1370,42 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
                 <p className="mt-2 text-base font-bold text-sky-700 sm:text-lg">{track.tagline}</p>
             )}
 
-            {/* Prominent seat limit display: >25 -> 'Limited seats available', <=25 -> 'x seats left' */}
+            {/* Prominent seat limit display */}
             {badgeInfo && (
                 <div className="mt-4 flex items-center gap-2.5 flex-wrap">
                     <span className={`inline-flex items-center gap-1.5 border-2 border-slate-900 px-3.5 py-1.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
-                        badgeInfo.isSoldOut ? 'bg-rose-500 text-white' : 'bg-amber-300 text-slate-950'
+                        badgeInfo.isSoldOut
+                            ? 'bg-rose-500 text-white'
+                            : badgeInfo.isPaused
+                                ? 'bg-amber-300 text-slate-950'
+                                : 'bg-amber-300 text-slate-950'
                     }`}>
-                        <span>{badgeInfo.isSoldOut ? '🚫' : '⚡'}</span>
+                        <span>{badgeInfo.isSoldOut ? '🚫' : badgeInfo.isPaused ? '⏸' : '⚡'}</span>
                         <span>{badgeInfo.isSoldOut ? 'SOLD OUT' : badgeInfo.text.toUpperCase()}</span>
                     </span>
+                </div>
+            )}
+
+            {/* When Software is paused for technical issue */}
+            {isSoftware && softwareSeats?.isPaused && (
+                <div className="mt-5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] space-y-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="border-2 border-slate-900 bg-rose-500 text-white px-2 py-0.5 font-mono text-[11px] font-black uppercase">
+                            ⏸ Registrations Temporarily Paused
+                        </span>
+                        <span className="border-2 border-slate-900 bg-slate-900 text-amber-300 px-2 py-0.5 font-mono text-[11px] font-black uppercase">
+                            ⚡ Reopens Monday 8:00 AM
+                        </span>
+                    </div>
+                    <h4 className="text-base sm:text-lg font-black uppercase text-slate-900">
+                        Fixing a technical issue on the bank's side
+                    </h4>
+                    <p className="text-xs sm:text-sm font-bold leading-relaxed text-slate-700">
+                        We are currently resolving a technical issue on our banking partner's end. Software &amp; Autonomous Systems registrations will reopen tomorrow (Monday) morning at 8:00 AM and will remain open until Tuesday, 6 October at 11:59 PM (or when our 160-seat capacity is reached, whichever comes first).
+                    </p>
+                    <p className="text-xs font-mono font-bold text-slate-700">
+                        ★ Current count: 145 / 160 seats filled · <strong className="text-slate-950 font-black">Only {softwareSeats.seatsLeft ?? 15} seats remaining</strong>. Be ready when the window reopens!
+                    </p>
                 </div>
             )}
 
@@ -1256,25 +1417,32 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
                             ✕ Powertrain Track Sold Out
                         </span>
                         <span className="border-2 border-slate-900 bg-slate-900 text-amber-300 px-2 py-0.5 font-mono text-[11px] font-black uppercase">
-                            ⚡ Only Software Track Available
+                            ⚡ Software Track Reopens Mon 8 AM
                         </span>
                     </div>
                     <h4 className="text-base sm:text-lg font-black uppercase text-slate-900">
                         Powertrain seats are completely filled!
                     </h4>
                     <p className="text-xs sm:text-sm font-bold leading-relaxed text-slate-700">
-                        Missed a seat in Powertrain? Don't worry — the <strong className="text-slate-950">Software &amp; Autonomous Systems</strong> track is still open! Understanding perception stacks, ROS navigation, and real-time computer vision is what brings vehicle electronics and motors to life. Mastering the software layer gives you the complete picture of how autonomous machines think and act.
+                        Missed a seat in Powertrain? Don't worry — the <strong className="text-slate-950">Software &amp; Autonomous Systems</strong> track reopens tomorrow (Monday) at 8:00 AM! Understanding perception stacks, ROS navigation, and real-time computer vision is what brings vehicle electronics and motors to life. Mastering the software layer gives you the complete picture of how autonomous machines think and act.
                     </p>
                     <p className="text-xs font-mono font-bold text-slate-600">
                         ★ Stay tuned for future workshops and bootcamps by our team.
                     </p>
-                    <div className="pt-1">
+                    <div className="pt-1 flex flex-wrap gap-2.5">
                         <button
                             type="button"
                             onClick={() => onRegister('software')}
                             className="press border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black uppercase text-amber-300 shadow-[3px_3px_0px_#0284c7] hover:bg-slate-800 cursor-pointer"
                         >
-                            Register for Software Track Instead →
+                            View Software Track →
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onOpenUpgrade}
+                            className="press border-2 border-slate-900 bg-amber-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-[3px_3px_0px_#0f172a] hover:bg-amber-300 cursor-pointer"
+                        >
+                            ★ Already in Powertrain? Upgrade to Combo (₹750)
                         </button>
                     </div>
                 </div>
@@ -1340,7 +1508,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
                                 <span className={`font-mono text-[10px] font-black uppercase px-2 py-0.5 border ${
                                     comboBadgeInfo.isSoldOut ? 'bg-rose-500 text-white border-rose-700' : 'bg-amber-300 text-slate-900 border-slate-900'
                                 }`}>
-                                    {comboBadgeInfo.isSoldOut ? 'Combo Full' : comboBadgeInfo.text}
+                                    {comboBadgeInfo.isSoldOut ? (softwareSeats?.isPaused ? 'Paused ⏸' : 'Combo Full') : comboBadgeInfo.text}
                                 </span>
                             )}
                         </div>
@@ -1351,18 +1519,27 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
                             Get Software + Powertrain for 1,750 (Save 250). Includes both full tracks and all bonus sessions.
                         </p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => onRegister('combo')}
-                        disabled={comboSeats.soldOut}
-                        className={`press shrink-0 border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
-                            comboSeats.soldOut
-                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                                : 'bg-amber-300 text-slate-900 hover:bg-amber-400 cursor-pointer'
-                        }`}
-                    >
-                        {comboSeats.soldOut ? 'Combo Sold Out ✕' : 'Get Combo (1,750) ✦'}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={onOpenUpgrade}
+                            className="press shrink-0 border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                        >
+                            ★ Upgrade to Combo (₹750)
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onRegister('combo')}
+                            disabled={comboSeats.soldOut}
+                            className={`press shrink-0 border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
+                                comboSeats.soldOut
+                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                    : 'bg-amber-300 text-slate-900 hover:bg-amber-400 cursor-pointer'
+                            }`}
+                        >
+                            {comboSeats.soldOut ? (softwareSeats?.isPaused ? 'Paused ⏸' : 'Combo Sold Out ✕') : 'Get Combo (1,750) ✦'}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1370,14 +1547,21 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onPrev
                 <button
                     type="button"
                     onClick={() => onRegister(track.id)}
-                    disabled={badgeInfo?.isSoldOut}
+                    disabled={badgeInfo?.isSoldOut || trackSeats?.isPaused}
                     className={`press border-2 border-slate-900 px-5 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] ${
-                        badgeInfo?.isSoldOut
-                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                        badgeInfo?.isSoldOut || trackSeats?.isPaused
+                            ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
                             : 'bg-amber-300 hover:bg-amber-400 cursor-pointer text-slate-900'
                     }`}
                 >
-                    {badgeInfo?.isSoldOut ? 'Sold Out ✕' : 'Register ✦'}
+                    {trackSeats?.isPaused ? '⏸ Paused · Reopens Mon 8 AM' : badgeInfo?.isSoldOut ? 'Sold Out ✕' : 'Register ✦'}
+                </button>
+                <button
+                    type="button"
+                    onClick={onOpenUpgrade}
+                    className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 cursor-pointer flex items-center gap-1.5"
+                >
+                    <span>★ Upgrade to Combo (₹750)</span>
                 </button>
             </div>
             <p className="mt-4 font-mono text-[10px] font-bold uppercase text-slate-500">
@@ -1490,10 +1674,10 @@ function Field({ label, error, children }) {
 
 function ClosingDate({ className = '', dark = false }) {
     return (
-        <p className={`inline-flex items-center gap-2 border-2 px-3 py-1.5 font-mono text-xs font-black uppercase ${dark ? 'border-amber-300 text-amber-300' : 'border-slate-900 bg-white text-slate-900'
+        <p className={`inline-flex flex-wrap items-center gap-2 border-2 px-3 py-1.5 font-mono text-xs font-black uppercase ${dark ? 'border-amber-300 text-amber-300' : 'border-slate-900 bg-white text-slate-900'
             } ${className}`}>
             <span aria-hidden="true">⏳</span>
-            Registration closes on {REGISTRATION_CLOSES}
+            <span>Software Reopens Mon 8:00 AM · Closes Tue 11:59 PM (or at 160 seats)</span>
         </p>
     );
 }
@@ -1885,6 +2069,326 @@ function ReceiptPanel({ registration, form, onUpgrade, upgradeBusy, onRegisterAn
                 </div>
             </div>
         </div>
+    );
+}
+
+/**
+ * Dedicated Upgrade Modal:
+ * Allows students who registered for the single Powertrain track (or Software)
+ * to pay ₹750 and upgrade directly to the Dual-Track Combo.
+ */
+function UpgradeModal({ onClose }) {
+    const [lookupQuery, setLookupQuery] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [upgradeBusy, setUpgradeBusy] = useState(false);
+    const [error, setError] = useState('');
+    const [foundRecord, setFoundRecord] = useState(null);
+    const [successRecord, setSuccessRecord] = useState(null);
+    useModal(true, onClose);
+
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        const q = lookupQuery.trim();
+        if (!q) {
+            setError('Please enter your College Roll No, Registration No, Email, or Phone.');
+            return;
+        }
+        setBusy(true);
+        setError('');
+        setFoundRecord(null);
+        setSuccessRecord(null);
+        try {
+            const { ok, data } = await postJson('/api/workshop/receipt-lookup', {
+                query: q,
+                rollNo: q,
+                phone: q.replace(/\D/g, '').length >= 10 ? q : undefined,
+                email: q.includes('@') ? q : undefined
+            });
+            if (ok && data.receipts?.length) {
+                // Find single-track Powertrain or single-track Software registration
+                const single = data.receipts.find(r => r.package === 'powertrain' || r.package === 'software');
+                setFoundRecord(single || data.receipts[0]);
+            } else {
+                setError(data.error || 'No registered participant found with these details. Please double-check and try again.');
+            }
+        } catch {
+            setError('Could not reach the server. Please check your internet connection.');
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const handleUpgradePayment = async () => {
+        if (!foundRecord) return;
+        setUpgradeBusy(true);
+        setError('');
+        try {
+            const { ok, data } = await postJson('/api/workshop/upgrade', {
+                registrationId: foundRecord.registrationId
+            });
+            if (!ok) {
+                setError(data.error || 'Failed to initiate upgrade checkout. Please try again.');
+                setUpgradeBusy(false);
+                return;
+            }
+            const loaded = await loadRazorpayCheckout();
+            if (!loaded || !window.Razorpay) {
+                setError('Could not open payment window. Please disable any popup/ad-blocker.');
+                setUpgradeBusy(false);
+                return;
+            }
+            const checkout = new window.Razorpay({
+                key: data.keyId,
+                order_id: data.order.id,
+                amount: data.order.amount,
+                currency: data.order.currency,
+                name: 'Team Asterix',
+                description: 'Dual-Track Combo Upgrade (₹750)',
+                prefill: data.prefill,
+                notes: { registrationId: data.registrationId, type: 'upgrade' },
+                theme: { color: '#0ea5e9' },
+                handler: async (response) => {
+                    const verifyRes = await postJson('/api/workshop/verify', response);
+                    if (verifyRes.ok && verifyRes.data.registration) {
+                        setSuccessRecord({
+                            ...foundRecord,
+                            ...verifyRes.data.registration,
+                            package: 'combo',
+                            packageName: 'Dual-Track Combo',
+                            tracksEnrolled: ['software', 'powertrain'],
+                            amount: 1750
+                        });
+                        setFoundRecord(null);
+                    } else {
+                        setError(verifyRes.data?.error || 'Upgrade payment recorded but verification pending. Please refresh or contact support.');
+                    }
+                    setUpgradeBusy(false);
+                },
+                modal: {
+                    ondismiss: () => {
+                        setUpgradeBusy(false);
+                    }
+                }
+            });
+            checkout.on('payment.failed', (err) => {
+                setError(err?.error?.description || 'Upgrade payment was cancelled or failed.');
+                setUpgradeBusy(false);
+            });
+            checkout.open();
+        } catch {
+            setError('Could not connect to payment gateway. Please try again.');
+            setUpgradeBusy(false);
+        }
+    };
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm anim-fade sm:p-6"
+            onClick={onClose}
+            data-lenis-prevent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upgrade-modal-title"
+        >
+            <div
+                className="anim-pop-center flex max-h-[92dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white shadow-[10px_10px_0px_#0284c7]"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
+                    <div className="min-w-0">
+                        <span className="block font-mono text-[10px] font-black uppercase tracking-widest text-amber-300">
+                            ★ Instant Workshop Upgrade
+                        </span>
+                        <h2 id="upgrade-modal-title" className="truncate text-base font-black uppercase sm:text-lg">
+                            Upgrade to Dual-Track Combo
+                        </h2>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        aria-label="Close"
+                        className="press press-flat flex h-9 w-9 shrink-0 items-center justify-center border-2 border-white bg-rose-500 font-sans text-base font-bold text-white hover:bg-rose-600 cursor-pointer"
+                    >
+                        <span aria-hidden="true">✕</span>
+                    </button>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
+                    {/* Success State */}
+                    {successRecord ? (
+                        <div className="space-y-4">
+                            <div className="border-3 border-emerald-700 bg-emerald-50 p-4 text-emerald-950">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">🎉</span>
+                                    <h3 className="font-mono text-sm font-black uppercase">Upgrade Successful!</h3>
+                                </div>
+                                <p className="mt-1 text-xs font-bold text-emerald-800">
+                                    You are now fully enrolled in the <strong className="font-black text-emerald-950">Dual-Track Combo (Software + Powertrain)</strong>. Your receipt has been updated to ₹1,750.
+                                </p>
+                            </div>
+
+                            <dl className="divide-y-2 divide-slate-200 border-2 border-slate-900">
+                                {receiptRows(successRecord).map(([label, value]) => (
+                                    <div key={label} className={`grid grid-cols-[6.5rem_1fr] gap-3 p-2 sm:grid-cols-[8rem_1fr] ${label === 'Amount paid' ? 'bg-amber-300' : ''}`}>
+                                        <dt className="font-mono text-[11px] font-black uppercase text-slate-500">{label}</dt>
+                                        <dd className="min-w-0 break-words font-mono text-sm font-black">{value}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+
+                            <WhatsAppGroupInvite pkgId="combo" tracksEnrolled={['software', 'powertrain']} />
+
+                            <div className="pt-2 flex flex-col gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => downloadReceipt(receiptRows(successRecord), successRecord.receiptNo || successRecord.registrationId)}
+                                    className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-sm font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800 cursor-pointer"
+                                >
+                                    Download Upgraded Receipt ↓
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="press min-h-10 w-full border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black uppercase text-slate-900 hover:bg-slate-100 cursor-pointer"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        </div>
+                    ) : foundRecord ? (
+                        /* Found Registration State */
+                        <div className="space-y-4">
+                            {foundRecord.package === 'combo' || (Array.isArray(foundRecord.tracksEnrolled) && foundRecord.tracksEnrolled.includes('software') && foundRecord.tracksEnrolled.includes('powertrain')) ? (
+                                <div className="border-3 border-sky-600 bg-sky-50 p-4">
+                                    <span className="font-mono text-[11px] font-black uppercase text-sky-900 block mb-1">
+                                        ✦ Already Enrolled in Combo
+                                    </span>
+                                    <p className="text-sm font-black text-slate-900">{foundRecord.name} ({foundRecord.rollNo})</p>
+                                    <p className="text-xs font-bold text-slate-700 mt-1">
+                                        You are already registered for the Dual-Track Combo package! No upgrade required.
+                                    </p>
+                                    <div className="mt-3 flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => downloadReceipt(receiptRows(foundRecord), foundRecord.receiptNo || foundRecord.registrationId)}
+                                            className="press border-2 border-slate-900 bg-slate-900 text-amber-300 px-4 py-2 font-mono text-xs font-black uppercase shadow-[2px_2px_0px_#0284c7] cursor-pointer"
+                                        >
+                                            Download Receipt ↓
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFoundRecord(null)}
+                                            className="press border-2 border-slate-900 bg-white text-slate-900 px-3 py-2 font-mono text-xs font-black uppercase cursor-pointer"
+                                        >
+                                            Search another
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-[3px_3px_0px_#0f172a]">
+                                        <div className="flex items-center justify-between gap-2 border-b-2 border-slate-300 pb-2">
+                                            <div>
+                                                <p className="text-sm font-black uppercase text-slate-900">{foundRecord.name}</p>
+                                                <p className="font-mono text-xs font-bold text-slate-600">Roll No: {foundRecord.rollNo}</p>
+                                            </div>
+                                            <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase">
+                                                Paid ₹{foundRecord.amount || 1000}
+                                            </span>
+                                        </div>
+                                        <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs">
+                                            <div className="border border-slate-200 bg-white p-2.5">
+                                                <span className="text-[10px] font-black uppercase text-slate-500 block">Enrolled In</span>
+                                                <strong className="text-slate-900 font-black block mt-0.5">
+                                                    {foundRecord.package === 'powertrain' ? 'Electronics & Powertrain' : 'Software Track'}
+                                                </strong>
+                                                <span className="text-[10px] text-slate-600 block mt-1">Single Track</span>
+                                            </div>
+                                            <div className="border border-slate-900 bg-amber-300 p-2.5">
+                                                <span className="text-[10px] font-black uppercase text-amber-950 block">Upgrading To</span>
+                                                <strong className="text-slate-950 font-black block mt-0.5">Dual-Track Combo</strong>
+                                                <span className="text-[10px] text-amber-950 font-bold block mt-1">Software + Powertrain</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Cost breakdown */}
+                                    <div className="border-2 border-slate-900 bg-slate-900 text-white p-3.5 flex items-center justify-between">
+                                        <div>
+                                            <span className="font-mono text-[10px] font-black uppercase text-amber-300 block">Upgrade Amount</span>
+                                            <span className="text-2xl font-black">₹750</span>
+                                            <span className="font-mono text-[10px] text-slate-300 block">Total ₹1,750 Combo Value (Save ₹250)</span>
+                                        </div>
+                                        <div className="text-right font-mono text-[11px] text-emerald-400 font-bold">
+                                            ⚡ Instant Confirmation<br />
+                                            Claims 1 of 15 Software Seats
+                                        </div>
+                                    </div>
+
+                                    {error && <p className="border-2 border-red-600 bg-red-50 p-2.5 font-mono text-xs font-black text-red-700" role="alert">{error}</p>}
+
+                                    <button
+                                        type="button"
+                                        disabled={upgradeBusy}
+                                        onClick={handleUpgradePayment}
+                                        className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0284c7] cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                                    >
+                                        {upgradeBusy ? 'Opening Payment…' : 'Pay ₹750 & Upgrade to Combo ✦'}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => { setFoundRecord(null); setError(''); }}
+                                        className="w-full text-center font-mono text-xs font-black uppercase text-sky-700 underline cursor-pointer"
+                                    >
+                                        ← Look up another registration
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    ) : (
+                        /* Initial Search Form */
+                        <form onSubmit={handleSearch} noValidate className="space-y-4">
+                            <div className="border-2 border-slate-900 bg-amber-100 p-3.5 shadow-[2px_2px_0px_#0f172a]">
+                                <h3 className="font-mono text-xs font-black uppercase text-amber-950">
+                                    ★ Already Registered for Electronics &amp; Powertrain?
+                                </h3>
+                                <p className="mt-1 text-xs font-bold leading-relaxed text-slate-800">
+                                    Pay just <strong className="text-slate-950">₹750</strong> to unlock the <strong className="text-slate-950">Software &amp; Autonomous Systems</strong> track and get the full Combo experience! You'll master ROS, Computer Vision, ML, and autonomous vehicle system design.
+                                </p>
+                            </div>
+
+                            <Field label="College Roll No, Reg No, Email, or Phone">
+                                <input
+                                    className={inputClass(false)}
+                                    value={lookupQuery}
+                                    onChange={e => { setLookupQuery(e.target.value); setError(''); }}
+                                    autoComplete="off"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                    enterKeyHint="search"
+                                    maxLength={80}
+                                    placeholder="e.g. 26m125 / 7207960077 / email"
+                                />
+                            </Field>
+
+                            {error && <p className="border-2 border-red-600 bg-red-50 p-2.5 font-mono text-xs font-black text-red-700" role="alert">{error}</p>}
+
+                            <button
+                                type="submit"
+                                disabled={busy}
+                                className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                            >
+                                {busy ? 'Searching registration…' : 'Find My Registration & Upgrade →'}
+                            </button>
+                        </form>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 }
 

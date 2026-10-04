@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
+import { getSoftwareRegistrationState } from '../../server/src/config/workshopPackages.js';
 
 export default function WorkshopPopup({ onOpenWorkshop }) {
     const [isVisible, setIsVisible] = useState(true);
     const [isFooterVisible, setIsFooterVisible] = useState(false);
+    const [state, setState] = useState(() => getSoftwareRegistrationState(Date.now(), 145));
+
+    useEffect(() => {
+        const updateState = () => setState(getSoftwareRegistrationState(Date.now(), 145));
+        updateState();
+        const interval = setInterval(updateState, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -45,6 +54,12 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
 
     if (!isVisible) return null;
 
+    const badgeText = state.isPaused
+        ? 'PAUSED · REOPENS MON'
+        : state.isClosed
+        ? 'REGISTRATION CLOSED'
+        : 'CLOSES TUE 11:59 PM';
+
     return (
         <aside
             className={`fixed bottom-22 right-3.5 z-40 w-[calc(100vw-1.75rem)] max-w-[290px] rounded-2xl border-2 sm:border-3 border-slate-900 bg-amber-300 p-3 sm:p-3.5 text-slate-900 shadow-[6px_6px_0px_#0f172a] sm:bottom-6 sm:right-6 sm:w-72 select-none pointer-events-auto transition-all duration-500 ease-out ${
@@ -73,8 +88,10 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                     <span className="inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black uppercase tracking-wider text-amber-300 shadow-[1px_1px_0px_#0f172a]">
                         ✦ WORKSHOPS 2026
                     </span>
-                    <span className="inline-block rounded-md border border-rose-700 bg-rose-50 px-1.5 py-0.5 font-mono text-[9px] font-black uppercase text-rose-700">
-                        Closes 3 Oct
+                    <span className={`inline-block rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
+                        state.isPaused ? 'border-amber-700 bg-amber-100 text-amber-950 font-black' : 'border-rose-700 bg-rose-50 text-rose-700'
+                    }`}>
+                        {badgeText}
                     </span>
                 </div>
 
