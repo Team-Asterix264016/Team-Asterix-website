@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
 import { nextSequence } from '../models/Counter.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
@@ -980,6 +981,52 @@ router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, a
     } catch (err) {
         console.error('Error fetching workshop registrations:', err);
         res.status(500).json({ error: 'Failed to fetch registrations.' });
+    }
+});
+
+router.put('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const body = req.body || {};
+        const studentFields = {
+            name: String(body.name || '').trim(),
+            email: String(body.email || '').trim().toLowerCase(),
+            phone: String(body.phone || '').trim(),
+            college: String(body.college || '').trim(),
+            year: String(body.year || '').trim(),
+            department: String(body.department || '').trim(),
+            rollNo: String(body.rollNo || '').trim()
+        };
+        if (Object.values(studentFields).some((value, index) => index !== 3 && !value)) {
+            return res.status(400).json({ error: 'Name, email, phone, year, department, and registered number are required.' });
+        }
+        if (!EMAIL_RE.test(studentFields.email)) {
+            return res.status(400).json({ error: 'Enter a valid email address.' });
+        }
+        if (normalizePhone(studentFields.phone).length !== 10) {
+            return res.status(400).json({ error: 'Enter a valid 10-digit phone number.' });
+        }
+
+        const registration = await WorkshopRegistration.findByIdAndUpdate(
+            id,
+            { $set: studentFields },
+            { new: true, runValidators: true }
+        );
+        if (!registration) return res.status(404).json({ error: 'Workshop registration not found.' });
+
+        await WorkshopProjectSubmission.updateOne(
+            { registrationId: registration._id },
+            { $set: studentFields }
+        );
+
+        res.json({ success: true, registration });
+    } catch (err) {
+        console.error('Error updating workshop student details:', err);
+        res.status(500).json({ error: 'Could not update the student record.' });
     }
 });
 

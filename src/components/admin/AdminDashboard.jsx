@@ -6,6 +6,7 @@ import ImageField from './ImageField';
 import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
+import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import QuizAdmin from './QuizAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
@@ -523,6 +524,7 @@ export default function AdminDashboard({ onExit }) {
         { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
         { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
         { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+        { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
         { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
         { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
         { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
@@ -1529,6 +1531,10 @@ export default function AdminDashboard({ onExit }) {
                                 window.location.hash = `#attendance-projector?track=${preferredTrack || 'software'}`;
                             }}
                         />
+                    )}
+
+                    {activeTab === 'workshop-project-submissions' && (
+                        <WorkshopProjectSubmissionsAdmin showStatus={showStatus} />
                     )}
 
                     {activeTab === 'quiz-manager' && (

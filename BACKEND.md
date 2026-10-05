@@ -489,6 +489,13 @@ JWT_SECRET=asterix_super_secret_jwt_key_sae_baja_2026
 CORS_ORIGIN=http://localhost:5173
 ```
 
+### WhatsApp Activity Alerts
+Successful API writes (`POST`, `PUT`, `PATCH`, and `DELETE`) send a short WhatsApp alert. Login and lookup-only requests are excluded. Alerts describe the event and UTC time, and do not include student details or request bodies. The `/api/health` response reports `notifications.whatsappConfigured`.
+
+To enable delivery, configure `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ALERT_TO`, `WHATSAPP_TEMPLATE_NAME`, and `WHATSAPP_GRAPH_API_VERSION`; `WHATSAPP_TEMPLATE_LANGUAGE` defaults to `en_US`. Set the recipient in international format. Create and get approval for a WhatsApp Business Cloud API template whose body includes one placeholder, for example `Website alert: {{1}}`, matching the configured template name and language. The recipient must opt in to receive WhatsApp messages from the business. Store the access token and recipient in the backend host's environment settings, never in frontend code. Missing settings disable notifications without blocking website changes.
+
+Delivery is asynchronous and best-effort: a Meta API failure is logged by the backend and does not fail the originating website request.
+
 ### Running the Services
 
 From the root project folder:

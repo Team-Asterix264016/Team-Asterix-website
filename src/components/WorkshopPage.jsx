@@ -833,6 +833,9 @@ export default function WorkshopPage({ onBack }) {
                             <button type="button" onClick={() => scrollToEl(detailRef.current)} className="press border-2 border-slate-900 bg-white px-5 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] hover:bg-sky-100">
                                 Explore the tracks ↓
                             </button>
+                            <a href="#workshop-project-submit" className="press inline-flex items-center border-2 border-slate-900 bg-emerald-300 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-emerald-400 no-underline">
+                                Submit workshop project →
+                            </a>
                         </div>
                         <ClosingDate className="mt-5" />
                     </div>
@@ -1016,41 +1019,41 @@ export default function WorkshopPage({ onBack }) {
                         </p>
 
                         <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
-                            {/* Arya */}
+                            {/* Ratheeswar */}
                             <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
                                 <div>
                                     <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
                                         Software Lead
                                     </span>
-                                    <h3 className="text-base sm:text-lg font-black uppercase text-slate-900">Arya</h3>
+                                    <h3 className="text-base sm:text-lg font-black uppercase text-slate-900">Ratheeswar S</h3>
                                     <p className="mt-1 font-mono text-xs font-bold text-slate-600">ROS, ML, Agentic AI &amp; Perception Track</p>
-                                </div>
-                                <div className="mt-4 pt-3 border-t-2 border-slate-200">
-                                    <a
-                                        href="tel:9994399419"
-                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
-                                    >
-                                        <span>+91 99943 99419</span>
-                                        <span className="text-[10px] text-white font-mono">Call →</span>
-                                    </a>
-                                </div>
-                            </div>
-
-                            {/* Ratheeshwar S */}
-                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
-                                <div>
-                                    <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
-                                        Software Lead
-                                    </span>
-                                    <h3 className="text-base sm:text-lg font-black uppercase text-slate-900">Ratheeshwar S</h3>
-                                    <p className="mt-1 font-mono text-xs font-bold text-slate-600">Autonomous Stack, CV &amp; System Design</p>
                                 </div>
                                 <div className="mt-4 pt-3 border-t-2 border-slate-200">
                                     <a
                                         href="tel:8608944644"
                                         className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
                                     >
-                                        <span>+91 86089 44644</span>
+                                        <span>+91 8608944644</span>
+                                        <span className="text-[10px] text-white font-mono">Call →</span>
+                                    </a>
+                                </div>
+                            </div>
+
+                            {/* Arya A */}
+                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                                <div>
+                                    <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
+                                        Software Lead
+                                    </span>
+                                    <h3 className="text-base sm:text-lg font-black uppercase text-slate-900">Arya A</h3>
+                                    <p className="mt-1 font-mono text-xs font-bold text-slate-600">Autonomous Stack, CV &amp; System Design</p>
+                                </div>
+                                <div className="mt-4 pt-3 border-t-2 border-slate-200">
+                                    <a
+                                        href="tel:9994399419" 
+                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
+                                    >
+                                        <span>+91 99943 99419</span>
                                         <span className="text-[10px] text-white font-mono">Call →</span>
                                     </a>
                                 </div>

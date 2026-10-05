@@ -23,6 +23,7 @@ const SponsorPage = lazy(() => import("./components/SponsorPage"));
 const WorkshopPage = lazy(() => import("./components/WorkshopPage"));
 const WorkshopAttendanceProjector = lazy(() => import("./components/admin/WorkshopAttendanceProjector"));
 const WorkshopAttendanceCheckin = lazy(() => import("./components/WorkshopAttendanceCheckin"));
+const WorkshopProjectSubmissionPage = lazy(() => import("./components/WorkshopProjectSubmissionPage"));
 const QuizRunner = lazy(() => import("./components/quiz/QuizRunner"));
 
 function MainApp() {
@@ -31,6 +32,7 @@ function MainApp() {
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
+    const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(() => window.location.hash === '#workshop-project-submit');
     const [isAttendancePage, setIsAttendancePage] = useState(() => window.location.hash.startsWith('#attendance') && !window.location.hash.startsWith('#attendance-projector'));
     const [isProjectorPage, setIsProjectorPage] = useState(() => window.location.hash.startsWith('#attendance-projector'));
     const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
@@ -55,6 +57,7 @@ function MainApp() {
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
             setIsWorkshopPage(hash === '#workshop');
+            setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
             setIsQuizPage(hash.startsWith('#quiz'));
@@ -73,7 +76,7 @@ function MainApp() {
 
     useEffect(() => {
         scrollToTop();
-    }, [isSponsorPage, isWorkshopPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
+    }, [isSponsorPage, isWorkshopPage, isWorkshopProjectPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
 
     useEffect(() => {
         // Readers who ask for reduced motion get the browser's native scroll.
@@ -131,6 +134,7 @@ function MainApp() {
         setIsAdminOpen(false);
         setIsSponsorPage(false);
         setIsWorkshopPage(false);
+        setIsWorkshopProjectPage(false);
     };
 
     const handleSelectSubsystem = (id) => {
@@ -169,7 +173,7 @@ function MainApp() {
     const handleBackToHome = () => {
         closeAll();
         const hash = window.location.hash;
-        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#model'].includes(hash)) {
+        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#workshop-project-submit', '#model'].includes(hash)) {
             window.history.replaceState(null, '', window.location.pathname);
         }
         scrollToTop();
@@ -195,6 +199,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <WorkshopPage onBack={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isWorkshopProjectPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <WorkshopProjectSubmissionPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
