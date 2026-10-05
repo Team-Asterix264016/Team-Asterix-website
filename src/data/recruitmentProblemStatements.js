@@ -241,11 +241,11 @@ export const SOFTWARE_PERCEPTION_DATA = {
             id: 'ps-fusion',
             number: '02',
             title: 'Sensor Fusion & Track Reconstruction',
-            tagline: 'Take noisy, backward-mounted perception data from our aBAJA buggy and reconstruct a clean 2D map of the cone-marked track in global coordinates.',
+            tagline: 'Take noisy, backward-mounted perception data from our autonomous buggy and reconstruct a clean 2D map of the cone-marked track in global coordinates.',
             domain: 'State Estimation & Autonomous Mapping',
             badge: 'SENSOR FUSION & SLAM',
             targetHardware: {
-                vehicle: 'Team Asterix aBAJA Autonomous Buggy',
+                vehicle: 'Team Asterix Autonomous Buggy Platform',
                 sensor: 'Range & Bearing Perception Sensor (e.g. LiDAR / Depth Camera)',
                 mounting: 'Rotated 180° facing backward due to roll-cage constraints'
             },
@@ -266,7 +266,7 @@ export const SOFTWARE_PERCEPTION_DATA = {
                     deadline: '8 September 2026 • 11:59 PM IST',
                     deadlineDate: '2026-09-08T23:59:00+05:30',
                     tagline: 'Build an offline pipeline to ingest raw vehicle telemetry and backward sensor logs, reconcile frames, filter ghost cones, and output a clean 2D track map.',
-                    overview: 'Our aBAJA buggy is navigating a track marked by traffic cones. It is equipped with a perception sensor reporting range and bearing to observed cones. You are given a vehicle telemetry log (global pose over time) and a sensor log of cone observations. Your task is to compute the true global position of every real cone, reject ghost detections, and produce a clean 2D map.',
+                    overview: 'Our autonomous buggy is navigating a track marked by traffic cones. It is equipped with a perception sensor reporting range and bearing to observed cones. You are given a vehicle telemetry log (global pose over time) and a sensor log of cone observations. Your task is to compute the true global position of every real cone, reject ghost detections, and produce a clean 2D map.',
                     givenInputs: [
                         'Telemetry log: Vehicle pose (x, y position and heading θ) in the global frame over time.',
                         'Sensor log: Cone detections (range r, bearing φ, timestamp t) in the backward-facing sensor frame.'
@@ -380,7 +380,7 @@ export const POWERTRAIN_CHALLENGE_DATA = {
     name: 'Powertrain',
     headline: 'POWERTRAIN SUBSYSTEM RECRUITMENT CHALLENGE',
     badge: 'ROUND 2 • DESIGN & IMPLEMENTATION',
-    blurb: 'Choose one of three electrical engineering problem statements inspired by an autonomous BAJA vehicle. Research the problem, compare approaches, design a practical solution, and prove it with a working prototype or simulation.',
+    blurb: 'Choose one of three electrical engineering problem statements inspired by an autonomous off-road vehicle. Research the problem, compare approaches, design a practical solution, and prove it with a working prototype or simulation.',
     lead: SUBSYSTEM_LEADS['powertrain'],
     coordinators: [
         { name: 'Joel Anto Edwin', role: 'Powertrain Subsystem Lead', phone: '+91 72079 60077' },
@@ -388,14 +388,14 @@ export const POWERTRAIN_CHALLENGE_DATA = {
         { name: 'Kathin Sankar', role: 'Recruitment Coordinator', phone: '+91 97909 55695' }
     ],
     rulebook: {
-        title: 'aBAJA SAEINDIA Rulebook 2026 (Rev01)',
-        url: 'https://bajasaeindia.org/upload/Resource/aBAJA%20SAEINDIA%20RULEBOOK%202026_Rev01_1769348085.pdf',
-        note: 'Teams attempting Problem Statement 03 should refer to Part C (Base Vehicle Electrical Technical Requirements) for clarification on electrical starting interlocks and safety standards. Where this challenge document states a requirement, this challenge document takes precedence.'
+        title: 'Asterix Autonomous Vehicle Standards 2026',
+        url: '#',
+        note: 'Teams attempting Problem Statement 03 should refer to Section C (Base Vehicle Electrical Technical Requirements) for clarification on electrical starting interlocks and safety standards. Where this challenge document states a requirement, this challenge document takes precedence.'
     },
     teamFormat: {
         title: 'Team Formation: Teams of 2',
         badge: 'DUO TEAMS ALLOCATED',
-        desc: 'In this recruitment challenge, you will work in an allocated team of two to solve one electrical engineering problem inspired by the architecture and requirements of an autonomous BAJA vehicle. Each team must choose exactly ONE problem statement and register their selection in the portal.',
+        desc: 'In this recruitment challenge, you will work in an allocated team of two to solve one electrical engineering problem inspired by the architecture and requirements of an autonomous vehicle. Each team must choose exactly ONE problem statement and register their selection in the portal.',
         pdfUrl: 'https://ik.imagekit.io/kitzwb4be/asterix/recruitment/powertrain_teams.pdf?v=2',
         pdfLocalUrl: '/recruitment/powertrain_teams.pdf',
         teams: [
@@ -614,7 +614,7 @@ export const POWERTRAIN_CHALLENGE_DATA = {
             deadlineDay: 'Wednesday',
             mandatoryDemo: 'Breadboard hardware prototype: three ESP32 nodes, three sensors, communicating over CAN.',
             context: 'Autonomous vehicles rely on multiple sensors to understand their surroundings and their own state. When these sensors are distributed across the vehicle, a reliable way to move information between processing nodes is needed. The Controller Area Network (CAN) bus is widely used for this purpose in vehicles.',
-            task: 'Choose any three sensors that you believe are relevant to an autonomous/off-road BAJA vehicle. Connect each sensor to its own ESP32 node and link all three nodes over a CAN bus. Decide what each sensor contributes, where its data is processed, what information is transmitted over CAN, and how the three nodes work together to enable a useful vehicle function.',
+            task: 'Choose any three sensors that you believe are relevant to an autonomous/off-road vehicle. Connect each sensor to its own ESP32 node and link all three nodes over a CAN bus. Decide what each sensor contributes, where its data is processed, what information is transmitted over CAN, and how the three nodes work together to enable a useful vehicle function.',
             questionsToInvestigate: [
                 'Which three sensors provide useful information for an autonomous vehicle, and why?',
                 'What vehicle problem or function does your combination of sensors address?',
@@ -777,7 +777,7 @@ export const POWERTRAIN_CHALLENGE_DATA = {
         'Any AI tool (ChatGPT, Claude, Gemini, GitHub Copilot), online resource, simulator or person may be used for assistance. AI is explicitly allowed to learn concepts, generate or review code, troubleshoot errors, and explore alternatives.',
         'Do not treat external or AI-generated material as automatically correct. Verify important technical information, and be ready to explain every decision in your own words.',
         'Do not claim results you have not obtained. Clearly distinguish between researched facts, assumptions, simulated results and measured results.',
-        'Physical setups must be low-voltage and bench-scale only. Do not connect any work to a BAJA vehicle, traction battery, high-power actuator or vehicle-critical hardware.',
+        'Physical setups must be low-voltage and bench-scale only. Do not connect any work to a full-scale vehicle, traction battery, high-power actuator or vehicle-critical hardware.',
         'Evaluation is based on engineering reasoning, technical understanding and working results, not on presentation aesthetics or the amount of equipment used.'
     ],
     whatWeLookFor: [
@@ -805,7 +805,7 @@ export const MECHANICAL_MYSTERY_DATA = {
     name: 'Mechanical',
     headline: 'MECHANICAL PRESENTATION GUIDELINES & PROBLEM STATEMENTS',
     badge: 'ROUND 1: PRESENTATION',
-    blurb: 'Evaluate technical understanding, research capability, and design approach towards converting our existing electric BAJA buggy into an autonomous vehicle.',
+    blurb: 'Evaluate technical understanding, research capability, and design approach towards converting our existing electric buggy into a fully autonomous vehicle platform.',
     lead: SUBSYSTEM_LEADS['mechanical'],
     timeline: [
         {
@@ -924,7 +924,7 @@ export const MECHANICAL_MYSTERY_DATA = {
             num: '01',
             title: 'Understand the Existing Vehicle Systems',
             points: [
-                'Study the current electric buggy design used in the SAE eBAJA competition.',
+                'Study our electric vehicle platform architecture.',
                 'Gain a clear understanding of the hydraulic braking system and throttle control design implemented in the vehicle.'
             ]
         },
@@ -934,7 +934,7 @@ export const MECHANICAL_MYSTERY_DATA = {
             points: [
                 'Always incorporate how manual override works for your proposed design.',
                 'Design your proposed subsystem with redundant sensors and fail-safe mechanisms to ensure reliable operation.',
-                'Refer to relevant safety standards and guidelines (ISO, IATF, SAE, etc.) applicable to your subsystem.'
+                'Refer to relevant safety standards and guidelines (ISO, IATF, Automotive Standards, etc.) applicable to your subsystem.'
             ]
         },
         {
@@ -983,7 +983,7 @@ export const MECHANICAL_MYSTERY_DATA = {
                     target: 'Design a simple actuator system to generate 2000 N force at the brake master cylinder with a bore diameter (19.05mm)',
                     checklist: [
                         'Explain how you will control the actuator.',
-                        'Show how and where you will mount the actuator on the Baja buggy.',
+                        'Show how and where you will mount the actuator on the vehicle.',
                         'Required braking force and actuator torque/speed calculations, response time analysis',
                         'Comparison of different mechanisms (including the different types of motors, actuator drive mechanism, and feedback control)',
                         'The pedal travels in circular trajectory, how will you accommodate design if you choose linear actuator.'
@@ -996,7 +996,7 @@ export const MECHANICAL_MYSTERY_DATA = {
                         'Select a suitable motor and reduction mechanism.',
                         'Explain how you will control left/right steering.',
                         'Add a method to limit steering angle.',
-                        'Show how and where you will mount the system on the Baja buggy.'
+                        'Show how and where you will mount the system on the vehicle.'
                     ]
                 }
             ]
@@ -1014,7 +1014,7 @@ export const MECHANICAL_MYSTERY_DATA = {
                     checklist: [
                         'Explain how the autonomous braking will override.',
                         'Explain how manual braking is restored.',
-                        'Show where the mechanism will be mounted on the Baja.',
+                        'Show where the mechanism will be mounted on the vehicle.',
                         'Select suitable sensors for brake pressure, wheel speed and vehicle deceleration.'
                     ]
                 },

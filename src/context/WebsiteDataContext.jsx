@@ -12,7 +12,7 @@ import imgTrack from '../assets/gallery/04_track_dirt_action.jpg';
 import imgMechanics from '../assets/gallery/05_pitlane_mechanics.jpg';
 import imgCelebration from '../assets/gallery/06_team_celebration.jpg';
 
-const LOCAL_STORAGE_KEY = 'asterix_website_data_v1';
+const LOCAL_STORAGE_KEY = 'asterix_website_data_v2';
 export const AUTH_SESSION_KEY = 'asterix_admin_session_v1';
 export const AUTH_TOKEN_KEY = 'asterix_admin_token_v1';
 
@@ -55,11 +55,11 @@ It was the reason a training program turned into a family of engineers who learn
 const initialHeroData = {
     teamTitle: "TEAM",
     teamName: "ASTERIX",
-    tagline: "Got the passion? We got the track.",
+    tagline: "Pioneering Next-Gen Autonomous Mobility & Off-Road Robotics.",
     badges: [
-        { label: "AIR 13", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
-        { label: "SAEINDIA a-BAJA 2026", class: "bg-white text-slate-900" },
-        { label: "★ TN RANK 1", class: "rotate-[3deg] bg-sky-400 text-white" }
+        { label: "AUTONOMOUS MOBILITY LAB", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
+        { label: "ADVANCED R&D DIVISION", class: "bg-white text-slate-900" },
+        { label: "★ PSG iTECH ENGINEERING", class: "rotate-[3deg] bg-sky-400 text-white" }
     ],
     ctaText: "EXPLORE THE SQUAD →",
     ctaLink: "#squad",
@@ -71,10 +71,10 @@ const initialGalleryItems = [
     {
         id: "gal-1",
         title: "Paddock Dawn Inspection",
-        category: "PIT LANE • SCRUTINEERING",
+        category: "FIELD TESTING • SCRUTINEERING",
         year: "2026",
         src: imgPaddock,
-        desc: "Complete pre-race technical scrutineering and telemetry calibration under paddock sunrise."
+        desc: "Complete pre-test technical inspection and telemetry calibration under paddock sunrise."
     },
     {
         id: "gal-2",
@@ -106,15 +106,15 @@ const initialGalleryItems = [
         category: "PIT BAY • QUICK SERVICE",
         year: "2026",
         src: imgMechanics,
-        desc: "Trackside damper valving adjustments and hydraulic line bleeding between endurance heats."
+        desc: "Trackside damper valving adjustments and hydraulic line bleeding between endurance testing runs."
     },
     {
         id: "gal-6",
-        title: "Podium & National Victory",
-        category: "FINALS • PODIUM",
+        title: "Platform Milestone & Victory",
+        category: "PROVING GROUNDS • MILESTONE",
         year: "2026",
         src: imgCelebration,
-        desc: "Team Asterix celebrating AIR 13 and TN Rank 1 at the national SAE BAJA finals."
+        desc: "Team Asterix celebrating major technical milestones and successful autonomous field trials."
     }
 ];
 
@@ -150,8 +150,8 @@ const initialUpdates = [
     },
     {
         id: "upd-5",
-        label: "Endurance Podium Victory",
-        tag: "FEB 2026 • NATIONAL FINALS",
+        label: "Autonomous Field Milestone",
+        tag: "FEB 2026 • PROVING GROUNDS",
         image: imgCelebration,
         link: "#"
     }
@@ -234,7 +234,7 @@ const RECRUITMENT_TRACKS = [
                 id: 'ps-fusion-02',
                 title: 'Problem Statement 02: Sensor Fusion & Track Reconstruction',
                 summary: 'Reconstruct a clean 2D cone map from noisy, backward-mounted (180° inverted) perception data and vehicle telemetry, handling ghost cone hallucinations across Phase 1 (offline pipeline due 8th night 11:59 PM) and Phase 2 (online streaming pipeline due 15th night 11:59 PM).',
-                body: 'Phase 01: Offline Map Reconstruction & Noise Filtering (Deadline: 8 September 2026, 11:59 PM IST)\nPhase 02: Online Streaming & Uncertainty (Deadline: 15 September 2026, 11:59 PM IST)\nTarget: aBAJA Autonomous Buggy + 180° backward-facing perception sensor.'
+                body: 'Phase 01: Offline Map Reconstruction & Noise Filtering (Deadline: 8 September 2026, 11:59 PM IST)\nPhase 02: Online Streaming & Uncertainty (Deadline: 15 September 2026, 11:59 PM IST)\nTarget: Asterix Autonomous Buggy Platform + 180° backward-facing perception sensor.'
             }
         ]
     },

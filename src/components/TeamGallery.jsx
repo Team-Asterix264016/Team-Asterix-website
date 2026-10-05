@@ -42,7 +42,7 @@ export default function TeamGallery() {
             id: g.id || idx,
             title: g.title,
             category: g.category || "PADDOCK & TRACK",
-            location: g.location || "SAEINDIA Circuit & Workshop",
+            location: g.location || "Asterix Mobility Proving Grounds",
             date: g.year || "2026",
             image: apiUrl(g.src),
             badge: g.category || "GALLERY",

@@ -117,7 +117,7 @@ export const subsystems = [
         color: "bg-amber-400",
         stat: "100% CAD / FEA VALIDATED",
         shortDesc: "Custom AISI 4130 chromoly roll cage, long-travel double wishbone suspension, precision Ackermann steering, and electro-hydraulic brake systems.",
-        fullDesc: "The Mechanical subsystem forms the structural backbone and dynamic handling soul of the Asterix BAJA vehicle. The unit designs and fabricates the rule-compliant AISI 4130 tubular roll cage, calculates suspension roll center migration, manufactures custom uprights and A-arms, optimizes steering Ackermann geometry, and integrates the high-pressure 4-wheel lockup braking system.",
+        fullDesc: "The Mechanical subsystem forms the structural backbone and dynamic handling soul of the Asterix autonomous vehicle. The unit designs and fabricates the high-rigidity AISI 4130 tubular roll cage, calculates suspension roll center migration, manufactures custom uprights and A-arms, optimizes steering Ackermann geometry, and integrates the high-pressure 4-wheel lockup braking system.",
         specifications: [
             { label: "Chassis Material", value: "AISI 4130 Chromoly (Seamless Tubular)" },
             { label: "Front Suspension", value: "Double A-Arm with FOX Float Air Shocks" },
@@ -170,24 +170,24 @@ export const subsystems = [
     {
         id: "leads",
         name: "Leads",
-        tagline: "Project Management, Technical Architecture & Race Direction",
+        tagline: "Project Management, Technical Architecture & Operations Direction",
         badge: "EXECUTIVE & DIRECTORS",
         color: "bg-indigo-500",
         stat: "CHIEF ENGINEERING & OPS",
-        shortDesc: "Executive team directing vehicle architecture, inter-subsystem integration, financial sponsorships, and competition race strategy.",
-        fullDesc: "The Leads subsystem represents the technical and executive leadership driving Team Asterix. From overarching vehicle design architecture and cross-subsystem integration to project timelines, budget management, safety compliance, and race day pit-lane strategy, the leadership team ensures Asterix performs at peak engineering excellence.",
+        shortDesc: "Executive team directing vehicle architecture, inter-subsystem integration, financial sponsorships, and field testing strategy.",
+        fullDesc: "The Leads subsystem represents the technical and executive leadership driving Team Asterix. From overarching vehicle design architecture and cross-subsystem integration to project timelines, budget management, safety compliance, and field testing strategy, the leadership team ensures Asterix performs at peak engineering excellence.",
         specifications: [
             { label: "Leadership Scope", value: "Overall Technical & Operational Command" },
-            { label: "Competition Division", value: "SAEINDIA BAJA Autonomous Series" },
+            { label: "Mobility Division", value: "Asterix Autonomous Mobility Division" },
             { label: "Integration Cadence", value: "Weekly Sprint Milestones & Design Reviews" },
-            { label: "Safety Compliance", value: "100% SAEINDIA Tech Inspection Standards" },
-            { label: "Budget & Sponsorship", value: "Full Paddock Logistics & Sponsor Relations" },
-            { label: "Race Strategy", value: "Real-Time Telemetry & Driver Coaching" }
+            { label: "Safety Compliance", value: "100% ISO & Automotive Tech Inspection Standards" },
+            { label: "Budget & Sponsorship", value: "Full Proving Ground Logistics & Sponsor Relations" },
+            { label: "Field Strategy", value: "Real-Time Telemetry & Operator Coaching" }
         ],
         highlights: [
             "Holistic cross-subsystem systems engineering ensuring seamless mechanical-electronic synergy.",
-            "Rigorous design reviews, FMEA risk assessments, and competition compliance audits.",
-            "Paddock logistics, telemetry strategy, and driver training execution during competition."
+            "Rigorous design reviews, FMEA risk assessments, and technical compliance audits.",
+            "Paddock logistics, telemetry strategy, and operator training execution during field trials."
         ],
         teamMembers: [
             {

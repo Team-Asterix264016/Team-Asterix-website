@@ -123,7 +123,7 @@ export default function BajaModelPage({ onBack }) {
 
             {/* Bottom Footer Attribution */}
             <footer className="bg-white border-t-3 border-slate-900 py-3 px-4 sm:px-8 text-center text-xs font-mono font-bold text-slate-600">
-                TEAM ASTERIX • SAE BAJA 2026 VIRTUAL PROTOTYPE
+                TEAM ASTERIX • AUTONOMOUS VEHICLE VIRTUAL PROTOTYPE
             </footer>
 
         </div>

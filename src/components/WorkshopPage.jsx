@@ -399,21 +399,23 @@ export default function WorkshopPage({ onBack }) {
     const selectedPkg = WORKSHOP_PACKAGES.find(p => p.id === form.package) || null;
     const anyPriced = WORKSHOP_PACKAGES.some(isPriced);
 
-    const initialSoftwareState = getSoftwareRegistrationState(Date.now(), 145);
     const [powertrainSeats, setPowertrainSeats] = useState({
         maxSeats: POWERTRAIN_MAX_SEATS,
         seatsLeft: 0,
         soldOut: true
     });
-    const [softwareSeats, setSoftwareSeats] = useState({
-        maxSeats: SOFTWARE_MAX_SEATS,
-        seatsLeft: initialSoftwareState.seatsLeft,
-        soldOut: initialSoftwareState.soldOut,
-        isPaused: initialSoftwareState.isPaused,
-        isPastDeadline: initialSoftwareState.isPastDeadline,
-        open: initialSoftwareState.open,
-        pauseMessage: initialSoftwareState.pauseMessage,
-        scheduleSummary: initialSoftwareState.scheduleSummary
+    const [softwareSeats, setSoftwareSeats] = useState(() => {
+        const initialSoftwareState = getSoftwareRegistrationState(Date.now(), 145);
+        return {
+            maxSeats: SOFTWARE_MAX_SEATS,
+            seatsLeft: initialSoftwareState.seatsLeft,
+            soldOut: initialSoftwareState.soldOut,
+            isPaused: initialSoftwareState.isPaused,
+            isPastDeadline: initialSoftwareState.isPastDeadline,
+            open: initialSoftwareState.open,
+            pauseMessage: initialSoftwareState.pauseMessage,
+            scheduleSummary: initialSoftwareState.scheduleSummary
+        };
     });
 
     const comboSeats = useMemo(() => ({
@@ -994,7 +996,7 @@ export default function WorkshopPage({ onBack }) {
                             <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
                                 <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">07 / VEHICLE</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Real autonomous-vehicle context</h3>
-                                <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Taught directly on the systems powering our national BAJA autonomous buggy.</p>
+                                <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Taught directly on the systems powering our full-scale autonomous vehicle platform.</p>
                             </div>
                             <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
                                 <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">08 / SKILLS</span>

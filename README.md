@@ -1,8 +1,6 @@
-# Team Asterix — BAJA SAEINDIA Portal
+# Team Asterix — Autonomous Mobility & Engineering Portal
 
-Official site for **Team Asterix**, our college's BAJA SAEINDIA off-road racing
-team. React + Vite front end, Express + `node:sqlite` back end, deployed on
-Vercel.
+Official site for **Team Asterix**, our college's autonomous off-road engineering and mobility team. React + Vite front end, Express + `node:sqlite` back end, deployed on Vercel.
 
 Live: https://asterix-website.vercel.app
 

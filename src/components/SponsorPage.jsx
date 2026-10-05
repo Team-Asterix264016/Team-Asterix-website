@@ -70,15 +70,15 @@ export default function SponsorPage({ onBack }) {
             return;
         }
         const textContent = `=====================================================
-TEAM ASTERIX - SAEINDIA a-BAJA 2026 SPONSORSHIP PROPOSAL
+TEAM ASTERIX - AUTONOMOUS MOBILITY SPONSORSHIP PROPOSAL
 =====================================================
 Institution: PSG Institute of Technology and Applied Research (PSG iTech)
 Location: Neelambur, Coimbatore, Tamil Nadu - 641062
 Contact: ${contact?.email || 'asterix.psgitech@gmail.com'} | ${contact?.phone || '+91 86089 44644'}
 
 ABOUT TEAM ASTERIX:
-Team Asterix is the premier collegiate autonomous and all-terrain vehicle racing team of PSG iTech.
-Ranking: AIR 13 (a-BAJA 2026) | TN Rank 1
+Team Asterix is the premier collegiate autonomous and all-terrain mobility engineering team of PSG iTech.
+Division: Autonomous Off-Road Mobility & Robotics Lab
 
 VEHICLE ARCHITECTURE:
 - Subsystem 1: Software & Perception (ROS 2 Jazzy, OpenCV, Advanced Stanley Control)
@@ -101,7 +101,7 @@ Thank you for powering collegiate automotive innovation!
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'Team_Asterix_BAJA_Sponsorship_Brochure.txt';
+        a.download = 'Team_Asterix_Sponsorship_Brochure.txt';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -117,8 +117,8 @@ Thank you for powering collegiate automotive innovation!
         const textContent = `=====================================================
 TEAM ASTERIX - VEHICLE TECHNICAL ARCHITECTURE PITCH DECK
 =====================================================
-Vehicle Platform: Asterix Autonomous e-BAJA (a-BAJA 2026)
-Engineering Organization: PSG iTech Racing Division
+Vehicle Platform: Asterix Autonomous Electric Platform
+Engineering Organization: PSG iTech Racing & Mobility Division
 
 TECHNICAL SUBSYSTEM SPECIFICATIONS:
 1. AUTONOMOUS & PERCEPTION
@@ -140,7 +140,7 @@ TECHNICAL SUBSYSTEM SPECIFICATIONS:
    - Actuation: Steer-by-Wire + Electronic Brake-by-Wire Quad Caliper Lockup
 
 SPONSORSHIP TECHNICAL BENEFIT:
-Partnering technical sponsors receive validation data, testing telemetries, and hardware stress analytics directly from our competition logs.
+Partnering technical sponsors receive validation data, testing telemetries, and hardware stress analytics directly from our testing logs.
 =====================================================`;
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -165,21 +165,21 @@ OFFICIAL ENDORSEMENT & CREDENTIAL CERTIFICATION
 =====================================================
 To Whom It May Concern,
 
-This document certifies that TEAM ASTERIX is the officially recognized and sanctioned collegiate autonomous off-road vehicle racing team representing PSG Institute of Technology and Applied Research (PSG iTech), Neelambur, Coimbatore.
+This document certifies that TEAM ASTERIX is the officially recognized and sanctioned collegiate autonomous off-road vehicle team representing PSG Institute of Technology and Applied Research (PSG iTech), Neelambur, Coimbatore.
 
-The team actively participates in the SAEINDIA National BAJA Series, designing and manufacturing high-performance autonomous all-terrain electric buggies.
+The team actively designs and manufactures high-performance autonomous all-terrain electric buggies, pioneering next-generation mobility technology.
 
 Institutional Endorsement Details:
 - College: PSG Institute of Technology and Applied Research
 - Affiliation: Anna University, Approved by AICTE
 - Location: Avinashi Road, Neelambur, Coimbatore, Tamil Nadu - 641062
-- Team Designation: Team Asterix (Autonomous BAJA Division)
+- Team Designation: Team Asterix (Autonomous Mobility Division)
 
 All corporate sponsorships, technical equipment donations, and financial grants are received through official institutional accounts with statutory 80G tax exemptions where applicable.
 
 Authorized Signatory,
 Faculty Advisor & Head of Institution
-PSG iTech BAJA Racing Cell
+PSG iTech Autonomous Mobility Cell
 =====================================================`;
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -199,7 +199,7 @@ PSG iTech BAJA Racing Cell
             <section className="pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-8 bg-slate-900 text-white border-b-4 border-slate-900 relative overflow-hidden">
                 <div className="max-w-6xl mx-auto relative z-10">
                     <div className="inline-block px-3 py-1 bg-amber-300 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0284c7] mb-4">
-                        ★ POWER THE FIRST DRAFT • SAEINDIA a-BAJA 2026
+                        ★ POWER THE FIRST DRAFT • ASTERIX AUTONOMOUS PLATFORM
                     </div>
                     <h1 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight leading-none mb-6">
                         SPONSOR <span className="text-stroke-white text-transparent">TEAM ASTERIX</span>
@@ -563,7 +563,7 @@ PSG iTech BAJA Racing Cell
                         <p className="text-xs font-mono text-slate-300">
                             Ratheeswar • Software & Perception Lead<br />
                             Team Captains & Faculty Advisors<br />
-                            PSG iTech BAJA Racing Cell
+                            PSG iTech Autonomous Mobility Cell
                         </p>
                     </div>
                 </div>

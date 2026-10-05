@@ -190,7 +190,7 @@ export default function Car3DCanvas() {
         const proceduralModel = new THREE.Group();
         carRoot.add(proceduralModel);
 
-        // Load Real Team Asterix SAE BAJA GLB CAD Assembly Model
+        // Load Real Team Asterix Autonomous Buggy GLB CAD Assembly Model
         const gltfLoader = new GLTFLoader();
         gltfLoader.load(
             '/assembly_file_for_abaja.glb',

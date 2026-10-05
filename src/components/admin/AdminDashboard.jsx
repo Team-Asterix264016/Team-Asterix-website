@@ -60,6 +60,7 @@ export default function AdminDashboard({ onExit }) {
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
+    const [isWorkshopOpen, setIsWorkshopOpen] = useState(true);
 
     useEffect(() => {
         try {
@@ -521,10 +522,18 @@ export default function AdminDashboard({ onExit }) {
         { id: 'story', label: 'Our Story', icon: 'book' },
         { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
         { id: 'sponsorship', label: 'Sponsorship Portal', icon: 'folder' },
-        { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
-        { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
-        { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
-        { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
+        {
+            id: 'workshop-group',
+            label: 'WORKSHOP MANAGEMENT',
+            isGroup: true,
+            icon: 'calendar',
+            children: [
+                { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
+                { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
+                { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+                { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
+            ]
+        },
         { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
         { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
         { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
@@ -625,6 +634,82 @@ export default function AdminDashboard({ onExit }) {
                         // NAVIGATION
                     </span>
                     {tabs.map(tab => {
+                        if (tab.isGroup) {
+                            const isAnyChildActive = tab.children.some(c => c.id === activeTab);
+                            return (
+                                <div key={tab.id} className="flex flex-col gap-1 my-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsWorkshopOpen(prev => {
+                                                const next = !prev;
+                                                if (next && !activeTab.startsWith('workshop-')) {
+                                                    setActiveTab('workshop-schedule');
+                                                }
+                                                return next;
+                                            });
+                                        }}
+                                        className={`press press-flat w-full text-left px-3.5 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-between gap-2 transition-colors ${
+                                            isAnyChildActive
+                                                ? 'bg-slate-900 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a]'
+                                                : 'bg-slate-100 hover:bg-sky-100 text-slate-900 border-slate-900'
+                                        }`}
+                                        aria-expanded={isWorkshopOpen}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Icon name={tab.icon} className="w-4 h-4" />
+                                            <span>{tab.label}</span>
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span className={`text-[9px] font-mono px-1.5 py-0.5 border font-bold ${
+                                                isAnyChildActive
+                                                    ? 'bg-sky-400 text-slate-900 border-sky-300'
+                                                    : 'bg-white text-slate-700 border-slate-400'
+                                            }`}>
+                                                {tab.children.length}
+                                            </span>
+                                            <span className="text-[10px] font-black leading-none">
+                                                {isWorkshopOpen ? '▲' : '▼'}
+                                            </span>
+                                        </span>
+                                    </button>
+
+                                    {isWorkshopOpen && (
+                                        <div className="pl-2 ml-1 border-l-4 border-sky-500 flex flex-col gap-1 my-1">
+                                            {tab.children.map(child => {
+                                                const isTabRestricted = child.adminOnly && !isAdmin;
+                                                const isActive = activeTab === child.id;
+                                                return (
+                                                    <button
+                                                        key={child.id}
+                                                        onClick={() => setActiveTab(child.id)}
+                                                        className={`press press-flat w-full text-left px-3 py-2 border-2 font-mono text-[11px] uppercase cursor-pointer flex items-center justify-between gap-2 transition-all ${
+                                                            isActive
+                                                                ? 'bg-sky-500 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1 font-black'
+                                                                : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300 font-bold'
+                                                        }`}
+                                                        aria-current={isActive ? 'page' : undefined}
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <Icon name={child.icon} className="w-3.5 h-3.5" />
+                                                            <span>{child.label}</span>
+                                                        </span>
+                                                        {isTabRestricted ? (
+                                                            <span className="text-[8px] font-mono font-black text-amber-700 bg-amber-100 border border-amber-400 px-1 py-0.5">
+                                                                ADMIN
+                                                            </span>
+                                                        ) : (
+                                                            <span aria-hidden="true" className="text-xs">→</span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         const isTabRestricted = tab.adminOnly && !isAdmin;
                         return (
                             <button

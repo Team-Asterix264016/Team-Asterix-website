@@ -27,7 +27,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                 className="h-7 sm:h-8.5 w-auto object-contain"
                             />
                             <span className="px-2 py-0.5 rounded border border-slate-900 bg-amber-300 text-[10px] font-mono font-black uppercase text-slate-900 shadow-[1.5px_1.5px_0px_#0f172a]">
-                                SAEINDIA a-BAJA 2026
+                                AUTONOMOUS MOBILITY LAB
                             </span>
                         </div>
 
@@ -63,7 +63,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
 
                         {/* Description Text */}
                         <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed max-w-md">
-                            Official collegiate off-road engineering team from PSG iTech, designing, building, and racing high-performance BAJA vehicles.
+                            Official collegiate off-road engineering team from PSG iTech, designing, building, and operating high-performance autonomous vehicles.
                         </p>
 
                         {/* Interactive Quick Contact Chips */}

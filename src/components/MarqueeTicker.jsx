@@ -6,7 +6,7 @@ export default function MarqueeTicker() {
         "100% LOCKUP BRAKING",
         "CUSTOM CVT DYNAMICS",
         "11.2\" INDEPENDENT SUSPENSION",
-        "SAEINDIA NATIONAL SERIES",
+        "AUTONOMOUS MOBILITY LAB",
         "AEROSPACE GRADE RIGIDITY",
         "4-HOUR ENDURANCE TESTED",
         "FEA OPTIMIZED CHASSIS"

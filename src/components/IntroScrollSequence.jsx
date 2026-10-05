@@ -66,8 +66,8 @@ const TEAM_STAGES = [
         step: '03',
         tag: 'OUR MISSION',
         tagColor: 'bg-emerald-400 text-slate-950',
-        title: 'CHASING PODIUMS',
-        desc: 'Racing SAEINDIA a-BAJA 2026. Built with grit, tested in dirt, and engineered to conquer.',
+        title: 'ENGINEERING EXCELLENCE',
+        desc: 'Engineering next-generation autonomous mobility. Built with grit, tested in dirt, and engineered to conquer.',
     },
 ];
 
@@ -675,7 +675,7 @@ export default function IntroScrollSequence() {
                             ref={subtitleRef}
                             className="opacity-0 mt-2 text-center text-xs sm:text-sm font-black uppercase tracking-wider text-white leading-none"
                         >
-                            SAEINDIA a-BAJA 2026
+                            ASTERIX AUTONOMOUS MOBILITY
                         </p>
                         <div
                             ref={keepScrollingRef}

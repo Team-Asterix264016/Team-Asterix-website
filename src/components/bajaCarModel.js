@@ -98,7 +98,7 @@ export function buildBajaCarGroup() {
         return mesh;
     };
 
-    // 1. SKY-BLUE TUBULAR ROLL CAGE & SPACEFRAME (BAJA SAEINDIA Spec)
+    // 1. SKY-BLUE TUBULAR ROLL CAGE & SPACEFRAME (Asterix Autonomous Spec)
     const hoopTopY = 1.38;
     const hoopWidth = 0.46;
     addTube([-hoopWidth, hoopTopY, -0.25], [hoopWidth, hoopTopY, -0.25], 0.034);

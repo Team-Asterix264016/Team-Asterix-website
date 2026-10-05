@@ -291,7 +291,7 @@ export async function renderBadge(member, subsystem) {
     ctx.fillStyle = PAPER;
     ctx.font = `700 14px ${MONO}`;
     ctx.textBaseline = 'middle';
-    ctx.fillText('TEAM ASTERIX · SAEINDIA BAJA', cx + PAD, barY + barH / 2);
+    ctx.fillText('TEAM ASTERIX · AUTONOMOUS MOBILITY', cx + PAD, barY + barH / 2);
     ctx.fillStyle = statusColor;
     ctx.textAlign = 'right';
     ctx.fillText('ENGINEERING BADGE', cx + cw - PAD, barY + barH / 2);

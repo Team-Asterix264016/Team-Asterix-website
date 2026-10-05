@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { apiUrl } from '../../lib/api';
-import Icon from '../Icon';
 
 // Format seconds into MM:SS
 function formatTime(totalSeconds) {
@@ -170,6 +169,59 @@ export default function QuizRunner({ onBack }) {
     }, [quizData]);
 
     // -------------------------------------------------------------
+    // 4. Return Flow: Lookup Results by Email
+    // -------------------------------------------------------------
+    const performLookup = useCallback(async (emailToSearch) => {
+        const clean = (emailToSearch || lookupEmail || '').trim().toLowerCase();
+        if (!clean || !clean.includes('@')) {
+            setLookupError('Please enter a valid registered email address.');
+            return;
+        }
+
+        setLookupError('');
+        setIsLookingUp(true);
+
+        try {
+            const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/lookup-result`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: clean })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setLookupError(data.error || 'No submission found for this email address.');
+                return;
+            }
+
+            if (!data.resultsPublished) {
+                // Submitted but waiting for scheduled publish time!
+                setResultData({
+                    resultsPublished: false,
+                    userName: data.userName,
+                    submittedAt: data.submittedAt,
+                    resultsPublishTime: data.resultsPublishTime,
+                    message: data.message
+                });
+                setViewMode('submitted');
+            } else {
+                // Results released! Show full scorecard and answer review
+                setResultData({
+                    resultsPublished: true,
+                    ...data
+                });
+                setViewMode('results');
+            }
+        } catch (err) {
+            console.error('Error looking up result:', err);
+            setLookupError('Network error while checking results.');
+        } finally {
+            setIsLookingUp(false);
+        }
+    }, [lookupEmail, quizIdOrSlug]);
+
+    // -------------------------------------------------------------
     // 2. Exam Timer Countdown & Auto-Submit
     // -------------------------------------------------------------
     const answersRef = useRef(answers);
@@ -230,160 +282,7 @@ export default function QuizRunner({ onBack }) {
             setIsSubmittingExam(false);
             setShowConfirmModal(false);
         }
-    }, [submissionId, quizIdOrSlug, participant.email, quizData]);
-
-    useEffect(() => {
-        if (viewMode !== 'exam' || remainingSeconds <= 0) return;
-
-        const timer = setInterval(() => {
-            setRemainingSeconds(prev => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    // Time's up: Auto-submit!
-                    submitExamAction();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [viewMode, remainingSeconds, submitExamAction]);
-
-    // -------------------------------------------------------------
-    // 3. Gatekeeper: Start Quiz
-    // -------------------------------------------------------------
-    const handleStartQuiz = async (e) => {
-        e.preventDefault();
-        setGatekeeperError('');
-
-        const cleanEmail = (participant.email || '').trim().toLowerCase();
-        const cleanName = (participant.name || '').trim();
-        const cleanRoll = (participant.rollNo || '').trim().toUpperCase();
-
-        if (!cleanEmail || !cleanEmail.includes('@')) {
-            setGatekeeperError('Please enter a valid email address.');
-            return;
-        }
-        if (!cleanName) {
-            setGatekeeperError('Please enter your full name.');
-            return;
-        }
-
-        try {
-            sessionStorage.setItem('asterix_quiz_attendee', JSON.stringify({
-                email: cleanEmail,
-                name: cleanName,
-                rollNo: cleanRoll
-            }));
-        } catch {
-            // ignore
-        }
-
-        setIsStarting(true);
-
-        try {
-            const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/start`), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: cleanEmail,
-                    name: cleanName,
-                    rollNo: cleanRoll
-                })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                if (data.alreadySubmitted) {
-                    // Already submitted: Redirect to result lookup!
-                    setLookupEmail(cleanEmail);
-                    setGatekeeperTab('lookup');
-                    setGatekeeperError('You have already submitted this quiz! Check your results below.');
-                    performLookup(cleanEmail);
-                    return;
-                }
-                setGatekeeperError(data.error || 'Failed to enter quiz.');
-                return;
-            }
-
-            setSubmissionId(data.submissionId);
-            setQuestions(data.questions || []);
-            setRemainingSeconds(data.remainingSeconds || 60);
-
-            // Restore any draft answers
-            try {
-                const saved = localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${cleanEmail}`);
-                if (saved) {
-                    setAnswers(JSON.parse(saved));
-                }
-            } catch {
-                // ignore
-            }
-
-            setViewMode('exam');
-            setCurrentQIndex(0);
-        } catch (err) {
-            console.error('Error starting quiz:', err);
-            setGatekeeperError('Could not connect to the quiz engine. Please try again.');
-        } finally {
-            setIsStarting(false);
-        }
-    };
-
-    // -------------------------------------------------------------
-    // 4. Return Flow: Lookup Results by Email
-    // -------------------------------------------------------------
-    const performLookup = async (emailToSearch) => {
-        const clean = (emailToSearch || lookupEmail || '').trim().toLowerCase();
-        if (!clean || !clean.includes('@')) {
-            setLookupError('Please enter a valid registered email address.');
-            return;
-        }
-
-        setLookupError('');
-        setIsLookingUp(true);
-
-        try {
-            const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/lookup-result`), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: clean })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                setLookupError(data.error || 'No submission found for this email address.');
-                return;
-            }
-
-            if (!data.resultsPublished) {
-                // Submitted but waiting for scheduled publish time!
-                setResultData({
-                    resultsPublished: false,
-                    userName: data.userName,
-                    submittedAt: data.submittedAt,
-                    resultsPublishTime: data.resultsPublishTime,
-                    message: data.message
-                });
-                setViewMode('submitted');
-            } else {
-                // Results released! Show full scorecard and answer review
-                setResultData({
-                    resultsPublished: true,
-                    ...data
-                });
-                setViewMode('results');
-            }
-        } catch (err) {
-            console.error('Error looking up result:', err);
-            setLookupError('Network error while checking results.');
-        } finally {
-            setIsLookingUp(false);
-        }
-    };
+    }, [submissionId, quizIdOrSlug, participant.email, quizData, performLookup]);
 
     // -------------------------------------------------------------
     // 5. Option Selection & Local Draft Save
@@ -479,10 +378,6 @@ export default function QuizRunner({ onBack }) {
         );
     }
 
-    const now = Date.now();
-    const isUpcoming = now < new Date(quizData.startTime).getTime();
-    const isEnded = now > new Date(quizData.endTime).getTime();
-    const isActive = !isUpcoming && !isEnded;
 
     // -------------------------------------------------------------
     // RENDER: VIEW 1 - GATEKEEPER & ATTENDEE FORM

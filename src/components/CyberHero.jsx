@@ -26,7 +26,7 @@ export default function CyberHero({ onOpenModelViewer }) {
                     <span className="w-2 h-2 rounded-full bg-slate-900 animate-ping" />
                     <span>CHAMPIONSHIP SPEC</span>
                 </div>
-                <span className="text-[10px] text-slate-800 mt-0.5 font-bold">CHENNAI a-BAJA 2026</span>
+                <span className="text-[10px] text-slate-800 mt-0.5 font-bold">ASTERIX AUTONOMOUS LAB</span>
             </div>
 
             {/* Main Hero Container - Left-aligned text content */}

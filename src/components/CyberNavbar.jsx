@@ -482,7 +482,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                         <span className="text-[9px]">✦</span>
                     </button>
                     <span className="px-1.5 py-0.5 rounded border border-slate-300 bg-slate-100 text-[9px] font-mono font-bold uppercase text-slate-700">
-                        BAJA 2026
+                        AUTONOMY
                     </span>
                 </div>
             </header>

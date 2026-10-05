@@ -64,11 +64,11 @@ export async function seedDatabaseIfNeeded() {
             const initialHeroData = {
                 teamTitle: "TEAM",
                 teamName: "ASTERIX",
-                tagline: "Got the passion? We got the track.",
+                tagline: "Pioneering Next-Gen Autonomous Mobility & Off-Road Robotics.",
                 badges: [
-                    { label: "⚡ AIR 13", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
-                    { label: "SAEINDIA a-BAJA 2026", class: "bg-white text-slate-900" },
-                    { label: "★ TN RANK 1", class: "rotate-[3deg] bg-sky-400 text-white" }
+                    { label: "AUTONOMOUS MOBILITY LAB", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
+                    { label: "ADVANCED R&D DIVISION", class: "bg-white text-slate-900" },
+                    { label: "★ PSG iTECH ENGINEERING", class: "rotate-[3deg] bg-sky-400 text-white" }
                 ],
                 ctaText: "EXPLORE THE SQUAD →",
                 ctaLink: "#squad",
@@ -77,37 +77,33 @@ export async function seedDatabaseIfNeeded() {
 
             const initialStoryText = `It started as a training program.
 
-In the first year, there was no Team Asterix, no competition vehicle, and no clear idea where the journey would lead. It was simply a group of students learning how vehicles worked. Months were spent understanding vehicle dynamics, control systems, electronics, and autonomous technologies.
+In the first year, there was no Team Asterix, no prototype vehicle, and no clear idea where the journey would lead. It was simply a group of passionate students learning how complex autonomous vehicles worked. Months were spent understanding vehicle dynamics, embedded control systems, drive-by-wire mechanics, and vision technologies.
 
-About a year later, the group decided to take the program seriously and registered for SAE BAJA 2026. Somewhere along that journey, the name Asterix came into existence, and the training program evolved into a team with a much bigger ambition.
+About a year later, the group decided to take the program to the next level and established Team Asterix. Somewhere along that journey, the training program evolved into an advanced engineering initiative with a much bigger ambition: pioneering high-performance autonomous off-road mobility platforms from the ground up.
 
-That was where the real learning began.
+That was where the real engineering began.
 
-The project was divided into five major subsystems: Software, Sensors, Powertrain, Steer-by-Wire, and Brake & Throttle-by-Wire. Each had its own challenges, but the vehicle could only work when all five came together.
+The project was divided into four core engineering pillars: Software & Perception, Powertrain & Energy Systems, Mechanical & Chassis Engineering, and Team Leadership. Each subsystem presented immense technical challenges, but the vehicle platform could only perform when all four synced seamlessly.
 
-The team started with planning. Budgets were prepared, timelines were drawn, documents were written, and everything looked organized on paper. But this was the first BAJA vehicle ever built by this group. When work moved from paper to the workshop, reality hit hard.
+The team started with raw architecture. Technical specifications were drawn, control loops designed, CAD schematics finalized, and component pipelines established. But this was the first full-scale autonomous vehicle ever built by this team. When work moved from simulation to the workshop floor, engineering reality hit hard.
 
-Parts did not arrive on time. Some components were missing. Others arrived damaged or did not fit the way they were supposed to. Fabrication work was delayed, and testing schedules had to be rewritten again and again. Every week brought a new obstacle, and progress felt painfully slow.
+Parts faced supply chain delays. Custom sensors required bespoke mounting hardware. Fabrication tolerances needed tight control, and field test schedules had to be rewritten repeatedly. Every week brought a new technical obstacle, requiring constant iteration and resilience.
 
-Then came the physical assembly.
+Then came physical integration.
 
-Mounting the systems was far more complicated than expected. Wires had to be rerouted, brackets had to be redesigned, and mechanical adjustments had to be made directly on the vehicle frame. Days were spent troubleshooting electrical noise, sensor communication drops, and mechanical alignment issues. The workshop slowly became a place of long hours, frustration, and continuous trial and error.
+System mounting on the spaceframe was complex. High-voltage wiring harnesses had to be isolated, CAN bus topologies routed, custom sensor brackets CNC-machined, and mechanical drive-by-wire linkages calibrated directly on the vehicle frame. Endless hours were spent eliminating EMI noise, stabilizing sensor communication nodes, and perfecting steering actuation algorithms. The workshop became a 24/7 hub of innovation, telemetry analysis, and hands-on assembly.
 
-Testing brought another layer of difficulty.
+Field testing pushed the systems further.
 
-Systems that worked in isolation failed when connected together. Sensors gave unexpected readings when the vehicle moved. The steering actuator responded with slight delays that had to be corrected through control tuning. The brake actuator required precise pressure calibration to ensure safe stopping distances. Each test run revealed a new flaw, and each flaw meant going back to the design, changing parameters, and testing again.
+Components that ran flawlessly on bench testing faced real-world environmental noise. LiDAR and vision models required dynamic filtering on rough terrain. Steering and braking actuators needed microsecond control loop tuning for precise responsiveness. Every field test revealed new insights, driving continuous refinement of control parameters and structural reliability.
 
-There were moments when things seemed stalled. The competition deadline was approaching, the vehicle was still not performing reliably, and fatigue was beginning to set in. The team had to make difficult decisions: simplify certain mechanisms, rebuild faulty connections, and work through nights to keep the project alive.
+What kept Team Asterix charging forward was an unwavering commitment to engineering excellence and autonomous mobility innovation.
 
-What kept the team moving forward was simple: the vehicle had to drive.
+Bit by bit, technical breakthroughs mounted. Perception pipelines achieved ultra-fast tracking, drive-by-wire controllers executed with high precision, and the tubular chassis demonstrated unmatched structural integrity. What began as conceptual schematics grew into a state-of-the-art autonomous all-terrain vehicle platform.
 
-Bit by bit, the problems were solved. The software pipeline stabilized. The drive-by-wire systems began responding accurately to commands. The mechanical assembly became solid. The vehicle that once existed only as sketches and CAD files slowly became an actual running machine.
+Team Asterix is not defined by simple competitions. It is an engineering powerhouse forged through hands-on innovation, technical mastery, and the relentless drive to push the boundaries of next-generation mobility.
 
-Team Asterix was not built with experience or endless resources. It was built through mistakes, delays, redesigns, and the stubborn refusal to leave the workshop until the car worked.
-
-SAE BAJA was never just a competition for this team.
-
-It was the reason a training program turned into a family of engineers who learned how to build something real from nothing.`;
+Building autonomous vehicle technology is a mission for Team Asterix—turning ambitious engineering concepts into real-world technological impact.`;
 
             const initialSubsystems = [
                 {
@@ -282,16 +278,16 @@ It was the reason a training program turned into a family of engineers who learn
                     fullDesc: "The Leads subsystem represents the technical and executive leadership driving Team Asterix. From overarching vehicle design architecture and cross-subsystem integration to project timelines, budget management, safety compliance, and race day pit-lane strategy, the leadership team ensures Asterix performs at peak engineering excellence.",
                     specifications: [
                         { label: "Leadership Scope", value: "Overall Technical & Operational Command" },
-                        { label: "Competition Division", value: "SAEINDIA BAJA Autonomous Series" },
+                        { label: "Mobility Division", value: "Asterix Autonomous Mobility Division" },
                         { label: "Integration Cadence", value: "Weekly Sprint Milestones & Design Reviews" },
-                        { label: "Safety Compliance", value: "100% SAEINDIA Tech Inspection Standards" },
-                        { label: "Budget & Sponsorship", value: "Full Paddock Logistics & Sponsor Relations" },
-                        { label: "Race Strategy", value: "Real-Time Telemetry & Driver Coaching" }
+                        { label: "Safety Compliance", value: "100% ISO & Automotive Tech Inspection Standards" },
+                        { label: "Budget & Sponsorship", value: "Full Proving Ground Logistics & Sponsor Relations" },
+                        { label: "Field Strategy", value: "Real-Time Telemetry & Operator Coaching" }
                     ],
                     highlights: [
                         "Holistic cross-subsystem systems engineering ensuring seamless mechanical-electronic synergy.",
-                        "Rigorous design reviews, FMEA risk assessments, and competition compliance audits.",
-                        "Paddock logistics, telemetry strategy, and driver training execution during competition."
+                        "Rigorous design reviews, FMEA risk assessments, and technical compliance audits.",
+                        "Paddock logistics, telemetry strategy, and operator training execution during field trials."
                     ],
                     teamMembers: [
                         {
@@ -334,10 +330,10 @@ It was the reason a training program turned into a family of engineers who learn
                 {
                     id: "gal-1",
                     title: "Paddock Dawn Inspection",
-                    category: "PIT LANE • SCRUTINEERING",
+                    category: "FIELD TESTING • SCRUTINEERING",
                     year: "2026",
                     src: "/uploads/gallery/01_team_paddock.jpg",
-                    desc: "Complete pre-race technical scrutineering and telemetry calibration under paddock sunrise."
+                    desc: "Complete pre-test technical inspection and telemetry calibration under paddock sunrise."
                 },
                 {
                     id: "gal-2",
@@ -369,15 +365,15 @@ It was the reason a training program turned into a family of engineers who learn
                     category: "PIT BAY • QUICK SERVICE",
                     year: "2026",
                     src: "/uploads/gallery/05_pitlane_mechanics.jpg",
-                    desc: "Trackside damper valving adjustments and hydraulic line bleeding between endurance heats."
+                    desc: "Trackside damper valving adjustments and hydraulic line bleeding between endurance testing runs."
                 },
                 {
                     id: "gal-6",
-                    title: "Podium & National Victory",
-                    category: "FINALS • PODIUM",
+                    title: "Platform Milestone & Victory",
+                    category: "PROVING GROUNDS • MILESTONE",
                     year: "2026",
                     src: "/uploads/gallery/06_team_celebration.jpg",
-                    desc: "Team Asterix celebrating AIR 13 and TN Rank 1 at the national SAE BAJA finals."
+                    desc: "Team Asterix celebrating major technical milestones and successful autonomous field trials."
                 }
             ];
 
