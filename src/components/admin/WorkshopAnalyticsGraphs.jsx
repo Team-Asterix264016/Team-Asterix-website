@@ -358,7 +358,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
 
     return (
-        <section className="bg-white border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-5 font-mono">
+        <section className="bg-white border-2 border-slate-900 shadow-brutal-4 p-4 sm:p-5 font-mono">
             {/* Header & Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-slate-900 pb-3">
                 <div className="flex items-center gap-2">
@@ -384,7 +384,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                             onClick={() => setDatasetScope('paid')}
                             className={`px-2.5 py-1 cursor-pointer transition-colors ${
                                 datasetScope === 'paid'
-                                    ? 'bg-emerald-400 text-slate-950 font-black shadow-[1px_1px_0px_#0f172a]'
+                                    ? 'bg-emerald-400 text-slate-950 font-black shadow-brutal-1'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -395,7 +395,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                             onClick={() => setDatasetScope('all')}
                             className={`px-2.5 py-1 cursor-pointer transition-colors ${
                                 datasetScope === 'all'
-                                    ? 'bg-sky-400 text-slate-950 font-black shadow-[1px_1px_0px_#0f172a]'
+                                    ? 'bg-sky-400 text-slate-950 font-black shadow-brutal-1'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -407,7 +407,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                     <button
                         type="button"
                         onClick={() => setIsCollapsed(prev => !prev)}
-                        className="press px-2.5 py-1 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 text-[10px] font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-2.5 py-1 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 text-[10px] font-black uppercase shadow-brutal-2 cursor-pointer"
                         title={isCollapsed ? 'Expand graphs' : 'Collapse graphs'}
                     >
                         {isCollapsed ? 'Show Graphs ▼' : 'Hide Graphs ▲'}
@@ -425,7 +425,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                     ) : (
                         <>
                             {/* GRAPH 1: STACKED DEPARTMENT × COURSE PIE / SUNBURST CHART */}
-                            <div className="bg-slate-50 border-2 border-slate-900 p-4 shadow-[3px_3px_0px_#0f172a] space-y-4">
+                            <div className="bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-3 space-y-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-300 pb-2.5">
                                     <div className="flex items-center gap-2">
                                         <span className="w-3 h-3 bg-sky-500 border border-slate-900"></span>
@@ -629,8 +629,8 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                         key={dept.name}
                                                         className={`p-2.5 bg-white border-2 border-slate-900 transition-all ${
                                                             isHighlighted
-                                                                ? 'shadow-[4px_4px_0px_#0f172a] bg-amber-50/50'
-                                                                : 'shadow-[2px_2px_0px_#0f172a] hover:bg-slate-50'
+                                                                ? 'shadow-brutal-4 bg-amber-50/50'
+                                                                : 'shadow-brutal-2 hover:bg-slate-50'
                                                         }`}
                                                         onMouseEnter={() => setHighlightDept(dept.name)}
                                                         onMouseLeave={() => setHighlightDept(null)}
@@ -684,7 +684,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                 <span>·</span>
                                                                 <span className="text-emerald-700">Combo: <strong className="text-slate-900">{dept.courses.combo.count}</strong></span>
                                                             </div>
-                                                            <span className="text-[9px] text-slate-400">
+                                                            <span className="text-[9px] text-slate-600">
                                                                 Top: {dept.courses.combo.count >= dept.courses.software.count && dept.courses.combo.count >= dept.courses.powertrain.count ? 'Combo' : dept.courses.software.count >= dept.courses.powertrain.count ? 'Software' : 'Powertrain'}
                                                             </span>
                                                         </div>
@@ -700,7 +700,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             const fillWidth = Math.max(10, (dept.total / deptCourseStats.list[0].total) * 100);
 
                                             return (
-                                                <div key={dept.name} className="space-y-1 bg-white p-3 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                                                <div key={dept.name} className="space-y-1 bg-white p-3 border-2 border-slate-900 shadow-brutal-2">
                                                     <div className="flex items-center justify-between text-xs font-bold">
                                                         <div className="flex items-center gap-2">
                                                             <span className={`px-1.5 py-0.2 border text-[9px] font-black ${dept.color.badge} text-slate-900`}>
@@ -763,7 +763,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                             {/* ROW 2: GRAPH 2 (PACKAGES) & GRAPH 4 (TIME INTELLIGENCE / HOURLY RUSH) */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                                 {/* GRAPH 2: TRACK & PACKAGE BREAKDOWN (5 cols) */}
-                                <div className="lg:col-span-4 bg-slate-50 border-2 border-slate-900 p-4 shadow-[2px_2px_0px_#0f172a] flex flex-col justify-between">
+                                <div className="lg:col-span-4 bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-2 flex flex-col justify-between">
                                     <div>
                                         <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
                                             <div className="flex items-center gap-1.5">
@@ -802,7 +802,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             {packageStats.items.map((pkg) => (
                                                 <div
                                                     key={pkg.id}
-                                                    className="p-2.5 border-2 border-slate-900 bg-white shadow-[2px_2px_0px_#0f172a] flex items-center justify-between"
+                                                    className="p-2.5 border-2 border-slate-900 bg-white shadow-brutal-2 flex items-center justify-between"
                                                 >
                                                     <div className="flex items-center gap-2">
                                                         <span
@@ -840,7 +840,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                 </div>
 
                                 {/* GRAPH 4: TIME INTELLIGENCE & HOURLY RUSH ANALYSIS (8 cols) */}
-                                <div className="lg:col-span-8 bg-slate-50 border-2 border-slate-900 p-4 shadow-[2px_2px_0px_#0f172a] flex flex-col justify-between space-y-4">
+                                <div className="lg:col-span-8 bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-2 flex flex-col justify-between space-y-4">
                                     <div>
                                         {/* Header & Date Scope Controls */}
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-300 pb-2.5">
@@ -862,7 +862,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                 <select
                                                     value={selectedDateFilter}
                                                     onChange={(e) => setSelectedDateFilter(e.target.value)}
-                                                    className="px-2 py-1 bg-white border border-slate-900 text-[10px] font-black text-slate-900 focus:outline-none cursor-pointer shadow-[1px_1px_0px_#0f172a]"
+                                                    className="px-2 py-1 bg-white border border-slate-900 text-[10px] font-black text-slate-900 focus:outline-none cursor-pointer shadow-brutal-1"
                                                 >
                                                     {timeIntelligence.peakDate && (
                                                         <option value="peak">
@@ -883,7 +883,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
 
                                         {/* Highlight Badges Bar */}
                                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3">
-                                            <div className="p-2 bg-white border border-slate-900 shadow-[1px_1px_0px_#0f172a]">
+                                            <div className="p-2 bg-white border border-slate-900 shadow-brutal-1">
                                                 <span className="text-[9px] font-bold text-slate-500 uppercase block">Selected Window</span>
                                                 <span className="text-xs font-black text-slate-900 block truncate">
                                                     {timeIntelligence.activeDateLabel}
@@ -893,7 +893,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-amber-50 border border-slate-900 shadow-[1px_1px_0px_#0f172a]">
+                                            <div className="p-2 bg-amber-50 border border-slate-900 shadow-brutal-1">
                                                 <span className="text-[9px] font-black text-amber-800 uppercase block">🔥 Peak Rush Hour</span>
                                                 <span className="text-xs font-black text-amber-900 block truncate">
                                                     {timeIntelligence.peakHourBucket?.range}
@@ -903,7 +903,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-rose-50 border border-slate-900 shadow-[1px_1px_0px_#0f172a]">
+                                            <div className="p-2 bg-rose-50 border border-slate-900 shadow-brutal-1">
                                                 <span className="text-[9px] font-black text-rose-800 uppercase block">⚡ Prime Time Slot</span>
                                                 <span className="text-xs font-black text-rose-900 block truncate">
                                                     {timeIntelligence.primeSlot?.label}
@@ -913,7 +913,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-sky-50 border border-slate-900 shadow-[1px_1px_0px_#0f172a]">
+                                            <div className="p-2 bg-sky-50 border border-slate-900 shadow-brutal-1">
                                                 <span className="text-[9px] font-black text-sky-800 uppercase block">Avg Speed / Hour</span>
                                                 <span className="text-xs font-black text-slate-900 block">
                                                     {(timeIntelligence.totalInScope / 24).toFixed(1)} / hr
@@ -928,10 +928,10 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
                                                 <span className="uppercase">Hour-by-Hour Activity (00:00 → 23:59 IST)</span>
-                                                <span className="text-slate-400">Hover bar to inspect specific hour</span>
+                                                <span className="text-slate-500">Hover bar to inspect specific hour</span>
                                             </div>
 
-                                            <div className="relative pt-6 pb-2 overflow-x-auto bg-white border border-slate-900 p-2 shadow-[2px_2px_0px_#0f172a]">
+                                            <div className="relative pt-6 pb-2 overflow-x-auto bg-white border border-slate-900 p-2 shadow-brutal-2">
                                                 <div className="min-w-[540px] h-32 flex items-end gap-1 sm:gap-1.5 border-b-2 border-slate-900 px-1">
                                                     {timeIntelligence.hourlyBuckets.map((bucket) => {
                                                         const isPeak = bucket.count === timeIntelligence.maxHourlyCount && bucket.count > 0;
@@ -962,7 +962,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                         bucket.count === 0
                                                                             ? 'bg-slate-200 h-[2px]'
                                                                             : isPeak
-                                                                                ? 'bg-amber-400 border border-slate-900 shadow-[1px_1px_0px_#0f172a]'
+                                                                                ? 'bg-amber-400 border border-slate-900 shadow-brutal-1'
                                                                                 : isHovered
                                                                                     ? 'bg-sky-500 border border-slate-900'
                                                                                     : 'bg-sky-400 hover:bg-sky-300 border border-slate-900'
@@ -1002,7 +1002,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             {timeIntelligence.timeSlots.map(slot => (
                                                 <div
                                                     key={slot.id}
-                                                    className={`p-2 border-2 border-slate-900 ${slot.bg} shadow-[2px_2px_0px_#0f172a] flex flex-col justify-between`}
+                                                    className={`p-2 border-2 border-slate-900 ${slot.bg} shadow-brutal-2 flex flex-col justify-between`}
                                                 >
                                                     <div>
                                                         <div className="flex items-center justify-between text-xs font-black text-slate-900 mb-0.5">

@@ -437,7 +437,7 @@ export default function AdminDashboard({ onExit }) {
     if (!currentUser) {
         return (
             <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
-                <div className="w-full max-w-md bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-8">
+                <div className="w-full max-w-md bg-white border-4 border-slate-900 shadow-brutal-8 p-8">
                     <div className="text-center mb-6">
                         <span className="text-[11px] font-mono font-black text-sky-700 tracking-wider uppercase block mb-1">
                             RESTRICTED ACCESS
@@ -489,7 +489,7 @@ export default function AdminDashboard({ onExit }) {
                             <button
                                 type="submit"
                                 disabled={isLoggingIn}
-                                className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-brutal-5 cursor-pointer disabled:opacity-50"
                             >
                                 {isLoggingIn ? 'Verifying Credentials...' : 'Login to Dashboard →'}
                             </button>
@@ -605,7 +605,7 @@ export default function AdminDashboard({ onExit }) {
                                 showStatus(syncError || 'Could not save to Cloud. Edits are preserved safely in browser.');
                             }
                         }}
-                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         title="Push current modifications to Cloud Database"
                     >
                         ☁ Sync Cloud
@@ -613,14 +613,14 @@ export default function AdminDashboard({ onExit }) {
 
                     <button
                         onClick={onExit}
-                        className="press px-3.5 py-1.5 bg-amber-300 hover:bg-amber-400 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-amber-300 hover:bg-amber-400 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         View Live Site ↗
                     </button>
 
                     <button
                         onClick={handleLogout}
-                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         Log Out
                     </button>
@@ -631,7 +631,7 @@ export default function AdminDashboard({ onExit }) {
             <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
 
                 {/* Sidebar Navigation */}
-                <aside className="md:col-span-1 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 h-fit flex flex-col gap-1.5">
+                <aside className="md:col-span-1 bg-white border-4 border-slate-900 shadow-brutal-6 p-4 h-fit flex flex-col gap-1.5">
                     <span className="text-[10px] font-mono font-black text-sky-700 uppercase tracking-widest block mb-2 px-2">
                         // NAVIGATION
                     </span>
@@ -653,7 +653,7 @@ export default function AdminDashboard({ onExit }) {
                                         }}
                                         className={`press press-flat w-full text-left px-3.5 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-between gap-2 transition-colors ${
                                             isAnyChildActive
-                                                ? 'bg-slate-900 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a]'
+                                                ? 'bg-slate-900 text-white border-slate-900 shadow-brutal-2'
                                                 : 'bg-slate-100 hover:bg-sky-100 text-slate-900 border-slate-900'
                                         }`}
                                         aria-expanded={isWorkshopOpen}
@@ -677,7 +677,7 @@ export default function AdminDashboard({ onExit }) {
                                     </button>
 
                                     {isWorkshopOpen && (
-                                        <div className="pl-2 ml-1 border-l-4 border-sky-500 flex flex-col gap-1 my-1">
+                                        <div className="pl-2 ml-1 border-l-2 border-slate-300 flex flex-col gap-1 my-1">
                                             {tab.children.map(child => {
                                                 const isTabRestricted = child.adminOnly && !isAdmin;
                                                 const isActive = activeTab === child.id;
@@ -687,7 +687,7 @@ export default function AdminDashboard({ onExit }) {
                                                         onClick={() => setActiveTab(child.id)}
                                                         className={`press press-flat w-full text-left px-3 py-2 border-2 font-mono text-[11px] uppercase cursor-pointer flex items-center justify-between gap-2 transition-all ${
                                                             isActive
-                                                                ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1 font-black'
+                                                                ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-brutal-2 translate-x-1 font-black'
                                                                 : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300 font-bold'
                                                         }`}
                                                         aria-current={isActive ? 'page' : undefined}
@@ -718,7 +718,7 @@ export default function AdminDashboard({ onExit }) {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`press press-flat w-full text-left px-3.5 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-between gap-2 ${activeTab === tab.id
-                                    ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1'
+                                    ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-brutal-2 translate-x-1'
                                     : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300'
                                     }`}
                                 aria-current={activeTab === tab.id ? 'page' : undefined}
@@ -749,7 +749,7 @@ export default function AdminDashboard({ onExit }) {
                 </aside>
 
                 {/* Content Workspace Area */}
-                <main className="md:col-span-3 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-6 sm:p-8">
+                <main className="md:col-span-3 bg-white border-4 border-slate-900 shadow-brutal-6 p-6 sm:p-8">
 
                     {/* TAB 1: OVERVIEW */}
                     {activeTab === 'overview' && (
@@ -763,25 +763,25 @@ export default function AdminDashboard({ onExit }) {
 
                             {/* Key Stats Cards */}
                             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                                <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                                     <span className="text-[10px] font-mono font-black text-sky-700 uppercase block">Subsystems</span>
                                     <span className="text-3xl font-black text-slate-900">{siteData.subsystems.length}</span>
                                 </div>
-                                <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                                <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-brutal-3">
                                     <span className="text-[10px] font-mono font-black text-amber-600 uppercase block">Specialists</span>
                                     <span className="text-3xl font-black text-slate-900">
                                         {siteData.subsystems.reduce((sum, s) => sum + (s.teamMembers?.length || 0), 0)}
                                     </span>
                                 </div>
-                                <div className="p-4 bg-emerald-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                                <div className="p-4 bg-emerald-50 border-2 border-slate-900 shadow-brutal-3">
                                     <span className="text-[10px] font-mono font-black text-emerald-600 uppercase block">Gallery</span>
                                     <span className="text-3xl font-black text-slate-900">{siteData.gallery.length}</span>
                                 </div>
-                                <div className="p-4 bg-rose-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                                <div className="p-4 bg-rose-50 border-2 border-slate-900 shadow-brutal-3">
                                     <span className="text-[10px] font-mono font-black text-rose-600 uppercase block">Updates</span>
                                     <span className="text-3xl font-black text-slate-900">{siteData.updates.length}</span>
                                 </div>
-                                <div className="p-4 bg-indigo-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                                <div className="p-4 bg-indigo-50 border-2 border-slate-900 shadow-brutal-3">
                                     <span className="text-[10px] font-mono font-black text-indigo-600 uppercase block">Leads</span>
                                     <span className="text-3xl font-black text-slate-900">{subscribers.length}</span>
                                 </div>
@@ -1018,7 +1018,7 @@ export default function AdminDashboard({ onExit }) {
                                 <span>{siteData.story.length} Characters • ~{siteData.story.split(/\s+/).filter(Boolean).length} Words</span>
                                 <button
                                     onClick={() => showStatus('Story updated and saved!')}
-                                    className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer"
                                 >
                                     Save Story Changes
                                 </button>
@@ -1044,7 +1044,7 @@ export default function AdminDashboard({ onExit }) {
                                         key={s.id}
                                         onClick={() => setSelectedSubsystemId(s.id)}
                                         className={`px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase transition-all cursor-pointer ${selectedSubsystemId === s.id
-                                            ? 'bg-slate-900 text-white shadow-[2px_2px_0px_#0ea5e9]'
+                                            ? 'bg-slate-900 text-white shadow-brutal-2-bright'
                                             : 'bg-white hover:bg-slate-100 text-slate-800'
                                             }`}
                                     >
@@ -1146,7 +1146,7 @@ export default function AdminDashboard({ onExit }) {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {(currentSubsystem.teamMembers || []).map((m, idx) => (
-                                        <div key={idx} className="p-3.5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] relative flex flex-col justify-between">
+                                        <div key={idx} className="p-3.5 bg-white border-2 border-slate-900 shadow-brutal-3 relative flex flex-col justify-between">
                                             <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200">
                                                 <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
                                                     # Pos {idx + 1} of {currentSubsystem.teamMembers.length}
@@ -1359,7 +1359,7 @@ export default function AdminDashboard({ onExit }) {
                                 </p>
                             </div>
 
-                            <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] space-y-6">
+                            <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 space-y-6">
                                 {/* 1. Brochure */}
                                 <div className="p-4 bg-slate-50 border-2 border-slate-900 space-y-2">
                                     <div className="flex items-center justify-between">
@@ -1533,7 +1533,7 @@ export default function AdminDashboard({ onExit }) {
                                         No sponsor inquiries recorded yet. Submissions from the Sponsorship form will appear here.
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto border-2 border-slate-900 bg-white shadow-[4px_4px_0px_#0f172a]">
+                                    <div className="overflow-x-auto border-2 border-slate-900 bg-white shadow-brutal-4">
                                         <table className="w-full text-left font-mono text-xs">
                                             <thead className="bg-slate-900 text-white font-black uppercase text-[10px]">
                                                 <tr>
@@ -1707,7 +1707,7 @@ export default function AdminDashboard({ onExit }) {
                             {/* Gallery List */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {siteData.gallery.map(item => (
-                                    <div key={item.id} className="bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] p-3 flex flex-col justify-between">
+                                    <div key={item.id} className="bg-white border-2 border-slate-900 shadow-brutal-3 p-3 flex flex-col justify-between">
                                         <div>
                                             <div className="mb-2">
                                                 <ImageField
@@ -1814,7 +1814,7 @@ export default function AdminDashboard({ onExit }) {
                             {/* Updates List */}
                             <div className="space-y-3">
                                 {siteData.updates.map(upd => (
-                                    <div key={upd.id} className="p-3 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] space-y-2">
+                                    <div key={upd.id} className="p-3 bg-white border-2 border-slate-900 shadow-brutal-2 space-y-2">
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="min-w-0 flex-1">
                                                 <input
@@ -1878,7 +1878,7 @@ export default function AdminDashboard({ onExit }) {
                                     <button
                                         onClick={handleExportSubscribersCSV}
                                         disabled={subscribers.length === 0}
-                                        className="press px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-slate-900 text-xs font-mono font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                        className="press px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-slate-900 text-xs font-mono font-black uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50"
                                     >
                                         Export CSV ↓
                                     </button>
@@ -2115,7 +2115,7 @@ export default function AdminDashboard({ onExit }) {
                                     </p>
                                     <button
                                         onClick={handleDownloadBackup}
-                                        className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                        className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer"
                                     >
                                         Download Backup JSON ↓
                                     </button>
@@ -2153,7 +2153,7 @@ export default function AdminDashboard({ onExit }) {
                                                 showStatus('Reset completed successfully!');
                                             }
                                         }}
-                                        className="press px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                        className="press px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer"
                                     >
                                         Reset All Content
                                     </button>

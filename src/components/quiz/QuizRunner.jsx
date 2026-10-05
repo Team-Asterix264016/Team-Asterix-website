@@ -77,8 +77,8 @@ export default function QuizRunner({ onBack }) {
             return { name: '', email: '', rollNo: '' };
         }
     });
-    const [gatekeeperError, setGatekeeperError] = useState('');
-    const [isStarting, setIsStarting] = useState(false);
+    const [gatekeeperError] = useState('');
+    const [isStarting] = useState(false);
 
     // Lookup / Return flow state
     const [lookupEmail, setLookupEmail] = useState('');
@@ -86,11 +86,11 @@ export default function QuizRunner({ onBack }) {
     const [lookupError, setLookupError] = useState('');
 
     // Active Exam state
-    const [submissionId, setSubmissionId] = useState('');
-    const [questions, setQuestions] = useState([]);
+    const [submissionId] = useState('');
+    const [questions] = useState([]);
     const [currentQIndex, setCurrentQIndex] = useState(0);
     const [answers, setAnswers] = useState({}); // { [questionId]: selectedOptionIndex }
-    const [remainingSeconds, setRemainingSeconds] = useState(0);
+    const [remainingSeconds] = useState(0);
     const [isSubmittingExam, setIsSubmittingExam] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showPaletteDrawer, setShowPaletteDrawer] = useState(false);
@@ -345,7 +345,7 @@ export default function QuizRunner({ onBack }) {
     if (isLoadingQuiz) {
         return (
             <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6 text-slate-900 font-mono">
-                <div className="p-8 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] max-w-md w-full text-center space-y-4">
+                <div className="p-8 bg-white border-4 border-slate-900 shadow-brutal-6 max-w-md w-full text-center space-y-4">
                     <div className="w-12 h-12 border-4 border-slate-900 border-t-sky-500 rounded-full animate-spin mx-auto"></div>
                     <h2 className="text-xl font-black uppercase">Loading Quiz System...</h2>
                     <p className="text-xs text-slate-600">Connecting to Asterix Secure Assessment Engine</p>
@@ -357,7 +357,7 @@ export default function QuizRunner({ onBack }) {
     if (fetchError || !quizData) {
         return (
             <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6 text-slate-900 font-mono">
-                <div className="p-8 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] max-w-lg w-full space-y-4">
+                <div className="p-8 bg-white border-4 border-slate-900 shadow-brutal-6 max-w-lg w-full space-y-4">
                     <div className="flex items-center gap-3 text-rose-600">
                         <span className="text-2xl">⚠️</span>
                         <h2 className="text-xl font-black uppercase">Quiz Unavailable</h2>
@@ -368,7 +368,7 @@ export default function QuizRunner({ onBack }) {
                     <div className="pt-2 flex gap-3">
                         <button
                             onClick={onBack || (() => { window.location.hash = ''; })}
-                            className="press flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                            className="press flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase shadow-brutal-3 cursor-pointer"
                         >
                             ← Back to Asterix Homepage
                         </button>
@@ -398,7 +398,7 @@ export default function QuizRunner({ onBack }) {
 
                     <button
                         onClick={onBack || (() => { window.location.hash = ''; })}
-                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         ← Exit
                     </button>
@@ -406,7 +406,7 @@ export default function QuizRunner({ onBack }) {
 
                 <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 space-y-6">
                     {/* Top Quiz Banner */}
-                    <div className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-6 sm:p-8">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-6 p-6 sm:p-8">
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-200 pb-4">
                             <div className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -447,19 +447,19 @@ export default function QuizRunner({ onBack }) {
 
                         {/* Quiz Quick Specs */}
                         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
-                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-brutal-2">
                                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Duration</span>
                                 <span className="text-base font-black text-slate-900">{quizData.durationMinutes} Mins</span>
                             </div>
-                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-brutal-2">
                                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Questions</span>
                                 <span className="text-base font-black text-slate-900">{quizData.questionCount} MCQs</span>
                             </div>
-                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-brutal-2">
                                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Total Points</span>
                                 <span className="text-base font-black text-slate-900">{quizData.totalPoints} Pts</span>
                             </div>
-                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="p-3 bg-slate-50 border-2 border-slate-900 shadow-brutal-2">
                                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Pass Requirement</span>
                                 <span className="text-base font-black text-slate-900">{quizData.passingPercentage}%</span>
                             </div>
@@ -485,7 +485,7 @@ export default function QuizRunner({ onBack }) {
                     </div>
 
                     {/* Dual-Tab Action Area: Attend Exam OR Check Results */}
-                    <div className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-6 sm:p-8">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-6 p-6 sm:p-8">
                         <div className="flex border-b-2 border-slate-900 mb-6">
                             <button
                                 type="button"
@@ -539,7 +539,7 @@ export default function QuizRunner({ onBack }) {
                                         <button
                                             type="button"
                                             onClick={() => setGatekeeperTab('lookup')}
-                                            className="press px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                                            className="press px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-3 cursor-pointer"
                                         >
                                             Check Your Evaluation Scorecard →
                                         </button>
@@ -597,7 +597,7 @@ export default function QuizRunner({ onBack }) {
 
                                     <div>
                                         <label className="block font-mono text-xs font-bold uppercase text-slate-700 mb-1">
-                                            College Roll No / Register No <span className="text-slate-400">(Optional)</span>
+                                            College Roll No / Register No <span className="text-slate-500">(Optional)</span>
                                         </label>
                                         <input
                                             type="text"
@@ -620,7 +620,7 @@ export default function QuizRunner({ onBack }) {
                                     <button
                                         type="submit"
                                         disabled={isStarting || isUpcoming || isEnded}
-                                        className="press w-full py-3.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-900 text-slate-900 font-mono font-black text-sm uppercase shadow-[4px_4px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2"
+                                        className="press w-full py-3.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-slate-900 text-slate-900 font-mono font-black text-sm uppercase shadow-brutal-4 cursor-pointer flex items-center justify-center gap-2"
                                     >
                                         {isStarting ? (
                                             <>
@@ -673,7 +673,7 @@ export default function QuizRunner({ onBack }) {
                                             type="button"
                                             onClick={() => performLookup(lookupEmail)}
                                             disabled={isLookingUp}
-                                            className="press px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-2"
+                                            className="press px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer shrink-0 flex items-center justify-center gap-2"
                                         >
                                             {isLookingUp ? (
                                                 <>
@@ -727,7 +727,7 @@ export default function QuizRunner({ onBack }) {
 
                     <div className="flex items-center gap-3">
                         {/* Live Timer */}
-                        <div className={`px-4 py-1.5 border-2 border-slate-900 font-mono font-black text-sm sm:text-base flex items-center gap-2 shadow-[2px_2px_0px_#0f172a] ${isTimerUrgent
+                        <div className={`px-4 py-1.5 border-2 border-slate-900 font-mono font-black text-sm sm:text-base flex items-center gap-2 shadow-brutal-2 ${isTimerUrgent
                             ? 'bg-rose-500 text-white animate-pulse'
                             : 'bg-amber-300 text-slate-900'
                             }`}>
@@ -739,7 +739,7 @@ export default function QuizRunner({ onBack }) {
                         <button
                             type="button"
                             onClick={() => setShowPaletteDrawer(!showPaletteDrawer)}
-                            className="press px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                            className="press px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             title="View all questions palette"
                         >
                             📋 {answeredCount}/{totalQuestionsCount}
@@ -749,7 +749,7 @@ export default function QuizRunner({ onBack }) {
                         <button
                             type="button"
                             onClick={() => setShowConfirmModal(true)}
-                            className="press px-4 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                            className="press px-4 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         >
                             Finish Exam ✓
                         </button>
@@ -758,7 +758,7 @@ export default function QuizRunner({ onBack }) {
 
                 <div className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 flex flex-col md:flex-row gap-6">
                     {/* Collapsible / Desktop Question Navigator Palette */}
-                    <div className={`${showPaletteDrawer ? 'block' : 'hidden md:block'} w-full md:w-64 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 flex-shrink-0 h-fit space-y-4`}>
+                    <div className={`${showPaletteDrawer ? 'block' : 'hidden md:block'} w-full md:w-64 bg-white border-4 border-slate-900 shadow-brutal-6 p-4 flex-shrink-0 h-fit space-y-4`}>
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-2">
                             <span className="font-mono text-xs font-black uppercase text-slate-900">
                                 Question Palette
@@ -782,7 +782,7 @@ export default function QuizRunner({ onBack }) {
                                             setShowPaletteDrawer(false);
                                         }}
                                         className={`press py-2 font-black border-2 border-slate-900 text-center cursor-pointer transition-all ${isCurrent
-                                            ? 'ring-2 ring-sky-500 ring-offset-1 bg-sky-400 text-slate-900 shadow-[2px_2px_0px_#0f172a]'
+                                            ? 'ring-2 ring-sky-500 ring-offset-1 bg-sky-400 text-slate-900 shadow-brutal-2'
                                             : isAnswered
                                                 ? 'bg-emerald-300 text-slate-900'
                                                 : 'bg-slate-50 hover:bg-slate-100 text-slate-700'
@@ -811,7 +811,7 @@ export default function QuizRunner({ onBack }) {
                     </div>
 
                     {/* Active Question Workspace */}
-                    <div className="flex-1 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-6 sm:p-8 flex flex-col justify-between">
+                    <div className="flex-1 bg-white border-4 border-slate-900 shadow-brutal-6 p-6 sm:p-8 flex flex-col justify-between">
                         {currentQ ? (
                             <div className="space-y-6">
                                 {/* Question Title Bar */}
@@ -841,7 +841,7 @@ export default function QuizRunner({ onBack }) {
                                                 type="button"
                                                 onClick={() => handleSelectOption(currentQ.id, optIdx)}
                                                 className={`press w-full p-4 border-2 border-slate-900 text-left font-mono text-xs sm:text-sm flex items-start gap-3.5 cursor-pointer transition-all ${isSelected
-                                                    ? 'bg-emerald-300 text-slate-900 font-black shadow-[3px_3px_0px_#0f172a] translate-x-1'
+                                                    ? 'bg-emerald-300 text-slate-900 font-black shadow-brutal-3 translate-x-1'
                                                     : 'bg-slate-50 hover:bg-sky-50 text-slate-800 font-bold'
                                                     }`}
                                             >
@@ -867,7 +867,7 @@ export default function QuizRunner({ onBack }) {
                                 type="button"
                                 disabled={currentQIndex === 0}
                                 onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
-                                className="press px-4 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="press px-4 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 ← Previous
                             </button>
@@ -886,7 +886,7 @@ export default function QuizRunner({ onBack }) {
                                 <button
                                     type="button"
                                     onClick={() => setCurrentQIndex(prev => Math.min(totalQuestionsCount - 1, prev + 1))}
-                                    className="press px-5 py-2 bg-sky-400 hover:bg-sky-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-5 py-2 bg-sky-400 hover:bg-sky-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                 >
                                     Next Question →
                                 </button>
@@ -894,7 +894,7 @@ export default function QuizRunner({ onBack }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmModal(true)}
-                                    className="press px-5 py-2 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-5 py-2 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                 >
                                     Submit Exam ✓
                                 </button>
@@ -906,7 +906,7 @@ export default function QuizRunner({ onBack }) {
                 {/* Submit Confirmation Modal */}
                 {showConfirmModal && (
                     <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-                        <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-md w-full p-6 space-y-4 font-mono">
+                        <div className="bg-white border-4 border-slate-900 shadow-brutal-8 max-w-md w-full p-6 space-y-4 font-mono">
                             <div className="flex items-center gap-2 border-b-2 border-slate-200 pb-2">
                                 <span className="text-xl">🏁</span>
                                 <h3 className="text-base font-black uppercase text-slate-900">
@@ -945,7 +945,7 @@ export default function QuizRunner({ onBack }) {
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmModal(false)}
-                                    className="press flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                 >
                                     Review Questions
                                 </button>
@@ -953,7 +953,7 @@ export default function QuizRunner({ onBack }) {
                                     type="button"
                                     onClick={() => submitExamAction()}
                                     disabled={isSubmittingExam}
-                                    className="press flex-1 py-2.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                                    className="press flex-1 py-2.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center justify-center gap-1.5"
                                 >
                                     {isSubmittingExam ? (
                                         <>
@@ -985,15 +985,15 @@ export default function QuizRunner({ onBack }) {
                     </span>
                     <button
                         onClick={onBack || (() => { window.location.hash = ''; })}
-                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         Homepage →
                     </button>
                 </header>
 
                 <main className="flex-1 max-w-3xl w-full mx-auto p-4 sm:p-8 flex items-center justify-center">
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-6 sm:p-10 w-full space-y-6 text-center font-mono">
-                        <div className="w-16 h-16 bg-emerald-100 border-4 border-slate-900 rounded-full flex items-center justify-center text-3xl mx-auto shadow-[3px_3px_0px_#0f172a]">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-8 p-6 sm:p-10 w-full space-y-6 text-center font-mono">
+                        <div className="w-16 h-16 bg-emerald-100 border-4 border-slate-900 rounded-full flex items-center justify-center text-3xl mx-auto shadow-brutal-3">
                             🎉
                         </div>
 
@@ -1010,7 +1010,7 @@ export default function QuizRunner({ onBack }) {
                         </div>
 
                         {/* Scheduled Results Reveal Card */}
-                        <div className="p-6 bg-amber-50 border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] space-y-4">
+                        <div className="p-6 bg-amber-50 border-3 border-slate-900 shadow-brutal-4 space-y-4">
                             <div className="text-xs font-black uppercase text-amber-900 tracking-wider">
                                 🔒 Evaluation Results Under Lock
                             </div>
@@ -1057,14 +1057,14 @@ export default function QuizRunner({ onBack }) {
                             <button
                                 type="button"
                                 onClick={copyJoinLink}
-                                className="press flex-1 py-3 bg-sky-400 hover:bg-sky-300 border-2 border-slate-900 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="press flex-1 py-3 bg-sky-400 hover:bg-sky-300 border-2 border-slate-900 font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 {copySuccess ? '✓ Link Copied to Clipboard!' : '📋 Copy This Quiz Link to Bookmark'}
                             </button>
                             <button
                                 type="button"
                                 onClick={onBack || (() => { window.location.hash = ''; })}
-                                className="press px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="press px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 Exit to Homepage →
                             </button>
@@ -1098,14 +1098,14 @@ export default function QuizRunner({ onBack }) {
                         <button
                             type="button"
                             onClick={() => window.print()}
-                            className="press hidden sm:inline-block px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                            className="press hidden sm:inline-block px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         >
                             🖨 Print / PDF
                         </button>
                         <button
                             type="button"
                             onClick={onBack || (() => { window.location.hash = ''; })}
-                            className="press px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                            className="press px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         >
                             ← Home
                         </button>
@@ -1114,7 +1114,7 @@ export default function QuizRunner({ onBack }) {
 
                 <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 space-y-6">
                     {/* Grand Score Hero Card */}
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-6 sm:p-8">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-8 p-6 sm:p-8">
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-200 pb-4">
                             <div>
                                 <span className="font-mono text-xs font-black uppercase text-slate-500">
@@ -1125,7 +1125,7 @@ export default function QuizRunner({ onBack }) {
                                 </h1>
                             </div>
 
-                            <span className={`px-4 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] ${isPassed ? 'bg-emerald-300 text-slate-900' : 'bg-rose-200 text-rose-900'
+                            <span className={`px-4 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 ${isPassed ? 'bg-emerald-300 text-slate-900' : 'bg-rose-200 text-rose-900'
                                 }`}>
                                 {isPassed ? '✓ PASSED' : 'COMPLETED'}
                             </span>
@@ -1149,7 +1149,7 @@ export default function QuizRunner({ onBack }) {
 
                         {/* Key Metrics Grid */}
                         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
-                            <div className="p-4 bg-emerald-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                            <div className="p-4 bg-emerald-50 border-2 border-slate-900 shadow-brutal-3">
                                 <span className="text-[10px] font-black uppercase text-emerald-700 block">Score Earned</span>
                                 <div className="text-2xl sm:text-3xl font-black text-slate-900">
                                     {resultData.score}
@@ -1157,14 +1157,14 @@ export default function QuizRunner({ onBack }) {
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                            <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                                 <span className="text-[10px] font-black uppercase text-sky-700 block">Percentage</span>
                                 <div className="text-2xl sm:text-3xl font-black text-slate-900">
                                     {resultData.percentage}%
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                            <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-brutal-3">
                                 <span className="text-[10px] font-black uppercase text-amber-700 block">Class Rank</span>
                                 <div className="text-2xl sm:text-3xl font-black text-slate-900">
                                     #{resultData.rank || 1}
@@ -1172,7 +1172,7 @@ export default function QuizRunner({ onBack }) {
                                 </div>
                             </div>
 
-                            <div className="p-4 bg-indigo-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                            <div className="p-4 bg-indigo-50 border-2 border-slate-900 shadow-brutal-3">
                                 <span className="text-[10px] font-black uppercase text-indigo-700 block">Time Taken</span>
                                 <div className="text-xl sm:text-2xl font-black text-slate-900 pt-1">
                                     {Math.round((resultData.timeSpentSeconds || 0) / 60 * 10) / 10} <span className="text-xs">mins</span>
@@ -1182,7 +1182,7 @@ export default function QuizRunner({ onBack }) {
                     </div>
 
                     {/* Question-by-Question Review Breakdown */}
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-6 sm:p-8 space-y-6">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-8 p-6 sm:p-8 space-y-6">
                         <div className="border-b-2 border-slate-200 pb-3">
                             <h2 className="text-lg font-black uppercase text-slate-900">
                                 Answer Sheet & Solutions Review
@@ -1237,7 +1237,7 @@ export default function QuizRunner({ onBack }) {
 
                                                 let cardStyle = 'bg-white border-slate-300 text-slate-700';
                                                 if (isActuallyCorrect) {
-                                                    cardStyle = 'bg-emerald-200 border-slate-900 text-slate-900 font-black shadow-[2px_2px_0px_#0f172a]';
+                                                    cardStyle = 'bg-emerald-200 border-slate-900 text-slate-900 font-black shadow-brutal-2';
                                                 } else if (isCandidateChoice && !isActuallyCorrect) {
                                                     cardStyle = 'bg-rose-200 border-slate-900 text-rose-900 font-bold';
                                                 }

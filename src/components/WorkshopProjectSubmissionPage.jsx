@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiUrl } from '../lib/api';
 
 const EMPTY_LOOKUP = { email: '', rollNo: '', phone: '' };
-const INPUT_CLASS = 'w-full min-h-12 border-2 border-slate-900 bg-white px-3 py-2.5 text-base font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500';
+const INPUT_CLASS = 'w-full min-h-12 border-2 border-slate-900 bg-white px-3 py-2.5 text-base font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500';
 
 export default function WorkshopProjectSubmissionPage({ onBack }) {
     const [config, setConfig] = useState(null);
@@ -88,12 +88,12 @@ export default function WorkshopProjectSubmissionPage({ onBack }) {
                         <p className="font-mono text-xs font-black uppercase tracking-widest text-sky-700">Team Asterix / Workshop</p>
                         <h1 className="mt-1 text-xl font-black uppercase sm:text-2xl">Project Submission</h1>
                     </div>
-                    <button type="button" onClick={onBack} className="press border-2 border-slate-950 bg-amber-300 px-3 py-2 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-400">Back to site</button>
+                    <button type="button" onClick={onBack} className="press border-2 border-slate-950 bg-amber-300 px-3 py-2 font-mono text-xs font-black uppercase shadow-brutal-3 hover:bg-amber-400">Back to site</button>
                 </div>
             </header>
 
             <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 sm:px-8 sm:py-12 lg:grid-cols-[0.8fr_1.2fr]">
-                <section className="self-start border-l-8 border-sky-600 bg-slate-950 p-6 text-white sm:p-8">
+                <section className="self-start border-2 border-sky-600 bg-slate-950 p-6 text-white sm:p-8">
                     <p className="font-mono text-xs font-black uppercase tracking-widest text-amber-300">Workshop 2026</p>
                     <h2 className="mt-3 text-3xl font-black uppercase leading-tight">{config?.title || 'Submit your project'}</h2>
                     <p className="mt-4 text-sm font-bold leading-relaxed text-slate-200">{config?.description || 'Verify your paid workshop registration to attach your project to the student record we already have on file.'}</p>
@@ -108,7 +108,7 @@ export default function WorkshopProjectSubmissionPage({ onBack }) {
                     {isLoading ? (
                         <p className="border-2 border-slate-300 bg-white p-6 font-mono text-sm font-bold">Loading submission form...</p>
                     ) : !student ? (
-                        <form onSubmit={handleLookup} className="border-2 border-slate-950 bg-white p-5 shadow-[5px_5px_0px_#0f172a] sm:p-7">
+                        <form onSubmit={handleLookup} className="border-2 border-slate-950 bg-white p-5 shadow-brutal-5 sm:p-7">
                             <div className="border-b-2 border-slate-200 pb-4">
                                 <p className="font-mono text-xs font-black uppercase text-sky-700">Registration verification</p>
                                 <h3 className="mt-1 text-xl font-black uppercase">Find your student record</h3>
@@ -119,11 +119,11 @@ export default function WorkshopProjectSubmissionPage({ onBack }) {
                                 <label className="block text-xs font-black uppercase">Registered number<input className={`${INPUT_CLASS} mt-1.5`} value={lookup.rollNo} onChange={event => setLookup({ ...lookup, rollNo: event.target.value })} required /></label>
                                 <label className="block text-xs font-black uppercase">Phone used at registration<input className={`${INPUT_CLASS} mt-1.5`} type="tel" autoComplete="tel" value={lookup.phone} onChange={event => setLookup({ ...lookup, phone: event.target.value })} required /></label>
                             </div>
-                            {error && <p role="alert" className="mt-4 border-l-4 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
-                            <button type="submit" disabled={isBusy} className="press mt-5 min-h-12 w-full border-2 border-slate-950 bg-sky-500 px-4 py-3 font-mono text-xs font-black uppercase text-white shadow-[3px_3px_0px_#0f172a] hover:bg-sky-600 disabled:cursor-wait disabled:opacity-60">{isBusy ? 'Checking registration...' : 'Verify and continue'}</button>
+                            {error && <p role="alert" className="mt-4 border-2 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
+                            <button type="submit" disabled={isBusy} className="press mt-5 min-h-12 w-full border-2 border-slate-950 bg-sky-500 px-4 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-3 hover:bg-sky-600 disabled:cursor-wait disabled:opacity-60">{isBusy ? 'Checking registration...' : 'Verify and continue'}</button>
                         </form>
                     ) : (
-                        <form onSubmit={handleSubmit} className="border-2 border-slate-950 bg-white p-5 shadow-[5px_5px_0px_#0f172a] sm:p-7">
+                        <form onSubmit={handleSubmit} className="border-2 border-slate-950 bg-white p-5 shadow-brutal-5 sm:p-7">
                             <div className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-slate-200 pb-4">
                                 <div><p className="font-mono text-xs font-black uppercase text-emerald-700">Registration verified</p><h3 className="mt-1 text-xl font-black uppercase">{student.name}</h3></div>
                                 <button type="button" onClick={() => { setStudent(null); setError(''); setNotice(''); }} className="font-mono text-xs font-black uppercase text-sky-700 underline">Change student</button>
@@ -155,9 +155,9 @@ export default function WorkshopProjectSubmissionPage({ onBack }) {
                                             </label>
                                         ))}
                                     </div>
-                                    {error && <p role="alert" className="mt-4 border-l-4 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
-                                    {notice && <p role="status" className="mt-4 border-l-4 border-emerald-600 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800">{notice}</p>}
-                                    <button type="submit" disabled={isBusy} className="press mt-5 min-h-12 w-full border-2 border-slate-950 bg-amber-300 px-4 py-3 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60">{isBusy ? 'Saving project...' : 'Submit project'}</button>
+                                    {error && <p role="alert" className="mt-4 border-2 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
+                                    {notice && <p role="status" className="mt-4 border-2 border-emerald-600 bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-800">{notice}</p>}
+                                    <button type="submit" disabled={isBusy} className="press mt-5 min-h-12 w-full border-2 border-slate-950 bg-amber-300 px-4 py-3 font-mono text-xs font-black uppercase shadow-brutal-3 hover:bg-amber-400 disabled:cursor-wait disabled:opacity-60">{isBusy ? 'Saving project...' : 'Submit project'}</button>
                                 </>
                             ) : <p className="mt-5 border-2 border-amber-500 bg-amber-50 p-4 font-mono text-sm font-bold">Project submissions are currently closed.</p>}
                         </form>

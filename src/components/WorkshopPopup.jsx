@@ -62,7 +62,7 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
 
     return (
         <aside
-            className={`fixed bottom-22 right-3.5 z-40 w-[calc(100vw-1.75rem)] max-w-[290px] rounded-2xl border-2 sm:border-3 border-slate-900 bg-amber-300 p-3 sm:p-3.5 text-slate-900 shadow-[6px_6px_0px_#0f172a] sm:bottom-6 sm:right-6 sm:w-72 select-none pointer-events-auto transition-all duration-500 ease-out ${
+            className={`fixed bottom-22 right-3.5 z-40 w-[calc(100vw-1.75rem)] max-w-[290px] rounded-2xl border-2 sm:border-3 border-slate-900 bg-amber-300 p-3 sm:p-3.5 text-slate-900 shadow-brutal-6 sm:bottom-6 sm:right-6 sm:w-72 select-none pointer-events-auto transition-all duration-500 ease-out ${
                 isFooterVisible ? 'translate-y-36 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
             }`}
             aria-labelledby="workshop-popup-title"
@@ -79,13 +79,13 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                         setIsVisible(false);
                     }}
                     aria-label="Close workshop announcement"
-                    className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 rounded-full border-2 border-slate-900 bg-white flex items-center justify-center font-mono text-[11px] font-black text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-rose-100 hover:text-rose-600 transition-colors cursor-pointer"
+                    className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 rounded-full border-2 border-slate-900 bg-white flex items-center justify-center font-mono text-[11px] font-black text-slate-900 shadow-brutal-2 hover:bg-rose-100 hover:text-rose-600 transition-colors cursor-pointer"
                 >
                     ✕
                 </button>
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black uppercase tracking-wider text-amber-300 shadow-[1px_1px_0px_#0f172a]">
+                    <span className="inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black uppercase tracking-wider text-amber-300 shadow-brutal-1">
                         ✦ WORKSHOPS 2026
                     </span>
                     <span className={`inline-block rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
@@ -113,7 +113,7 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                     <button
                         type="button"
                         onClick={onOpenWorkshop}
-                        className="press rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_#0284c7] hover:bg-sky-100 cursor-pointer flex items-center gap-1"
+                        className="press rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-900 shadow-brutal-2-brand hover:bg-sky-100 cursor-pointer flex items-center gap-1"
                     >
                         <span>View Details</span>
                         <span aria-hidden="true">↗</span>

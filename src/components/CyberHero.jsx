@@ -20,7 +20,7 @@ export default function CyberHero({ onOpenModelViewer }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="5"
-                className="hidden lg:flex absolute right-14 top-40 z-20 flex-col items-start bg-yellow-300 text-slate-950 border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-xl px-4 py-2.5 font-mono font-black text-xs uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute right-14 top-40 z-20 flex-col items-start bg-yellow-300 text-slate-950 border-3 border-slate-900 shadow-brutal-6 rounded-xl px-4 py-2.5 font-mono font-black text-xs uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-slate-900 animate-ping" />
@@ -37,7 +37,7 @@ export default function CyberHero({ onOpenModelViewer }) {
                     {hero.badges.map((badge, idx) => (
                         <div 
                             key={idx} 
-                            className={`border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] px-4 py-2 font-black text-xs uppercase tracking-wider ${badge.class || 'bg-white text-slate-900'}`}
+                            className={`border-3 border-slate-900 shadow-brutal-4 px-4 py-2 font-black text-xs uppercase tracking-wider ${badge.class || 'bg-white text-slate-900'}`}
                         >
                             {badge.label}
                         </div>
@@ -87,7 +87,7 @@ export default function CyberHero({ onOpenModelViewer }) {
                 {/* Corner 3D Baja Inspector Button */}
                 <button
                     onClick={onOpenModelViewer}
-                    className="press group px-4 py-2.5 bg-white hover:bg-sky-500 text-slate-900 hover:text-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#0f172a] flex items-center gap-2.5 font-mono font-black text-xs uppercase cursor-pointer"
+                    className="press group px-4 py-2.5 bg-white hover:bg-sky-500 text-slate-900 hover:text-slate-950 border-2 border-slate-900 shadow-brutal-3 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-brutal-5 flex items-center gap-2.5 font-mono font-black text-xs uppercase cursor-pointer"
                 >
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-slate-900 animate-pulse" />
                     <span>3D BAJA MODEL</span>

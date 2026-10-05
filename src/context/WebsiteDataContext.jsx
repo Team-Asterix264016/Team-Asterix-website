@@ -1,8 +1,8 @@
-import { useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WebsiteDataContext } from './WebsiteContext';
 import { subsystems as initialSubsystems } from '../data/subsystemsData';
 import { apiUrl } from '../lib/api';
-import { SOFTWARE_PERCEPTION_DATA, POWERTRAIN_CHALLENGE_DATA, POWERTRAIN_TEST_DATA, MECHANICAL_MYSTERY_DATA } from '../data/recruitmentProblemStatements';
+import { SOFTWARE_PERCEPTION_DATA, POWERTRAIN_CHALLENGE_DATA, MECHANICAL_MYSTERY_DATA } from '../data/recruitmentProblemStatements';
 import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
 
 import imgPaddock from '../assets/gallery/01_team_paddock.jpg';
@@ -59,7 +59,7 @@ const initialHeroData = {
     badges: [
         { label: "AUTONOMOUS MOBILITY LAB", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
         { label: "ADVANCED R&D DIVISION", class: "bg-white text-slate-900" },
-        { label: "★ PSG iTECH ENGINEERING", class: "rotate-[3deg] bg-sky-400 text-white" }
+        { label: "★ PSG iTECH ENGINEERING", class: "rotate-[3deg] bg-sky-400 text-slate-950" }
     ],
     ctaText: "EXPLORE THE SQUAD →",
     ctaLink: "#squad",
@@ -814,31 +814,34 @@ export function WebsiteDataProvider({ children }) {
 
 
     // Update helpers
-    const updateHero = (newHero) => {
+    /* Stable identity so the memoised context value does not churn. */
+    const forceLiveRefresh = useCallback(() => fetchFromDatabase(false), [fetchFromDatabase]);
+
+    const updateHero = useCallback((newHero) => {
         setSiteData(prev => ({
             ...prev,
             hero: { ...prev.hero, ...newHero },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateStory = (newStory) => {
+    const updateStory = useCallback((newStory) => {
         setSiteData(prev => ({
             ...prev,
             story: newStory,
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateContact = (newContact) => {
+    const updateContact = useCallback((newContact) => {
         setSiteData(prev => ({
             ...prev,
             contact: { ...prev.contact, ...newContact },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateSubsystem = (subsystemId, updatedFields) => {
+    const updateSubsystem = useCallback((subsystemId, updatedFields) => {
         setSiteData(prev => ({
             ...prev,
             subsystems: prev.subsystems.map(s => 
@@ -846,9 +849,9 @@ export function WebsiteDataProvider({ children }) {
             ),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addTeamMember = (subsystemId, newMember) => {
+    const addTeamMember = useCallback((subsystemId, newMember) => {
         setSiteData(prev => ({
             ...prev,
             subsystems: prev.subsystems.map(s => {
@@ -862,9 +865,9 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateTeamMember = (subsystemId, memberIndex, updatedMember) => {
+    const updateTeamMember = useCallback((subsystemId, memberIndex, updatedMember) => {
         setSiteData(prev => ({
             ...prev,
             subsystems: prev.subsystems.map(s => {
@@ -877,9 +880,9 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteTeamMember = (subsystemId, memberIndex) => {
+    const deleteTeamMember = useCallback((subsystemId, memberIndex) => {
         setSiteData(prev => ({
             ...prev,
             subsystems: prev.subsystems.map(s => {
@@ -891,9 +894,9 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const moveTeamMember = (subsystemId, fromIndex, toIndex) => {
+    const moveTeamMember = useCallback((subsystemId, fromIndex, toIndex) => {
         setSiteData(prev => ({
             ...prev,
             subsystems: prev.subsystems.map(s => {
@@ -908,109 +911,109 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addGalleryItem = (newItem) => {
+    const addGalleryItem = useCallback((newItem) => {
         setSiteData(prev => ({
             ...prev,
             gallery: [newItem, ...prev.gallery],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateGalleryItem = (id, updatedFields) => {
+    const updateGalleryItem = useCallback((id, updatedFields) => {
         setSiteData(prev => ({
             ...prev,
             gallery: prev.gallery.map(item => item.id === id ? { ...item, ...updatedFields } : item),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteGalleryItem = (id) => {
+    const deleteGalleryItem = useCallback((id) => {
         setSiteData(prev => ({
             ...prev,
             gallery: prev.gallery.filter(item => item.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addUpdate = (newUpdate) => {
+    const addUpdate = useCallback((newUpdate) => {
         setSiteData(prev => ({
             ...prev,
             updates: [newUpdate, ...prev.updates],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateUpdate = (id, updatedFields) => {
+    const updateUpdate = useCallback((id, updatedFields) => {
         setSiteData(prev => ({
             ...prev,
             updates: prev.updates.map(item => item.id === id ? { ...item, ...updatedFields } : item),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteUpdate = (id) => {
+    const deleteUpdate = useCallback((id) => {
         setSiteData(prev => ({
             ...prev,
             updates: prev.updates.filter(item => item.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addAccount = (account) => {
+    const addAccount = useCallback((account) => {
         setSiteData(prev => ({
             ...prev,
             accounts: [...prev.accounts, account],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateAccount = (id, fields) => {
+    const updateAccount = useCallback((id, fields) => {
         setSiteData(prev => ({
             ...prev,
             accounts: prev.accounts.map(acc => acc.id === id ? { ...acc, ...fields } : acc),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteAccount = (id) => {
+    const deleteAccount = useCallback((id) => {
         setSiteData(prev => ({
             ...prev,
             accounts: prev.accounts.filter(acc => acc.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateSponsorship = (fields) => {
+    const updateSponsorship = useCallback((fields) => {
         setSiteData(prev => ({
             ...prev,
             sponsorship: { ...(prev.sponsorship || initialSponsorshipData), ...fields },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
     /* One setter for the whole recruitment blob. The admin editor manages the
        timeline and problem-statement arrays wholesale (add / edit / reorder /
        remove) and hands the finished field back through here, so there is a
        single path the debounced sync watches. */
-    const updateRecruitment = (fields) => {
+    const updateRecruitment = useCallback((fields) => {
         setSiteData(prev => ({
             ...prev,
             recruitment: normalizeRecruitment({ ...(prev.recruitment || initialRecruitment), ...fields }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateWorkshop = (fields) => {
+    const updateWorkshop = useCallback((fields) => {
         setSiteData(prev => ({
             ...prev,
             workshop: normalizeWorkshop({ ...(prev.workshop || initialWorkshopData), ...fields }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const resetToDefaults = () => {
+    const resetToDefaults = useCallback(() => {
         const defaults = {
             hero: initialHeroData,
             story: initialStoryText,
@@ -1027,9 +1030,9 @@ export function WebsiteDataProvider({ children }) {
         setSiteData(defaults);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaults));
         syncToServer(defaults);
-    };
+    }, [syncToServer]);
 
-    const loadFromBackup = (data) => {
+    const loadFromBackup = useCallback((data) => {
         const updated = {
             ...data,
             lastModified: new Date().toISOString()
@@ -1037,16 +1040,18 @@ export function WebsiteDataProvider({ children }) {
         setSiteData(updated);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
         syncToServer(updated);
-    };
+    }, [syncToServer]);
 
-    return (
-        <WebsiteDataContext.Provider value={{
+    /* Memoised: an inline object literal here handed every consumer a new
+       reference on every provider render, so the whole tree re-rendered on
+       any state change. Handlers above are useCallback-stable. */
+    const contextValue = useMemo(() => ({
             siteData,
             isServerConnected,
             isLoading,
             lastRefreshedAt,
             isLiveRefreshing,
-            forceLiveRefresh: () => fetchFromDatabase(false),
+            forceLiveRefresh,
             fetchFromDatabase,
             syncToServer,
             updateHero,
@@ -1075,7 +1080,43 @@ export function WebsiteDataProvider({ children }) {
             loadFromBackup,
             AUTH_SESSION_KEY,
             AUTH_TOKEN_KEY
-        }}>
+    }), [
+        siteData,
+        isServerConnected,
+        isLoading,
+        lastRefreshedAt,
+        isLiveRefreshing,
+        forceLiveRefresh,
+        fetchFromDatabase,
+        syncToServer,
+        updateHero,
+        updateStory,
+        updateContact,
+        updateSubsystem,
+        addTeamMember,
+        updateTeamMember,
+        deleteTeamMember,
+        moveTeamMember,
+        addGalleryItem,
+        updateGalleryItem,
+        deleteGalleryItem,
+        addUpdate,
+        updateUpdate,
+        deleteUpdate,
+        addAccount,
+        updateAccount,
+        deleteAccount,
+        updateSponsorship,
+        updateRecruitment,
+        updateWorkshop,
+        syncState,
+        syncError,
+        resetToDefaults,
+        loadFromBackup,
+    ]);
+
+    return (
+        <WebsiteDataContext.Provider value={contextValue}>
             {children}
         </WebsiteDataContext.Provider>
     );

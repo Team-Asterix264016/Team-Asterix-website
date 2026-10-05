@@ -118,7 +118,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
 
     return (
         <div className="min-h-screen bg-slate-900 text-slate-100 font-mono flex flex-col justify-center items-center p-4 sm:p-6 select-none">
-            <div className="max-w-md w-full bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0284c7] text-slate-900 p-6 sm:p-8 relative">
+            <div className="max-w-md w-full bg-white border-4 border-slate-900 shadow-brutal-8-brand text-slate-900 p-6 sm:p-8 relative">
                 
                 {/* Header Track Tag */}
                 <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-5">
@@ -140,7 +140,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                 {/* SUCCESS CONFIRMATION PASS */}
                 {successData ? (
                     <div className="space-y-5 text-center py-2">
-                        <div className="w-16 h-16 bg-emerald-100 border-4 border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-[3px_3px_0px_#0f172a]">
+                        <div className="w-16 h-16 bg-emerald-100 border-4 border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-brutal-3">
                             <span className="text-3xl font-black text-emerald-600">✓</span>
                         </div>
 
@@ -157,7 +157,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                         </div>
 
                         {/* Candidate Details Card */}
-                        <div className="p-3.5 bg-slate-50 border-2 border-slate-900 text-left text-xs font-mono space-y-1.5 shadow-[2px_2px_0px_#0f172a]">
+                        <div className="p-3.5 bg-slate-50 border-2 border-slate-900 text-left text-xs font-mono space-y-1.5 shadow-brutal-2">
                             <div className="flex justify-between border-b border-slate-200 pb-1">
                                 <span className="text-slate-500 text-[11px]">Track:</span>
                                 <span className="font-black text-slate-900 uppercase">{successData.track}</span>
@@ -197,7 +197,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             <button
                                 type="button"
                                 onClick={onGoHome}
-                                className="press w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0284c7] cursor-pointer"
+                                className="press w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-3-brand cursor-pointer"
                             >
                                 Back to Asterix Homepage ↗
                             </button>
@@ -261,7 +261,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                                 placeholder="rollno@psgitech.ac.in"
                                 className="w-full px-3 py-2 border-2 border-slate-900 font-mono text-sm font-medium bg-slate-50 focus:bg-white focus:outline-none"
                             />
-                            <span className="text-[10px] text-slate-400 font-medium block mt-1">
+                            <span className="text-[10px] text-slate-500 font-medium block mt-1">
                                 Must match the email used during workshop payment.
                             </span>
                         </div>
@@ -270,7 +270,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                         <button
                             type="submit"
                             disabled={isSubmitting || !token}
-                            className={`press w-full py-3 border-2 border-slate-900 font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 ${
+                            className={`press w-full py-3 border-2 border-slate-900 font-black text-xs uppercase shadow-brutal-3 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 ${
                                 isSoftware
                                     ? 'bg-sky-400 hover:bg-sky-300 text-slate-950'
                                     : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
@@ -287,7 +287,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                         </button>
 
                         <div className="text-center pt-2">
-                            <span className="text-[10px] text-slate-400 font-bold">
+                            <span className="text-[10px] text-slate-500 font-bold">
                                 Single device check-in active · Session verified
                             </span>
                         </div>

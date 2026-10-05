@@ -701,7 +701,7 @@ export default function IntroScrollSequence() {
                     ref={hudRef}
                     className="absolute inset-x-0 top-[45%] -translate-y-1/2 sm:translate-y-0 sm:inset-y-0 sm:left-0 sm:right-auto flex items-center justify-center sm:justify-start px-4 sm:p-10 md:p-14 lg:p-16 z-20 pointer-events-none w-full max-w-[320px] sm:max-w-[400px] md:max-w-[440px] mx-auto sm:mx-0 select-none"
                 >
-                    <div className="w-full bg-white/95 text-slate-900 border-2 sm:border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] sm:shadow-[8px_8px_0px_#0f172a] rounded-xl sm:rounded-2xl p-4.5 sm:p-7 md:p-8 backdrop-blur-md relative overflow-hidden">
+                    <div className="w-full bg-white/95 text-slate-900 border-2 sm:border-3 border-slate-900 shadow-brutal-5 sm:shadow-brutal-8 rounded-xl sm:rounded-2xl p-4.5 sm:p-7 md:p-8 backdrop-blur-md relative overflow-hidden">
                         {/* Dynamic Stages Stack using CSS Grid overlapping (prevents overlap with footer) */}
                         <div className="grid grid-cols-1 grid-rows-1 relative">
                             {/* Stage 0 */}
@@ -710,7 +710,7 @@ export default function IntroScrollSequence() {
                                 className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity]"
                             >
                                 <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[0].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                    <span className={`${TEAM_STAGES[0].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-brutal-2`}>
                                         {TEAM_STAGES[0].tag}
                                     </span>
                                     <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">
@@ -731,7 +731,7 @@ export default function IntroScrollSequence() {
                                 className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity] opacity-0"
                             >
                                 <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[1].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                    <span className={`${TEAM_STAGES[1].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-brutal-2`}>
                                         {TEAM_STAGES[1].tag}
                                     </span>
                                     <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">
@@ -752,7 +752,7 @@ export default function IntroScrollSequence() {
                                 className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity] opacity-0"
                             >
                                 <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[2].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                    <span className={`${TEAM_STAGES[2].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-brutal-2`}>
                                         {TEAM_STAGES[2].tag}
                                     </span>
                                     <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">

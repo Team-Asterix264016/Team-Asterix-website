@@ -158,7 +158,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         <button
                             type="button"
                             onClick={() => onOpenProjector(track)}
-                            className="press px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1.5"
+                            className="press px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center gap-1.5"
                         >
                             <span>🖥</span>
                             <span>Open Projector Mode ↗</span>
@@ -168,7 +168,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         type="button"
                         onClick={handleExportCSV}
                         disabled={isExporting || rosterData.totalEligible === 0}
-                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
                         <span>📥</span>
                         <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
@@ -177,7 +177,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         type="button"
                         onClick={fetchRecords}
                         disabled={isLoading}
-                        className="press px-3.5 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         {isLoading ? '⟳ Refreshing...' : '⟳ Refresh'}
                     </button>
@@ -185,8 +185,8 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             </div>
 
             {/* Session Settings & Selector Bar */}
-            <div className="p-4 bg-slate-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] space-y-3">
-                <span className="text-[10px] font-black uppercase text-sky-600 tracking-wider block">
+            <div className="p-4 bg-slate-50 border-2 border-slate-900 shadow-brutal-3 space-y-3">
+                <span className="text-[10px] font-black uppercase text-sky-700 tracking-wider block">
                     // Attendance Session Configuration
                 </span>
 
@@ -257,25 +257,25 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
 
             {/* Metrics Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3.5 bg-emerald-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                <div className="p-3.5 bg-emerald-50 border-2 border-slate-900 shadow-brutal-3">
                     <span className="text-[10px] font-black text-emerald-800 uppercase block truncate">Present In Class</span>
                     <span className="text-2xl sm:text-3xl font-black text-emerald-700">{rosterData.totalPresent}</span>
                     <span className="text-[10px] text-emerald-600 block mt-0.5">Verified attendees</span>
                 </div>
 
-                <div className="p-3.5 bg-rose-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                <div className="p-3.5 bg-rose-50 border-2 border-slate-900 shadow-brutal-3">
                     <span className="text-[10px] font-black text-rose-800 uppercase block truncate">Absent / Pending</span>
                     <span className="text-2xl sm:text-3xl font-black text-rose-700">{absentCount}</span>
                     <span className="text-[10px] text-rose-600 block mt-0.5">Awaiting check-in</span>
                 </div>
 
-                <div className="p-3.5 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                <div className="p-3.5 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                     <span className="text-[10px] font-black text-sky-800 uppercase block truncate">Total Eligible</span>
                     <span className="text-2xl sm:text-3xl font-black text-slate-900">{rosterData.totalEligible}</span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Paid candidates in track</span>
                 </div>
 
-                <div className="p-3.5 bg-amber-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                <div className="p-3.5 bg-amber-50 border-2 border-slate-900 shadow-brutal-3">
                     <span className="text-[10px] font-black text-amber-800 uppercase block truncate">Attendance Rate</span>
                     <span className="text-2xl sm:text-3xl font-black text-amber-800">{attendancePct}%</span>
                     <span className="text-[10px] text-slate-500 block mt-0.5">Quorum achieved</span>
@@ -290,7 +290,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             )}
 
             {/* Roster Search & Filter Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border-2 border-slate-900 shadow-brutal-2">
                 <div className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[10px] font-black uppercase text-slate-500 mr-1">Filter:</span>
                     <button
@@ -333,7 +333,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery('')}
-                            className="absolute right-2 top-1 text-xs text-slate-400 hover:text-slate-900"
+                            className="absolute right-2 top-1 text-xs text-slate-600 hover:text-slate-900"
                         >
                             ✕
                         </button>
@@ -342,7 +342,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             </div>
 
             {/* Roster Table */}
-            <div className="border-2 border-slate-900 bg-white shadow-[4px_4px_0px_#0f172a] overflow-x-auto">
+            <div className="border-2 border-slate-900 bg-white shadow-brutal-4 overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                     <thead>
                         <tr className="bg-slate-900 text-white font-mono text-[10px] uppercase">
@@ -365,7 +365,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                             </tr>
                         ) : filteredRoster.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="p-8 text-center text-slate-400 font-bold">
+                                <td colSpan="7" className="p-8 text-center text-slate-500 font-bold">
                                     No candidates found matching the selected filter.
                                 </td>
                             </tr>
@@ -385,11 +385,11 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                         </td>
                                         <td className="p-2.5 font-bold text-slate-900 border-r border-slate-200">
                                             <div>{cand.name}</div>
-                                            <div className="text-[10px] text-slate-400 font-mono">{cand.email}</div>
+                                            <div className="text-[10px] text-slate-500 font-mono">{cand.email}</div>
                                         </td>
                                         <td className="p-2.5 text-slate-700 border-r border-slate-200">
                                             <div>{cand.department}</div>
-                                            <div className="text-[10px] text-slate-400">Year {cand.year}</div>
+                                            <div className="text-[10px] text-slate-500">Year {cand.year}</div>
                                         </td>
                                         <td className="p-2.5 border-r border-slate-200">
                                             <span className="px-1.5 py-0.5 text-[9px] font-black uppercase border border-slate-900 bg-slate-100">
@@ -418,7 +418,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                                             hour12: true
                                                         })}
                                                     </span>
-                                                    <span className="text-[9px] text-slate-400 block">
+                                                    <span className="text-[9px] text-slate-500 block">
                                                         via {cand.verifiedBy}
                                                     </span>
                                                 </div>
@@ -432,7 +432,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                                     type="button"
                                                     disabled={isBusy}
                                                     onClick={() => handleManualMark(cand.rollNo)}
-                                                    className="press px-2 py-1 bg-amber-300 hover:bg-amber-400 border border-slate-900 text-slate-950 font-black text-[10px] uppercase shadow-[1px_1px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                                    className="press px-2 py-1 bg-amber-300 hover:bg-amber-400 border border-slate-900 text-slate-950 font-black text-[10px] uppercase shadow-brutal-1 cursor-pointer disabled:opacity-50"
                                                     title="Mark present manually if student phone has issue"
                                                 >
                                                     {isBusy ? 'Saving...' : 'Mark Present ✓'}

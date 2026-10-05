@@ -200,7 +200,7 @@ const AccordionGallery = ({
           <Tag
             key={i}
             ref={el => { panelRefs.current[i] = el; }}
-            className="press group relative block min-w-0 min-h-0 flex-[1_1_0] cursor-pointer overflow-hidden border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] hover:shadow-[8px_8px_0px_#0284c7] no-underline outline-none [transform-style:preserve-3d] [transform-origin:center] focus-visible:[box-shadow:0_0_0_2px_var(--ag-accent),0_10px_30px_-18px_rgba(0,0,0,0.8)] max-[640px]:min-h-[110px] max-[640px]:!transform-none transition-shadow"
+            className="press group relative block min-w-0 min-h-0 flex-[1_1_0] cursor-pointer overflow-hidden border-3 border-slate-900 shadow-brutal-6 hover:shadow-brutal-8-brand no-underline outline-none [transform-style:preserve-3d] [transform-origin:center] focus-visible:[box-shadow:0_0_0_2px_var(--ag-accent),0_10px_30px_-18px_rgba(0,0,0,0.8)] max-[640px]:min-h-[110px] max-[640px]:!transform-none transition-shadow"
             style={{ borderRadius: `${radius}px`, '--ag-accent': accentColor, willChange: 'flex-grow, transform' }}
             href={item.link && item.link !== '#' ? item.link : undefined}
             onClick={e => handleClick(i, e)}
@@ -223,6 +223,8 @@ const AccordionGallery = ({
                 }}
               >
                 <img
+                    loading="lazy"
+                    decoding="async"
                   src={apiUrl(item.image)}
                   alt={item.alt || item.label || ''}
                   draggable="false"

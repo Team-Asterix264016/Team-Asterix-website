@@ -135,7 +135,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
             <header
                 className={`hidden md:block fixed z-50 transition-all duration-300 ease-out select-none ${
                     isScrolled
-                        ? 'top-2.5 left-1/2 -translate-x-1/2 w-max max-w-[95vw] rounded-full border-2 border-slate-900 bg-white/90 backdrop-blur-md shadow-[3px_3px_0px_#0f172a] px-3.5 py-1'
+                        ? 'top-2.5 left-1/2 -translate-x-1/2 w-max max-w-[95vw] rounded-full border-2 border-slate-900 bg-white/90 backdrop-blur-md shadow-brutal-3 px-3.5 py-1'
                         : 'top-0 inset-x-0 w-full rounded-none border-b-4 border-slate-900 bg-white/95 backdrop-blur-md shadow-none px-4 sm:px-8 py-2.5'
                 }`}
             >
@@ -170,8 +170,8 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             }}
                                             className={`press flex items-center gap-1 border-slate-900 bg-white transition-colors ${
                                                 isScrolled
-                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-[2px_2px_0px_#0f172a]'
-                                                    : 'px-3 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[3px_3px_0px_#0f172a]'
+                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-brutal-2'
+                                                    : 'px-3 py-1.5 text-xs border-2 shadow-brutal-2 hover:bg-sky-100 hover:shadow-brutal-3'
                                             } ${shopOpen ? '!bg-sky-200' : ''}`}
                                         >
                                             <span>{isScrolled ? 'SUBSYSTEMS' : 'THE SUBSYSTEMS'}</span>
@@ -181,16 +181,16 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                         {/* Mega Dropdown Menu */}
                                         {shopOpen && (
                                             <div
-                                                className="absolute top-full left-0 mt-2.5 w-80 bg-white border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-xl p-4 z-50 anim-pop"
+                                                className="absolute top-full left-0 mt-2.5 w-80 bg-white border-3 border-slate-900 shadow-brutal-6 rounded-xl p-4 z-50 anim-pop"
                                                 onMouseLeave={() => setShopOpen(false)}
                                             >
                                                 <div className="flex items-center justify-between mb-2.5 border-b-2 border-slate-200 pb-1">
-                                                    <span className="text-[10px] font-mono text-sky-600 uppercase font-black">
+                                                    <span className="text-[10px] font-mono text-sky-700 uppercase font-black">
                                                         // SELECT SUBSYSTEM DECK
                                                     </span>
                                                     <button
                                                         onClick={() => setShopOpen(false)}
-                                                        className="press press-flat text-xs font-black text-slate-400 hover:text-slate-900 cursor-pointer"
+                                                        className="press press-flat text-xs font-black text-slate-500 hover:text-slate-900 cursor-pointer"
                                                     >
                                                         ✕
                                                     </button>
@@ -200,7 +200,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                         <button
                                                             key={s.id}
                                                             onClick={() => handleSubsystemClick(s.id)}
-                                                            className="press press-flat p-2 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-white transition-colors flex items-center justify-between font-bold text-xs cursor-pointer text-left"
+                                                            className="press press-flat p-2 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-slate-950 transition-colors flex items-center justify-between font-bold text-xs cursor-pointer text-left"
                                                         >
                                                             <span>{s.name}</span>
                                                             <span>→</span>
@@ -217,8 +217,8 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             onClick={onBackToHome}
                                             className={`press flex items-center gap-1 border-slate-900 bg-amber-300 text-slate-900 hover:bg-amber-400 font-bold ${
                                                 isScrolled
-                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border shadow-[2px_2px_0px_#0f172a]'
-                                                    : 'px-3 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a]'
+                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border shadow-brutal-2'
+                                                    : 'px-3 py-1.5 text-xs border-2 shadow-brutal-2'
                                             }`}
                                         >
                                             <span>← Home</span>
@@ -235,7 +235,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                     setShopOpen(false);
                                                     setContactOpen(false);
                                                 }}
-                                                className={`press flex items-center gap-1 border-slate-900 bg-white px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-[2px_2px_0px_#0f172a] ${
+                                                className={`press flex items-center gap-1 border-slate-900 bg-white px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-brutal-2 ${
                                                     mobileOpen ? '!bg-sky-200' : ''
                                                 }`}
                                             >
@@ -245,16 +245,16 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
 
                                             {mobileOpen && (
                                                 <div
-                                                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2.5 w-56 bg-white border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-xl p-3 z-50 anim-pop"
+                                                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2.5 w-56 bg-white border-3 border-slate-900 shadow-brutal-6 rounded-xl p-3 z-50 anim-pop"
                                                     onMouseLeave={() => setMobileOpen(false)}
                                                 >
                                                     <div className="flex items-center justify-between mb-2 border-b-2 border-slate-200 pb-1">
-                                                        <span className="text-[10px] font-mono text-sky-600 uppercase font-black">
+                                                        <span className="text-[10px] font-mono text-sky-700 uppercase font-black">
                                                             // SECTIONS
                                                         </span>
                                                         <button
                                                             onClick={() => setMobileOpen(false)}
-                                                            className="press press-flat text-xs font-black text-slate-400 hover:text-slate-900 cursor-pointer"
+                                                            className="press press-flat text-xs font-black text-slate-500 hover:text-slate-900 cursor-pointer"
                                                         >
                                                             ✕
                                                         </button>
@@ -265,7 +265,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                                 setMobileOpen(false);
                                                                 handleNavigate('#gallery');
                                                             }}
-                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-white transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
+                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-slate-950 transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
                                                         >
                                                             <span>Gallery</span>
                                                             <span>→</span>
@@ -275,7 +275,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                                 setMobileOpen(false);
                                                                 handleNavigate('#updates');
                                                             }}
-                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-white transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
+                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-slate-950 transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
                                                         >
                                                             <span>Updates</span>
                                                             <span>→</span>
@@ -285,7 +285,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                                 setMobileOpen(false);
                                                                 handleNavigate('#story');
                                                             }}
-                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-white transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
+                                                            className="p-1.5 border border-slate-900 rounded bg-sky-50 hover:bg-sky-500 hover:text-slate-950 transition-colors flex items-center justify-between font-bold text-xs text-left cursor-pointer"
                                                         >
                                                             <span>Our Story</span>
                                                             <span>→</span>
@@ -301,7 +301,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             <DockTextItem
                                                 mouseX={mouseX}
                                                 onClick={() => handleNavigate('#gallery')}
-                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[3px_3px_0px_#0f172a]"
+                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-brutal-2 hover:bg-sky-100 hover:shadow-brutal-3"
                                             >
                                                 <span>Gallery</span>
                                             </DockTextItem>
@@ -310,7 +310,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             <DockTextItem
                                                 mouseX={mouseX}
                                                 onClick={() => handleNavigate('#updates')}
-                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[3px_3px_0px_#0f172a]"
+                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-brutal-2 hover:bg-sky-100 hover:shadow-brutal-3"
                                             >
                                                 <span>Updates</span>
                                             </DockTextItem>
@@ -319,7 +319,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             <DockTextItem
                                                 mouseX={mouseX}
                                                 onClick={() => handleNavigate('#story')}
-                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[3px_3px_0px_#0f172a]"
+                                                className="px-3 py-1.5 text-xs border-2 border-slate-900 bg-white shadow-brutal-2 hover:bg-sky-100 hover:shadow-brutal-3"
                                             >
                                                 <span>Our Story</span>
                                             </DockTextItem>
@@ -337,8 +337,8 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                             }}
                                             className={`press flex items-center gap-1 border-slate-900 bg-white ${
                                                 isScrolled
-                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-[2px_2px_0px_#0f172a]'
-                                                    : 'px-3 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[3px_3px_0px_#0f172a]'
+                                                    ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:bg-sky-100 hover:shadow-brutal-2'
+                                                    : 'px-3 py-1.5 text-xs border-2 shadow-brutal-2 hover:bg-sky-100 hover:shadow-brutal-3'
                                             } ${contactOpen ? '!bg-sky-200' : ''}`}
                                         >
                                             <span>CONTACT</span>
@@ -348,16 +348,16 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                         {/* Contact Us Dropdown Pop-up Card */}
                                         {contactOpen && (
                                             <div
-                                                className="absolute top-full right-0 mt-2.5 w-72 bg-white border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-xl p-3.5 z-50 anim-pop"
+                                                className="absolute top-full right-0 mt-2.5 w-72 bg-white border-3 border-slate-900 shadow-brutal-6 rounded-xl p-3.5 z-50 anim-pop"
                                                 onMouseLeave={() => setContactOpen(false)}
                                             >
                                                 <div className="flex items-center justify-between mb-2.5 border-b-2 border-slate-200 pb-1">
-                                                    <span className="text-[10px] font-mono text-sky-600 uppercase font-black">
+                                                    <span className="text-[10px] font-mono text-sky-700 uppercase font-black">
                                                         // COMMS & SOCIALS
                                                     </span>
                                                     <button
                                                         onClick={() => setContactOpen(false)}
-                                                        className="press press-flat text-xs font-black text-slate-400 hover:text-slate-900 cursor-pointer"
+                                                        className="press press-flat text-xs font-black text-slate-500 hover:text-slate-900 cursor-pointer"
                                                     >
                                                         ✕
                                                     </button>
@@ -371,7 +371,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             onClick={() => setContactOpen(false)}
-                                                            className={`p-2 border border-slate-900 rounded bg-sky-50 ${item.color} transition-all flex items-center justify-between font-bold text-xs hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_#0f172a] cursor-pointer group`}
+                                                            className={`p-2 border border-slate-900 rounded bg-sky-50 ${item.color} transition-all flex items-center justify-between font-bold text-xs hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-brutal-3 cursor-pointer group`}
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 {item.icon}
@@ -392,14 +392,14 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                 <div className="mt-2.5 pt-2 border-t border-slate-200 flex flex-col gap-1.5">
                                                     <a
                                                         href={`tel:${(contact.phone || '+91 86089 44644').replace(/[^0-9+]/g, '')}`}
-                                                        className="text-[10px] font-mono font-bold text-slate-700 hover:text-sky-600 flex items-center gap-1.5"
+                                                        className="text-[10px] font-mono font-bold text-slate-700 hover:text-sky-700 flex items-center gap-1.5"
                                                     >
                                                         <span className="p-0.5 bg-sky-100 border border-slate-900 flex items-center justify-center w-4 h-4"><Icon name="phone" className="w-2.5 h-2.5" /></span>
                                                         <span>{contact.phone || '+91 86089 44644'}</span>
                                                     </a>
                                                     <a
                                                         href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
-                                                        className="text-[10px] font-mono font-bold text-slate-600 hover:text-sky-600 flex items-center gap-1.5"
+                                                        className="text-[10px] font-mono font-bold text-slate-600 hover:text-sky-700 flex items-center gap-1.5"
                                                     >
                                                         <span className="p-0.5 bg-sky-100 border border-slate-900 flex items-center justify-center w-4 h-4"><Icon name="mail" className="w-2.5 h-2.5" /></span>
                                                         <span className="truncate">{contact.email || 'asterix.psgitech@gmail.com'}</span>
@@ -415,8 +415,8 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                         onClick={() => onOpenWorkshop?.()}
                                         className={`border-slate-900 bg-amber-300 text-slate-900 hover:bg-amber-400 font-black flex items-center gap-1 cursor-pointer ${
                                             isScrolled
-                                                ? 'px-2.5 py-1 text-[11px] rounded-md border hover:shadow-[2px_2px_0px_#0f172a]'
-                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a]'
+                                                ? 'px-2.5 py-1 text-[11px] rounded-md border hover:shadow-brutal-2'
+                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-brutal-2 hover:shadow-brutal-3'
                                         }`}
                                     >
                                         <span>WORKSHOP</span>
@@ -436,8 +436,8 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                                 : 'bg-emerald-300 text-slate-900 hover:bg-emerald-400 font-black'
                                         } ${
                                             isScrolled
-                                                ? 'px-2.5 py-1 text-[11px] rounded-md border hover:shadow-[2px_2px_0px_#0f172a]'
-                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a]'
+                                                ? 'px-2.5 py-1 text-[11px] rounded-md border hover:shadow-brutal-2'
+                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-brutal-2 hover:shadow-brutal-3'
                                         }`}
                                     >
                                         <span>COMMUNITY</span>
@@ -454,12 +454,12 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                         }}
                                         className={`border-slate-900 cursor-pointer ${
                                             currentPage === 'sponsor'
-                                                ? 'bg-sky-600 text-white font-black shadow-[inset_2px_2px_0px_#000]'
-                                                : 'bg-sky-500 text-white hover:bg-sky-400'
+                                                ? 'bg-sky-600 text-slate-950 font-black shadow-[inset_2px_2px_0px_#000]'
+                                                : 'bg-sky-500 text-slate-950 hover:bg-sky-400'
                                         } ${
                                             isScrolled
-                                                ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:shadow-[2px_2px_0px_#0f172a]'
-                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a]'
+                                                ? 'px-2.5 py-1 text-[11px] rounded-md border font-bold hover:shadow-brutal-2'
+                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-brutal-2 hover:shadow-brutal-3'
                                         }`}
                                     >
                                         <span>Sponsor</span>
@@ -497,7 +497,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                     <button
                         type="button"
                         onClick={() => onOpenWorkshop?.()}
-                        className="press px-2 py-0.5 rounded border border-slate-900 bg-amber-300 text-[10px] font-black uppercase text-slate-900 shadow-[1px_1px_0px_#0f172a] cursor-pointer flex items-center gap-1"
+                        className="press px-2 py-0.5 rounded border border-slate-900 bg-amber-300 text-[10px] font-black uppercase text-slate-900 shadow-brutal-1 cursor-pointer flex items-center gap-1"
                     >
                         <span>Workshop</span>
                         <span className="text-[9px]">✦</span>
@@ -522,7 +522,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                 
                 {/* Mobile Slide-Up Cockpit Drawer */}
                 {mobileOpen && (
-                    <div className="w-full max-w-md bg-white border-3 border-slate-900 shadow-[6px_6px_0px_#0f172a] rounded-2xl p-4 mb-2 max-h-[75vh] overflow-y-auto pointer-events-auto anim-sheet-slide-up">
+                    <div className="w-full max-w-md bg-white border-3 border-slate-900 shadow-brutal-6 rounded-2xl p-4 mb-2 max-h-[75vh] overflow-y-auto pointer-events-auto anim-sheet-slide-up">
                         <div className="flex items-center justify-between pb-2 border-b-2 border-slate-900 mb-3">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-sky-500 animate-ping" />
@@ -545,7 +545,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     setMobileOpen(false);
                                     handleNavigate('#gallery');
                                 }}
-                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 Gallery
                             </button>
@@ -554,7 +554,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     setMobileOpen(false);
                                     handleNavigate('#updates');
                                 }}
-                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 Updates
                             </button>
@@ -563,7 +563,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     setMobileOpen(false);
                                     handleNavigate('#story');
                                 }}
-                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                className="p-2 border-2 border-slate-900 bg-sky-50 hover:bg-sky-200 text-center font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                             >
                                 Story
                             </button>
@@ -579,7 +579,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     <button
                                         key={s.id}
                                         onClick={() => handleSubsystemClick(s.id)}
-                                        className="p-2 border border-slate-900 bg-white hover:bg-sky-500 hover:text-white text-left font-bold text-[11px] truncate flex items-center justify-between cursor-pointer"
+                                        className="p-2 border border-slate-900 bg-white hover:bg-sky-500 hover:text-slate-950 text-left font-bold text-[11px] truncate flex items-center justify-between cursor-pointer"
                                     >
                                         <span className="truncate">{s.name}</span>
                                         <span className="text-[10px] ml-1">→</span>
@@ -643,7 +643,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     setMobileOpen(false);
                                     onOpenWorkshop?.();
                                 }}
-                                className="w-full p-2.5 bg-amber-300 text-slate-900 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0f172a] font-black text-xs uppercase cursor-pointer hover:bg-amber-400"
+                                className="w-full p-2.5 bg-amber-300 text-slate-900 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-brutal-2 font-black text-xs uppercase cursor-pointer hover:bg-amber-400"
                             >
                                 <span>Workshops 2026</span>
                                 <span>✦</span>
@@ -654,7 +654,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     if (onOpenCommunity) onOpenCommunity();
                                     else window.location.hash = '#community';
                                 }}
-                                className="w-full p-2.5 bg-emerald-300 text-slate-900 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0f172a] font-black text-xs uppercase cursor-pointer hover:bg-emerald-400"
+                                className="w-full p-2.5 bg-emerald-300 text-slate-900 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-brutal-2 font-black text-xs uppercase cursor-pointer hover:bg-emerald-400"
                             >
                                 <span>Community & Horizon</span>
                                 <span>💬</span>
@@ -665,7 +665,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                     if (onOpenSponsor) onOpenSponsor();
                                     else window.location.hash = '#sponsor';
                                 }}
-                                className="w-full p-2.5 bg-sky-500 text-white border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0f172a] font-black text-xs uppercase cursor-pointer hover:bg-sky-400"
+                                className="w-full p-2.5 bg-sky-500 text-slate-950 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-brutal-2 font-black text-xs uppercase cursor-pointer hover:bg-sky-400"
                             >
                                 <span>Sponsor Asterix Racing</span>
                                 <span>↗</span>
@@ -678,7 +678,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                 {/* Main Floating Bottom Cockpit Dock Bar */}
                 <nav
                     aria-label="Mobile Navigation Cockpit"
-                    className="pointer-events-auto w-full max-w-sm bg-white/95 backdrop-blur-md border-3 border-slate-900 rounded-2xl shadow-[4px_4px_0px_#0f172a] px-2.5 py-1.5 flex items-center justify-between gap-1.5"
+                    className="pointer-events-auto w-full max-w-sm bg-white/95 backdrop-blur-md border-3 border-slate-900 rounded-2xl shadow-brutal-4 px-2.5 py-1.5 flex items-center justify-between gap-1.5"
                 >
                     {/* Home / Logo Anchor */}
                     <button
@@ -709,7 +709,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                     <button
                         onClick={() => setMobileOpen(!mobileOpen)}
                         className={`press px-2.5 py-1.5 border-2 border-slate-900 rounded-lg text-xs font-black uppercase flex items-center gap-1.5 ${
-                            mobileOpen ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 shadow-[2px_2px_0px_#0f172a]'
+                            mobileOpen ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 shadow-brutal-2'
                         }`}
                         aria-expanded={mobileOpen}
                         aria-label="Toggle navigation HUD menu"
@@ -724,7 +724,7 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                             if (onOpenSponsor) onOpenSponsor();
                             else window.location.hash = '#sponsor';
                         }}
-                        className="press px-2.5 py-1.5 border-2 border-slate-900 bg-sky-500 text-white rounded-lg text-xs font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-0.5"
+                        className="press px-2.5 py-1.5 border-2 border-slate-900 bg-sky-500 text-slate-950 rounded-lg text-xs font-black uppercase shadow-brutal-2 cursor-pointer flex items-center gap-0.5"
                     >
                         <span>SPONSOR</span>
                         <span className="text-[10px]">↗</span>

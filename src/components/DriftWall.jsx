@@ -279,13 +279,13 @@ const DriftWall = ({
     'rounded-[var(--dw-radius)] opacity-[var(--dw-dim)] [transform:translateZ(0)]',
     'transition-[transform,opacity,box-shadow,border-color] duration-[350ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
     'group-[.is-active]/tile:opacity-100 group-[.is-active]/tile:[transform:translateZ(var(--dw-lift))]',
-    'group-[.is-active]/tile:border-slate-900 group-[.is-active]/tile:shadow-[8px_8px_0px_#0284c7]',
+    'group-[.is-active]/tile:border-slate-900 group-[.is-active]/tile:shadow-brutal-8-brand',
     // Clicking a tile pushes it back down toward the wall, so a click on an
     // already-lifted tile still reads as a press.
-    'group-active/tile:[transform:translateZ(calc(var(--dw-lift)*0.4))] group-active/tile:shadow-[2px_2px_0px_#0284c7]',
+    'group-active/tile:[transform:translateZ(calc(var(--dw-lift)*0.4))] group-active/tile:shadow-brutal-2-brand',
     'group-active/tile:duration-[120ms]',
     'group-focus-visible/tile:opacity-100 group-focus-visible/tile:[transform:translateZ(var(--dw-lift))]',
-    'group-focus-visible/tile:border-slate-900 group-focus-visible/tile:shadow-[8px_8px_0px_#0284c7]'
+    'group-focus-visible/tile:border-slate-900 group-focus-visible/tile:shadow-brutal-8-brand'
   );
   const imgClass = cx(
     'block h-full w-full select-none object-cover',

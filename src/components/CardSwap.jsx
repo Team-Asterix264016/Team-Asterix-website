@@ -5,7 +5,7 @@ export const Card = forwardRef(({ customClass, ...rest }, ref) => (
   <div
     ref={ref}
     {...rest}
-    className={`absolute top-1/2 left-1/2 rounded-2xl border-3 border-slate-900 bg-white [transform-style:preserve-3d] [will-change:transform] [backface-visibility:hidden] shadow-[8px_8px_0px_#0f172a] ${customClass ?? ''} ${rest.className ?? ''}`.trim()}
+    className={`absolute top-1/2 left-1/2 rounded-2xl border-3 border-slate-900 bg-white [transform-style:preserve-3d] [will-change:transform] [backface-visibility:hidden] shadow-brutal-8 ${customClass ?? ''} ${rest.className ?? ''}`.trim()}
   />
 ));
 Card.displayName = 'Card';
@@ -213,7 +213,7 @@ const CardSwap = ({
       ? cloneElement(child, {
           key: child.key,
           ref: refs[i],
-          style: { width, height, ...(child.props.style ?? {}) },
+          style: { width, height, ...child.props.style },
           onClick: e => {
             child.props.onClick?.(e);
             onCardClick?.(i);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ModelViewer from './ModelViewer';
 
-export default function BajaModelPage({ onBack }) {
+export default function BajaModelPage() {
     useEffect(() => {
         window.scrollTo(0, 0);
         if (window.lenis) {
@@ -34,7 +34,7 @@ export default function BajaModelPage({ onBack }) {
             <main className="relative flex-1 w-full min-h-[calc(100vh-140px)] flex flex-col items-center justify-center p-2 sm:p-6 overflow-hidden">
 
                 {/* 3D ModelViewer Canvas */}
-                <div className="relative w-full max-w-6xl h-[65vh] sm:h-[72vh] bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] overflow-hidden">
+                <div className="relative w-full max-w-6xl h-[65vh] sm:h-[72vh] bg-white border-4 border-slate-900 shadow-brutal-10 overflow-hidden">
 
                     <ModelViewer
                         url="/assembly_file_for_abaja.glb"
@@ -64,14 +64,14 @@ export default function BajaModelPage({ onBack }) {
                         {/* Auto-Rotation Toggle */}
                         <button
                             onClick={() => setAutoRotate(prev => !prev)}
-                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-[11px] uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer ${autoRotate ? 'bg-sky-500 text-white' : 'bg-white text-slate-900 hover:bg-sky-100'
+                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-[11px] uppercase shadow-brutal-2 cursor-pointer ${autoRotate ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900 hover:bg-sky-100'
                                 }`}
                         >
                             <span>Auto-Rotate: {autoRotate ? 'ON' : 'OFF'}</span>
                         </button>
 
                         {/* Environment Preset Picker */}
-                        <div className="hidden sm:flex items-center gap-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-1">
+                        <div className="hidden sm:flex items-center gap-1 bg-white border-2 border-slate-900 shadow-brutal-2 p-1">
                             <span className="text-[10px] font-mono font-black text-slate-500 px-1.5 uppercase">LIGHTING:</span>
                             {presets.map(p => (
                                 <button
@@ -89,8 +89,8 @@ export default function BajaModelPage({ onBack }) {
                     </div>
 
                     {/* Top Left Interaction Helper */}
-                    <div className="absolute top-4 left-4 z-20 hidden sm:block bg-white/90 backdrop-blur-sm border-2 border-slate-900 p-2.5 shadow-[3px_3px_0px_#0f172a]">
-                        <span className="text-[10px] font-mono font-black text-sky-600 block mb-1 uppercase">
+                    <div className="absolute top-4 left-4 z-20 hidden sm:block bg-white/90 backdrop-blur-sm border-2 border-slate-900 p-2.5 shadow-brutal-3">
+                        <span className="text-[10px] font-mono font-black text-sky-700 block mb-1 uppercase">
                             // CONTROLS
                         </span>
                         <div className="text-[11px] font-mono font-bold text-slate-700 space-y-0.5">
@@ -107,9 +107,9 @@ export default function BajaModelPage({ onBack }) {
                     {carSpecs.map((spec, i) => (
                         <div
                             key={i}
-                            className="p-3 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex flex-col justify-between"
+                            className="p-3 bg-white border-2 border-slate-900 shadow-brutal-3 flex flex-col justify-between"
                         >
-                            <span className="text-[9px] font-mono font-black text-sky-600 uppercase tracking-wider block">
+                            <span className="text-[9px] font-mono font-black text-sky-700 uppercase tracking-wider block">
                                 {spec.label}
                             </span>
                             <span className="text-xs font-bold text-slate-800 mt-1 leading-snug">

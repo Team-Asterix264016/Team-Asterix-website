@@ -392,7 +392,7 @@ export default function ScrollStack({
         {(showProgress || showCounter) && total > 1 && (
           <div className="pointer-events-none mt-6 sm:mt-8 flex items-center justify-center gap-4 px-6 select-none">
             {showProgress && (
-              <span className="relative h-2 w-32 sm:w-52 overflow-hidden bg-slate-200 border-2 border-slate-900 rounded-full shadow-[2px_2px_0px_#0f172a]">
+              <span className="relative h-2 w-32 sm:w-52 overflow-hidden bg-slate-200 border-2 border-slate-900 rounded-full shadow-brutal-2">
                 <span
                   ref={progressRailRef}
                   className="absolute inset-0 origin-left bg-sky-500 rounded-full transition-transform"
@@ -401,7 +401,7 @@ export default function ScrollStack({
               </span>
             )}
             {showCounter && (
-              <span className="px-3 py-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] rounded-md text-xs font-mono font-black text-slate-900 tracking-wider">
+              <span className="px-3 py-1 bg-white border-2 border-slate-900 shadow-brutal-2 rounded-md text-xs font-mono font-black text-slate-900 tracking-wider">
                 {String(activeIndex + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
               </span>
             )}

@@ -11,8 +11,6 @@ import {
     WORKSHOP_DEPARTMENTS,
     SOFTWARE_MAX_SEATS,
     POWERTRAIN_MAX_SEATS,
-    SOFTWARE_REOPEN_TIME,
-    SOFTWARE_CLOSE_DEADLINE,
     getSoftwareRegistrationState,
     isPriced
 } from '../../server/src/config/workshopPackages.js';
@@ -46,7 +44,7 @@ const FIELD_LABELS = {
 /* text-base (16px) on phones: anything smaller makes iOS Safari zoom the page
    in when a field is tapped, which then has to be pinched back out. */
 function inputClass(hasError) {
-    return `w-full min-h-12 px-3 py-3 border-2 font-mono text-base font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 sm:text-sm ${hasError ? 'border-red-600 bg-red-50' : 'border-slate-950 bg-slate-50'
+    return `w-full min-h-12 px-3 py-3 border-2 font-mono text-base font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500 sm:text-sm ${hasError ? 'border-red-600 bg-red-50' : 'border-slate-950 bg-slate-50'
         }`;
 }
 
@@ -58,7 +56,6 @@ function normalizePhone(phone) {
 }
 
 // Shown on the page as the deadline.
-const REGISTRATION_CLOSES = 'Tuesday, 6 October 2026 at 11:59 PM (or when remaining seats are filled)';
 
 function formatAmount(amount) {
     if (typeof amount !== 'number') return 'TBD';
@@ -394,7 +391,7 @@ export default function WorkshopPage({ onBack }) {
     const dynamicTracks = siteData?.workshop?.tracks || {};
     const track = {
         ...WORKSHOP_TRACKS[activeTrack],
-        ...(dynamicTracks[activeTrack] || {})
+        ...dynamicTracks[activeTrack]
     };
     const selectedPkg = WORKSHOP_PACKAGES.find(p => p.id === form.package) || null;
     const anyPriced = WORKSHOP_PACKAGES.some(isPriced);
@@ -734,11 +731,11 @@ export default function WorkshopPage({ onBack }) {
             <header className="sticky top-0 z-50 border-b-4 border-slate-900 bg-white/95 px-4 py-3.5 shadow-[0_4px_0px_#0f172a] backdrop-blur-md sm:px-8">
                 <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
                     <div>
-                        <span className="font-mono text-xs font-black uppercase tracking-widest text-sky-600">Team Asterix</span>
+                        <span className="font-mono text-xs font-black uppercase tracking-widest text-sky-700">Team Asterix</span>
                         <strong className="block text-sm font-black uppercase">Workshops 2026</strong>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                        <button type="button" onClick={onBack} className="press border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-400 sm:px-4">
+                        <button type="button" onClick={onBack} className="press border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-xs font-black uppercase shadow-brutal-3 hover:bg-amber-400 sm:px-4">
                             ← Main<span className="hidden sm:inline"> Website</span>
                         </button>
                         {/* Prominent Upgrade to Combo Button in Header */}
@@ -747,7 +744,7 @@ export default function WorkshopPage({ onBack }) {
                             onClick={() => setUpgradeModalOpen(true)}
                             aria-haspopup="dialog"
                             aria-label="Upgrade to Dual-Track Combo"
-                            className="press inline-flex items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-2.5 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-[3px_3px_0px_#0284c7] hover:bg-amber-300 sm:px-3.5 cursor-pointer"
+                            className="press inline-flex items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-2.5 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-3-brand hover:bg-amber-300 sm:px-3.5 cursor-pointer"
                         >
                             <span className="text-amber-950">★</span>
                             <span className="sm:hidden">{softwareSeats.isPaused ? 'Upgrade ⏸' : 'Upgrade ₹750'}</span>
@@ -759,7 +756,7 @@ export default function WorkshopPage({ onBack }) {
                             onClick={() => setLookupOpen(true)}
                             aria-haspopup="dialog"
                             aria-label="Check registration"
-                            className="press inline-flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-2.5 py-2 font-mono text-xs font-black uppercase text-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-emerald-300 sm:px-4"
+                            className="press inline-flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-2.5 py-2 font-mono text-xs font-black uppercase text-slate-900 shadow-brutal-3 hover:bg-emerald-300 sm:px-4"
                         >
                             <svg className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -794,7 +791,7 @@ export default function WorkshopPage({ onBack }) {
 
                         {/* Prominent Bank Maintenance Notice */}
                         {softwareSeats.isPaused && (
-                            <div className="mt-8 border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_#0f172a] sm:p-6">
+                            <div className="mt-8 border-4 border-slate-900 bg-white p-5 shadow-brutal-6 sm:p-6">
                                 <div className="flex items-center gap-2 flex-wrap mb-2">
                                     <span className="border-2 border-slate-900 bg-rose-500 text-white px-2.5 py-0.5 font-mono text-[11px] font-black uppercase">
                                         ⏸ Registrations Temporarily Paused
@@ -820,22 +817,22 @@ export default function WorkshopPage({ onBack }) {
                             <button
                                 type="button"
                                 onClick={() => openRegister()}
-                                className="press border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800"
+                                className="press border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-4-brand hover:bg-slate-800"
                             >
                                 {softwareSeats.isPaused ? '⏸ Registration Paused · Reopens Mon 6 AM' : 'Register now →'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setUpgradeModalOpen(true)}
-                                className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 flex items-center gap-1.5 cursor-pointer"
+                                className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-4 hover:bg-amber-300 flex items-center gap-1.5 cursor-pointer"
                             >
                                 <span>{softwareSeats.isPaused ? '⏸ Upgrade to Combo (Reopens Mon 6 AM)' : '★ Already in Powertrain? Upgrade for ₹750'}</span>
                                 <span>→</span>
                             </button>
-                            <button type="button" onClick={() => scrollToEl(detailRef.current)} className="press border-2 border-slate-900 bg-white px-5 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] hover:bg-sky-100">
+                            <button type="button" onClick={() => scrollToEl(detailRef.current)} className="press border-2 border-slate-900 bg-white px-5 py-3 font-mono text-xs font-black uppercase shadow-brutal-4 hover:bg-sky-100">
                                 Explore the tracks ↓
                             </button>
-                            <a href="#workshop-project-submit" className="press inline-flex items-center border-2 border-slate-900 bg-emerald-300 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-emerald-400 no-underline">
+                            <a href="#workshop-project-submit" className="press inline-flex items-center border-2 border-slate-900 bg-emerald-300 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-4 hover:bg-emerald-400 no-underline">
                                 Submit workshop project →
                             </a>
                         </div>
@@ -864,16 +861,16 @@ export default function WorkshopPage({ onBack }) {
                                         aria-selected={active}
                                         onClick={() => selectTrack(id)}
                                         className={`press group cursor-pointer border-3 sm:border-4 border-slate-900 p-3.5 sm:p-6 text-left transition-all ${active
-                                            ? 'bg-slate-900 text-white shadow-[6px_6px_0px_#0284c7]'
-                                            : 'bg-white text-slate-900 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-100 hover:shadow-[6px_6px_0px_#0f172a]'
+                                            ? 'bg-slate-900 text-white shadow-brutal-6-brand'
+                                            : 'bg-white text-slate-900 shadow-brutal-4 hover:bg-amber-100 hover:shadow-brutal-6'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between gap-1">
-                                            <span className={`inline-flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black uppercase tracking-wider ${active ? 'text-amber-300' : 'text-sky-600 group-hover:text-sky-700'
+                                            <span className={`inline-flex items-center gap-1 font-mono text-[10px] sm:text-xs font-black uppercase tracking-wider ${active ? 'text-amber-300' : 'text-sky-700 group-hover:text-sky-700'
                                                 }`}>
                                             <span>{active ? '● Selected' : '○ View Track'}</span>
                                             </span>
-                                            <span className={`font-mono text-xs font-black ${active ? 'text-amber-300' : 'text-slate-400 group-hover:text-slate-900'
+                                            <span className={`font-mono text-xs font-black ${active ? 'text-amber-300' : 'text-slate-500 group-hover:text-slate-900'
                                                 }`}>
                                                 {active ? '✓' : '↘'}
                                             </span>
@@ -888,8 +885,8 @@ export default function WorkshopPage({ onBack }) {
                                                     badgeInfo.isSoldOut
                                                         ? 'bg-rose-500 text-white'
                                                         : badgeInfo.isPaused
-                                                            ? 'bg-amber-300 text-slate-950 shadow-[2px_2px_0px_#0f172a]'
-                                                            : 'bg-amber-400 text-slate-950 shadow-[2px_2px_0px_#0f172a]'
+                                                            ? 'bg-amber-300 text-slate-950 shadow-brutal-2'
+                                                            : 'bg-amber-400 text-slate-950 shadow-brutal-2'
                                                 }`}>
                                                     <span>{badgeInfo.isSoldOut ? '✕' : badgeInfo.isPaused ? '⏸' : '⚡'}</span>
                                                     <span>{badgeInfo.text}</span>
@@ -916,7 +913,7 @@ export default function WorkshopPage({ onBack }) {
                         />
 
                         {/* Flexible Upgrade Anytime Banner on Home Page */}
-                        <div className="mt-8 border-4 border-slate-900 bg-amber-300 p-5 shadow-[6px_6px_0px_#0f172a] sm:p-6">
+                        <div className="mt-8 border-4 border-slate-900 bg-amber-300 p-5 shadow-brutal-6 sm:p-6">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -940,7 +937,7 @@ export default function WorkshopPage({ onBack }) {
                                 <button
                                     type="button"
                                     onClick={() => setUpgradeModalOpen(true)}
-                                    className="press shrink-0 border-2 border-slate-900 bg-slate-900 text-amber-300 hover:bg-slate-800 px-6 py-3.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0284c7] cursor-pointer"
+                                    className="press shrink-0 border-2 border-slate-900 bg-slate-900 text-amber-300 hover:bg-slate-800 px-6 py-3.5 font-mono text-xs font-black uppercase shadow-brutal-3-brand cursor-pointer"
                                 >
                                     {softwareSeats.isPaused ? "⏸ Upgrades Reopen Mon 6 AM" : "Upgrade to Combo for ₹750 ★"}
                                 </button>
@@ -963,43 +960,43 @@ export default function WorkshopPage({ onBack }) {
                         </p>
 
                         <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-3.5">
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">01 / RESOURCES</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">01 / RESOURCES</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Handbooks &amp; guides</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Physical &amp; digital comprehensive manuals, schematics and code references.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">02 / PRACTICE</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">02 / PRACTICE</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Hands-on learning</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Direct hardware labs, vehicle testing and interactive debugging sessions.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">03 / BUILD</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">03 / BUILD</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Mini-projects</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">End-to-end milestone projects designed to build practical engineering confidence.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">04 / CAREER</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">04 / CAREER</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Build and strengthen your resume</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Stand out with verified, hands-on project experience on real autonomous stacks and powertrain electronics.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">05 / CURRICULUM</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">05 / CURRICULUM</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Industry approved syllabus</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Sessions handled by Team Asterix engineers and industry experts.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">06 / BONUS</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">06 / BONUS</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">3 complimentary sessions</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Free cross-track masterclasses: Perception, Embedded Systems &amp; Mechanical Fundamentals.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">07 / VEHICLE</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">07 / VEHICLE</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Real autonomous-vehicle context</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Taught directly on the systems powering our full-scale autonomous vehicle platform.</p>
                             </div>
-                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a]">
-                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-600">08 / SKILLS</span>
+                            <div className="border-2 sm:border-3 border-slate-900 bg-white p-3.5 sm:p-4 shadow-brutal-3 sm:shadow-brutal-4">
+                                <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-sky-700">08 / SKILLS</span>
                                 <h3 className="mt-1 text-sm sm:text-base font-black uppercase leading-snug">Future ready minds</h3>
                                 <p className="mt-1 text-xs font-bold leading-relaxed text-slate-600">Master ROS, Computer Vision, Agentic AI, circuits, and PCB design.</p>
                             </div>
@@ -1022,7 +1019,7 @@ export default function WorkshopPage({ onBack }) {
 
                         <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
                             {/* Ratheeswar */}
-                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-brutal-4 flex flex-col justify-between">
                                 <div>
                                     <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
                                         Software Lead
@@ -1033,7 +1030,7 @@ export default function WorkshopPage({ onBack }) {
                                 <div className="mt-4 pt-3 border-t-2 border-slate-200">
                                     <a
                                         href="tel:8608944644"
-                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
+                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-2-bright hover:bg-slate-800"
                                     >
                                         <span>+91 8608944644</span>
                                         <span className="text-[10px] text-white font-mono">Call →</span>
@@ -1042,7 +1039,7 @@ export default function WorkshopPage({ onBack }) {
                             </div>
 
                             {/* Arya A */}
-                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-brutal-4 flex flex-col justify-between">
                                 <div>
                                     <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
                                         Software Lead
@@ -1053,7 +1050,7 @@ export default function WorkshopPage({ onBack }) {
                                 <div className="mt-4 pt-3 border-t-2 border-slate-200">
                                     <a
                                         href="tel:9994399419" 
-                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
+                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-2-bright hover:bg-slate-800"
                                     >
                                         <span>+91 99943 99419</span>
                                         <span className="text-[10px] text-white font-mono">Call →</span>
@@ -1062,7 +1059,7 @@ export default function WorkshopPage({ onBack }) {
                             </div>
 
                             {/* Joel Anto Edwin */}
-                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                            <div className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-brutal-4 flex flex-col justify-between">
                                 <div>
                                     <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 inline-block mb-2">
                                         Powertrain Lead
@@ -1073,7 +1070,7 @@ export default function WorkshopPage({ onBack }) {
                                 <div className="mt-4 pt-3 border-t-2 border-slate-200">
                                     <a
                                         href="tel:7207960077"
-                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0ea5e9] hover:bg-slate-800"
+                                        className="press flex items-center justify-between border-2 border-slate-900 bg-slate-900 px-3.5 py-2.5 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-2-bright hover:bg-slate-800"
                                     >
                                         <span>+91 72079 60077</span>
                                         <span className="text-[10px] text-white font-mono">Call →</span>
@@ -1100,7 +1097,7 @@ export default function WorkshopPage({ onBack }) {
                                 type="button"
                                 onClick={() => setUpgradeModalOpen(true)}
                                 aria-haspopup="dialog"
-                                className="press border-3 border-amber-400 bg-amber-400 px-6 py-4 text-base sm:text-lg font-black uppercase tracking-wide text-slate-950 shadow-[5px_5px_0px_#0284c7] hover:bg-amber-300 cursor-pointer"
+                                className="press border-3 border-amber-400 bg-amber-400 px-6 py-4 text-base sm:text-lg font-black uppercase tracking-wide text-slate-950 shadow-brutal-5-brand hover:bg-amber-300 cursor-pointer"
                             >
                                 {softwareSeats.isPaused ? '⏸ Upgrades Reopen Mon 6 AM' : '★ Upgrade to Combo (₹750)'}
                             </button>
@@ -1108,7 +1105,7 @@ export default function WorkshopPage({ onBack }) {
                                 type="button"
                                 onClick={openRegister}
                                 aria-haspopup="dialog"
-                                className="press press-sky border-4 border-white bg-white px-8 py-4 text-lg font-black uppercase tracking-wide text-slate-900 shadow-[6px_6px_0px_#0ea5e9] hover:bg-amber-300"
+                                className="press press-sky border-4 border-white bg-white px-8 py-4 text-lg font-black uppercase tracking-wide text-slate-900 shadow-brutal-6-bright hover:bg-amber-300"
                             >
                                 {softwareSeats.isPaused ? 'Registration Paused ⏸' : 'Register ✦'}
                             </button>
@@ -1170,7 +1167,7 @@ export default function WorkshopPage({ onBack }) {
                                                     className={`press flex min-h-14 items-center justify-between gap-3 border-2 p-3.5 ${
                                                         isOptionDisabled
                                                             ? 'opacity-60 bg-slate-100 border-slate-300 cursor-not-allowed'
-                                                            : 'cursor-pointer ' + (fieldErrors.package ? 'border-red-600' : 'border-slate-950') + ' ' + (selected ? 'bg-amber-300 shadow-[4px_4px_0px_#0f172a]' : 'bg-slate-50 hover:bg-amber-50')
+                                                            : 'cursor-pointer ' + (fieldErrors.package ? 'border-red-600' : 'border-slate-950') + ' ' + (selected ? 'bg-amber-300 shadow-brutal-4' : 'bg-slate-50 hover:bg-amber-50')
                                                     }`}
                                                 >
                                                     <span className="flex min-w-0 items-center gap-3">
@@ -1258,7 +1255,7 @@ export default function WorkshopPage({ onBack }) {
                                                     aria-pressed={form.year === y}
                                                     data-field={y === '1' ? 'year' : undefined}
                                                     className={`press min-h-12 border-2 p-3 font-mono text-sm font-black uppercase ${fieldErrors.year ? 'border-red-600' : 'border-slate-950'
-                                                        } ${form.year === y ? 'bg-sky-500 text-white' : fieldErrors.year ? 'bg-red-50 hover:bg-sky-100' : 'bg-slate-50 hover:bg-sky-100'
+                                                        } ${form.year === y ? 'bg-sky-500 text-slate-950' : fieldErrors.year ? 'bg-red-50 hover:bg-sky-100' : 'bg-slate-50 hover:bg-sky-100'
                                                         }`}
                                                 >
                                                     {y === '1' ? '1st year' : '2nd year'}
@@ -1298,7 +1295,7 @@ export default function WorkshopPage({ onBack }) {
                                     className={`press min-h-12 w-full border-2 border-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase ${
                                         softwareSeats.isPaused
                                             ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
-                                            : 'bg-slate-900 text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800'
+                                            : 'bg-slate-900 text-amber-300 shadow-brutal-4-brand hover:bg-slate-800'
                                     }`}
                                 >
                                     {softwareSeats.isPaused ? '⏸ Registrations Reopen Monday 6:00 AM' : 'Review & continue →'}
@@ -1335,7 +1332,7 @@ export default function WorkshopPage({ onBack }) {
     );
 }
 
-function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpenUpgrade, onPreviewSyllabus }) {
+function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpenUpgrade }) {
     const isSoftware = track.id === 'software';
     const isPowertrain = track.id === 'powertrain';
     const otherTrackName = isSoftware ? 'Powertrain' : 'Software';
@@ -1372,7 +1369,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
         : track.syllabus;
 
     return (
-        <article className="mt-8 border-4 border-slate-900 bg-white p-5 shadow-[8px_8px_0px_#0f172a] sm:p-8 anim-pop" role="tabpanel">
+        <article className="mt-8 border-4 border-slate-900 bg-white p-5 shadow-brutal-8 sm:p-8 anim-pop" role="tabpanel">
             <h3 className="text-2xl font-black uppercase sm:text-4xl">{track.name}</h3>
             {track.tagline && (
                 <p className="mt-2 text-base font-bold text-sky-700 sm:text-lg">{track.tagline}</p>
@@ -1381,7 +1378,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
             {/* Prominent seat limit display */}
             {badgeInfo && (
                 <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-                    <span className={`inline-flex items-center gap-1.5 border-2 border-slate-900 px-3.5 py-1.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
+                    <span className={`inline-flex items-center gap-1.5 border-2 border-slate-900 px-3.5 py-1.5 font-mono text-xs font-black uppercase shadow-brutal-3 ${
                         badgeInfo.isSoldOut
                             ? 'bg-rose-500 text-white'
                             : badgeInfo.isPaused
@@ -1396,7 +1393,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
 
             {/* When Software is paused for technical issue */}
             {isSoftware && softwareSeats?.isPaused && (
-                <div className="mt-5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] space-y-2.5">
+                <div className="mt-5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5 shadow-brutal-4 space-y-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="border-2 border-slate-900 bg-rose-500 text-white px-2 py-0.5 font-mono text-[11px] font-black uppercase">
                             ⏸ Registrations Temporarily Paused
@@ -1419,7 +1416,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
 
             {/* When Powertrain is full: display prominent notice that only Software is available, encourage registering for Software, and stay tuned note */}
             {isPowertrain && powertrainSeats?.soldOut && (
-                <div className="mt-5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] space-y-2.5">
+                <div className="mt-5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5 shadow-brutal-4 space-y-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
                         <span className="border-2 border-slate-900 bg-rose-500 text-white px-2 py-0.5 font-mono text-[11px] font-black uppercase">
                             ✕ Powertrain Track Sold Out
@@ -1441,14 +1438,14 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                         <button
                             type="button"
                             onClick={() => onRegister('software')}
-                            className="press border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black uppercase text-amber-300 shadow-[3px_3px_0px_#0284c7] hover:bg-slate-800 cursor-pointer"
+                            className="press border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-3-brand hover:bg-slate-800 cursor-pointer"
                         >
                             View Software Track →
                         </button>
                         <button
                             type="button"
                             onClick={onOpenUpgrade}
-                            className="press border-2 border-slate-900 bg-amber-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-[3px_3px_0px_#0f172a] hover:bg-amber-300 cursor-pointer"
+                            className="press border-2 border-slate-900 bg-amber-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-3 hover:bg-amber-300 cursor-pointer"
                         >
                             <span>{softwareSeats?.isPaused ? '⏸ Upgrade Paused · Reopens Mon 6 AM' : '★ Already in Powertrain? Upgrade to Combo (₹750)'}</span>
                         </button>
@@ -1458,7 +1455,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
 
             <p className="mt-2 max-w-3xl text-sm font-bold leading-relaxed text-slate-600 sm:text-base">{track.overview}</p>
             {track.highlight && (
-                <p className="mt-4 inline-block border-2 border-slate-900 bg-green-400 px-3 py-1.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a]">
+                <p className="mt-4 inline-block border-2 border-slate-900 bg-green-400 px-3 py-1.5 font-mono text-xs font-black uppercase shadow-brutal-3">
                     ⏱ {track.highlight}
                 </p>
             )}
@@ -1473,7 +1470,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
             </dl>
             <p className="mt-3 font-mono text-xs font-bold text-slate-600">{track.audience}</p>
 
-            <h4 className="mt-6 font-mono text-xs font-black uppercase tracking-widest text-sky-600">What you will learn</h4>
+            <h4 className="mt-6 font-mono text-xs font-black uppercase tracking-widest text-sky-700">What you will learn</h4>
             <p className="mt-2 text-sm font-bold leading-relaxed text-slate-700">
                 {track.topics.map(topic => topic.title).join(' · ')}.
             </p>
@@ -1481,7 +1478,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
 
             {/* Simplified Curriculum Document Card: title alone, one download button, no description */}
             {hasSyllabus && (
-                <div className="mt-6 border-3 border-slate-900 bg-sky-50 p-3.5 sm:p-4 shadow-[4px_4px_0px_#0f172a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="mt-6 border-3 border-slate-900 bg-sky-50 p-3.5 sm:p-4 shadow-brutal-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <h4 className="text-sm sm:text-base font-black uppercase text-slate-900">
                         {track.name} Syllabus &amp; Weekly Plan
                     </h4>
@@ -1490,7 +1487,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                         target="_blank"
                         rel="noopener noreferrer"
                         download={`${track.id}_syllabus.pdf`}
-                        className="press border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black uppercase text-amber-300 shadow-[2px_2px_0px_#0284c7] hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 no-underline cursor-pointer shrink-0"
+                        className="press border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black uppercase text-amber-300 shadow-brutal-2-brand hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 no-underline cursor-pointer shrink-0"
                     >
                         <span>Download Syllabus</span>
                         <span>↓</span>
@@ -1499,8 +1496,8 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
             )}
 
             {/* Handbook & guided resources note */}
-            <div className="mt-5 inline-flex items-center gap-2 border-2 border-slate-900 bg-sky-50 px-3.5 py-2 font-mono text-xs font-black uppercase text-slate-900 shadow-[2px_2px_0px_#0f172a]">
-                <span className="text-sky-600">✦</span>
+            <div className="mt-5 inline-flex items-center gap-2 border-2 border-slate-900 bg-sky-50 px-3.5 py-2 font-mono text-xs font-black uppercase text-slate-900 shadow-brutal-2">
+                <span className="text-sky-700">✦</span>
                 <span>Handbook + guided resources included.</span>
             </div>
 
@@ -1534,7 +1531,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                             <button
                                 type="button"
                                 onClick={onOpenUpgrade}
-                                className="press shrink-0 border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                                className="press shrink-0 border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-brutal-3 cursor-pointer"
                             >
                                 {softwareSeats?.isPaused ? '⏸ Upgrades Reopen Mon 6 AM' : '★ Upgrade to Combo (₹750)'}
                             </button>
@@ -1542,7 +1539,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                                 type="button"
                                 onClick={() => onRegister('combo')}
                                 disabled={comboSeats.soldOut}
-                                className={`press shrink-0 border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
+                                className={`press shrink-0 border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-brutal-3 ${
                                     comboSeats.soldOut
                                         ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                                         : 'bg-amber-300 text-slate-900 hover:bg-amber-400 cursor-pointer'
@@ -1560,7 +1557,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                     type="button"
                     onClick={() => onRegister(track.id)}
                     disabled={badgeInfo?.isSoldOut || trackSeats?.isPaused}
-                    className={`press border-2 border-slate-900 px-5 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] ${
+                    className={`press border-2 border-slate-900 px-5 py-3 font-mono text-xs font-black uppercase shadow-brutal-4 ${
                         badgeInfo?.isSoldOut || trackSeats?.isPaused
                             ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
                             : 'bg-amber-300 hover:bg-amber-400 cursor-pointer text-slate-900'
@@ -1572,7 +1569,7 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
                     <button
                         type="button"
                         onClick={onOpenUpgrade}
-                        className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 cursor-pointer flex items-center gap-1.5"
+                        className="press border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-4 hover:bg-amber-300 cursor-pointer flex items-center gap-1.5"
                     >
                         <span>{softwareSeats?.isPaused ? '⏸ Upgrade Paused · Reopens Mon 6 AM' : '★ Upgrade to Combo (₹750)'}</span>
                     </button>
@@ -1604,7 +1601,7 @@ function SyllabusPreviewModal({ url, trackName, onClose }) {
             aria-label={`${trackName} Syllabus PDF Preview`}
         >
             <div
-                className="anim-pop-center flex h-[94dvh] w-full max-w-5xl flex-col border-4 border-slate-900 bg-white shadow-[8px_8px_0px_#0f172a]"
+                className="anim-pop-center flex h-[94dvh] w-full max-w-5xl flex-col border-4 border-slate-900 bg-white shadow-brutal-8"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -1622,7 +1619,7 @@ function SyllabusPreviewModal({ url, trackName, onClose }) {
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="press hidden sm:inline-flex items-center gap-1 border-2 border-white bg-sky-500 px-3 py-1 font-mono text-xs font-black uppercase text-white shadow-[2px_2px_0px_#fff] hover:bg-sky-600 no-underline cursor-pointer"
+                            className="press hidden sm:inline-flex items-center gap-1 border-2 border-white bg-sky-500 px-3 py-1 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2-white hover:bg-sky-600 no-underline cursor-pointer"
                         >
                             Open in New Tab ↗
                         </a>
@@ -1657,7 +1654,7 @@ function SyllabusPreviewModal({ url, trackName, onClose }) {
                             target="_blank"
                             rel="noopener noreferrer"
                             download={`${trackName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_syllabus.pdf`}
-                            className="press border-2 border-slate-900 bg-white px-3 py-1 font-mono text-xs font-black uppercase text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 no-underline cursor-pointer"
+                            className="press border-2 border-slate-900 bg-white px-3 py-1 font-mono text-xs font-black uppercase text-slate-900 shadow-brutal-2 hover:bg-sky-100 no-underline cursor-pointer"
                         >
                             Download PDF ↓
                         </a>
@@ -1704,7 +1701,7 @@ function UpsellPopover({ offer, onAccept, onDecline, onDismiss }) {
         <div
             role="dialog"
             aria-label="Add the other track"
-            className="anim-pop absolute bottom-full right-3 left-3 z-10 mb-2 border-4 border-slate-900 bg-white p-4 shadow-[6px_6px_0px_#16a34a] sm:left-auto sm:right-4 sm:w-96"
+            className="anim-pop absolute bottom-full right-3 left-3 z-10 mb-2 border-4 border-slate-900 bg-white p-4 shadow-brutal-6-go sm:left-auto sm:right-4 sm:w-96"
         >
             <button type="button" onClick={onDismiss} aria-label="Close offer" className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center font-black text-slate-500 hover:text-slate-900">
                 ✕
@@ -1719,7 +1716,7 @@ function UpsellPopover({ offer, onAccept, onDecline, onDismiss }) {
                 Get both tracks for {formatPrice(COMBO_PACKAGE)}. This {formatAmount(COMBO_SAVING)} saving is lost if you don’t add it now.
             </p>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <button type="button" onClick={onAccept} className="press min-h-11 border-2 border-slate-900 bg-green-400 px-3 py-2 font-mono text-[11px] font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-green-300">
+                <button type="button" onClick={onAccept} className="press min-h-11 border-2 border-slate-900 bg-green-400 px-3 py-2 font-mono text-[11px] font-black uppercase shadow-brutal-3 hover:bg-green-300">
                     Add both →
                 </button>
                 <button type="button" onClick={onDecline} className="press min-h-11 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-[11px] font-black uppercase hover:bg-slate-100">
@@ -1798,7 +1795,7 @@ function RegisterDialog({ step, canClose, onClose, children }) {
                         <li
                             key={label}
                             aria-current={i === step ? 'step' : undefined}
-                            className={`flex items-center justify-center gap-1.5 px-2 py-2.5 transition-colors ${i > 0 ? 'border-l-2 border-slate-900' : ''} ${i === step ? 'bg-amber-300 text-slate-900' : i < step ? 'bg-sky-100 text-slate-700' : 'bg-white text-slate-400'
+                            className={`flex items-center justify-center gap-1.5 px-2 py-2.5 transition-colors ${i > 0 ? 'border-l-2 border-slate-900' : ''} ${i === step ? 'bg-amber-300 text-slate-900' : i < step ? 'bg-sky-100 text-slate-700' : 'bg-white text-slate-500'
                                 }`}
                         >
                             <span>{i < step ? '✓' : i + 1}</span>
@@ -1848,7 +1845,7 @@ function ReviewPanel({ form, pkg, error, busy, upgradePrompt, upgradeBusy, onUpg
         <div className="flex h-full flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
                 {upgradePrompt ? (
-                    <div className="mb-4 border-3 border-amber-900 bg-amber-100 p-4 shadow-[4px_4px_0px_#0f172a]">
+                    <div className="mb-4 border-3 border-amber-900 bg-amber-100 p-4 shadow-brutal-4">
                         <div className="flex items-center gap-2">
                             <span className="border-2 border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-amber-300">
                                 ★ Already Enrolled
@@ -1864,14 +1861,14 @@ function ReviewPanel({ form, pkg, error, busy, upgradePrompt, upgradeBusy, onUpg
                             type="button"
                             disabled={upgradeBusy || busy}
                             onClick={() => onUpgrade?.(upgradePrompt.registrationId, { name: form.name, email: form.email, contact: form.phone })}
-                            className="press mt-3 min-h-12 w-full border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 px-4 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-[3px_3px_0px_#0f172a] disabled:opacity-60"
+                            className="press mt-3 min-h-12 w-full border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 px-4 py-3 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-3 disabled:opacity-60"
                         >
                             {upgradeBusy ? 'Opening Upgrade Payment…' : `Pay ${upgradePrompt.upgradePrice || 750} & Upgrade to Combo ✦`}
                         </button>
                     </div>
                 ) : null}
 
-                <p className="font-mono text-xs font-black uppercase tracking-widest text-sky-600">Check your details before paying</p>
+                <p className="font-mono text-xs font-black uppercase tracking-widest text-sky-700">Check your details before paying</p>
                 <dl className="mt-3 divide-y-2 divide-slate-200 border-2 border-slate-900">
                     {rows.map(([label, value]) => (
                         <div key={label} className="grid grid-cols-[6.5rem_1fr] gap-3 p-3 sm:grid-cols-[9rem_1fr]">
@@ -1897,10 +1894,10 @@ function ReviewPanel({ form, pkg, error, busy, upgradePrompt, upgradeBusy, onUpg
             <div className="border-t-4 border-slate-900 bg-slate-50 p-3 sm:p-4">
                 {error && <p className="mb-3 border-2 border-red-600 bg-red-50 p-2.5 font-mono text-xs font-black text-red-700">{error}</p>}
                 <div className="grid grid-cols-[auto_1fr] gap-3">
-                    <button type="button" onClick={onEdit} disabled={busy || upgradeBusy} className="press min-h-12 border-2 border-slate-900 bg-white px-4 py-3 font-mono text-xs font-black uppercase shadow-[4px_4px_0px_#0f172a] hover:bg-sky-100 disabled:opacity-50">
+                    <button type="button" onClick={onEdit} disabled={busy || upgradeBusy} className="press min-h-12 border-2 border-slate-900 bg-white px-4 py-3 font-mono text-xs font-black uppercase shadow-brutal-4 hover:bg-sky-100 disabled:opacity-50">
                         ← Edit
                     </button>
-                    <button type="button" onClick={onPay} disabled={busy || upgradeBusy || !PAYMENTS_ENABLED} className="press min-h-12 border-2 border-slate-900 bg-sky-500 px-5 py-3 font-mono text-sm font-black uppercase text-white shadow-[4px_4px_0px_#0f172a] hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-sky-500">
+                    <button type="button" onClick={onPay} disabled={busy || upgradeBusy || !PAYMENTS_ENABLED} className="press min-h-12 border-2 border-slate-900 bg-sky-500 px-5 py-3 font-mono text-sm font-black uppercase text-slate-950 shadow-brutal-4 hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-sky-500">
                         {busy ? 'Opening payment…' : `Pay ${formatPrice(pkg)} →`}
                     </button>
                 </div>
@@ -1953,7 +1950,7 @@ function WhatsAppGroupInvite({ pkgId, tracksEnrolled = [] }) {
     const hasPowertrain = isCombo || pkgId === 'powertrain' || tracksEnrolled?.includes('powertrain');
 
     return (
-        <div className="mt-4 border-3 border-slate-900 bg-emerald-50 p-4 shadow-[4px_4px_0px_#0f172a]">
+        <div className="mt-4 border-3 border-slate-900 bg-emerald-50 p-4 shadow-brutal-4">
             <div className="flex items-center gap-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 font-mono text-xs font-black text-white">
                     💬
@@ -1972,7 +1969,7 @@ function WhatsAppGroupInvite({ pkgId, tracksEnrolled = [] }) {
                         href={WHATSAPP_GROUPS.software.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="press flex items-center justify-between border-2 border-slate-900 bg-[#25D366] hover:bg-[#20bd5a] px-3.5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 shadow-[2px_2px_0px_#0f172a] no-underline"
+                        className="press flex items-center justify-between border-2 border-slate-900 bg-[#25D366] hover:bg-[#20bd5a] px-3.5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2 no-underline"
                     >
                         <span>Join Software &amp; Perception Group →</span>
                         <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[10px] text-white">WhatsApp ↗</span>
@@ -1983,7 +1980,7 @@ function WhatsAppGroupInvite({ pkgId, tracksEnrolled = [] }) {
                         href={WHATSAPP_GROUPS.powertrain.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="press flex items-center justify-between border-2 border-slate-900 bg-[#25D366] hover:bg-[#20bd5a] px-3.5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 shadow-[2px_2px_0px_#0f172a] no-underline"
+                        className="press flex items-center justify-between border-2 border-slate-900 bg-[#25D366] hover:bg-[#20bd5a] px-3.5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2 no-underline"
                     >
                         <span>Join Electronics &amp; Powertrain Group →</span>
                         <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[10px] text-white">WhatsApp ↗</span>
@@ -2012,7 +2009,7 @@ function ReceiptPanel({ registration, form, softwareSeats, onUpgrade, upgradeBus
     return (
         <div className="flex h-full flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-                <div className="border-4 border-slate-900 bg-white shadow-[6px_6px_0px_#16a34a]">
+                <div className="border-4 border-slate-900 bg-white shadow-brutal-6-go">
                     <div className="border-b-4 border-slate-900 bg-green-400 p-4 sm:p-5">
                         <span className="font-mono text-xs font-black uppercase tracking-widest">✓ Payment confirmed</span>
                         <p className="mt-1 text-2xl font-black uppercase">You’re in, {registration.name?.split(' ')[0]}!</p>
@@ -2031,7 +2028,7 @@ function ReceiptPanel({ registration, form, softwareSeats, onUpgrade, upgradeBus
 
                 {/* Single-track upgrade promotion card: only shown for Powertrain because Powertrain is full and Software participants cannot upgrade to Combo */}
                 {!isCombo && (registration.package === 'powertrain' || form.package === 'powertrain') && (
-                    <div className="mt-4 border-3 border-amber-900 bg-amber-100 p-4 shadow-[4px_4px_0px_#0f172a]">
+                    <div className="mt-4 border-3 border-amber-900 bg-amber-100 p-4 shadow-brutal-4">
                         <div className="flex items-center gap-2">
                             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 font-mono text-xs font-black text-slate-900">
                                 ★
@@ -2052,7 +2049,7 @@ function ReceiptPanel({ registration, form, softwareSeats, onUpgrade, upgradeBus
                             type="button"
                             disabled={upgradeBusy || softwareSeats?.isPaused}
                             onClick={() => onUpgrade?.(registration.registrationId || registration._id, form)}
-                            className={`press mt-3 min-h-11 w-full border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] ${
+                            className={`press mt-3 min-h-11 w-full border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase shadow-brutal-3 ${
                                 softwareSeats?.isPaused
                                     ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
                                     : 'bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:opacity-60 cursor-pointer'
@@ -2075,15 +2072,15 @@ function ReceiptPanel({ registration, form, softwareSeats, onUpgrade, upgradeBus
                 <button
                     type="button"
                     onClick={() => downloadReceipt(rows, fileId)}
-                    className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase text-amber-300 shadow-[4px_4px_0px_#16a34a] hover:bg-slate-800"
+                    className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase text-amber-300 shadow-brutal-4-go hover:bg-slate-800"
                 >
                     Download receipt ↓
                 </button>
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                    <button type="button" onClick={onRegisterAnother} className="press min-h-11 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-[11px] font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-sky-100">
+                    <button type="button" onClick={onRegisterAnother} className="press min-h-11 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-[11px] font-black uppercase shadow-brutal-3 hover:bg-sky-100">
                         Register another
                     </button>
-                    <button type="button" onClick={onClose} className="press min-h-11 border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-[11px] font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-400">
+                    <button type="button" onClick={onClose} className="press min-h-11 border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-[11px] font-black uppercase shadow-brutal-3 hover:bg-amber-400">
                         Done
                     </button>
                 </div>
@@ -2206,7 +2203,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
             aria-labelledby="upgrade-modal-title"
         >
             <div
-                className="anim-pop-center flex max-h-[92dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white shadow-[10px_10px_0px_#0284c7]"
+                className="anim-pop-center flex max-h-[92dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white shadow-brutal-10-brand"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -2258,7 +2255,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                 <button
                                     type="button"
                                     onClick={() => downloadReceipt(receiptRows(successRecord), successRecord.receiptNo || successRecord.registrationId)}
-                                    className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-sm font-black uppercase text-amber-300 shadow-[4px_4px_0px_#0284c7] hover:bg-slate-800 cursor-pointer"
+                                    className="press min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-sm font-black uppercase text-amber-300 shadow-brutal-4-brand hover:bg-slate-800 cursor-pointer"
                                 >
                                     Download Upgraded Receipt ↓
                                 </button>
@@ -2287,7 +2284,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                         <button
                                             type="button"
                                             onClick={() => downloadReceipt(receiptRows(foundRecord), foundRecord.receiptNo || foundRecord.registrationId)}
-                                            className="press border-2 border-slate-900 bg-slate-900 text-amber-300 px-4 py-2 font-mono text-xs font-black uppercase shadow-[2px_2px_0px_#0284c7] cursor-pointer"
+                                            className="press border-2 border-slate-900 bg-slate-900 text-amber-300 px-4 py-2 font-mono text-xs font-black uppercase shadow-brutal-2-brand cursor-pointer"
                                         >
                                             Download Receipt ↓
                                         </button>
@@ -2319,7 +2316,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                             <button
                                                 type="button"
                                                 onClick={() => downloadReceipt(receiptRows(foundRecord), foundRecord.receiptNo || foundRecord.registrationId)}
-                                                className="press border-2 border-slate-900 bg-slate-900 text-amber-300 px-4 py-2 font-mono text-xs font-black uppercase shadow-[2px_2px_0px_#0284c7] cursor-pointer"
+                                                className="press border-2 border-slate-900 bg-slate-900 text-amber-300 px-4 py-2 font-mono text-xs font-black uppercase shadow-brutal-2-brand cursor-pointer"
                                             >
                                                 Download Receipt ↓
                                             </button>
@@ -2335,7 +2332,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-[3px_3px_0px_#0f172a]">
+                                    <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-brutal-3">
                                         <div className="flex items-center justify-between gap-2 border-b-2 border-slate-300 pb-2">
                                             <div>
                                                 <p className="text-sm font-black uppercase text-slate-900">{foundRecord.name}</p>
@@ -2394,7 +2391,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                             type="button"
                                             disabled={upgradeBusy}
                                             onClick={handleUpgradePayment}
-                                            className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0284c7] cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                                            className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 hover:bg-amber-300 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-brutal-4-brand cursor-pointer disabled:cursor-wait disabled:opacity-60"
                                         >
                                             {upgradeBusy ? 'Opening Payment…' : 'Pay ₹750 & Upgrade to Combo ✦'}
                                         </button>
@@ -2419,7 +2416,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                                 </div>
                             )}
 
-                            <div className="border-2 border-slate-900 bg-amber-100 p-3.5 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="border-2 border-slate-900 bg-amber-100 p-3.5 shadow-brutal-2">
                                 <h3 className="font-mono text-xs font-black uppercase text-amber-950">
                                     ★ Already Registered for Electronics &amp; Powertrain?
                                 </h3>
@@ -2450,7 +2447,7 @@ function UpgradeModal({ onClose, softwareSeats }) {
                             <button
                                 type="submit"
                                 disabled={busy}
-                                className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-[4px_4px_0px_#0f172a] hover:bg-amber-300 cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                                className="press min-h-12 w-full border-2 border-slate-900 bg-amber-400 px-5 py-3.5 font-mono text-sm font-black uppercase text-slate-950 shadow-brutal-4 hover:bg-amber-300 cursor-pointer disabled:cursor-wait disabled:opacity-60"
                             >
                                 {busy ? 'Searching registration…' : 'Find My Registration & Upgrade →'}
                             </button>
@@ -2577,7 +2574,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
             aria-labelledby="workshop-receipt-title"
         >
             <div
-                className="anim-pop-center flex max-h-[90dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white shadow-[10px_10px_0px_#16a34a]"
+                className="anim-pop-center flex max-h-[90dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white shadow-brutal-10-go"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between gap-3 bg-slate-900 px-4 py-3 text-white">
@@ -2615,7 +2612,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
 
                                         {/* Upgrade Option: Only shown for Powertrain participants since Powertrain is full and Software participants cannot upgrade to Combo */}
                                         {!isCombo && record.package === 'powertrain' && (
-                                            <div className="mt-3 border-2 border-slate-900 bg-amber-100 p-3.5 shadow-[3px_3px_0px_#0f172a]">
+                                            <div className="mt-3 border-2 border-slate-900 bg-amber-100 p-3.5 shadow-brutal-3">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <span className="font-mono text-[11px] font-black uppercase text-amber-950">
                                                         ★ Complete Domain Knowledge
@@ -2633,7 +2630,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
                                                     type="button"
                                                     disabled={upgradeBusyId === record.registrationId || softwareSeats?.isPaused}
                                                     onClick={() => handleLookupUpgrade(record)}
-                                                    className={`press mt-2.5 min-h-11 w-full border-2 border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase shadow-[2px_2px_0px_#0f172a] ${
+                                                    className={`press mt-2.5 min-h-11 w-full border-2 border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase shadow-brutal-2 ${
                                                         softwareSeats?.isPaused
                                                             ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
                                                             : 'bg-amber-400 hover:bg-amber-300 text-slate-950 disabled:opacity-60 cursor-pointer'
@@ -2651,7 +2648,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
                                         <button
                                             type="button"
                                             onClick={() => downloadReceipt(rows, record.receiptNo || record.registrationId)}
-                                            className="press mt-3 min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase text-amber-300 shadow-[4px_4px_0px_#16a34a] hover:bg-slate-800"
+                                            className="press mt-3 min-h-12 w-full border-2 border-slate-900 bg-slate-900 px-5 py-3.5 font-mono text-sm font-black uppercase text-amber-300 shadow-brutal-4-go hover:bg-slate-800"
                                         >
                                             Download receipt ↓
                                         </button>
@@ -2711,7 +2708,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
                             <button
                                 type="submit"
                                 disabled={busy}
-                                className="press min-h-12 w-full border-2 border-slate-900 bg-green-400 px-5 py-3.5 font-mono text-sm font-black uppercase shadow-[4px_4px_0px_#0f172a] hover:bg-green-300 disabled:cursor-wait disabled:opacity-60"
+                                className="press min-h-12 w-full border-2 border-slate-900 bg-green-400 px-5 py-3.5 font-mono text-sm font-black uppercase shadow-brutal-4 hover:bg-green-300 disabled:cursor-wait disabled:opacity-60"
                             >
                                 {busy ? 'Looking up receipt…' : 'Find my receipt →'}
                             </button>
@@ -2727,7 +2724,7 @@ function ReceiptLookupDialog({ onClose, softwareSeats }) {
 function StatusCard({ title, body, busy = false }) {
     return (
         <div className="flex h-full items-center justify-center p-4 sm:p-6">
-            <div className="w-full border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_#0f172a]" role="status">
+            <div className="w-full border-4 border-slate-900 bg-white p-6 shadow-brutal-8" role="status">
                 {busy && <span className="mb-4 block h-8 w-8 animate-spin border-4 border-slate-900 border-t-amber-300" aria-hidden="true" />}
                 <p className="text-xl font-black uppercase">{title}</p>
                 <p className="mt-2 text-sm font-bold text-slate-600">{body}</p>

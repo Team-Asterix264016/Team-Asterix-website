@@ -26,7 +26,7 @@ const Loader = ({ placeholderSrc }) => {
       {placeholderSrc ? (
         <img src={placeholderSrc} width={128} height={128} className="blur-lg rounded-lg" alt="Loading preview" />
       ) : (
-        <div className="px-4 py-2 border-2 border-slate-900 bg-white shadow-[3px_3px_0px_#0f172a] font-mono font-black text-xs uppercase text-slate-900">
+        <div className="px-4 py-2 border-2 border-slate-900 bg-white shadow-brutal-3 font-mono font-black text-xs uppercase text-slate-900">
           Loading Model: {Math.round(progress)}%
         </div>
       )}
@@ -430,7 +430,7 @@ const ModelViewer = ({
       {showScreenshotButton && (
         <button
           onClick={capture}
-          className="press absolute top-4 right-4 z-10 cursor-pointer px-3.5 py-2 border-2 border-slate-900 bg-white font-mono font-black text-xs uppercase text-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-sky-500 hover:text-white hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_#0f172a] flex items-center gap-1.5"
+          className="press absolute top-4 right-4 z-10 cursor-pointer px-3.5 py-2 border-2 border-slate-900 bg-white font-mono font-black text-xs uppercase text-slate-900 shadow-brutal-3 hover:bg-sky-500 hover:text-slate-950 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-brutal-4 flex items-center gap-1.5"
           title="Download snapshot of 3D Model"
         >
           <Icon name="camera" className="w-4 h-4" />

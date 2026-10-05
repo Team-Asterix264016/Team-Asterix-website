@@ -42,7 +42,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="-5"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-12 z-20 bg-yellow-400 text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0284c7] rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute left-6 sm:left-12 top-12 z-20 bg-yellow-400 text-slate-950 border-3 border-slate-900 shadow-brutal-5-brand rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <span>● FOUNDING LOGS</span>
             </div>
@@ -82,12 +82,12 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
             <div className="max-w-4xl mx-auto relative z-10">
 
                 {/* Main Story Box (Essay Format) with Subtle Elevation Parallax */}
-                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.05" className="bg-white text-slate-900 border-4 border-slate-900 shadow-[12px_12px_0px_#0284c7] p-6 sm:p-12 md:p-14 relative will-change-transform">
+                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.05" className="bg-white text-slate-900 border-4 border-slate-900 shadow-brutal-12-brand p-6 sm:p-12 md:p-14 relative will-change-transform">
 
                     {/* Section Header */}
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8 border-b-3 border-slate-900 pb-6">
                         <div>
-                            <span className="text-xs font-mono font-black text-sky-600 tracking-widest uppercase block mb-1">
+                            <span className="text-xs font-mono font-black text-sky-700 tracking-widest uppercase block mb-1">
                                 CHRONICLES • HOW IT ALL BEGAN
                             </span>
                             <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 uppercase leading-none">
@@ -100,7 +100,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                                 if (onOpenSponsor) onOpenSponsor();
                                 else window.location.hash = '#sponsor';
                             }}
-                            className="press cyber-button px-7 py-3.5 text-xs font-black tracking-wider uppercase inline-block self-start md:self-auto cursor-pointer whitespace-nowrap shadow-[4px_4px_0px_#0f172a]"
+                            className="press cyber-button px-7 py-3.5 text-xs font-black tracking-wider uppercase inline-block self-start md:self-auto cursor-pointer whitespace-nowrap shadow-brutal-4"
                         >
                             SPONSOR TEAM →
                         </button>
@@ -150,7 +150,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                             onClick={() => setIsExpanded(!isExpanded)}
                             aria-expanded={isExpanded}
                             aria-controls="story-essay"
-                            className="press inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 font-black text-xs uppercase tracking-wider text-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-sky-100 hover:shadow-[5px_5px_0px_#0f172a] hover:-translate-x-[1px] hover:-translate-y-[1px] cursor-pointer"
+                            className="press inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 font-black text-xs uppercase tracking-wider text-slate-900 shadow-brutal-3 hover:bg-sky-100 hover:shadow-brutal-5 hover:-translate-x-[1px] hover:-translate-y-[1px] cursor-pointer"
                         >
                             <span>
                                 {isExpanded ? "SHOW LESS" : "READ FULL STORY (SHOW MORE)"}
@@ -163,19 +163,19 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
 
                     {/* Milestones Strip */}
                     <div data-assemble="stagger" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t-3 border-slate-900 text-center font-mono">
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                             <span className="text-2xl sm:text-3xl font-black text-slate-900 block">YEAR 1</span>
                             <span className="text-[10px] font-bold text-slate-600 uppercase">Training Genesis</span>
                         </div>
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                             <span className="text-2xl sm:text-3xl font-black text-slate-900 block">4</span>
                             <span className="text-[10px] font-bold text-slate-600 uppercase">Core Subsystems</span>
                         </div>
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
                             <span className="text-2xl sm:text-3xl font-black text-slate-900 block">AIR 13</span>
                             <span className="text-[10px] font-bold text-slate-600 uppercase">a-BAJA 2026 Finish</span>
                         </div>
-                        <div className="p-4 bg-amber-300 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                        <div className="p-4 bg-amber-300 border-2 border-slate-900 shadow-brutal-3">
                             <span className="text-2xl sm:text-3xl font-black text-slate-900 block">GEN 2</span>
                             <span className="text-[10px] font-bold text-slate-900 uppercase">The Next Build</span>
                         </div>

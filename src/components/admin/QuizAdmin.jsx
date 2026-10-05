@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 function formatDateTimeInput(dateVal) {
     if (!dateVal) return '';
@@ -26,6 +27,11 @@ export default function QuizAdmin({ showStatus }) {
     const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
     const [submissionFilter, setSubmissionFilter] = useState('all');
     const [submissionSearch, setSubmissionSearch] = useState('');
+
+    const submissionsModalRef = useModalBehavior(
+        Boolean(selectedQuizForSubmissions),
+        () => setSelectedQuizForSubmissions(null)
+    );
 
     // Fetch all quizzes
     const fetchQuizzes = useCallback(async () => {
@@ -162,7 +168,7 @@ export default function QuizAdmin({ showStatus }) {
     return (
         <div className="space-y-6">
             {/* Header & Quick Stats */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_#0f172a]">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-4 border-slate-900 bg-white p-5 shadow-brutal-6">
                 <div>
                     <div className="flex items-center gap-2">
                         <span className="text-2xl sm:text-3xl">📝</span>
@@ -180,7 +186,7 @@ export default function QuizAdmin({ showStatus }) {
                         type="button"
                         onClick={fetchQuizzes}
                         disabled={isLoading}
-                        className="press px-3.5 py-2 bg-white hover:bg-slate-50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3.5 py-2 bg-white hover:bg-slate-50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         title="Reload quiz list"
                     >
                         {isLoading ? '⟳ Refreshing...' : '⟳ Refresh'}
@@ -191,7 +197,7 @@ export default function QuizAdmin({ showStatus }) {
                             setEditingQuiz(null);
                             setIsEditorOpen(true);
                         }}
-                        className="press px-4 py-2 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer flex items-center gap-1.5"
+                        className="press px-4 py-2 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-brutal-3 cursor-pointer flex items-center gap-1.5"
                     >
                         <span>+</span>
                         <span>Create New Quiz</span>
@@ -207,11 +213,11 @@ export default function QuizAdmin({ showStatus }) {
 
             {/* Quiz List */}
             {isLoading && quizzes.length === 0 ? (
-                <div className="border-4 border-slate-900 bg-white p-12 text-center font-mono font-black uppercase text-slate-500 shadow-[6px_6px_0px_#0f172a]">
+                <div className="border-4 border-slate-900 bg-white p-12 text-center font-mono font-black uppercase text-slate-500 shadow-brutal-6">
                     Loading quizzes...
                 </div>
             ) : quizzes.length === 0 ? (
-                <div className="border-4 border-slate-900 bg-white p-12 text-center shadow-[6px_6px_0px_#0f172a]">
+                <div className="border-4 border-slate-900 bg-white p-12 text-center shadow-brutal-6">
                     <span className="text-4xl">📋</span>
                     <h3 className="mt-3 text-lg font-black uppercase text-slate-900">No Quizzes Created Yet</h3>
                     <p className="mt-1 font-mono text-xs font-bold text-slate-500">
@@ -223,12 +229,11 @@ export default function QuizAdmin({ showStatus }) {
                     {quizzes.map((quiz) => {
                         const isLive = quiz.liveState === 'active';
                         const isUpcoming = quiz.liveState === 'upcoming';
-                        const isEnded = quiz.liveState === 'ended';
 
                         return (
                             <div
                                 key={quiz._id}
-                                className="border-4 border-slate-900 bg-white p-5 sm:p-6 shadow-[6px_6px_0px_#0f172a] flex flex-col gap-4"
+                                className="border-4 border-slate-900 bg-white p-5 sm:p-6 shadow-brutal-6 flex flex-col gap-4"
                             >
                                 <div className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-slate-900/15 pb-4">
                                     <div className="space-y-1">
@@ -278,7 +283,7 @@ export default function QuizAdmin({ showStatus }) {
                                         <button
                                             type="button"
                                             onClick={() => handleCopyLink(quiz)}
-                                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1 ${
+                                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center gap-1 ${
                                                 copiedId === quiz._id ? 'bg-emerald-300 text-slate-900' : 'bg-sky-100 hover:bg-sky-200 text-sky-950'
                                             }`}
                                             title="Copy participant test join link"
@@ -290,7 +295,7 @@ export default function QuizAdmin({ showStatus }) {
                                         <button
                                             type="button"
                                             onClick={() => handleOpenSubmissions(quiz)}
-                                            className="press px-3 py-1.5 bg-amber-300 hover:bg-amber-200 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1"
+                                            className="press px-3 py-1.5 bg-amber-300 hover:bg-amber-200 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center gap-1"
                                             title="View student results and leaderboard"
                                         >
                                             <span>📊</span>
@@ -303,7 +308,7 @@ export default function QuizAdmin({ showStatus }) {
                                                 setEditingQuiz(quiz);
                                                 setIsEditorOpen(true);
                                             }}
-                                            className="press px-3 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press px-3 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                             title="Edit quiz questions or timing"
                                         >
                                             Edit
@@ -312,7 +317,7 @@ export default function QuizAdmin({ showStatus }) {
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteQuiz(quiz)}
-                                            className="press px-3 py-1.5 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press px-3 py-1.5 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                             title="Delete quiz"
                                         >
                                             Delete
@@ -367,15 +372,25 @@ export default function QuizAdmin({ showStatus }) {
 
             {/* Submissions & Leaderboard Drawer Modal */}
             {selectedQuizForSubmissions && (
-                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-5xl w-full max-h-[90vh] flex flex-col anim-pop">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                    onClick={(e) => { if (e.target === e.currentTarget) setSelectedQuizForSubmissions(null); }}
+                >
+                    <div
+                        ref={submissionsModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="quiz-submissions-modal-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-8 max-w-5xl w-full max-h-[90vh] flex flex-col anim-pop"
+                    >
                         {/* Header */}
                         <div className="p-4 sm:p-5 border-b-4 border-slate-900 bg-amber-300 flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <span className="font-mono text-[10px] font-black uppercase tracking-wider text-slate-900 bg-white px-2 py-0.5 border border-slate-900">
                                     QUIZ RESULTS & LEADERBOARD
                                 </span>
-                                <h3 className="text-lg sm:text-xl font-black uppercase text-slate-950 mt-1">
+                                <h3 id="quiz-submissions-modal-title" className="text-lg sm:text-xl font-black uppercase text-slate-950 mt-1">
                                     {selectedQuizForSubmissions.title}
                                 </h3>
                             </div>
@@ -383,14 +398,14 @@ export default function QuizAdmin({ showStatus }) {
                                 <button
                                     type="button"
                                     onClick={() => handleExportCsv(selectedQuizForSubmissions._id)}
-                                    className="press px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                 >
                                     📥 Export CSV
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedQuizForSubmissions(null)}
-                                    className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                                 >
                                     ✕ Close
                                 </button>
@@ -528,7 +543,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
     const [description, setDescription] = useState(initialData?.description || '');
     const [slug, setSlug] = useState(initialData?.slug || '');
     const [durationMinutes, setDurationMinutes] = useState(initialData?.durationMinutes || 20);
-    const [passingPercentage, setPassingPercentage] = useState(initialData?.passingPercentage || 50);
+    const [passingPercentage] = useState(initialData?.passingPercentage || 50);
 
     // Timing
     const [startTime, setStartTime] = useState(() => {
@@ -578,6 +593,8 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
             }
         ];
     });
+
+    const editorModalRef = useModalBehavior(true, onClose);
 
     // Preset helper for results publish time
     const handleSetPublishPreset = (type) => {
@@ -733,22 +750,32 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-            <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-4xl w-full max-h-[92vh] flex flex-col anim-pop">
+        <div
+            className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div
+                ref={editorModalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="quiz-editor-modal-title"
+                tabIndex={-1}
+                className="bg-white border-4 border-slate-900 shadow-brutal-8 max-w-4xl w-full max-h-[92vh] flex flex-col anim-pop"
+            >
                 {/* Modal Header */}
                 <div className="p-4 sm:p-5 border-b-4 border-slate-900 bg-sky-300 flex items-center justify-between gap-3">
                     <div>
                         <span className="font-mono text-[10px] font-black uppercase tracking-wider text-slate-900 bg-white px-2 py-0.5 border border-slate-900">
                             {isEdit ? 'EDIT QUIZ' : 'CREATE NEW QUIZ'}
                         </span>
-                        <h3 className="text-xl font-black uppercase text-slate-950 mt-1">
+                        <h3 id="quiz-editor-modal-title" className="text-xl font-black uppercase text-slate-950 mt-1">
                             {title.trim() || 'Untitled Quiz'}
                         </h3>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         ✕ Close
                     </button>
@@ -832,7 +859,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                             </div>
 
                             {/* Exam Schedule Window */}
-                            <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
+                            <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-brutal-4 space-y-3">
                                 <h4 className="font-mono text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
                                     <span>⏳</span>
                                     <span>Exam Examination Window (When students can join)</span>
@@ -877,7 +904,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                             </div>
 
                             {/* Results Publishing Time */}
-                            <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
+                            <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-brutal-4 space-y-3">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                     <h4 className="font-mono text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
                                         <span>📢</span>
@@ -963,7 +990,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                 <button
                                     type="button"
                                     onClick={handleAddQuestion}
-                                    className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1"
+                                    className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center gap-1"
                                 >
                                     <span>+</span>
                                     <span>Add Question</span>
@@ -974,7 +1001,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                 {questions.map((q, qIdx) => (
                                     <div
                                         key={qIdx}
-                                        className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] space-y-3"
+                                        className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-brutal-4 space-y-3"
                                     >
                                         <div className="flex items-center justify-between gap-3 border-b-2 border-slate-900/10 pb-2">
                                             <div className="flex items-center gap-2">
@@ -1065,7 +1092,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveOption(qIdx, optIdx)}
-                                                                    className="text-slate-400 hover:text-rose-600 font-bold px-1"
+                                                                    className="text-slate-500 hover:text-rose-600 font-bold px-1"
                                                                     title="Remove choice"
                                                                 >
                                                                     ✕
@@ -1114,7 +1141,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                             type="button"
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="press px-5 py-2 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                            className="press px-5 py-2 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-3 cursor-pointer"
                         >
                             {isSaving ? 'Saving Quiz...' : isEdit ? 'Update Quiz' : 'Save & Publish Quiz'}
                         </button>

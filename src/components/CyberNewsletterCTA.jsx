@@ -51,13 +51,13 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="7"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-10 z-20 bg-white text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] rounded-lg px-3.5 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute left-6 sm:left-12 top-10 z-20 bg-white text-slate-950 border-3 border-slate-900 shadow-brutal-5 rounded-lg px-3.5 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <span>✦ PADDOCK ALLIANCE</span>
             </div>
 
             <div className="max-w-5xl mx-auto relative z-10">
-                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.06" className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] p-8 sm:p-14 md:p-16 relative will-change-transform">
+                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.06" className="bg-white border-4 border-slate-900 shadow-brutal-10 p-8 sm:p-14 md:p-16 relative will-change-transform">
 
                     <div data-assemble="header" className="text-center mb-8 sm:mb-10">
                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
@@ -84,7 +84,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     if (onOpenSponsor) onOpenSponsor();
                                     else window.location.hash = '#sponsor';
                                 }}
-                                className="press cyber-button px-5 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider cursor-pointer shadow-[3px_3px_0px_#0f172a] sm:shadow-[4px_4px_0px_#0f172a] bg-amber-300 hover:bg-amber-400 text-slate-900 inline-flex items-center justify-center gap-2 max-w-full text-center"
+                                className="press cyber-button px-5 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider cursor-pointer shadow-brutal-3 sm:shadow-brutal-4 bg-amber-300 hover:bg-amber-400 text-slate-900 inline-flex items-center justify-center gap-2 max-w-full text-center"
                             >
                                 <span>SPONSOR TEAM (VIEW FILES & DECK)</span>
                                 <span>→</span>
@@ -93,7 +93,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                     </div>
 
                     <div className="relative border-t-2 border-slate-200 pt-8 mt-8">
-                        <span className="text-[11px] font-mono font-black uppercase text-slate-400 block text-center mb-4">
+                        <span className="text-[11px] font-mono font-black uppercase text-slate-500 block text-center mb-4">
                             -- OR SUBSCRIBE FOR PADDOCK RACE UPDATES & NEWSLETTER --
                         </span>
 
@@ -104,7 +104,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                         )}
 
                         {submitted ? (
-                            <div className="p-6 bg-sky-100 border-3 border-slate-900 text-center font-black text-base text-slate-900 shadow-[4px_4px_0px_#0f172a]">
+                            <div className="p-6 bg-sky-100 border-3 border-slate-900 text-center font-black text-base text-slate-900 shadow-brutal-4">
                                 ✓ THANK YOU FOR JOINING THE ASTERIX RACING ALLIANCE! WE WILL REACH OUT SHORTLY.
                             </div>
                         ) : (
@@ -116,7 +116,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter Your Corporate / Student Email"
-                                    className="flex-1 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#0284c7] transition-all"
+                                    className="flex-1 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white focus:shadow-brutal-4-brand transition-all"
                                 />
                                 <input
                                     data-assemble="up"
@@ -124,7 +124,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="Phone (Optional)"
-                                    className="sm:w-48 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:shadow-[4px_4px_0px_#0284c7] transition-all"
+                                    className="sm:w-48 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white focus:shadow-brutal-4-brand transition-all"
                                 />
                                 <button
                                     data-assemble="right"

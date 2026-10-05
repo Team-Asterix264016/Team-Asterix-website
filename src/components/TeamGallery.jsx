@@ -77,7 +77,7 @@ export default function TeamGallery() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [lightboxIndex]);
+    }, [lightboxIndex, galleryItems.length]);
 
     const activeItem = lightboxIndex !== null ? galleryItems[lightboxIndex] : null;
 
@@ -106,7 +106,7 @@ export default function TeamGallery() {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="-7"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-14 z-20 bg-emerald-300 text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute left-6 sm:left-12 top-14 z-20 bg-emerald-300 text-slate-950 border-3 border-slate-900 shadow-brutal-5 rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <span>● PADDOCK ARCHIVE</span>
             </div>
@@ -130,7 +130,7 @@ export default function TeamGallery() {
                             <span 
                                 data-parallax="sticker"
                                 data-parallax-rotate="4"
-                                className="px-3 py-1 bg-amber-300 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] font-mono text-xs font-black text-slate-900 uppercase will-change-transform"
+                                className="px-3 py-1 bg-amber-300 border-2 border-slate-900 shadow-brutal-2 font-mono text-xs font-black text-slate-900 uppercase will-change-transform"
                             >
                                 ★ {galleryItems.length} ARCHIVE PHOTOS
                             </span>
@@ -141,12 +141,12 @@ export default function TeamGallery() {
                     </div>
 
                     {/* View Mode Switcher */}
-                    <div className="flex items-center gap-2 bg-slate-100 p-1.5 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                    <div className="flex items-center gap-2 bg-slate-100 p-1.5 border-2 border-slate-900 shadow-brutal-3">
                         <button
                             onClick={() => setViewMode('wall')}
                             className={`press px-4 py-2 font-mono text-xs font-black uppercase cursor-pointer border border-slate-900 transition-all ${
                                 viewMode === 'wall'
-                                    ? 'bg-sky-500 text-white shadow-[2px_2px_0px_#0f172a]'
+                                    ? 'bg-sky-500 text-slate-950 shadow-brutal-2'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
                             }`}
                         >
@@ -156,7 +156,7 @@ export default function TeamGallery() {
                             onClick={() => setViewMode('grid')}
                             className={`press px-4 py-2 font-mono text-xs font-black uppercase cursor-pointer border border-slate-900 transition-all ${
                                 viewMode === 'grid'
-                                    ? 'bg-sky-500 text-white shadow-[2px_2px_0px_#0f172a]'
+                                    ? 'bg-sky-500 text-slate-950 shadow-brutal-2'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
                             }`}
                         >
@@ -167,7 +167,7 @@ export default function TeamGallery() {
 
                 {/* 3D DriftWall or High-Density Grid Gallery Stage */}
                 {viewMode === 'wall' ? (
-                    <div data-assemble="card" className="relative w-full h-[540px] sm:h-[620px] md:h-[680px] bg-sky-50/40 border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] overflow-hidden">
+                    <div data-assemble="card" className="relative w-full h-[540px] sm:h-[620px] md:h-[680px] bg-sky-50/40 border-4 border-slate-900 shadow-brutal-10 overflow-hidden">
                         {/* The 3D DriftWall */}
                         <DriftWall
                             items={driftItems}
@@ -198,10 +198,12 @@ export default function TeamGallery() {
                             <div
                                 key={item.id || idx}
                                 onClick={() => setLightboxIndex(idx)}
-                                className="press group relative bg-white border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] hover:shadow-[8px_8px_0px_#0284c7] hover:translate-x-[-2px] hover:translate-y-[-2px] overflow-hidden cursor-pointer flex flex-col justify-between"
+                                className="press group relative bg-white border-3 border-slate-900 shadow-brutal-5 hover:shadow-brutal-8-brand hover:translate-x-[-2px] hover:translate-y-[-2px] overflow-hidden cursor-pointer flex flex-col justify-between"
                             >
                                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={apiUrl(item.image)}
                                         alt={item.title}
                                         style={framingStyle(item.fit, item.position)}
@@ -216,7 +218,7 @@ export default function TeamGallery() {
                                     </span>
                                 </div>
                                 <div className="p-3 bg-white border-t-2 border-slate-900 flex flex-col justify-between flex-1">
-                                    <h3 className="font-black text-sm uppercase text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
+                                    <h3 className="font-black text-sm uppercase text-slate-900 group-hover:text-sky-700 transition-colors line-clamp-1">
                                         {item.title}
                                     </h3>
                                     <span className="text-[10px] font-mono font-bold text-slate-500 block mt-1">
@@ -238,7 +240,7 @@ export default function TeamGallery() {
                     data-lenis-prevent
                 >
                     <div
-                        className="anim-pop-center relative max-w-5xl w-full bg-white border-4 border-slate-900 shadow-[12px_12px_0px_#0284c7] overflow-hidden flex flex-col"
+                        className="anim-pop-center relative max-w-5xl w-full bg-white border-4 border-slate-900 shadow-brutal-12-brand overflow-hidden flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header Bar */}
@@ -260,6 +262,8 @@ export default function TeamGallery() {
                         {/* Image Viewer Frame */}
                         <div className="relative aspect-[16/10] sm:aspect-[16/9] max-h-[60vh] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
                             <img
+                                loading="lazy"
+                                decoding="async"
                                 src={apiUrl(activeItem.image)}
                                 alt={activeItem.title}
                                 className="max-w-full max-h-full object-contain select-none"
@@ -275,7 +279,7 @@ export default function TeamGallery() {
                                     e.stopPropagation();
                                     setLightboxIndex(prev => (prev > 0 ? prev - 1 : galleryItems.length - 1));
                                 }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-white text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex items-center justify-center text-xl font-black cursor-pointer"
+                                className="absolute left-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-slate-950 text-slate-900 border-2 border-slate-900 shadow-brutal-3 flex items-center justify-center text-xl font-black cursor-pointer"
                                 aria-label="Previous Photo"
                             >
                                 <span aria-hidden="true">←</span>
@@ -287,7 +291,7 @@ export default function TeamGallery() {
                                     e.stopPropagation();
                                     setLightboxIndex(prev => (prev < galleryItems.length - 1 ? prev + 1 : 0));
                                 }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-white text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex items-center justify-center text-xl font-black cursor-pointer"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-slate-950 text-slate-900 border-2 border-slate-900 shadow-brutal-3 flex items-center justify-center text-xl font-black cursor-pointer"
                                 aria-label="Next Photo"
                             >
                                 <span aria-hidden="true">→</span>
@@ -323,7 +327,7 @@ export default function TeamGallery() {
                                 <span>USE ARROW KEYS (← / →) TO NAVIGATE • [ESC] TO CLOSE</span>
                                 <button
                                     onClick={() => setLightboxIndex(null)}
-                                    className="press press-flat text-slate-900 font-black hover:text-sky-600 cursor-pointer"
+                                    className="press press-flat text-slate-900 font-black hover:text-sky-700 cursor-pointer"
                                 >
                                     CLOSE VIEWER ✕
                                 </button>

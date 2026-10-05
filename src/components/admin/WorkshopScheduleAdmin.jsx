@@ -6,11 +6,10 @@ import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 const btn = 'press font-mono font-black text-[11px] uppercase border border-slate-900 cursor-pointer px-3 py-1.5 transition-all';
 const btnPrimary = `${btn} bg-sky-500 hover:bg-sky-400 text-white`;
 const btnQuiet = `${btn} bg-white hover:bg-slate-100 text-slate-900`;
-const btnDanger = `${btn} bg-rose-400 hover:bg-rose-300 text-slate-900`;
 const input = 'w-full px-2.5 py-1.5 border border-slate-900 bg-white text-xs font-mono font-medium focus:outline-none focus:ring-1 focus:ring-sky-500';
 const labelClass = 'block text-[10px] font-mono font-black uppercase text-slate-700 mb-1';
 
-export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus, onImageUpload }) {
+export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
     const { siteData, updateWorkshop, syncToServer, syncState } = useWebsiteData();
     const workshop = siteData.workshop || { tracks: WORKSHOP_TRACKS };
     const tracks = workshop.tracks || WORKSHOP_TRACKS;
@@ -24,7 +23,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
     // Active track data with fallback to canonical defaults
     const currentTrack = {
         ...WORKSHOP_TRACKS[selectedTrackId],
-        ...(tracks[selectedTrackId] || {})
+        ...tracks[selectedTrackId]
     };
 
     const handleSaveWorkshop = async () => {
@@ -102,7 +101,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                     onClick={() => setActiveSection('registrations')}
                     className={`press px-4 py-2 border-2 border-slate-900 font-mono text-xs font-black uppercase cursor-pointer transition-all ${
                         activeSection === 'registrations'
-                            ? 'bg-sky-500 text-white shadow-[3px_3px_0px_#0f172a]'
+                            ? 'bg-sky-500 text-slate-950 shadow-brutal-3'
                             : 'bg-white hover:bg-slate-100 text-slate-900'
                     }`}
                 >
@@ -113,7 +112,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                     onClick={() => setActiveSection('schedule')}
                     className={`press px-4 py-2 border-2 border-slate-900 font-mono text-xs font-black uppercase cursor-pointer transition-all ${
                         activeSection === 'schedule'
-                            ? 'bg-sky-500 text-white shadow-[3px_3px_0px_#0f172a]'
+                            ? 'bg-sky-500 text-slate-950 shadow-brutal-3'
                             : 'bg-white hover:bg-slate-100 text-slate-900'
                     }`}
                 >
@@ -138,7 +137,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                                         onClick={() => setSelectedTrackId(key)}
                                         className={`px-4 py-2 border border-slate-900 font-mono text-xs font-black uppercase cursor-pointer transition-all ${
                                             active
-                                                ? 'bg-slate-900 text-white shadow-[2px_2px_0px_#0284c7]'
+                                                ? 'bg-slate-900 text-white shadow-brutal-2-brand'
                                                 : 'bg-white hover:bg-slate-50 text-slate-800'
                                         }`}
                                     >
@@ -156,7 +155,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                                 type="button"
                                 onClick={handleSaveWorkshop}
                                 disabled={isSaving}
-                                className="press px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                className="press px-4 py-2 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer disabled:opacity-50"
                             >
                                 {isSaving ? 'Saving...' : '💾 Save Workshop Changes'}
                             </button>
@@ -164,7 +163,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                     </div>
 
             {/* SECTION 1: SYLLABUS DOCUMENT MANAGEMENT */}
-            <div className="p-5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] space-y-4">
+            <div className="p-5 bg-white border-2 border-slate-900 shadow-brutal-3 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
                     <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-lg font-black uppercase text-slate-900">
@@ -189,7 +188,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
                             href={currentTrack.syllabus}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="press text-xs font-mono font-bold text-sky-600 hover:text-sky-800 underline flex items-center gap-1"
+                            className="press text-xs font-mono font-bold text-sky-700 hover:text-sky-800 underline flex items-center gap-1"
                         >
                             View Active PDF &rarr;
                         </a>
@@ -232,7 +231,7 @@ export default function WorkshopScheduleAdmin({ currentUser, isAdmin, showStatus
             </div>
 
             {/* SECTION 2: TIMINGS, DATES & AUDIENCE */}
-            <div className="p-5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] space-y-4">
+            <div className="p-5 bg-white border-2 border-slate-900 shadow-brutal-3 space-y-4">
                 <div className="border-b border-slate-200 pb-3">
                     <h3 className="text-lg font-black uppercase text-slate-900">
                         Track Timings, Dates &amp; Audience

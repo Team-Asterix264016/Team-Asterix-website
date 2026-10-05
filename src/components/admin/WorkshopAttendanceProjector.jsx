@@ -13,7 +13,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     // Dynamic QR & Timer state
     const [qrDataUrl, setQrDataUrl] = useState('');
     const [countdownSeconds, setCountdownSeconds] = useState(12);
-    const [scanUrl, setScanUrl] = useState('');
+    const [, setScanUrl] = useState('');
     const [error, setError] = useState('');
 
     // Live Attendance stream
@@ -144,7 +144,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 {/* LEFT: ONLY THE QR CODE (Fitted to 100% screen height) */}
                 <div className="lg:col-span-7 xl:col-span-8 h-full flex flex-col items-center justify-center py-1 overflow-hidden">
                     {/* Dynamic QR Container */}
-                    <div className="p-3 sm:p-5 lg:p-6 bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#38bdf8] flex flex-col items-center justify-center max-w-full max-h-[calc(100vh-80px)] shrink-0">
+                    <div className="p-3 sm:p-5 lg:p-6 bg-white border-4 border-slate-900 shadow-brutal-10-light flex flex-col items-center justify-center max-w-full max-h-[calc(100vh-80px)] shrink-0">
                         {qrDataUrl ? (
                             <img
                                 src={qrDataUrl}
@@ -186,7 +186,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 <div className="lg:col-span-5 xl:col-span-4 h-full flex flex-col justify-between gap-2.5 overflow-hidden py-1">
                     
                     {/* Header Block (All headers moved here) */}
-                    <div className="space-y-2 bg-slate-900/80 p-3 border-2 border-slate-800 shadow-[4px_4px_0px_#0f172a] shrink-0">
+                    <div className="space-y-2 bg-slate-900/80 p-3 border-2 border-slate-800 shadow-brutal-4 shrink-0">
                         {/* Top Title & Controls */}
                         <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
                             <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                     type="button"
                                     onClick={() => setTrack('software')}
                                     className={`px-2.5 py-1 cursor-pointer transition-colors ${
-                                        track === 'software' ? 'bg-sky-400 text-slate-950 shadow-[1px_1px_0px_#ffffff]' : 'text-slate-400 hover:text-white'
+                                        track === 'software' ? 'bg-sky-400 text-slate-950 shadow-brutal-1-white' : 'text-slate-400 hover:text-slate-950'
                                     }`}
                                 >
                                     Software
@@ -240,7 +240,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                     type="button"
                                     onClick={() => setTrack('powertrain')}
                                     className={`px-2.5 py-1 cursor-pointer transition-colors ${
-                                        track === 'powertrain' ? 'bg-amber-400 text-slate-950 shadow-[1px_1px_0px_#ffffff]' : 'text-slate-400 hover:text-white'
+                                        track === 'powertrain' ? 'bg-amber-400 text-slate-950 shadow-brutal-1-white' : 'text-slate-400 hover:text-white'
                                     }`}
                                 >
                                     Powertrain
@@ -294,7 +294,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
                     {/* Live Metric Cards */}
                     <div className="grid grid-cols-2 gap-2.5 shrink-0">
-                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-[3px_3px_0px_#0284c7]">
+                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-brutal-3-brand">
                             <span className="text-[10px] uppercase tracking-wider text-sky-400 font-black block">
                                 Present In Class
                             </span>
@@ -306,7 +306,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                             </span>
                         </div>
 
-                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-[3px_3px_0px_#10b981]">
+                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-brutal-3-go-bright">
                             <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-black block">
                                 Attendance Rate
                             </span>
@@ -320,7 +320,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                     </div>
 
                     {/* Live Attendance Stream / Ticker - Flex-1 with internal scroll */}
-                    <div className="flex-1 min-h-0 bg-slate-900 border-2 border-slate-800 shadow-[4px_4px_0px_#0f172a] p-3 flex flex-col space-y-2 overflow-hidden">
+                    <div className="flex-1 min-h-0 bg-slate-900 border-2 border-slate-800 shadow-brutal-4 p-3 flex flex-col space-y-2 overflow-hidden">
                         <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 shrink-0">
                             <span className="text-xs font-black uppercase text-slate-300 flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>

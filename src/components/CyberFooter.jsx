@@ -22,6 +22,8 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                         {/* Top Identity Row */}
                         <div className="flex items-center gap-2.5 flex-wrap">
                             <img
+                                loading="lazy"
+                                decoding="async"
                                 src={teamLogo}
                                 alt="Asterix Racing"
                                 className="h-7 sm:h-8.5 w-auto object-contain"
@@ -35,7 +37,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-0.5">
                             <button
                                 onClick={onOpenAdmin}
-                                className="press px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 rounded-lg text-[10px] font-mono font-black shadow-[2px_2px_0px_#0284c7] tracking-wider cursor-pointer flex items-center gap-1 transition-all"
+                                className="press px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 rounded-lg text-[10px] font-mono font-black shadow-brutal-2-brand tracking-wider cursor-pointer flex items-center gap-1 transition-all"
                                 title="Open Admin Management Interface"
                             >
                                 <span className="text-sky-400">⚡</span>
@@ -52,7 +54,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     href={net.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`press px-2.5 py-1 bg-white border-2 border-slate-900 rounded-lg text-[10px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_#0f172a] ${net.color} cursor-pointer transition-all flex items-center gap-1`}
+                                    className={`press px-2.5 py-1 bg-white border-2 border-slate-900 rounded-lg text-[10px] font-black uppercase text-slate-900 shadow-brutal-2 ${net.color} cursor-pointer transition-all flex items-center gap-1`}
                                 >
                                     <span>{net.emoji}</span>
                                     <span>{net.name}</span>
@@ -70,7 +72,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5 font-mono text-xs">
                             <a
                                 href={`tel:${(contact.phone || '+91 86089 44644').replace(/[^0-9+]/g, '')}`}
-                                className="press p-2 bg-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-sky-50 hover:border-sky-600 flex items-center gap-2 font-bold text-slate-800 cursor-pointer transition-colors"
+                                className="press p-2 bg-white rounded-lg border-2 border-slate-900 shadow-brutal-2 hover:bg-sky-50 hover:border-sky-600 flex items-center gap-2 font-bold text-slate-800 cursor-pointer transition-colors"
                             >
                                 <span className="p-1 bg-sky-100 rounded border border-slate-900 text-slate-900 flex items-center justify-center flex-shrink-0">
                                     <Icon name="phone" className="w-3.5 h-3.5" />
@@ -80,7 +82,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
 
                             <a
                                 href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
-                                className="press p-2 bg-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-sky-50 hover:border-sky-600 flex items-center gap-2 font-bold text-slate-800 cursor-pointer transition-colors"
+                                className="press p-2 bg-white rounded-lg border-2 border-slate-900 shadow-brutal-2 hover:bg-sky-50 hover:border-sky-600 flex items-center gap-2 font-bold text-slate-800 cursor-pointer transition-colors"
                             >
                                 <span className="p-1 bg-sky-100 rounded border border-slate-900 text-slate-900 flex items-center justify-center flex-shrink-0">
                                     <Icon name="mail" className="w-3.5 h-3.5" />
@@ -88,7 +90,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                 <span className="truncate text-[11px]">{contact.email || 'asterix.psgitech@gmail.com'}</span>
                             </a>
 
-                            <div className="p-2 bg-white rounded-lg border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] flex items-center gap-2 font-bold text-slate-800">
+                            <div className="p-2 bg-white rounded-lg border-2 border-slate-900 shadow-brutal-2 flex items-center gap-2 font-bold text-slate-800">
                                 <span className="p-1 bg-sky-100 rounded border border-slate-900 text-slate-900 flex items-center justify-center flex-shrink-0">
                                     <Icon name="pin" className="w-3.5 h-3.5" />
                                 </span>
@@ -116,10 +118,10 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="p-2 -mx-1.5 rounded-lg border border-transparent hover:border-slate-900 hover:bg-sky-50 hover:shadow-[2px_2px_0px_#0f172a] transition-all flex items-center justify-between group cursor-pointer text-slate-800"
+                                        className="p-2 -mx-1.5 rounded-lg border border-transparent hover:border-slate-900 hover:bg-sky-50 hover:shadow-brutal-2 transition-all flex items-center justify-between group cursor-pointer text-slate-800"
                                     >
                                         <span>{item.name}</span>
-                                        <span className="font-mono text-[11px] text-slate-400 group-hover:text-sky-700 group-hover:translate-x-0.5 transition-all">→</span>
+                                        <span className="font-mono text-[11px] text-slate-500 group-hover:text-sky-700 group-hover:translate-x-0.5 transition-all">→</span>
                                     </a>
                                 ))}
                             </div>
@@ -138,13 +140,13 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                         if (onOpenWorkshop) onOpenWorkshop();
                                         else window.location.hash = '#workshop';
                                     }}
-                                    className="p-2 -mx-1.5 rounded-lg border border-slate-900 bg-amber-50 hover:bg-amber-200 hover:shadow-[2px_2px_0px_#0f172a] transition-all flex items-center justify-between group text-left cursor-pointer font-bold text-slate-900"
+                                    className="p-2 -mx-1.5 rounded-lg border border-slate-900 bg-amber-50 hover:bg-amber-200 hover:shadow-brutal-2 transition-all flex items-center justify-between group text-left cursor-pointer font-bold text-slate-900"
                                 >
                                     <span className="flex items-center gap-1.5">
                                         <span>Workshops 2026</span>
-                                        <span className="text-[9px] px-1.5 py-0.2 bg-amber-300 border border-slate-900 rounded font-black text-slate-900 shadow-[1px_1px_0px_#0f172a]">✦</span>
+                                        <span className="text-[9px] px-1.5 py-0.2 bg-amber-300 border border-slate-900 rounded font-black text-slate-900 shadow-brutal-1">✦</span>
                                     </span>
-                                    <span className="font-mono text-[11px] text-slate-400 group-hover:text-amber-900 group-hover:translate-x-0.5 transition-all">→</span>
+                                    <span className="font-mono text-[11px] text-slate-500 group-hover:text-amber-900 group-hover:translate-x-0.5 transition-all">→</span>
                                 </button>
 
                                 <button
@@ -152,13 +154,13 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                         if (onOpenSponsor) onOpenSponsor();
                                         else window.location.hash = '#sponsor';
                                     }}
-                                    className="p-2 -mx-1.5 rounded-lg border border-slate-900 bg-sky-50 hover:bg-sky-200 hover:shadow-[2px_2px_0px_#0f172a] transition-all flex items-center justify-between group text-left cursor-pointer font-bold text-slate-900"
+                                    className="p-2 -mx-1.5 rounded-lg border border-slate-900 bg-sky-50 hover:bg-sky-200 hover:shadow-brutal-2 transition-all flex items-center justify-between group text-left cursor-pointer font-bold text-slate-900"
                                 >
                                     <span className="flex items-center gap-1.5">
                                         <span>Sponsor Portal</span>
-                                        <span className="text-[9px] px-1.5 py-0.2 bg-sky-200 text-sky-900 border border-slate-900 rounded font-black font-mono shadow-[1px_1px_0px_#0f172a]">↗</span>
+                                        <span className="text-[9px] px-1.5 py-0.2 bg-sky-200 text-sky-900 border border-slate-900 rounded font-black font-mono shadow-brutal-1">↗</span>
                                     </span>
-                                    <span className="font-mono text-[11px] text-slate-400 group-hover:text-sky-800 group-hover:translate-x-0.5 transition-all">→</span>
+                                    <span className="font-mono text-[11px] text-slate-500 group-hover:text-sky-800 group-hover:translate-x-0.5 transition-all">→</span>
                                 </button>
 
                                 {[
@@ -169,10 +171,10 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="p-2 -mx-1.5 rounded-lg border border-transparent hover:border-slate-900 hover:bg-slate-100 hover:shadow-[2px_2px_0px_#0f172a] transition-all flex items-center justify-between group cursor-pointer text-slate-800"
+                                        className="p-2 -mx-1.5 rounded-lg border border-transparent hover:border-slate-900 hover:bg-slate-100 hover:shadow-brutal-2 transition-all flex items-center justify-between group cursor-pointer text-slate-800"
                                     >
                                         <span>{item.name}</span>
-                                        <span className="font-mono text-[11px] text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all">→</span>
+                                        <span className="font-mono text-[11px] text-slate-600 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all">→</span>
                                     </a>
                                 ))}
 
@@ -195,7 +197,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                     <p className="text-[10px] sm:text-[11px] font-bold text-slate-600">
                         Crafted with ❤️ by the Software & Perception Subsystem
                     </p>
-                    <p className="text-[8px] sm:text-[9px] font-semibold text-slate-400/80 uppercase tracking-widest">
+                    <p className="text-[8px] sm:text-[9px] font-semibold text-slate-600 uppercase tracking-widest">
                         © 2026 TEAM ASTERIX • ALL RIGHTS RESERVED
                     </p>
                 </div>

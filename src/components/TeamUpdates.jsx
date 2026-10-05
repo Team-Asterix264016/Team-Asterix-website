@@ -20,7 +20,7 @@ export default function TeamUpdates() {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="6"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-14 z-20 bg-rose-300 text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute left-6 sm:left-12 top-14 z-20 bg-rose-300 text-slate-950 border-3 border-slate-900 shadow-brutal-5 rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <span>● PROVING GROUNDS</span>
             </div>

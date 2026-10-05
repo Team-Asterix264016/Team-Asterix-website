@@ -103,7 +103,7 @@ function FeedbackAnalytics({ registrations }) {
                     ['Feedback coverage', `${analytics.feedbackRate}%`],
                     ['Average comment', `${analytics.averageWords} words`]
                 ].map(([label, value]) => (
-                    <div key={label} className="border-2 border-slate-900 bg-white p-4 shadow-[3px_3px_0px_#0f172a]">
+                    <div key={label} className="border-2 border-slate-900 bg-white p-4 shadow-brutal-3">
                         <p className="font-mono text-[10px] font-black uppercase text-slate-500">{label}</p>
                         <p className="mt-2 text-2xl font-black text-slate-950">{value}</p>
                     </div>
@@ -261,14 +261,14 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                     <p className="mt-1 text-xs font-bold text-slate-500">{registrations.length} registrations · {registrations.filter(registration => registration.projectSubmission).length} project submissions</p>
                 </div>
                 <div className="flex flex-wrap gap-2" role="tablist" aria-label="Project submission admin sections">
-                    <button type="button" role="tab" aria-selected={view === 'students'} onClick={() => setView('students')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'students' ? 'bg-sky-500 text-white' : 'bg-white hover:bg-sky-50'}`}>Submission review</button>
-                    <button type="button" role="tab" aria-selected={view === 'analytics'} onClick={() => setView('analytics')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'analytics' ? 'bg-sky-500 text-white' : 'bg-white hover:bg-sky-50'}`}>Feedback analytics</button>
-                    <button type="button" role="tab" aria-selected={view === 'form'} onClick={() => setView('form')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'form' ? 'bg-sky-500 text-white' : 'bg-white hover:bg-sky-50'}`}>Form settings</button>
+                    <button type="button" role="tab" aria-selected={view === 'students'} onClick={() => setView('students')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'students' ? 'bg-sky-500 text-slate-950' : 'bg-white hover:bg-sky-50'}`}>Submission review</button>
+                    <button type="button" role="tab" aria-selected={view === 'analytics'} onClick={() => setView('analytics')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'analytics' ? 'bg-sky-500 text-slate-950' : 'bg-white hover:bg-sky-50'}`}>Feedback analytics</button>
+                    <button type="button" role="tab" aria-selected={view === 'form'} onClick={() => setView('form')} className={`border-2 border-slate-900 px-3 py-2 text-xs font-black uppercase ${view === 'form' ? 'bg-sky-500 text-slate-950' : 'bg-white hover:bg-sky-50'}`}>Form settings</button>
                     <button type="button" onClick={loadData} disabled={isLoading} aria-label="Refresh project submissions" title="Refresh project submissions and feedback" className="border-2 border-slate-900 bg-white px-3 py-2 text-xs font-black uppercase hover:bg-emerald-100 disabled:opacity-50">↻ Refresh</button>
                 </div>
             </div>
 
-            {error && <p role="alert" className="border-l-4 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
+            {error && <p role="alert" className="border-2 border-rose-600 bg-rose-50 px-3 py-2 text-sm font-bold text-rose-800">{error}</p>}
             {isLoading ? <p className="border-2 border-slate-200 bg-white p-6 text-sm font-bold">Loading workshop records...</p> : view === 'form' ? (
                 config && <form onSubmit={handleSaveConfig} className="space-y-5">
                     <section className="space-y-4 border-b-2 border-slate-200 pb-5">
@@ -295,7 +295,7 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                         ))}
                         {!config.questions?.length && <p className="border-2 border-dashed border-slate-300 bg-white p-5 text-sm font-bold text-slate-500">No custom questions have been added.</p>}
                     </div>
-                    <button type="submit" disabled={isSaving} className="border-2 border-slate-900 bg-emerald-400 px-5 py-3 text-xs font-black uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-emerald-300 disabled:opacity-60">{isSaving ? 'Saving...' : 'Save form settings'}</button>
+                    <button type="submit" disabled={isSaving} className="border-2 border-slate-900 bg-emerald-400 px-5 py-3 text-xs font-black uppercase shadow-brutal-3 hover:bg-emerald-300 disabled:opacity-60">{isSaving ? 'Saving...' : 'Save form settings'}</button>
                 </form>
             ) : view === 'analytics' ? (
                 <FeedbackAnalytics registrations={registrations} />
@@ -305,7 +305,7 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                         <div className="grid gap-3 sm:grid-cols-3 lg:flex lg:items-end">
                             <label className="block w-full min-w-52 text-[10px] font-black uppercase">Search registered students<input className={`${FIELD_CLASS} mt-1.5`} value={query} onChange={event => setQuery(event.target.value)} placeholder="Name, email, registered number..." /></label>
                             <label className="block text-[10px] font-black uppercase">Submission status<select className={`${FIELD_CLASS} mt-1.5`} value={submissionFilter} onChange={event => setSubmissionFilter(event.target.value)}><option value="all">All students</option><option value="submitted">Submitted</option><option value="not-submitted">Not submitted</option></select></label>
-                            <button type="button" onClick={() => setSubmissionSort(current => current === 'desc' ? 'asc' : 'desc')} aria-label={`Sort submissions ${submissionSort === 'desc' ? 'oldest first' : 'newest first'}`} className="min-h-10 border-2 border-slate-900 bg-amber-300 px-3 py-2 text-[10px] font-black uppercase shadow-[2px_2px_0px_#0f172a] hover:bg-amber-200">
+                            <button type="button" onClick={() => setSubmissionSort(current => current === 'desc' ? 'asc' : 'desc')} aria-label={`Sort submissions ${submissionSort === 'desc' ? 'oldest first' : 'newest first'}`} className="min-h-10 border-2 border-slate-900 bg-amber-300 px-3 py-2 text-[10px] font-black uppercase shadow-brutal-2 hover:bg-amber-200">
                                 Submission time: {submissionSort === 'desc' ? 'Newest first ↓' : 'Oldest first ↑'}
                             </button>
                         </div>
@@ -322,7 +322,7 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                                             <td className="p-3"><div className="font-bold">{registration.rollNo}</div><div className="mt-1 text-[10px] font-black uppercase text-slate-500">{registration.status} · {registration.package}</div><div className="text-[11px] text-slate-500">{registration.phone}</div></td>
                                             <td className={`p-3 ${SUBMISSION_TIME_CLASS}`}>{formatSubmissionTime(registration.projectSubmission)}</td>
                                             <td className="p-3">
-                                                {registration.projectSubmission ? <div className="space-y-1.5"><a href={registration.projectSubmission.driveLink} target="_blank" rel="noreferrer" className="font-black text-sky-700 underline">Open project link ↗</a><details className="max-w-sm"><summary className="cursor-pointer text-[10px] font-black uppercase text-slate-600">Feedback &amp; answers</summary><p className="mt-1 whitespace-pre-wrap text-[11px]">{registration.projectSubmission.feedback || 'No feedback provided.'}</p>{(registration.projectSubmission.answers || []).map(answer => <p key={answer.questionId} className="mt-2 text-[11px]"><strong>{answer.label}:</strong> {answer.answer || '—'}</p>)}</details></div> : <span className="text-[10px] font-black uppercase text-slate-400">Not submitted</span>}
+                                                {registration.projectSubmission ? <div className="space-y-1.5"><a href={registration.projectSubmission.driveLink} target="_blank" rel="noreferrer" className="font-black text-sky-700 underline">Open project link ↗</a><details className="max-w-sm"><summary className="cursor-pointer text-[10px] font-black uppercase text-slate-600">Feedback &amp; answers</summary><p className="mt-1 whitespace-pre-wrap text-[11px]">{registration.projectSubmission.feedback || 'No feedback provided.'}</p>{(registration.projectSubmission.answers || []).map(answer => <p key={answer.questionId} className="mt-2 text-[11px]"><strong>{answer.label}:</strong> {answer.answer || '—'}</p>)}</details></div> : <span className="text-[10px] font-black uppercase text-slate-500">Not submitted</span>}
                                             </td>
                                         </tr>
                                     ))}

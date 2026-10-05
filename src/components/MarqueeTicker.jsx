@@ -17,7 +17,7 @@ export default function MarqueeTicker() {
             
             {/* Top Marquee Ribbon (Sky Blue Background - Moving Left with Scroll Counter-Parallax) */}
             <div data-assemble="left" data-parallax="counter-x-left" className="bg-sky-500 py-3 border-b-2 border-slate-900 flex overflow-hidden will-change-transform">
-                <div className="animate-marquee-left text-white font-black text-sm sm:text-base tracking-widest uppercase">
+                <div className="animate-marquee-left text-slate-950 font-black text-sm sm:text-base tracking-widest uppercase">
                     {[...items, ...items].map((text, idx) => (
                         <div key={idx} className="flex items-center gap-8 pr-8 whitespace-nowrap">
                             <span>{text}</span>

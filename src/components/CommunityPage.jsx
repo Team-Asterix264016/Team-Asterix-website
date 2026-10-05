@@ -6,6 +6,7 @@ import {
     INITIAL_RESOURCES,
     HORIZON_BLOGS
 } from '../data/communityData';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function CommunityPage({ onBack }) {
     const [activeTab, setActiveTab] = useState('discussions'); // 'discussions' | 'projects' | 'resources' | 'horizon'
@@ -28,6 +29,11 @@ export default function CommunityPage({ onBack }) {
     // Newsletter State
     const [newsletterEmail, setNewsletterEmail] = useState('');
     const [newsletterStatus, setNewsletterStatus] = useState('');
+
+    const threadModalRef = useModalBehavior(Boolean(activeThread), () => setActiveThread(null));
+    const blogModalRef = useModalBehavior(Boolean(activeBlog), () => setActiveBlog(null));
+    const newDiscussionModalRef = useModalBehavior(isNewDiscussionOpen, () => setIsNewDiscussionOpen(false));
+    const newProjectModalRef = useModalBehavior(isNewProjectOpen, () => setIsNewProjectOpen(false));
 
     // Handlers
     const handleUpvoteDiscussion = (id, e) => {
@@ -140,7 +146,7 @@ export default function CommunityPage({ onBack }) {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onBack}
-                        className="press press-flat px-3.5 py-1.5 bg-amber-300 hover:bg-amber-400 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press press-flat px-3.5 py-1.5 bg-amber-300 hover:bg-amber-400 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                     >
                         ← Back to Live Site
                     </button>
@@ -155,7 +161,7 @@ export default function CommunityPage({ onBack }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-emerald-300 border-2 border-slate-900 font-mono text-[10px] font-black uppercase shadow-[2px_2px_0px_#0f172a]">
+                    <span className="px-2.5 py-1 bg-emerald-300 border-2 border-slate-900 font-mono text-[10px] font-black uppercase shadow-brutal-2">
                         ● OPEN COMMUNITY ACTIVE
                     </span>
                 </div>
@@ -165,7 +171,7 @@ export default function CommunityPage({ onBack }) {
             <section className="bg-slate-900 text-white border-b-4 border-slate-900 px-4 sm:px-8 py-10 relative overflow-hidden">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
                     <div className="space-y-2 max-w-2xl">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-400 text-slate-900 border-2 border-white font-mono text-xs font-black uppercase rotate-[-1deg] shadow-[3px_3px_0px_#fff]">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-400 text-slate-900 border-2 border-white font-mono text-xs font-black uppercase rotate-[-1deg] shadow-brutal-3-white">
                             <span>✦ TEAM ASTERIX KNOWLEDGE ECOSYSTEM</span>
                         </div>
                         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-none text-white">
@@ -178,19 +184,19 @@ export default function CommunityPage({ onBack }) {
 
                     {/* Quick Stats Pill */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
-                        <div className="p-3 bg-white text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#38bdf8] text-center">
+                        <div className="p-3 bg-white text-slate-900 border-2 border-slate-900 shadow-brutal-3-light text-center">
                             <span className="block text-2xl font-black">{discussions.length}</span>
                             <span className="text-[9px] font-mono font-bold uppercase text-slate-500">Discussions</span>
                         </div>
-                        <div className="p-3 bg-amber-300 text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#fff] text-center">
+                        <div className="p-3 bg-amber-300 text-slate-900 border-2 border-slate-900 shadow-brutal-3-white text-center">
                             <span className="block text-2xl font-black">{projects.length}</span>
                             <span className="text-[9px] font-mono font-bold uppercase text-slate-900">Projects</span>
                         </div>
-                        <div className="p-3 bg-emerald-300 text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#fff] text-center">
+                        <div className="p-3 bg-emerald-300 text-slate-900 border-2 border-slate-900 shadow-brutal-3-white text-center">
                             <span className="block text-2xl font-black">{INITIAL_RESOURCES.length}</span>
                             <span className="text-[9px] font-mono font-bold uppercase text-slate-900">Resources</span>
                         </div>
-                        <div className="p-3 bg-rose-400 text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#fff] text-center">
+                        <div className="p-3 bg-rose-400 text-slate-900 border-2 border-slate-900 shadow-brutal-3-white text-center">
                             <span className="block text-2xl font-black">{HORIZON_BLOGS.length}</span>
                             <span className="text-[9px] font-mono font-bold uppercase text-slate-900">Blogs</span>
                         </div>
@@ -203,9 +209,9 @@ export default function CommunityPage({ onBack }) {
                 <div className="flex flex-wrap items-center gap-2 border-b-4 border-slate-900 pb-3">
                     <button
                         onClick={() => setActiveTab('discussions')}
-                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-[2px_2px_0px_#0f172a] ${
+                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-brutal-2 ${
                             activeTab === 'discussions'
-                                ? 'bg-sky-500 text-white border-slate-900 translate-y-[-1px]'
+                                ? 'bg-sky-500 text-slate-950 border-slate-900 translate-y-[-1px]'
                                 : 'bg-white hover:bg-sky-50 text-slate-800 border-slate-900'
                         }`}
                     >
@@ -215,7 +221,7 @@ export default function CommunityPage({ onBack }) {
 
                     <button
                         onClick={() => setActiveTab('projects')}
-                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-[2px_2px_0px_#0f172a] ${
+                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-brutal-2 ${
                             activeTab === 'projects'
                                 ? 'bg-amber-300 text-slate-900 border-slate-900 translate-y-[-1px]'
                                 : 'bg-white hover:bg-amber-50 text-slate-800 border-slate-900'
@@ -227,7 +233,7 @@ export default function CommunityPage({ onBack }) {
 
                     <button
                         onClick={() => setActiveTab('resources')}
-                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-[2px_2px_0px_#0f172a] ${
+                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-brutal-2 ${
                             activeTab === 'resources'
                                 ? 'bg-emerald-300 text-slate-900 border-slate-900 translate-y-[-1px]'
                                 : 'bg-white hover:bg-emerald-50 text-slate-800 border-slate-900'
@@ -239,7 +245,7 @@ export default function CommunityPage({ onBack }) {
 
                     <button
                         onClick={() => setActiveTab('horizon')}
-                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-[2px_2px_0px_#0f172a] ${
+                        className={`press press-flat px-4 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center gap-2 shadow-brutal-2 ${
                             activeTab === 'horizon'
                                 ? 'bg-rose-400 text-slate-900 border-slate-900 translate-y-[-1px]'
                                 : 'bg-white hover:bg-rose-50 text-slate-800 border-slate-900'
@@ -255,7 +261,7 @@ export default function CommunityPage({ onBack }) {
             {activeTab === 'discussions' && (
                 <main className="max-w-6xl mx-auto px-4 sm:px-8 mt-6">
                     {/* Filter & Action Header */}
-                    <div className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 sm:p-6 mb-6">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-6 p-4 sm:p-6 mb-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-slate-200 pb-4 mb-4">
                             <div>
                                 <h3 className="text-xl font-black uppercase text-slate-900">Community Q&A & Technical Discussions</h3>
@@ -263,7 +269,7 @@ export default function CommunityPage({ onBack }) {
                             </div>
                             <button
                                 onClick={() => setIsNewDiscussionOpen(true)}
-                                className="press px-4 py-2 bg-sky-500 hover:bg-sky-400 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2 self-start md:self-auto"
+                                className="press px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center justify-center gap-2 self-start md:self-auto"
                             >
                                 <span>+ Start New Discussion</span>
                             </button>
@@ -278,7 +284,7 @@ export default function CommunityPage({ onBack }) {
                                         onClick={() => setSelectedCategory(cat.id)}
                                         className={`press px-3 py-1 border-2 font-mono text-[11px] uppercase font-bold cursor-pointer transition-all ${
                                             selectedCategory === cat.id
-                                                ? 'bg-slate-900 text-white border-slate-900 shadow-[2px_2px_0px_#38bdf8]'
+                                                ? 'bg-slate-900 text-white border-slate-900 shadow-brutal-2-light'
                                                 : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
                                         }`}
                                     >
@@ -303,7 +309,7 @@ export default function CommunityPage({ onBack }) {
                             <div
                                 key={disc.id}
                                 onClick={() => setActiveThread(disc)}
-                                className="bg-white border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] p-4 sm:p-6 hover:translate-x-1 transition-all cursor-pointer group"
+                                className="bg-white border-3 border-slate-900 shadow-brutal-4 p-4 sm:p-6 hover:translate-x-1 transition-all cursor-pointer group"
                             >
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="space-y-2 flex-1">
@@ -316,10 +322,10 @@ export default function CommunityPage({ onBack }) {
                                                     ✓ SOLVED
                                                 </span>
                                             )}
-                                            <span className="text-[10px] font-mono text-slate-400">• Posted by <strong>{disc.author}</strong> ({disc.timestamp})</span>
+                                            <span className="text-[10px] font-mono text-slate-500">• Posted by <strong>{disc.author}</strong> ({disc.timestamp})</span>
                                         </div>
 
-                                        <h4 className="text-lg font-black uppercase text-slate-900 group-hover:text-sky-600 transition-colors">
+                                        <h4 className="text-lg font-black uppercase text-slate-900 group-hover:text-sky-700 transition-colors">
                                             {disc.title}
                                         </h4>
                                         <p className="text-xs font-mono text-slate-600 line-clamp-2">
@@ -331,7 +337,7 @@ export default function CommunityPage({ onBack }) {
                                     <div className="flex flex-col items-center gap-2 flex-shrink-0">
                                         <button
                                             onClick={(e) => handleUpvoteDiscussion(disc.id, e)}
-                                            className="press px-3 py-1.5 bg-slate-100 hover:bg-sky-100 border-2 border-slate-900 font-mono text-xs font-black text-slate-900 flex flex-col items-center shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press px-3 py-1.5 bg-slate-100 hover:bg-sky-100 border-2 border-slate-900 font-mono text-xs font-black text-slate-900 flex flex-col items-center shadow-brutal-2 cursor-pointer"
                                             title="Upvote discussion"
                                         >
                                             <span className="text-xs">▲</span>
@@ -351,7 +357,7 @@ export default function CommunityPage({ onBack }) {
                                 <p className="text-slate-500 text-sm font-bold">No discussions found matching your filter.</p>
                                 <button
                                     onClick={() => setIsNewDiscussionOpen(true)}
-                                    className="mt-3 press px-4 py-2 bg-sky-500 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]"
+                                    className="mt-3 press px-4 py-2 bg-sky-500 text-slate-950 font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2"
                                 >
                                     + Start the first discussion
                                 </button>
@@ -364,14 +370,14 @@ export default function CommunityPage({ onBack }) {
             {/* TAB 2: PROJECT SHOWCASE WALL */}
             {activeTab === 'projects' && (
                 <main className="max-w-6xl mx-auto px-4 sm:px-8 mt-6">
-                    <div className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 sm:p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-6 p-4 sm:p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
                             <h3 className="text-xl font-black uppercase text-slate-900">Project Showcase Wall</h3>
                             <p className="text-xs font-mono font-bold text-slate-500">Explore autonomous systems, custom mechanical builds, and student open-source hardware.</p>
                         </div>
                         <button
                             onClick={() => setIsNewProjectOpen(true)}
-                            className="press px-4 py-2 bg-amber-300 hover:bg-amber-400 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                            className="press px-4 py-2 bg-amber-300 hover:bg-amber-400 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
                         >
                             + Submit Your Project
                         </button>
@@ -379,10 +385,10 @@ export default function CommunityPage({ onBack }) {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {projects.map(proj => (
-                            <div key={proj.id} className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between overflow-hidden group hover:translate-y-[-2px] transition-transform">
+                            <div key={proj.id} className="bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between overflow-hidden group hover:translate-y-[-2px] transition-transform">
                                 <div className="relative h-48 border-b-4 border-slate-900 overflow-hidden bg-slate-900">
                                     <img src={proj.image} alt={proj.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90" />
-                                    <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-300 text-slate-900 border-2 border-slate-900 font-mono text-[9px] font-black uppercase shadow-[2px_2px_0px_#0f172a]">
+                                    <span className="absolute top-3 left-3 px-2 py-0.5 bg-amber-300 text-slate-900 border-2 border-slate-900 font-mono text-[9px] font-black uppercase shadow-brutal-2">
                                         {proj.authorBadge}
                                     </span>
                                 </div>
@@ -409,7 +415,7 @@ export default function CommunityPage({ onBack }) {
                                         <div className="flex items-center justify-between pt-2">
                                             <button
                                                 onClick={(e) => handleStarProject(proj.id, e)}
-                                                className="press px-3 py-1 bg-amber-50 hover:bg-amber-300 border border-slate-900 font-mono text-xs font-black text-slate-900 flex items-center gap-1 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                                className="press px-3 py-1 bg-amber-50 hover:bg-amber-300 border border-slate-900 font-mono text-xs font-black text-slate-900 flex items-center gap-1 shadow-brutal-2 cursor-pointer"
                                             >
                                                 <span>⭐</span>
                                                 <span>{proj.stars} Stars</span>
@@ -420,7 +426,7 @@ export default function CommunityPage({ onBack }) {
                                                     href={proj.githubUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-xs font-mono font-black text-sky-600 hover:text-slate-900 underline flex items-center gap-1"
+                                                    className="text-xs font-mono font-black text-sky-700 hover:text-slate-900 underline flex items-center gap-1"
                                                 >
                                                     <span>GitHub Repo ↗</span>
                                                 </a>
@@ -437,14 +443,14 @@ export default function CommunityPage({ onBack }) {
             {/* TAB 3: RESOURCE VAULT */}
             {activeTab === 'resources' && (
                 <main className="max-w-6xl mx-auto px-4 sm:px-8 mt-6">
-                    <div className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 sm:p-6 mb-6">
+                    <div className="bg-white border-4 border-slate-900 shadow-brutal-6 p-4 sm:p-6 mb-6">
                         <h3 className="text-xl font-black uppercase text-slate-900">Resource Vault & Technical Cheatsheets</h3>
                         <p className="text-xs font-mono font-bold text-slate-500">Download verified CAD models, ROS2 configuration templates, and FEA stress calculation sheets.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {INITIAL_RESOURCES.map(res => (
-                            <div key={res.id} className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-5 flex flex-col justify-between gap-4">
+                            <div key={res.id} className="bg-white border-4 border-slate-900 shadow-brutal-6 p-5 flex flex-col justify-between gap-4">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between gap-2">
                                         <span className="px-2.5 py-0.5 bg-emerald-100 border border-emerald-600 text-emerald-900 font-mono text-[9px] font-black uppercase">
@@ -468,7 +474,7 @@ export default function CommunityPage({ onBack }) {
                                         href={res.link}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="press px-4 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a]"
+                                        className="press px-4 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2"
                                     >
                                         Download File ⤓
                                     </a>
@@ -483,10 +489,10 @@ export default function CommunityPage({ onBack }) {
             {activeTab === 'horizon' && (
                 <main className="max-w-6xl mx-auto px-4 sm:px-8 mt-6 space-y-8">
                     {/* Featured Article Spotlight Header */}
-                    <div className="bg-slate-900 text-white border-4 border-slate-900 shadow-[8px_8px_0px_#38bdf8] grid grid-cols-1 md:grid-cols-2 overflow-hidden">
+                    <div className="bg-slate-900 text-white border-4 border-slate-900 shadow-brutal-8-light grid grid-cols-1 md:grid-cols-2 overflow-hidden">
                         <div className="h-64 md:h-auto overflow-hidden relative">
                             <img src={HORIZON_BLOGS[0].image} alt={HORIZON_BLOGS[0].title} className="w-full h-full object-cover" />
-                            <span className="absolute top-4 left-4 px-3 py-1 bg-rose-400 text-slate-900 border-2 border-white font-mono text-xs font-black uppercase shadow-[2px_2px_0px_#fff]">
+                            <span className="absolute top-4 left-4 px-3 py-1 bg-rose-400 text-slate-900 border-2 border-white font-mono text-xs font-black uppercase shadow-brutal-2-white">
                                 ★ HORIZON FEATURED STORY
                             </span>
                         </div>
@@ -508,7 +514,7 @@ export default function CommunityPage({ onBack }) {
 
                             <button
                                 onClick={() => setActiveBlog(HORIZON_BLOGS[0])}
-                                className="press px-5 py-2.5 bg-rose-400 hover:bg-rose-300 text-slate-900 border-2 border-white font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#fff] cursor-pointer self-start"
+                                className="press px-5 py-2.5 bg-rose-400 hover:bg-rose-300 text-slate-900 border-2 border-white font-mono font-black text-xs uppercase shadow-brutal-3-white cursor-pointer self-start"
                             >
                                 Read Full Article →
                             </button>
@@ -518,7 +524,7 @@ export default function CommunityPage({ onBack }) {
                     {/* Blog Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {HORIZON_BLOGS.slice(1).map(blog => (
-                            <div key={blog.id} className="bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between overflow-hidden">
+                            <div key={blog.id} className="bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between overflow-hidden">
                                 <div className="h-48 overflow-hidden relative border-b-4 border-slate-900">
                                     <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
                                     <span className="absolute top-3 left-3 px-2 py-0.5 bg-sky-400 text-slate-900 border-2 border-slate-900 font-mono text-[9px] font-black uppercase">
@@ -545,7 +551,7 @@ export default function CommunityPage({ onBack }) {
                                         <span className="text-[10px] font-mono font-bold text-slate-500">By {blog.author}</span>
                                         <button
                                             onClick={() => setActiveBlog(blog)}
-                                            className="press px-3.5 py-1.5 bg-slate-900 hover:bg-sky-600 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press px-3.5 py-1.5 bg-slate-900 hover:bg-sky-600 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer"
                                         >
                                             Read →
                                         </button>
@@ -559,7 +565,7 @@ export default function CommunityPage({ onBack }) {
 
             {/* Newsletter CTA Section */}
             <section className="max-w-6xl mx-auto px-4 sm:px-8 mt-12">
-                <div className="bg-amber-300 border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="bg-amber-300 border-4 border-slate-900 shadow-brutal-8 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="space-y-2 max-w-xl">
                         <span className="px-2.5 py-0.5 bg-slate-900 text-white font-mono text-[10px] font-black uppercase">
                             NEWSLETTER SUBSCRIPTION
@@ -579,11 +585,11 @@ export default function CommunityPage({ onBack }) {
                             placeholder="Enter your email address..."
                             value={newsletterEmail}
                             onChange={(e) => setNewsletterEmail(e.target.value)}
-                            className="px-4 py-2.5 bg-white border-2 border-slate-900 font-mono text-xs text-slate-900 focus:outline-none w-full sm:w-72 shadow-[2px_2px_0px_#0f172a]"
+                            className="px-4 py-2.5 bg-white border-2 border-slate-900 font-mono text-xs text-slate-900 focus:outline-none w-full sm:w-72 shadow-brutal-2"
                         />
                         <button
                             type="submit"
-                            className="press px-5 py-2.5 bg-slate-900 hover:bg-sky-600 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer whitespace-nowrap"
+                            className="press px-5 py-2.5 bg-slate-900 hover:bg-sky-600 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer whitespace-nowrap"
                         >
                             Subscribe Now 📬
                         </button>
@@ -602,8 +608,16 @@ export default function CommunityPage({ onBack }) {
                     className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
                     data-lenis-prevent="true"
                     data-lenis-prevent-wheel="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setActiveThread(null); }}
                 >
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                    <div
+                        ref={threadModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="community-thread-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-10 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+                    >
                         {/* Header */}
                         <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between flex-shrink-0 z-10">
                             <span className="font-mono text-xs font-black uppercase text-sky-400">// DISCUSSION THREAD</span>
@@ -621,7 +635,7 @@ export default function CommunityPage({ onBack }) {
                                     <span className="px-2 py-0.5 bg-sky-100 text-sky-900 border border-slate-900 font-mono text-[9px] font-black uppercase">{activeThread.categoryLabel}</span>
                                     <span className="text-[10px] font-mono text-slate-500">Posted by <strong>{activeThread.author}</strong> ({activeThread.timestamp})</span>
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-900 leading-snug">{activeThread.title}</h3>
+                                <h3 id="community-thread-title" className="text-xl sm:text-2xl font-black uppercase text-slate-900 leading-snug">{activeThread.title}</h3>
                                 <div className="bg-slate-50 border-2 border-slate-900 p-4 font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-line">
                                     {activeThread.content}
                                 </div>
@@ -652,7 +666,7 @@ export default function CommunityPage({ onBack }) {
                                 />
                                 <button
                                     onClick={() => handleAddReply(activeThread.id)}
-                                    className="press px-4 py-2 bg-sky-500 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer"
                                 >
                                     Post Reply
                                 </button>
@@ -668,8 +682,16 @@ export default function CommunityPage({ onBack }) {
                     className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
                     data-lenis-prevent="true"
                     data-lenis-prevent-wheel="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setActiveBlog(null); }}
                 >
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                    <div
+                        ref={blogModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="community-blog-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-10 max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+                    >
                         {/* Header */}
                         <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between flex-shrink-0 z-10">
                             <span className="font-mono text-xs font-black uppercase text-rose-400">// "HORIZON" TECH ARTICLE</span>
@@ -686,7 +708,7 @@ export default function CommunityPage({ onBack }) {
                                 <span className="px-2.5 py-1 bg-rose-400 text-slate-900 border-2 border-slate-900 font-mono text-xs font-black uppercase">
                                     {activeBlog.category}
                                 </span>
-                                <h2 className="text-2xl sm:text-3xl font-black uppercase text-slate-900 leading-tight">
+                                <h2 id="community-blog-title" className="text-2xl sm:text-3xl font-black uppercase text-slate-900 leading-tight">
                                     {activeBlog.title}
                                 </h2>
                                 <div className="flex items-center gap-3 text-xs font-mono font-bold text-slate-500">
@@ -716,11 +738,19 @@ export default function CommunityPage({ onBack }) {
                     className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
                     data-lenis-prevent="true"
                     data-lenis-prevent-wheel="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setIsNewDiscussionOpen(false); }}
                 >
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div
+                        ref={newDiscussionModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="community-new-discussion-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-10 max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar"
+                    >
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
-                            <h3 className="font-black uppercase text-lg text-slate-900">Start New Discussion</h3>
-                            <button onClick={() => setIsNewDiscussionOpen(false)} className="font-mono font-black text-slate-400 hover:text-slate-900">✕</button>
+                            <h3 id="community-new-discussion-title" className="font-black uppercase text-lg text-slate-900">Start New Discussion</h3>
+                            <button onClick={() => setIsNewDiscussionOpen(false)} className="font-mono font-black text-slate-500 hover:text-slate-900">✕</button>
                         </div>
                         <form onSubmit={handleCreateThread} className="space-y-3 font-mono text-xs">
                             <div>
@@ -741,7 +771,7 @@ export default function CommunityPage({ onBack }) {
                                 <label className="block font-bold mb-1">Detailed Explanation & Code/Logs</label>
                                 <textarea rows="5" required placeholder="Provide details..." value={newThreadForm.content} onChange={e => setNewThreadForm({ ...newThreadForm, content: e.target.value })} className="w-full p-2 border-2 border-slate-900" />
                             </div>
-                            <button type="submit" className="press w-full py-2.5 bg-sky-500 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">Publish Thread</button>
+                            <button type="submit" className="press w-full py-2.5 bg-sky-500 text-slate-950 font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2">Publish Thread</button>
                         </form>
                     </div>
                 </div>
@@ -753,11 +783,19 @@ export default function CommunityPage({ onBack }) {
                     className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
                     data-lenis-prevent="true"
                     data-lenis-prevent-wheel="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setIsNewProjectOpen(false); }}
                 >
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+                    <div
+                        ref={newProjectModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="community-new-project-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-10 max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar"
+                    >
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
-                            <h3 className="font-black uppercase text-lg text-slate-900">Submit Project Showcase</h3>
-                            <button onClick={() => setIsNewProjectOpen(false)} className="font-mono font-black text-slate-400 hover:text-slate-900">✕</button>
+                            <h3 id="community-new-project-title" className="font-black uppercase text-lg text-slate-900">Submit Project Showcase</h3>
+                            <button onClick={() => setIsNewProjectOpen(false)} className="font-mono font-black text-slate-500 hover:text-slate-900">✕</button>
                         </div>
                         <form onSubmit={handleCreateProject} className="space-y-3 font-mono text-xs">
                             <div>
@@ -780,7 +818,7 @@ export default function CommunityPage({ onBack }) {
                                 <label className="block font-bold mb-1">GitHub / Code URL</label>
                                 <input type="url" placeholder="https://github.com/..." value={newProjectForm.githubUrl} onChange={e => setNewProjectForm({ ...newProjectForm, githubUrl: e.target.value })} className="w-full p-2 border-2 border-slate-900" />
                             </div>
-                            <button type="submit" className="press w-full py-2.5 bg-amber-300 text-slate-900 font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">Publish Project</button>
+                            <button type="submit" className="press w-full py-2.5 bg-amber-300 text-slate-900 font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2">Publish Project</button>
                         </form>
                     </div>
                 </div>

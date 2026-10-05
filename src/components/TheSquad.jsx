@@ -44,13 +44,16 @@ export default function TheSquad({ onSelectSubsystem }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="-5"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-28 z-20 bg-sky-300 text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="hidden lg:flex absolute left-6 sm:left-12 top-6 z-20 bg-sky-300 text-slate-950 border-3 border-slate-900 shadow-brutal-5 rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
             >
                 <span>● ROSTER // ACTIVE CREW</span>
             </div>
 
             {/* Section Header */}
-            <div className="pt-16 sm:pt-24 pb-6 sm:pb-10 px-4 sm:px-8 max-w-7xl mx-auto relative z-10">
+            {/* lg:pt-40 reserves the band the kinetic sticker occupies (it sits at
+                top-6 plus a fixed 55px GSAP offset, so it runs to ~125px inside this
+                section). Without it the sticker lands on top of the word THE. */}
+            <div className="pt-16 sm:pt-24 lg:pt-44 pb-6 sm:pb-10 px-4 sm:px-8 max-w-7xl mx-auto relative z-10">
                 <div data-assemble="header" className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
@@ -82,7 +85,7 @@ export default function TheSquad({ onSelectSubsystem }) {
                         <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
                             CURRENT DECK:
                         </span>
-                        <span className="px-3 py-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] text-xs font-black uppercase text-sky-600">
+                        <span className="px-3 py-1 bg-white border-2 border-slate-900 shadow-brutal-2 text-xs font-black uppercase text-sky-700">
                             {activeSystem.name}
                         </span>
                     </div>
@@ -116,16 +119,16 @@ export default function TheSquad({ onSelectSubsystem }) {
                                 onSelectSubsystem(system.id);
                             }
                         }}
-                        className="group relative w-full h-full rounded-2xl bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] sm:shadow-[14px_14px_0px_#0f172a] p-6 sm:p-8 md:p-10 flex flex-col justify-between overflow-hidden cursor-pointer select-none transition-transform duration-200 hover:-translate-y-1 hover:shadow-[14px_14px_0px_#0284c7]"
+                        className="group relative w-full h-full rounded-2xl bg-white border-4 border-slate-900 shadow-brutal-10 sm:shadow-brutal-14 p-6 sm:p-8 md:p-10 flex flex-col justify-between overflow-hidden cursor-pointer select-none transition-transform duration-200 hover:-translate-y-1 hover:shadow-brutal-14-brand"
                     >
                         {/* Top Color Accent Stripe */}
                         <div
                             className={`h-5 sm:h-6 -mx-6 sm:-mx-8 md:-mx-10 -mt-6 sm:-mt-8 md:-mt-10 mb-6 sm:mb-8 ${system.color} border-b-4 border-slate-900 flex items-center justify-between px-6`}
                         >
-                            <span className="text-[10px] font-mono font-black text-slate-900/60 uppercase tracking-widest">
+                            <span className="text-[10px] font-mono font-black text-slate-900 uppercase tracking-widest">
                                 DECK 0{idx + 1}
                             </span>
-                            <span className="text-[10px] font-mono font-black text-slate-900/60 uppercase">
+                            <span className="text-[10px] font-mono font-black text-slate-900 uppercase">
                                 TEAM ASTERIX
                             </span>
                         </div>
@@ -134,16 +137,16 @@ export default function TheSquad({ onSelectSubsystem }) {
                         <div className="flex-1 flex flex-col justify-start">
                             {/* Badges Row */}
                             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                                <span className="px-3 py-1 bg-slate-900 text-white font-mono font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-sm shadow-[2px_2px_0px_#0f172a]">
+                                <span className="px-3 py-1 bg-slate-900 text-white font-mono font-black text-[11px] sm:text-xs uppercase tracking-wider rounded-sm shadow-brutal-2">
                                     {system.badge}
                                 </span>
-                                <span className="px-3 py-1 bg-sky-100 border-2 border-slate-900 font-mono font-black text-[11px] sm:text-xs text-slate-900 rounded-sm shadow-[2px_2px_0px_#0f172a]">
+                                <span className="px-3 py-1 bg-sky-100 border-2 border-slate-900 font-mono font-black text-[11px] sm:text-xs text-slate-900 rounded-sm shadow-brutal-2">
                                     {system.stat}
                                 </span>
                             </div>
 
                             {/* Subsystem Name */}
-                            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tight mb-3 group-hover:text-sky-600 transition-colors">
+                            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 uppercase tracking-tight mb-3 group-hover:text-sky-700 transition-colors">
                                 {system.name}
                             </h3>
 
@@ -158,7 +161,7 @@ export default function TheSquad({ onSelectSubsystem }) {
                                     {system.specifications.slice(0, 3).map((spec, sIdx) => (
                                         <span
                                             key={sIdx}
-                                            className="px-2.5 py-1 bg-slate-100 border-2 border-slate-900 text-[10px] sm:text-[11px] font-mono text-slate-800 rounded shadow-[1px_1px_0px_#0f172a]"
+                                            className="px-2.5 py-1 bg-slate-100 border-2 border-slate-900 text-[10px] sm:text-[11px] font-mono text-slate-800 rounded shadow-brutal-1"
                                         >
                                             <strong className="font-black text-slate-900">{spec.label}:</strong> {spec.value}
                                         </span>
@@ -185,7 +188,7 @@ export default function TheSquad({ onSelectSubsystem }) {
                                         onSelectSubsystem(system.id);
                                     }
                                 }}
-                                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-sky-500 hover:bg-slate-900 text-white font-black text-xs sm:text-sm uppercase border-3 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:shadow-[1px_1px_0px_#0f172a] hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer"
+                                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-sky-500 hover:bg-slate-900 text-slate-950 font-black text-xs sm:text-sm uppercase border-3 border-slate-900 shadow-brutal-3 hover:shadow-brutal-1 hover:translate-x-[2px] hover:translate-y-[2px] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all cursor-pointer"
                             >
                                 VIEW CREW →
                             </button>
@@ -205,7 +208,7 @@ export default function TheSquad({ onSelectSubsystem }) {
                         <button
                             key={s.id}
                             onClick={() => onSelectSubsystem(s.id)}
-                            className="press p-3 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-sky-500 hover:text-white hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_#0f172a] text-left flex flex-col justify-between cursor-pointer transition-all"
+                            className="press p-3 bg-white border-2 border-slate-900 shadow-brutal-3 hover:bg-sky-500 hover:text-slate-950 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-brutal-5 text-left flex flex-col justify-between cursor-pointer transition-all"
                         >
                             <span className="text-[10px] font-black opacity-60">0{idx + 1}</span>
                             <span className="text-xs font-black uppercase mt-2 leading-tight">

@@ -198,7 +198,7 @@ PSG iTech Autonomous Mobility Cell
             {/* Hero Section */}
             <section className="pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-8 bg-slate-900 text-white border-b-4 border-slate-900 relative overflow-hidden">
                 <div className="max-w-6xl mx-auto relative z-10">
-                    <div className="inline-block px-3 py-1 bg-amber-300 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0284c7] mb-4">
+                    <div className="inline-block px-3 py-1 bg-amber-300 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-3-brand mb-4">
                         ★ POWER THE FIRST DRAFT • ASTERIX AUTONOMOUS PLATFORM
                     </div>
                     <h1 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight leading-none mb-6">
@@ -228,7 +228,7 @@ PSG iTech Autonomous Mobility Cell
             {/* Section 1: Official Documents & Deck Files */}
             <section className="py-16 px-4 sm:px-8 max-w-6xl mx-auto">
                 <div className="mb-10">
-                    <span className="text-xs font-mono font-black uppercase text-sky-600 tracking-widest block mb-1">
+                    <span className="text-xs font-mono font-black uppercase text-sky-700 tracking-widest block mb-1">
                         OFFICIAL DOCUMENTS & MATERIALS
                     </span>
                     <h2 className="text-3xl sm:text-4xl font-black uppercase text-slate-900 tracking-tight">
@@ -238,12 +238,12 @@ PSG iTech Autonomous Mobility Cell
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* File 1: Official Brochure */}
-                    <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                    <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                         <div>
-                            <div className="w-12 h-12 bg-sky-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="w-12 h-12 bg-sky-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-brutal-2">
                                 📄
                             </div>
-                            <span className="text-[10px] font-mono font-bold text-sky-600 uppercase block mb-1">
+                            <span className="text-[10px] font-mono font-bold text-sky-700 uppercase block mb-1">
                                 DOCUMENT • PDF
                             </span>
                             <h3 className="text-xl font-black uppercase text-slate-900 mb-2">
@@ -255,7 +255,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadBrochure}
-                            className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                            className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer flex items-center justify-center gap-1.5"
                         >
                             <span>Download Brochure</span>
                             <span>↓</span>
@@ -263,9 +263,9 @@ PSG iTech Autonomous Mobility Cell
                     </div>
 
                     {/* File 2: Technical Architecture Pitch */}
-                    <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                    <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                         <div>
-                            <div className="w-12 h-12 bg-amber-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="w-12 h-12 bg-amber-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-brutal-2">
                                 ⚙️
                             </div>
                             <span className="text-[10px] font-mono font-bold text-amber-700 uppercase block mb-1">
@@ -280,7 +280,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadDeck}
-                            className="press w-full py-2.5 bg-amber-300 hover:bg-amber-400 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                            className="press w-full py-2.5 bg-amber-300 hover:bg-amber-400 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer flex items-center justify-center gap-1.5"
                         >
                             <span>Download Tech Deck</span>
                             <span>↓</span>
@@ -288,9 +288,9 @@ PSG iTech Autonomous Mobility Cell
                     </div>
 
                     {/* File 3: Institution Endorsement */}
-                    <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                    <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                         <div>
-                            <div className="w-12 h-12 bg-emerald-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-[2px_2px_0px_#0f172a]">
+                            <div className="w-12 h-12 bg-emerald-100 border-2 border-slate-900 flex items-center justify-center text-2xl mb-4 shadow-brutal-2">
                                 🏛️
                             </div>
                             <span className="text-[10px] font-mono font-bold text-emerald-700 uppercase block mb-1">
@@ -305,7 +305,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadLetter}
-                            className="press w-full py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                            className="press w-full py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-900 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-2 cursor-pointer flex items-center justify-center gap-1.5"
                         >
                             <span>Download Letter</span>
                             <span>↓</span>
@@ -318,7 +318,7 @@ PSG iTech Autonomous Mobility Cell
             <section className="py-16 px-4 sm:px-8 bg-sky-50/60 border-y-4 border-slate-900">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center max-w-2xl mx-auto mb-12">
-                        <span className="text-xs font-mono font-black uppercase text-sky-600 tracking-widest block mb-1">
+                        <span className="text-xs font-mono font-black uppercase text-sky-700 tracking-widest block mb-1">
                             BRAND VISIBILITY TIERS
                         </span>
                         <h2 className="text-3xl sm:text-5xl font-black uppercase text-slate-900 tracking-tight">
@@ -328,12 +328,12 @@ PSG iTech Autonomous Mobility Cell
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {/* Tier 1: Title Partner */}
-                        <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] relative flex flex-col justify-between">
-                            <span className="absolute -top-3 right-4 px-2 py-0.5 bg-amber-300 border-2 border-slate-900 font-mono font-black text-[10px] uppercase shadow-[2px_2px_0px_#0f172a]">
+                        <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 relative flex flex-col justify-between">
+                            <span className="absolute -top-3 right-4 px-2 py-0.5 bg-amber-300 border-2 border-slate-900 font-mono font-black text-[10px] uppercase shadow-brutal-2">
                                 MAXIMUM EXPOSURE
                             </span>
                             <div>
-                                <span className="font-mono text-xs font-black uppercase text-sky-600 block mb-1">TIER 01</span>
+                                <span className="font-mono text-xs font-black uppercase text-sky-700 block mb-1">TIER 01</span>
                                 <h3 className="text-2xl font-black uppercase text-slate-900 mb-1">Title Partner</h3>
                                 <div className="text-lg font-mono font-black text-slate-900 mb-4 pb-3 border-b-2 border-slate-200">
                                     ₹3,00,000+
@@ -348,7 +348,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
 
                         {/* Tier 2: Gold Partner */}
-                        <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                        <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                             <div>
                                 <span className="font-mono text-xs font-black uppercase text-amber-600 block mb-1">TIER 02</span>
                                 <h3 className="text-2xl font-black uppercase text-slate-900 mb-1">Gold Partner</h3>
@@ -365,7 +365,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
 
                         {/* Tier 3: Silver Partner */}
-                        <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                        <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                             <div>
                                 <span className="font-mono text-xs font-black uppercase text-slate-500 block mb-1">TIER 03</span>
                                 <h3 className="text-2xl font-black uppercase text-slate-900 mb-1">Silver Partner</h3>
@@ -381,7 +381,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
 
                         {/* Tier 4: Technical & In-Kind Partner */}
-                        <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] flex flex-col justify-between">
+                        <div className="p-6 bg-white border-4 border-slate-900 shadow-brutal-6 flex flex-col justify-between">
                             <div>
                                 <span className="font-mono text-xs font-black uppercase text-emerald-600 block mb-1">TIER 04</span>
                                 <h3 className="text-2xl font-black uppercase text-slate-900 mb-1">Tech / In-Kind</h3>
@@ -401,9 +401,9 @@ PSG iTech Autonomous Mobility Cell
 
             {/* Section 3: Sponsor Details Form */}
             <section id="inquiry-form" className="py-20 px-4 sm:px-8 max-w-4xl mx-auto">
-                <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] p-8 sm:p-12">
+                <div className="bg-white border-4 border-slate-900 shadow-brutal-10 p-8 sm:p-12">
                     <div className="mb-8 border-b-3 border-slate-900 pb-4">
-                        <span className="text-xs font-mono font-black uppercase text-sky-600 tracking-widest block mb-1">
+                        <span className="text-xs font-mono font-black uppercase text-sky-700 tracking-widest block mb-1">
                             CONNECT WITH US
                         </span>
                         <h2 className="text-3xl sm:text-4xl font-black uppercase text-slate-900 tracking-tight">
@@ -415,7 +415,7 @@ PSG iTech Autonomous Mobility Cell
                     </div>
 
                     {submitted ? (
-                        <div className="p-8 bg-sky-100 border-3 border-slate-900 text-center space-y-3 shadow-[4px_4px_0px_#0f172a]">
+                        <div className="p-8 bg-sky-100 border-3 border-slate-900 text-center space-y-3 shadow-brutal-4">
                             <span className="text-3xl">✓</span>
                             <h3 className="text-xl font-black uppercase text-slate-900">
                                 INQUIRY RECEIVED WITH SUCCESS!
@@ -522,7 +522,7 @@ PSG iTech Autonomous Mobility Cell
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="press w-full py-4 bg-sky-500 hover:bg-sky-400 text-white font-mono font-black text-sm uppercase border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                className="press w-full py-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono font-black text-sm uppercase border-3 border-slate-900 shadow-brutal-4 cursor-pointer disabled:opacity-50"
                             >
                                 {isSubmitting ? 'Submitting Details...' : 'Submit Sponsorship Details →'}
                             </button>

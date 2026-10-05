@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import WorkshopAnalyticsGraphs from './WorkshopAnalyticsGraphs';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function WorkshopRegistrationsAdmin({ showStatus }) {
     const [registrations, setRegistrations] = useState([]);
@@ -19,6 +20,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
     const [isExporting, setIsExporting] = useState(false);
     const [actionBusyId, setActionBusyId] = useState(null);
     const [isSyncingRazorpay, setIsSyncingRazorpay] = useState(false);
+
+    const detailsModalRef = useModalBehavior(Boolean(selectedRegistration), () => setSelectedRegistration(null));
+    const editModalRef = useModalBehavior(Boolean(editingRegistration), () => setEditingRegistration(null));
 
     const fetchRegistrations = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoading(true);
@@ -287,7 +291,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                         type="button"
                         onClick={handleSyncRazorpay}
                         disabled={isSyncingRazorpay || isLoading}
-                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50 text-center flex items-center justify-center gap-1.5"
+                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50 text-center flex items-center justify-center gap-1.5"
                         title="Checks all pending registrations against Razorpay API and marks paid if captured"
                     >
                         <span>⚡</span>
@@ -297,7 +301,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                         type="button"
                         onClick={() => fetchRegistrations(false)}
                         disabled={isLoading || isSyncingRazorpay}
-                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50 text-center"
+                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50 text-center"
                     >
                         {isLoading ? '⟳ Refreshing...' : '⟳ Refresh'}
                     </button>
@@ -305,7 +309,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                         type="button"
                         onClick={handleExportCSV}
                         disabled={isExporting || registrations.length === 0}
-                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        className="press flex-1 sm:flex-none px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                         <span>📥</span>
                         <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
@@ -326,7 +330,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
             {/* Key Metrics Cards - 3 cards per row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {/* 1. Confirmed Paid */}
-                <div className="p-4 sm:p-5 bg-emerald-50 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                <div className="p-4 sm:p-5 bg-emerald-50 border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-mono font-black text-emerald-800 uppercase tracking-wider">
                             Confirmed Paid
@@ -349,12 +353,12 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 {/* 2. Total Revenue */}
-                <div className="p-4 sm:p-5 bg-emerald-400 text-slate-950 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                <div className="p-4 sm:p-5 bg-emerald-400 text-slate-950 border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-mono font-black uppercase tracking-wider text-slate-950">
                             Total Revenue
                         </span>
-                        <span className="px-2 py-0.5 bg-white text-slate-950 border border-slate-950 font-mono text-[10px] font-black uppercase shadow-[1px_1px_0px_#0f172a]">
+                        <span className="px-2 py-0.5 bg-white text-slate-950 border border-slate-950 font-mono text-[10px] font-black uppercase shadow-brutal-1">
                             INR Net
                         </span>
                     </div>
@@ -370,7 +374,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 {/* 3. Total Registered */}
-                <div className="p-4 sm:p-5 bg-slate-50 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                <div className="p-4 sm:p-5 bg-slate-50 border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-mono font-black text-slate-700 uppercase tracking-wider">
                             Total Registered
@@ -391,7 +395,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 {/* 4. Powertrain Track Capacity */}
-                <div className={`p-4 sm:p-5 ${summary.powertrainCapacity?.soldOut ? 'bg-rose-50 border-rose-600' : 'bg-amber-50'} border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between`}>
+                <div className={`p-4 sm:p-5 ${summary.powertrainCapacity?.soldOut ? 'bg-rose-50 border-rose-600' : 'bg-amber-50'} border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between`}>
                     <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <span className="text-xs font-mono font-black uppercase tracking-wider text-amber-900">
@@ -400,8 +404,8 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                             {summary.powertrainCapacity && (
                                 <span className={`text-[10px] font-mono font-black px-2 py-0.5 border ${
                                     summary.powertrainCapacity.soldOut
-                                        ? 'bg-rose-600 text-white border-rose-700 shadow-[1px_1px_0px_#0f172a]'
-                                        : 'bg-amber-400 text-slate-950 border-amber-600 shadow-[1px_1px_0px_#0f172a]'
+                                        ? 'bg-rose-600 text-white border-rose-700 shadow-brutal-1'
+                                        : 'bg-amber-400 text-slate-950 border-amber-600 shadow-brutal-1'
                                 }`}>
                                     {summary.powertrainCapacity.soldOut
                                         ? 'SOLD OUT'
@@ -448,7 +452,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 {/* 5. Software Track Capacity */}
-                <div className={`p-4 sm:p-5 ${summary.softwareCapacity?.soldOut ? 'bg-rose-50 border-rose-600' : 'bg-sky-50'} border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between`}>
+                <div className={`p-4 sm:p-5 ${summary.softwareCapacity?.soldOut ? 'bg-rose-50 border-rose-600' : 'bg-sky-50'} border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between`}>
                     <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
                             <span className="text-xs font-mono font-black uppercase tracking-wider text-sky-900">
@@ -457,10 +461,10 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                             {summary.softwareCapacity && (
                                 <span className={`text-[10px] font-mono font-black px-2 py-0.5 border ${
                                     summary.softwareCapacity.soldOut
-                                        ? 'bg-rose-600 text-white border-rose-700 shadow-[1px_1px_0px_#0f172a]'
+                                        ? 'bg-rose-600 text-slate-950 border-rose-700 shadow-brutal-1'
                                         : summary.softwareCapacity.seatsLeft <= 25
-                                        ? 'bg-amber-400 text-slate-950 border-amber-600 shadow-[1px_1px_0px_#0f172a]'
-                                        : 'bg-sky-400 text-slate-950 border-sky-600 shadow-[1px_1px_0px_#0f172a]'
+                                        ? 'bg-amber-400 text-slate-950 border-amber-600 shadow-brutal-1'
+                                        : 'bg-sky-400 text-slate-950 border-sky-600 shadow-brutal-1'
                                 }`}>
                                     {summary.softwareCapacity.soldOut
                                         ? 'SOLD OUT'
@@ -509,7 +513,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 {/* 6. Pending Unpaid */}
-                <div className="p-4 sm:p-5 bg-amber-50 border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] flex flex-col justify-between">
+                <div className="p-4 sm:p-5 bg-amber-50 border-2 border-slate-900 shadow-brutal-4 flex flex-col justify-between">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-mono font-black text-amber-800 uppercase tracking-wider">
                             Pending Unpaid
@@ -534,7 +538,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
             <WorkshopAnalyticsGraphs registrations={registrations} />
 
             {/* Filter and Search Bar */}
-            <div className="p-3 sm:p-4 bg-slate-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] space-y-3">
+            <div className="p-3 sm:p-4 bg-slate-50 border-2 border-slate-900 shadow-brutal-3 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
                     {/* Status Filter */}
                     <div>
@@ -586,7 +590,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-2 top-1.5 text-xs font-mono font-bold text-slate-400 hover:text-slate-900"
+                                    className="absolute right-2 top-1.5 text-xs font-mono font-bold text-slate-500 hover:text-slate-900"
                                 >
                                     ✕ Clear
                                 </button>
@@ -600,7 +604,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                     {(statusFilter !== 'paid' || packageFilter !== 'all' || searchQuery) && (
                         <button
                             onClick={() => { setStatusFilter('paid'); setPackageFilter('all'); setSearchQuery(''); }}
-                            className="text-sky-600 hover:underline cursor-pointer"
+                            className="text-sky-700 hover:underline cursor-pointer"
                         >
                             Reset to Paid Only
                         </button>
@@ -627,7 +631,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                         return (
                             <div
                                 key={reg._id || reg.receiptNo}
-                                className="p-3.5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] space-y-2.5 font-mono text-xs"
+                                className="p-3.5 bg-white border-2 border-slate-900 shadow-brutal-3 space-y-2.5 font-mono text-xs"
                             >
                                 <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
                                     {reg.receiptNo ? (
@@ -678,7 +682,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                             type="button"
                                             onClick={() => handleVerifySingleRazorpay(reg)}
                                             disabled={actionBusyId === reg._id}
-                                            className="press flex-1 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-mono text-xs font-black uppercase text-center shadow-[1px_1px_0px_#0f172a] disabled:opacity-50"
+                                            className="press flex-1 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-mono text-xs font-black uppercase text-center shadow-brutal-1 disabled:opacity-50"
                                             title="Check Razorpay API to see if candidate paid"
                                         >
                                             {actionBusyId === reg._id ? 'Checking…' : '⚡ Check Razorpay'}
@@ -687,7 +691,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                     <button
                                         type="button"
                                         onClick={() => setSelectedRegistration(reg)}
-                                        className="press flex-1 py-1.5 bg-slate-100 hover:bg-sky-100 border-2 border-slate-900 text-slate-900 font-mono text-xs font-black uppercase text-center shadow-[1px_1px_0px_#0f172a]"
+                                        className="press flex-1 py-1.5 bg-slate-100 hover:bg-sky-100 border-2 border-slate-900 text-slate-900 font-mono text-xs font-black uppercase text-center shadow-brutal-1"
                                     >
                                         Details →
                                     </button>
@@ -699,7 +703,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
             </div>
 
             {/* Desktop Table (Visible on screens >= 768px) */}
-            <div className="hidden md:block bg-white border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] overflow-x-auto">
+            <div className="hidden md:block bg-white border-2 border-slate-900 shadow-brutal-4 overflow-x-auto">
                 <table className="w-full text-left border-collapse font-mono text-xs">
                     <thead>
                         <tr className="bg-slate-900 text-white font-black uppercase text-[11px] border-b-2 border-slate-900">
@@ -743,7 +747,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                                     {reg.receiptNo}
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-400 font-normal">—</span>
+                                                <span className="text-slate-500 font-normal">—</span>
                                             )}
                                         </td>
 
@@ -785,12 +789,12 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                         {/* Status */}
                                         <td className="p-3 whitespace-nowrap">
                                             {isPaid && (
-                                                <span className="px-2 py-0.5 bg-emerald-500 text-white font-black border border-slate-900 shadow-[1px_1px_0px_#0f172a] text-[10px] uppercase flex items-center gap-1 w-fit">
+                                                <span className="px-2 py-0.5 bg-emerald-500 text-white font-black border border-slate-900 shadow-brutal-1 text-[10px] uppercase flex items-center gap-1 w-fit">
                                                     <span>✓ PAID</span>
                                                 </span>
                                             )}
                                             {isPending && (
-                                                <span className="px-2 py-0.5 bg-amber-300 text-slate-950 font-black border border-slate-900 shadow-[1px_1px_0px_#0f172a] text-[10px] uppercase flex items-center gap-1 w-fit">
+                                                <span className="px-2 py-0.5 bg-amber-300 text-slate-950 font-black border border-slate-900 shadow-brutal-1 text-[10px] uppercase flex items-center gap-1 w-fit">
                                                     <span>⏳ PENDING</span>
                                                 </span>
                                             )}
@@ -805,17 +809,17 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                         <td className="p-3 text-[10px] max-w-[140px] truncate">
                                             {reg.razorpayPaymentId ? (
                                                 <div>
-                                                    <span className="text-slate-400">Pay: </span>
+                                                    <span className="text-slate-500">Pay: </span>
                                                     <span className="font-bold text-slate-800">{reg.razorpayPaymentId}</span>
                                                 </div>
                                             ) : null}
                                             {reg.razorpayOrderId ? (
                                                 <div>
-                                                    <span className="text-slate-400">Ord: </span>
+                                                    <span className="text-slate-500">Ord: </span>
                                                     <span className="text-slate-600">{reg.razorpayOrderId}</span>
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-400">—</span>
+                                                <span className="text-slate-500">—</span>
                                             )}
                                         </td>
 
@@ -853,14 +857,24 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
 
             {/* Modal for Candidate Details */}
             {selectedRegistration && (
-                <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-lg w-full p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto max-w-[calc(100vw-2rem)]">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
+                    onClick={(e) => { if (e.target === e.currentTarget) setSelectedRegistration(null); }}
+                >
+                    <div
+                        ref={detailsModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="workshop-registration-details-title"
+                        tabIndex={-1}
+                        className="bg-white border-4 border-slate-900 shadow-brutal-8 max-w-lg w-full p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto max-w-[calc(100vw-2rem)]"
+                    >
                         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
                             <div>
-                                <span className="text-[10px] font-mono font-black text-sky-600 uppercase block">
+                                <span className="text-[10px] font-mono font-black text-sky-700 uppercase block">
                                     REGISTRATION RECORD
                                 </span>
-                                <h3 className="text-lg sm:text-xl font-black uppercase text-slate-900 leading-tight">
+                                <h3 id="workshop-registration-details-title" className="text-lg sm:text-xl font-black uppercase text-slate-900 leading-tight">
                                     {selectedRegistration.name}
                                 </h3>
                             </div>
@@ -986,8 +1000,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
             {editingRegistration && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-3">
                     <form
+                        ref={editModalRef}
                         onSubmit={handleSaveStudent}
-                        className="max-h-[92vh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 shadow-[7px_7px_0px_#0284c7] sm:p-7"
+                        className="max-h-[92vh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 shadow-brutal-7-brand sm:p-7"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="edit-workshop-student-title"
@@ -1016,7 +1031,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                 </label>
                             ))}
                         </div>
-                        {studentEditError && <p role="alert" className="mt-4 border-l-4 border-rose-600 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800">{studentEditError}</p>}
+                        {studentEditError && <p role="alert" className="mt-4 border-2 border-rose-600 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800">{studentEditError}</p>}
                         <p className="mt-4 text-[11px] font-bold text-slate-500">These fields update the workshop registration and any linked project submission. Package and payment details are unchanged.</p>
                         <div className="mt-5 flex justify-end gap-2">
                             <button type="button" onClick={() => setEditingRegistration(null)} disabled={isSavingStudent} className="border-2 border-slate-900 bg-white px-4 py-2 text-xs font-black uppercase">Cancel</button>

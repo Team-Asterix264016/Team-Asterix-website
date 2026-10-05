@@ -44,7 +44,6 @@ export default function ImageField({
     onUpload,
     folder = '/asterix',
     frames = 'member',
-    placeholder = 'Paste an image URL, or upload a file'
 }) {
     const framePresets = Array.isArray(frames) ? frames : (FRAME_PRESETS[frames] || FRAME_PRESETS.member);
     const resolved = apiUrl(value);
@@ -126,6 +125,8 @@ export default function ImageField({
                         </div>
                     ) : hasImage ? (
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={resolved}
                             alt=""
                             style={style}
@@ -133,7 +134,7 @@ export default function ImageField({
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <span className="w-full h-full flex items-center justify-center text-center font-mono text-[8px] font-black uppercase leading-tight text-slate-400">
+                        <span className="w-full h-full flex items-center justify-center text-center font-mono text-[8px] font-black uppercase leading-tight text-slate-600">
                             {failed ? 'Bad link' : 'No photo'}
                         </span>
                     )}
@@ -171,7 +172,7 @@ export default function ImageField({
                                 type="button"
                                 onClick={() => setShowCrop((v) => !v)}
                                 aria-expanded={showCrop}
-                                className={`${miniBtn} ${showCrop ? 'bg-sky-500 text-white' : 'bg-white hover:bg-slate-100 text-slate-900'}`}
+                                className={`${miniBtn} ${showCrop ? 'bg-sky-500 text-slate-950' : 'bg-white hover:bg-slate-100 text-slate-900'}`}
                             >
                                 {showCrop ? 'Done ▲' : 'Adjust crop ▼'}
                             </button>
@@ -204,6 +205,8 @@ export default function ImageField({
                         className="relative w-full max-h-44 bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#f8fafc_0%_50%)] bg-[length:12px_12px] border-2 border-slate-900 overflow-hidden cursor-crosshair touch-none select-none"
                     >
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={resolved}
                             alt="Uploaded original"
                             draggable={false}
@@ -225,7 +228,7 @@ export default function ImageField({
                         <button
                             type="button"
                             onClick={() => patch({ fit: 'cover' })}
-                            className={`${miniBtn} ${normalizeFit(fit) === 'cover' ? 'bg-sky-500 text-white' : 'bg-white text-slate-900'}`}
+                            className={`${miniBtn} ${normalizeFit(fit) === 'cover' ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900'}`}
                         >
                             Fill
                         </button>
@@ -233,7 +236,7 @@ export default function ImageField({
                             type="button"
                             onClick={() => patch({ fit: 'contain' })}
                             title="Never crops. The whole picture is shown and the frame is letterboxed."
-                            className={`${miniBtn} ${normalizeFit(fit) === 'contain' ? 'bg-sky-500 text-white' : 'bg-white text-slate-900'}`}
+                            className={`${miniBtn} ${normalizeFit(fit) === 'contain' ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900'}`}
                         >
                             Fit whole
                         </button>
@@ -274,6 +277,8 @@ export default function ImageField({
                                     style={{ height: PREVIEW_H, aspectRatio: frame.ratio }}
                                 >
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={resolved}
                                         alt={`${frame.label} preview`}
                                         draggable={false}
