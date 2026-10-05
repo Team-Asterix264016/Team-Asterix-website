@@ -5,8 +5,7 @@
  * (e.g. 'https://asterix-backend.onrender.com'), or configure vercel.json rewrites.
  */
 export const API_BASE = (
-    import.meta.env.VITE_API_URL ||
-    (import.meta.env.PROD ? 'https://asterix-backend.onrender.com' : '')
+    import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://asterix-backend.onrender.com' : '')
 ).replace(/\/+$/, '');
 
 /* Paths served by the frontend itself, not by the API. Everything in public/
@@ -41,7 +40,12 @@ export function apiUrl(path) {
     if (DEAD_UPLOAD_HOST.test(trimmed)) {
         return '';
     }
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    if (
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('data:') ||
+        trimmed.startsWith('blob:')
+    ) {
         return trimmed;
     }
 

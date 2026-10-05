@@ -6,7 +6,7 @@ const COLLAPSED_HEIGHT = 118;
 export default function OurStoryCurvedWave({ onOpenSponsor }) {
     const { siteData } = useWebsiteData();
     const [isExpanded, setIsExpanded] = useState(false);
-    const storyParagraphs = (siteData.story || "").split(/\n\n+/).filter(Boolean);
+    const storyParagraphs = (siteData.story || '').split(/\n\n+/).filter(Boolean);
 
     // `max-height` cannot transition to or from `none`, so the previous
     // max-h-[118px] -> max-h-none swap snapped open with no animation. Measure
@@ -27,12 +27,14 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
     }, [storyParagraphs.length]);
 
     return (
-        <section id="story" className="py-16 sm:py-28 px-4 sm:px-8 bg-slate-900 text-white border-t-4 border-slate-900 relative overflow-hidden z-10 select-none">
-
+        <section
+            id="story"
+            className="relative z-10 overflow-hidden border-t-4 border-slate-900 bg-slate-900 px-4 py-16 text-white select-none sm:px-8 sm:py-28"
+        >
             {/* Background Parallax Watermark (Option A: Slow layer) */}
             <div
                 data-parallax="slow"
-                className="absolute right-4 sm:right-10 top-10 text-[6rem] sm:text-[11rem] md:text-[13rem] font-black text-white/[0.03] select-none pointer-events-none font-mono leading-none z-0 will-change-transform"
+                className="pointer-events-none absolute top-10 right-4 z-0 font-mono text-[6rem] leading-none font-black text-white/[0.03] will-change-transform select-none sm:right-10 sm:text-[11rem] md:text-[13rem]"
                 aria-hidden="true"
             >
                 // 05 ORIGIN
@@ -42,7 +44,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="-5"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-12 z-20 bg-yellow-400 text-slate-950 border-3 border-slate-900 shadow-brutal-5-brand rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="shadow-brutal-5-brand pointer-events-none absolute top-12 left-6 z-20 hidden rounded-lg border-3 border-slate-900 bg-yellow-400 px-3 py-1.5 font-mono text-[11px] font-black tracking-wider text-slate-950 uppercase will-change-transform sm:left-12 lg:flex"
             >
                 <span>● FOUNDING LOGS</span>
             </div>
@@ -52,19 +54,18 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                 data-assemble="down"
                 data-parallax="fast"
                 data-parallax-speed="0.12"
-                className="w-full overflow-hidden opacity-90 mb-14 will-change-transform
-                           [mask-image:linear-gradient(to_right,transparent_0%,#000_12%,#000_88%,transparent_100%)]
-                           [-webkit-mask-image:linear-gradient(to_right,transparent_0%,#000_12%,#000_88%,transparent_100%)]"
+                className="mb-14 w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent_0%,#000_12%,#000_88%,transparent_100%)] opacity-90 will-change-transform [-webkit-mask-image:linear-gradient(to_right,transparent_0%,#000_12%,#000_88%,transparent_100%)]"
             >
-                <svg className="w-full h-28 sm:h-40 md:h-48" viewBox="0 0 1200 200" fill="none">
+                <svg className="h-28 w-full sm:h-40 md:h-48" viewBox="0 0 1200 200" fill="none">
                     <path
                         id="storyCurve"
                         d="M 0,100 C 300,10 600,190 900,100 C 1200,10 1500,190 1800,100 C 2100,10 2400,190 2700,100"
                         fill="none"
                     />
-                    <text className="font-black text-2xl sm:text-3xl tracking-widest fill-sky-400 uppercase font-mono">
+                    <text className="fill-sky-400 font-mono text-2xl font-black tracking-widest uppercase sm:text-3xl">
                         <textPath href="#storyCurve" startOffset="0%">
-                            OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦ SAEINDIA a-BAJA 2026 ✦ THE FIRST DRAFT ✦ OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦
+                            OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦ SAEINDIA a-BAJA 2026 ✦ THE FIRST
+                            DRAFT ✦ OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦
                             <animate
                                 attributeName="startOffset"
                                 values="0%;-34%;0%"
@@ -79,18 +80,21 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                 </svg>
             </div>
 
-            <div className="max-w-4xl mx-auto relative z-10">
-
+            <div className="relative z-10 mx-auto max-w-4xl">
                 {/* Main Story Box (Essay Format) with Subtle Elevation Parallax */}
-                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.05" className="bg-white text-slate-900 border-4 border-slate-900 shadow-brutal-12-brand p-6 sm:p-12 md:p-14 relative will-change-transform">
-
+                <div
+                    data-assemble="card"
+                    data-parallax="fast"
+                    data-parallax-speed="0.05"
+                    className="shadow-brutal-12-brand relative border-4 border-slate-900 bg-white p-6 text-slate-900 will-change-transform sm:p-12 md:p-14"
+                >
                     {/* Section Header */}
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8 border-b-3 border-slate-900 pb-6">
+                    <div className="mb-8 flex flex-col justify-between gap-6 border-b-3 border-slate-900 pb-6 md:flex-row md:items-start">
                         <div>
-                            <span className="text-xs font-mono font-black text-sky-700 tracking-widest uppercase block mb-1">
+                            <span className="mb-1 block font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                                 CHRONICLES • HOW IT ALL BEGAN
                             </span>
-                            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 uppercase leading-none">
+                            <h2 className="text-4xl leading-none font-black text-slate-900 uppercase sm:text-5xl md:text-6xl">
                                 OUR STORY
                             </h2>
                         </div>
@@ -100,7 +104,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                                 if (onOpenSponsor) onOpenSponsor();
                                 else window.location.hash = '#sponsor';
                             }}
-                            className="press cyber-button px-7 py-3.5 text-xs font-black tracking-wider uppercase inline-block self-start md:self-auto cursor-pointer whitespace-nowrap shadow-brutal-4"
+                            className="press cyber-button shadow-brutal-4 inline-block cursor-pointer self-start px-7 py-3.5 text-xs font-black tracking-wider whitespace-nowrap uppercase md:self-auto"
                         >
                             SPONSOR TEAM →
                         </button>
@@ -119,12 +123,14 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                         >
                             <div
                                 ref={contentRef}
-                                className="text-base sm:text-lg text-slate-700 font-medium leading-relaxed space-y-5"
+                                className="space-y-5 text-base leading-relaxed font-medium text-slate-700 sm:text-lg"
                             >
                                 {storyParagraphs.map((para, idx) => (
                                     <p
                                         key={idx}
-                                        className={idx === 0 ? "font-bold text-slate-900 text-lg sm:text-xl" : ""}
+                                        className={
+                                            idx === 0 ? 'text-lg font-bold text-slate-900 sm:text-xl' : ''
+                                        }
                                     >
                                         {para}
                                     </p>
@@ -136,13 +142,14 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                             by opacity so it does not pop out of existence the
                             instant the essay starts expanding. */}
                         <div
-                            className={`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white via-white/85 to-transparent pointer-events-none transition-opacity duration-[var(--dur-slow)] ease-[var(--ease-brutal)] ${isExpanded ? 'opacity-0' : 'opacity-100'
-                                }`}
+                            className={`pointer-events-none absolute right-0 bottom-0 left-0 h-16 bg-gradient-to-t from-white via-white/85 to-transparent transition-opacity duration-[var(--dur-slow)] ease-[var(--ease-brutal)] ${
+                                isExpanded ? 'opacity-0' : 'opacity-100'
+                            }`}
                         />
                     </div>
 
                     {/* Show More / Show Less Button */}
-                    <div className="mt-5 pt-4 border-t-2 border-slate-100 flex items-center justify-between">
+                    <div className="mt-5 flex items-center justify-between border-t-2 border-slate-100 pt-4">
                         {/* This used to apply the pressed-in look on hover,
                             which left nothing for the actual click to do.
                             Hover lifts, :active presses. */}
@@ -150,41 +157,53 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                             onClick={() => setIsExpanded(!isExpanded)}
                             aria-expanded={isExpanded}
                             aria-controls="story-essay"
-                            className="press inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-slate-900 font-black text-xs uppercase tracking-wider text-slate-900 shadow-brutal-3 hover:bg-sky-100 hover:shadow-brutal-5 hover:-translate-x-[1px] hover:-translate-y-[1px] cursor-pointer"
+                            className="press shadow-brutal-3 hover:shadow-brutal-5 inline-flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-white px-6 py-3 text-xs font-black tracking-wider text-slate-900 uppercase hover:-translate-x-[1px] hover:-translate-y-[1px] hover:bg-sky-100"
                         >
                             <span>
-                                {isExpanded ? "SHOW LESS" : "READ FULL STORY (SHOW MORE)"}
-                                <span aria-hidden="true">{isExpanded ? " ↑" : " ↓"}</span>
+                                {isExpanded ? 'SHOW LESS' : 'READ FULL STORY (SHOW MORE)'}
+                                <span aria-hidden="true">{isExpanded ? ' ↑' : ' ↓'}</span>
                             </span>
                         </button>
-
-
                     </div>
 
                     {/* Milestones Strip */}
-                    <div data-assemble="stagger" className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t-3 border-slate-900 text-center font-mono">
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-900 block">YEAR 1</span>
-                            <span className="text-[10px] font-bold text-slate-600 uppercase">Training Genesis</span>
+                    <div
+                        data-assemble="stagger"
+                        className="mt-8 grid grid-cols-2 gap-4 border-t-3 border-slate-900 pt-8 text-center font-mono sm:grid-cols-4"
+                    >
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-4">
+                            <span className="block text-2xl font-black text-slate-900 sm:text-3xl">
+                                YEAR 1
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase">
+                                Training Genesis
+                            </span>
                         </div>
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-900 block">4</span>
-                            <span className="text-[10px] font-bold text-slate-600 uppercase">Core Subsystems</span>
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-4">
+                            <span className="block text-2xl font-black text-slate-900 sm:text-3xl">4</span>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase">
+                                Core Subsystems
+                            </span>
                         </div>
-                        <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-900 block">AIR 13</span>
-                            <span className="text-[10px] font-bold text-slate-600 uppercase">a-BAJA 2026 Finish</span>
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-4">
+                            <span className="block text-2xl font-black text-slate-900 sm:text-3xl">
+                                AIR 13
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase">
+                                a-BAJA 2026 Finish
+                            </span>
                         </div>
-                        <div className="p-4 bg-amber-300 border-2 border-slate-900 shadow-brutal-3">
-                            <span className="text-2xl sm:text-3xl font-black text-slate-900 block">GEN 2</span>
-                            <span className="text-[10px] font-bold text-slate-900 uppercase">The Next Build</span>
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-amber-300 p-4">
+                            <span className="block text-2xl font-black text-slate-900 sm:text-3xl">
+                                GEN 2
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-900 uppercase">
+                                The Next Build
+                            </span>
                         </div>
                     </div>
-
                 </div>
-
             </div>
-
         </section>
     );
 }

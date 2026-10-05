@@ -28,9 +28,12 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 return;
             }
 
-            const res = await fetch(apiUrl(`/api/workshop/attendance/records?sessionId=${encodeURIComponent(sessionId)}`), {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetch(
+                apiUrl(`/api/workshop/attendance/records?sessionId=${encodeURIComponent(sessionId)}`),
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -60,7 +63,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     rollNo,
@@ -86,9 +89,12 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         setIsExporting(true);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(apiUrl(`/api/workshop/attendance/export?sessionId=${encodeURIComponent(sessionId)}`), {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetch(
+                apiUrl(`/api/workshop/attendance/export?sessionId=${encodeURIComponent(sessionId)}`),
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
 
             if (!res.ok) throw new Error('Failed to generate attendance CSV');
 
@@ -114,16 +120,17 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
     const filteredRoster = useMemo(() => {
         let list = rosterData.roster || [];
 
-        if (filterStatus === 'present') list = list.filter(c => c.isPresent);
-        if (filterStatus === 'absent') list = list.filter(c => !c.isPresent);
+        if (filterStatus === 'present') list = list.filter((c) => c.isPresent);
+        if (filterStatus === 'absent') list = list.filter((c) => !c.isPresent);
 
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
-            list = list.filter(c =>
-                c.rollNo?.toLowerCase().includes(q) ||
-                c.name?.toLowerCase().includes(q) ||
-                c.department?.toLowerCase().includes(q) ||
-                c.receiptNo?.toLowerCase().includes(q)
+            list = list.filter(
+                (c) =>
+                    c.rollNo?.toLowerCase().includes(q) ||
+                    c.name?.toLowerCase().includes(q) ||
+                    c.department?.toLowerCase().includes(q) ||
+                    c.receiptNo?.toLowerCase().includes(q)
             );
         }
 
@@ -131,24 +138,25 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
     }, [rosterData.roster, filterStatus, searchQuery]);
 
     const absentCount = (rosterData.totalEligible || 0) - (rosterData.totalPresent || 0);
-    const attendancePct = rosterData.totalEligible > 0
-        ? (((rosterData.totalPresent || 0) / rosterData.totalEligible) * 100).toFixed(1)
-        : 0;
+    const attendancePct =
+        rosterData.totalEligible > 0
+            ? (((rosterData.totalPresent || 0) / rosterData.totalEligible) * 100).toFixed(1)
+            : 0;
 
     return (
         <div className="space-y-6 font-mono text-slate-900">
             {/* Header with Projector Button & Export */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-slate-200 pb-4">
+            <div className="flex flex-col justify-between gap-3 border-b-2 border-slate-200 pb-4 sm:flex-row sm:items-center">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="text-xl sm:text-2xl font-black uppercase text-slate-900 leading-tight">
+                        <h2 className="text-xl leading-tight font-black text-slate-900 uppercase sm:text-2xl">
                             Workshop Session Attendance
                         </h2>
-                        <span className="px-2 py-0.5 bg-sky-100 text-sky-800 border border-sky-400 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="border border-sky-400 bg-sky-100 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sky-800 uppercase">
                             Live Scanner Engine
                         </span>
                     </div>
-                    <p className="text-xs font-bold text-slate-500 mt-1">
+                    <p className="mt-1 text-xs font-bold text-slate-500">
                         Dynamic rotating QR code, live tracking, and verified check-in.
                     </p>
                 </div>
@@ -158,7 +166,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         <button
                             type="button"
                             onClick={() => onOpenProjector(track)}
-                            className="press px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-brutal-2 cursor-pointer flex items-center gap-1.5"
+                            className="press shadow-brutal-2 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-3.5 py-1.5 text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
                         >
                             <span>🖥</span>
                             <span>Open Projector Mode ↗</span>
@@ -168,7 +176,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         type="button"
                         onClick={handleExportCSV}
                         disabled={isExporting || rosterData.totalEligible === 0}
-                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-brutal-2 cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                        className="press shadow-brutal-2 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-3.5 py-1.5 text-xs font-black text-slate-950 uppercase hover:bg-emerald-300 disabled:opacity-50"
                     >
                         <span>📥</span>
                         <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
@@ -177,7 +185,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         type="button"
                         onClick={fetchRecords}
                         disabled={isLoading}
-                        className="press px-3.5 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-black text-xs uppercase shadow-brutal-2 cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-3.5 py-1.5 text-xs font-black text-slate-900 uppercase hover:bg-slate-100"
                     >
                         {isLoading ? '⟳ Refreshing...' : '⟳ Refresh'}
                     </button>
@@ -185,21 +193,21 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             </div>
 
             {/* Session Settings & Selector Bar */}
-            <div className="p-4 bg-slate-50 border-2 border-slate-900 shadow-brutal-3 space-y-3">
-                <span className="text-[10px] font-black uppercase text-sky-700 tracking-wider block">
+            <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
+                <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
                     // Attendance Session Configuration
                 </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
                     {/* Track Selection */}
                     <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">
+                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
                             Workshop Track
                         </label>
                         <select
                             value={track}
                             onChange={(e) => setTrack(e.target.value)}
-                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-bold text-xs focus:outline-none"
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
                         >
                             <option value="software">Software & Perception</option>
                             <option value="powertrain">Electronics & Powertrain</option>
@@ -208,7 +216,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
 
                     {/* Session Number */}
                     <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">
+                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
                             Session Number
                         </label>
                         <input
@@ -217,26 +225,26 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                             max="20"
                             value={sessionNumber}
                             onChange={(e) => setSessionNumber(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-bold text-xs focus:outline-none"
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
                         />
                     </div>
 
                     {/* Session Date */}
                     <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">
+                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
                             Session Date (IST)
                         </label>
                         <input
                             type="date"
                             value={sessionDate}
                             onChange={(e) => setSessionDate(e.target.value)}
-                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-bold text-xs focus:outline-none"
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
                         />
                     </div>
 
                     {/* Topic (Optional) */}
                     <div>
-                        <label className="block text-[10px] font-black uppercase text-slate-700 mb-1">
+                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
                             Session Topic (Optional)
                         </label>
                         <input
@@ -244,60 +252,78 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                             value={sessionTopic}
                             onChange={(e) => setSessionTopic(e.target.value)}
                             placeholder="e.g. ROS Publisher Nodes"
-                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-bold text-xs focus:outline-none"
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
                         />
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200">
-                    <span>Active Session Key: <strong className="text-slate-900">{sessionId}</strong></span>
-                    <span className="text-[10px] text-sky-700 font-bold">Only paid candidates enrolled in {track.toUpperCase()} can check in</span>
+                <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-[11px] text-slate-500">
+                    <span>
+                        Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
+                    </span>
+                    <span className="text-[10px] font-bold text-sky-700">
+                        Only paid candidates enrolled in {track.toUpperCase()} can check in
+                    </span>
                 </div>
             </div>
 
             {/* Metrics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="p-3.5 bg-emerald-50 border-2 border-slate-900 shadow-brutal-3">
-                    <span className="text-[10px] font-black text-emerald-800 uppercase block truncate">Present In Class</span>
-                    <span className="text-2xl sm:text-3xl font-black text-emerald-700">{rosterData.totalPresent}</span>
-                    <span className="text-[10px] text-emerald-600 block mt-0.5">Verified attendees</span>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <div className="shadow-brutal-3 border-2 border-slate-900 bg-emerald-50 p-3.5">
+                    <span className="block truncate text-[10px] font-black text-emerald-800 uppercase">
+                        Present In Class
+                    </span>
+                    <span className="text-2xl font-black text-emerald-700 sm:text-3xl">
+                        {rosterData.totalPresent}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-emerald-600">Verified attendees</span>
                 </div>
 
-                <div className="p-3.5 bg-rose-50 border-2 border-slate-900 shadow-brutal-3">
-                    <span className="text-[10px] font-black text-rose-800 uppercase block truncate">Absent / Pending</span>
-                    <span className="text-2xl sm:text-3xl font-black text-rose-700">{absentCount}</span>
-                    <span className="text-[10px] text-rose-600 block mt-0.5">Awaiting check-in</span>
+                <div className="shadow-brutal-3 border-2 border-slate-900 bg-rose-50 p-3.5">
+                    <span className="block truncate text-[10px] font-black text-rose-800 uppercase">
+                        Absent / Pending
+                    </span>
+                    <span className="text-2xl font-black text-rose-700 sm:text-3xl">{absentCount}</span>
+                    <span className="mt-0.5 block text-[10px] text-rose-600">Awaiting check-in</span>
                 </div>
 
-                <div className="p-3.5 bg-sky-50 border-2 border-slate-900 shadow-brutal-3">
-                    <span className="text-[10px] font-black text-sky-800 uppercase block truncate">Total Eligible</span>
-                    <span className="text-2xl sm:text-3xl font-black text-slate-900">{rosterData.totalEligible}</span>
-                    <span className="text-[10px] text-slate-500 block mt-0.5">Paid candidates in track</span>
+                <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-3.5">
+                    <span className="block truncate text-[10px] font-black text-sky-800 uppercase">
+                        Total Eligible
+                    </span>
+                    <span className="text-2xl font-black text-slate-900 sm:text-3xl">
+                        {rosterData.totalEligible}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] text-slate-500">Paid candidates in track</span>
                 </div>
 
-                <div className="p-3.5 bg-amber-50 border-2 border-slate-900 shadow-brutal-3">
-                    <span className="text-[10px] font-black text-amber-800 uppercase block truncate">Attendance Rate</span>
-                    <span className="text-2xl sm:text-3xl font-black text-amber-800">{attendancePct}%</span>
-                    <span className="text-[10px] text-slate-500 block mt-0.5">Quorum achieved</span>
+                <div className="shadow-brutal-3 border-2 border-slate-900 bg-amber-50 p-3.5">
+                    <span className="block truncate text-[10px] font-black text-amber-800 uppercase">
+                        Attendance Rate
+                    </span>
+                    <span className="text-2xl font-black text-amber-800 sm:text-3xl">{attendancePct}%</span>
+                    <span className="mt-0.5 block text-[10px] text-slate-500">Quorum achieved</span>
                 </div>
             </div>
 
             {/* Error Banner */}
             {error && (
-                <div className="p-3 bg-rose-50 border-2 border-rose-600 text-rose-800 font-mono text-xs font-bold">
+                <div className="border-2 border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-800">
                     ⚠️ {error}
                 </div>
             )}
 
             {/* Roster Search & Filter Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border-2 border-slate-900 shadow-brutal-2">
+            <div className="shadow-brutal-2 flex flex-col justify-between gap-3 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center">
                 <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="text-[10px] font-black uppercase text-slate-500 mr-1">Filter:</span>
+                    <span className="mr-1 text-[10px] font-black text-slate-500 uppercase">Filter:</span>
                     <button
                         type="button"
                         onClick={() => setFilterStatus('all')}
-                        className={`px-2.5 py-1 text-[10px] font-black uppercase border border-slate-900 cursor-pointer ${
-                            filterStatus === 'all' ? 'bg-slate-900 text-white' : 'bg-white hover:bg-slate-100 text-slate-700'
+                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                            filterStatus === 'all'
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-white text-slate-700 hover:bg-slate-100'
                         }`}
                     >
                         All ({rosterData.roster?.length || 0})
@@ -305,8 +331,10 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                     <button
                         type="button"
                         onClick={() => setFilterStatus('present')}
-                        className={`px-2.5 py-1 text-[10px] font-black uppercase border border-slate-900 cursor-pointer ${
-                            filterStatus === 'present' ? 'bg-emerald-500 text-slate-950' : 'bg-white hover:bg-slate-100 text-slate-700'
+                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                            filterStatus === 'present'
+                                ? 'bg-emerald-500 text-slate-950'
+                                : 'bg-white text-slate-700 hover:bg-slate-100'
                         }`}
                     >
                         Present ({rosterData.totalPresent || 0})
@@ -314,26 +342,28 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                     <button
                         type="button"
                         onClick={() => setFilterStatus('absent')}
-                        className={`px-2.5 py-1 text-[10px] font-black uppercase border border-slate-900 cursor-pointer ${
-                            filterStatus === 'absent' ? 'bg-rose-500 text-white' : 'bg-white hover:bg-slate-100 text-slate-700'
+                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                            filterStatus === 'absent'
+                                ? 'bg-rose-500 text-white'
+                                : 'bg-white text-slate-700 hover:bg-slate-100'
                         }`}
                     >
                         Absent ({absentCount || 0})
                     </button>
                 </div>
 
-                <div className="relative max-w-xs w-full">
+                <div className="relative w-full max-w-xs">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search roll, name, dept..."
-                        className="w-full px-2.5 py-1 border-2 border-slate-900 text-xs font-mono focus:outline-none"
+                        className="w-full border-2 border-slate-900 px-2.5 py-1 font-mono text-xs focus:outline-none"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery('')}
-                            className="absolute right-2 top-1 text-xs text-slate-600 hover:text-slate-900"
+                            className="absolute top-1 right-2 text-xs text-slate-600 hover:text-slate-900"
                         >
                             ✕
                         </button>
@@ -342,30 +372,30 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             </div>
 
             {/* Roster Table */}
-            <div className="border-2 border-slate-900 bg-white shadow-brutal-4 overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
+            <div className="shadow-brutal-4 overflow-x-auto border-2 border-slate-900 bg-white">
+                <table className="w-full border-collapse text-left text-xs">
                     <thead>
-                        <tr className="bg-slate-900 text-white font-mono text-[10px] uppercase">
-                            <th className="p-2.5 border-r border-slate-700">Roll No</th>
-                            <th className="p-2.5 border-r border-slate-700">Name</th>
-                            <th className="p-2.5 border-r border-slate-700">Department</th>
-                            <th className="p-2.5 border-r border-slate-700">Package</th>
-                            <th className="p-2.5 border-r border-slate-700 text-center">Status</th>
-                            <th className="p-2.5 border-r border-slate-700">Check-in Time</th>
+                        <tr className="bg-slate-900 font-mono text-[10px] text-white uppercase">
+                            <th className="border-r border-slate-700 p-2.5">Roll No</th>
+                            <th className="border-r border-slate-700 p-2.5">Name</th>
+                            <th className="border-r border-slate-700 p-2.5">Department</th>
+                            <th className="border-r border-slate-700 p-2.5">Package</th>
+                            <th className="border-r border-slate-700 p-2.5 text-center">Status</th>
+                            <th className="border-r border-slate-700 p-2.5">Check-in Time</th>
                             <th className="p-2.5 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
                         {isLoading ? (
                             <tr>
-                                <td colSpan="7" className="p-8 text-center text-slate-500 font-bold">
-                                    <span className="w-4 h-4 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block mr-2 align-middle"></span>
+                                <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
+                                    <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
                                     Loading attendance roster...
                                 </td>
                             </tr>
                         ) : filteredRoster.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="p-8 text-center text-slate-500 font-bold">
+                                <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
                                     No candidates found matching the selected filter.
                                 </td>
                             </tr>
@@ -376,49 +406,54 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                 return (
                                     <tr
                                         key={cand.rollNo}
-                                        className={`hover:bg-slate-50 transition-colors ${
+                                        className={`transition-colors hover:bg-slate-50 ${
                                             cand.isPresent ? 'bg-emerald-50/30' : ''
                                         }`}
                                     >
-                                        <td className="p-2.5 font-black text-slate-900 font-mono border-r border-slate-200">
+                                        <td className="border-r border-slate-200 p-2.5 font-mono font-black text-slate-900">
                                             {cand.rollNo}
                                         </td>
-                                        <td className="p-2.5 font-bold text-slate-900 border-r border-slate-200">
+                                        <td className="border-r border-slate-200 p-2.5 font-bold text-slate-900">
                                             <div>{cand.name}</div>
-                                            <div className="text-[10px] text-slate-500 font-mono">{cand.email}</div>
+                                            <div className="font-mono text-[10px] text-slate-500">
+                                                {cand.email}
+                                            </div>
                                         </td>
-                                        <td className="p-2.5 text-slate-700 border-r border-slate-200">
+                                        <td className="border-r border-slate-200 p-2.5 text-slate-700">
                                             <div>{cand.department}</div>
                                             <div className="text-[10px] text-slate-500">Year {cand.year}</div>
                                         </td>
-                                        <td className="p-2.5 border-r border-slate-200">
-                                            <span className="px-1.5 py-0.5 text-[9px] font-black uppercase border border-slate-900 bg-slate-100">
+                                        <td className="border-r border-slate-200 p-2.5">
+                                            <span className="border border-slate-900 bg-slate-100 px-1.5 py-0.5 text-[9px] font-black uppercase">
                                                 {cand.package}
                                             </span>
                                         </td>
-                                        <td className="p-2.5 text-center border-r border-slate-200">
+                                        <td className="border-r border-slate-200 p-2.5 text-center">
                                             {cand.isPresent ? (
-                                                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-500 font-black text-[10px] uppercase">
+                                                <span className="border border-emerald-500 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase">
                                                     ✓ Present
                                                 </span>
                                             ) : (
-                                                <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-300 font-bold text-[10px] uppercase">
+                                                <span className="border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 uppercase">
                                                     Absent
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="p-2.5 text-slate-600 font-mono text-[11px] border-r border-slate-200">
+                                        <td className="border-r border-slate-200 p-2.5 font-mono text-[11px] text-slate-600">
                                             {cand.checkedInAt ? (
                                                 <div>
                                                     <span className="font-bold text-slate-900">
-                                                        {new Date(cand.checkedInAt).toLocaleTimeString('en-IN', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit',
-                                                            second: '2-digit',
-                                                            hour12: true
-                                                        })}
+                                                        {new Date(cand.checkedInAt).toLocaleTimeString(
+                                                            'en-IN',
+                                                            {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                second: '2-digit',
+                                                                hour12: true
+                                                            }
+                                                        )}
                                                     </span>
-                                                    <span className="text-[9px] text-slate-500 block">
+                                                    <span className="block text-[9px] text-slate-500">
                                                         via {cand.verifiedBy}
                                                     </span>
                                                 </div>
@@ -432,13 +467,13 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                                     type="button"
                                                     disabled={isBusy}
                                                     onClick={() => handleManualMark(cand.rollNo)}
-                                                    className="press px-2 py-1 bg-amber-300 hover:bg-amber-400 border border-slate-900 text-slate-950 font-black text-[10px] uppercase shadow-brutal-1 cursor-pointer disabled:opacity-50"
+                                                    className="press shadow-brutal-1 cursor-pointer border border-slate-900 bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
                                                     title="Mark present manually if student phone has issue"
                                                 >
                                                     {isBusy ? 'Saving...' : 'Mark Present ✓'}
                                                 </button>
                                             ) : (
-                                                <span className="text-[10px] text-emerald-700 font-bold">
+                                                <span className="text-[10px] font-bold text-emerald-700">
                                                     Recorded
                                                 </span>
                                             )}

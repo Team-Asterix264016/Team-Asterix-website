@@ -7,31 +7,31 @@ export function buildBajaCarGroup() {
         metalness: 0.35,
         clearcoat: 0.9,
         clearcoatRoughness: 0.06,
-        reflectivity: 0.95,
+        reflectivity: 0.95
     });
 
     const brushedSteelMaterial = new THREE.MeshStandardMaterial({
         color: 0xd1d5db,
         roughness: 0.26,
-        metalness: 0.88,
+        metalness: 0.88
     });
 
     const chromeMaterial = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: 0.03,
-        metalness: 1.0,
+        metalness: 1.0
     });
 
     const foxBronzeMaterial = new THREE.MeshStandardMaterial({
         color: 0x854d0e, // Fox bronze anodized
         roughness: 0.22,
-        metalness: 0.9,
+        metalness: 0.9
     });
 
     const foxBlueMaterial = new THREE.MeshStandardMaterial({
         color: 0x0284c7,
         roughness: 0.18,
-        metalness: 0.92,
+        metalness: 0.92
     });
 
     const whiteRimMaterial = new THREE.MeshPhysicalMaterial({
@@ -39,42 +39,42 @@ export function buildBajaCarGroup() {
         roughness: 0.16,
         metalness: 0.15,
         clearcoat: 0.8,
-        clearcoatRoughness: 0.08,
+        clearcoatRoughness: 0.08
     });
 
     const rubberTireMaterial = new THREE.MeshStandardMaterial({
         color: 0x18181b,
         roughness: 0.92,
-        metalness: 0.02,
+        metalness: 0.02
     });
 
     const whiteCompositeMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xf8fafc,
         roughness: 0.32,
         metalness: 0.05,
-        clearcoat: 0.5,
+        clearcoat: 0.5
     });
 
     const rubberTrimMaterial = new THREE.MeshStandardMaterial({
         color: 0x0f172a,
         roughness: 0.85,
-        metalness: 0.05,
+        metalness: 0.05
     });
 
     const darkHardwareMaterial = new THREE.MeshStandardMaterial({
         color: 0x1e293b,
         roughness: 0.45,
-        metalness: 0.85,
+        metalness: 0.85
     });
 
     const brakeRotorMaterial = new THREE.MeshStandardMaterial({
         color: 0xd4d4d8,
         roughness: 0.18,
-        metalness: 0.95,
+        metalness: 0.95
     });
 
     const carRoot = new THREE.Group();
-    carRoot.name = "Asterix_eBaja_2026";
+    carRoot.name = 'Asterix_eBaja_2026';
 
     const frameGroup = new THREE.Group();
     carRoot.add(frameGroup);
@@ -87,13 +87,10 @@ export function buildBajaCarGroup() {
         const mesh = new THREE.Mesh(geom, mat);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        
+
         const midpoint = new THREE.Vector3().addVectors(vStart, vEnd).multiplyScalar(0.5);
         mesh.position.copy(midpoint);
-        mesh.quaternion.setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0),
-            vEnd.clone().sub(vStart).normalize()
-        );
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vEnd.clone().sub(vStart).normalize());
         frameGroup.add(mesh);
         return mesh;
     };
@@ -107,7 +104,7 @@ export function buildBajaCarGroup() {
 
     // Top loop for Autonomous sensor canopy
     const loopH = 0.22;
-    const loopW = 0.20;
+    const loopW = 0.2;
     addTube([-loopW, hoopTopY, -0.25], [-loopW, hoopTopY + loopH, -0.25], 0.022);
     addTube([loopW, hoopTopY, -0.25], [loopW, hoopTopY + loopH, -0.25], 0.022);
     addTube([-loopW, hoopTopY + loopH, -0.25], [loopW, hoopTopY + loopH, -0.25], 0.022);
@@ -115,7 +112,7 @@ export function buildBajaCarGroup() {
     // Windshield Upper Bar
     const frontTopY = 1.26;
     const frontTopZ = 0.45;
-    const frontTopW = 0.40;
+    const frontTopW = 0.4;
     addTube([-frontTopW, frontTopY, frontTopZ], [frontTopW, frontTopY, frontTopZ], 0.032);
     addTube([-frontTopW, frontTopY, frontTopZ], [-hoopWidth, hoopTopY, -0.25], 0.032);
     addTube([frontTopW, frontTopY, frontTopZ], [hoopWidth, hoopTopY, -0.25], 0.032);
@@ -173,18 +170,12 @@ export function buildBajaCarGroup() {
     dashPlate.castShadow = true;
     carRoot.add(dashPlate);
 
-    const steerCol = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.018, 0.018, 0.35, 12),
-        darkHardwareMaterial
-    );
+    const steerCol = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.35, 12), darkHardwareMaterial);
     steerCol.position.set(0, 0.65, 0.58);
     steerCol.rotation.x = 0.6;
     carRoot.add(steerCol);
 
-    const steerWheel = new THREE.Mesh(
-        new THREE.TorusGeometry(0.13, 0.016, 10, 24),
-        darkHardwareMaterial
-    );
+    const steerWheel = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.016, 10, 24), darkHardwareMaterial);
     steerWheel.position.set(0, 0.74, 0.44);
     steerWheel.rotation.x = -0.6;
     carRoot.add(steerWheel);
@@ -193,7 +184,7 @@ export function buildBajaCarGroup() {
     const seatGroup = new THREE.Group();
     seatGroup.position.set(0, 0.66, -0.22);
     seatGroup.rotation.x = -0.18;
-    const firewallGeom = new THREE.BoxGeometry(0.70, 0.98, 0.024);
+    const firewallGeom = new THREE.BoxGeometry(0.7, 0.98, 0.024);
     const firewallMesh = new THREE.Mesh(firewallGeom, whiteCompositeMaterial);
     firewallMesh.castShadow = true;
     seatGroup.add(firewallMesh);
@@ -205,18 +196,12 @@ export function buildBajaCarGroup() {
     carRoot.add(seatGroup);
 
     // Battery Box & Brushed Floor Pan
-    const batteryBox = new THREE.Mesh(
-        new THREE.BoxGeometry(0.48, 0.16, 0.42),
-        darkHardwareMaterial
-    );
+    const batteryBox = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.16, 0.42), darkHardwareMaterial);
     batteryBox.position.set(0, 0.14, 0.12);
     batteryBox.castShadow = true;
     carRoot.add(batteryBox);
 
-    const floorPan = new THREE.Mesh(
-        new THREE.BoxGeometry(0.96, 0.015, 1.35),
-        brushedSteelMaterial
-    );
+    const floorPan = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.015, 1.35), brushedSteelMaterial);
     floorPan.position.set(0, 0.05, 0.25);
     floorPan.receiveShadow = true;
     carRoot.add(floorPan);
@@ -229,12 +214,12 @@ export function buildBajaCarGroup() {
     addTube([0.45, 0.06, 1.35], frontHubRight, 0.022, brushedSteelMaterial);
     addTube([0.45, 0.06, 0.95], frontHubRight, 0.022, brushedSteelMaterial);
 
-    const upperHubLeft = [-0.90, 0.28, 1.15];
-    const upperHubRight = [0.90, 0.28, 1.15];
-    addTube([-0.42, 0.32, 1.25], upperHubLeft, 0.020, brushedSteelMaterial);
-    addTube([-0.42, 0.32, 0.95], upperHubLeft, 0.020, brushedSteelMaterial);
-    addTube([0.42, 0.32, 1.25], upperHubRight, 0.020, brushedSteelMaterial);
-    addTube([0.42, 0.32, 0.95], upperHubRight, 0.020, brushedSteelMaterial);
+    const upperHubLeft = [-0.9, 0.28, 1.15];
+    const upperHubRight = [0.9, 0.28, 1.15];
+    addTube([-0.42, 0.32, 1.25], upperHubLeft, 0.02, brushedSteelMaterial);
+    addTube([-0.42, 0.32, 0.95], upperHubLeft, 0.02, brushedSteelMaterial);
+    addTube([0.42, 0.32, 1.25], upperHubRight, 0.02, brushedSteelMaterial);
+    addTube([0.42, 0.32, 0.95], upperHubRight, 0.02, brushedSteelMaterial);
 
     const createFoxAirShock = (isLeft = true) => {
         const shockGroup = new THREE.Group();
@@ -357,7 +342,7 @@ export function buildBajaCarGroup() {
         { pos: [-0.94, 0.08, 1.15], isFront: true, isLeft: true },
         { pos: [0.94, 0.08, 1.15], isFront: true, isLeft: false },
         { pos: [-1.02, 0.12, -0.95], isFront: false, isLeft: true },
-        { pos: [1.02, 0.12, -0.95], isFront: false, isLeft: false },
+        { pos: [1.02, 0.12, -0.95], isFront: false, isLeft: false }
     ];
 
     wheelPositions.forEach(({ pos, isFront, isLeft }) => {

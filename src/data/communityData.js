@@ -8,7 +8,7 @@ export const COMMUNITY_CATEGORIES = [
     { id: 'cad', label: 'CAD & Chassis', icon: '⚙️' },
     { id: 'embedded', label: 'Embedded & CAN', icon: '⚡' },
     { id: 'workshop', label: 'Workshop Q&A', icon: '🛠️' },
-    { id: 'general', label: 'General Discussion', icon: '💬' },
+    { id: 'general', label: 'General Discussion', icon: '💬' }
 ];
 
 export const INITIAL_DISCUSSIONS = [
@@ -25,7 +25,8 @@ export const INITIAL_DISCUSSIONS = [
         upvotes: 24,
         repliesCount: 8,
         isSolved: true,
-        summary: 'We noticed point cloud latency when running PCL filtering alongside YOLOv8 depth estimation. Here is how we lowered latency from 85ms to 18ms using CUDA zero-copy memory.',
+        summary:
+            'We noticed point cloud latency when running PCL filtering alongside YOLOv8 depth estimation. Here is how we lowered latency from 85ms to 18ms using CUDA zero-copy memory.',
         content: `When integrating our 32-beam LiDAR node with stereoscopic depth cameras on our SAE BAJA autonomous prototype, processing latency jumped to 85ms per frame on the NVIDIA Jetson AGX Orin.
 
 ### Root Cause
@@ -44,7 +45,8 @@ Current latency is down to **18.4ms**, enabling high-speed obstacle detection at
                 authorRole: 'Member • Software Squad',
                 timestamp: '1 hour ago',
                 upvotes: 6,
-                content: 'Awesome write-up! We tested CycloneDDS vs FastDDS on ROS2 Jazzy last week and saw another ~8% latency drop with shared memory (shm) enabled.'
+                content:
+                    'Awesome write-up! We tested CycloneDDS vs FastDDS on ROS2 Jazzy last week and saw another ~8% latency drop with shared memory (shm) enabled.'
             },
             {
                 id: 'rep-2',
@@ -52,7 +54,8 @@ Current latency is down to **18.4ms**, enabling high-speed obstacle detection at
                 authorRole: 'Workshop Alumnus 2025',
                 timestamp: '45 mins ago',
                 upvotes: 3,
-                content: 'Will this CUDA zero-copy pipeline work on Jetson Orin Nano (8GB) as well? We are running into memory bandwidth bottlenecks.'
+                content:
+                    'Will this CUDA zero-copy pipeline work on Jetson Orin Nano (8GB) as well? We are running into memory bandwidth bottlenecks.'
             }
         ]
     },
@@ -69,7 +72,8 @@ Current latency is down to **18.4ms**, enabling high-speed obstacle detection at
         upvotes: 19,
         repliesCount: 5,
         isSolved: true,
-        summary: 'Detailed welding voltage, ER70S-6 filler rod selection, and pre-heat recommendations for SAE BAJA chromoly spaceframe joints.',
+        summary:
+            'Detailed welding voltage, ER70S-6 filler rod selection, and pre-heat recommendations for SAE BAJA chromoly spaceframe joints.',
         content: `Welding 4130 chromoly tubing requires strict thermal control to prevent brittle martensite formation in the Heat Affected Zone (HAZ).
 
 **Key Parameters for TIG Welding:**
@@ -86,7 +90,8 @@ Check out our CAD weld joint stress analysis report attached in the Resource Vau
                 authorRole: 'Mechanical Specialist',
                 timestamp: '3 hours ago',
                 upvotes: 4,
-                content: 'Thanks for sharing! Did you use a fixture table with modular toggle clamps during main loop welding?'
+                content:
+                    'Thanks for sharing! Did you use a fixture table with modular toggle clamps during main loop welding?'
             }
         ]
     },
@@ -103,7 +108,8 @@ Check out our CAD weld joint stress analysis report attached in the Resource Vau
         upvotes: 14,
         repliesCount: 6,
         isSolved: false,
-        summary: 'Getting sporadic CAN bus error frames (ECR = 0x80) when streaming steer-by-wire telemetry at 500 kbps.',
+        summary:
+            'Getting sporadic CAN bus error frames (ECR = 0x80) when streaming steer-by-wire telemetry at 500 kbps.',
         content: `Hey everyone! We are configuring STM32F407 CAN1 & CAN2 nodes connected to SN65HVD230 transceivers. At 250 kbps telemetry works fine, but boosting to 500 kbps causes periodic passive error states on the bus.
 
 - Termination resistors: 120Ω installed on both far ends.
@@ -117,7 +123,8 @@ Any suggestions on baud rate prescaler timing or sampling point configuration?`,
                 authorRole: 'Embedded Specialist',
                 timestamp: '18 hours ago',
                 upvotes: 9,
-                content: 'Set your CAN sampling point to exactly 87.5%. For STM32F4 at 42MHz APB1 clock: Prescaler = 6, BS1 = 11, BS2 = 2. Also ensure transceiver VCC is a clean 3.3V without ground ripple.'
+                content:
+                    'Set your CAN sampling point to exactly 87.5%. For STM32F4 at 42MHz APB1 clock: Prescaler = 6, BS1 = 11, BS2 = 2. Also ensure transceiver VCC is a clean 3.3V without ground ripple.'
             }
         ]
     }
@@ -131,7 +138,8 @@ export const INITIAL_PROJECTS = [
         authorBadge: 'TEAM ASTERIX FEATURED',
         category: 'Autonomous Systems',
         image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80',
-        description: 'Complete 4WD drive-by-wire robotic vehicle platform equipped with LiDAR obstacle detection, stereoscopic depth mapping, and TEB local path planner.',
+        description:
+            'Complete 4WD drive-by-wire robotic vehicle platform equipped with LiDAR obstacle detection, stereoscopic depth mapping, and TEB local path planner.',
         tags: ['ROS2 Humble', 'NVIDIA Jetson', 'YOLOv8', 'SolidWorks', 'C++'],
         stars: 48,
         githubUrl: 'https://github.com/Team-Asterix264016',
@@ -144,7 +152,8 @@ export const INITIAL_PROJECTS = [
         authorBadge: 'COMMUNITY BUILD',
         category: 'Telemetry & Cloud',
         image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
-        description: 'High-speed browser telemetry console visualizing RPM, battery cell voltages, steering angle encoder streams, and GPS track logs over WebSockets.',
+        description:
+            'High-speed browser telemetry console visualizing RPM, battery cell voltages, steering angle encoder streams, and GPS track logs over WebSockets.',
         tags: ['React', 'Node.js', 'WebSocket', 'Tailwind', 'Chart.js'],
         stars: 32,
         githubUrl: 'https://github.com/Team-Asterix264016',
@@ -157,7 +166,8 @@ export const INITIAL_PROJECTS = [
         authorBadge: 'FAVORITE',
         category: 'Mechanical Engineering',
         image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-        description: 'CNC machined 7075-T6 aluminum brake pedal assembly with dual master cylinder bias bar and pneumatic fail-safe emergency actuation.',
+        description:
+            'CNC machined 7075-T6 aluminum brake pedal assembly with dual master cylinder bias bar and pneumatic fail-safe emergency actuation.',
         tags: ['SolidWorks', 'ANSYS FEA', 'CNC Machining', 'Pneumatics'],
         stars: 29,
         githubUrl: '#',
@@ -173,7 +183,8 @@ export const INITIAL_RESOURCES = [
         type: 'PDF',
         size: '2.4 MB',
         downloads: 340,
-        description: 'Quick reference guide covering sensor_msgs topics, PCL filters, costmap2d parameters, and CycloneDDS tuning for robotics competitions.',
+        description:
+            'Quick reference guide covering sensor_msgs topics, PCL filters, costmap2d parameters, and CycloneDDS tuning for robotics competitions.',
         link: '/workshop/software-perception-syllabus.pdf'
     },
     {
@@ -183,7 +194,8 @@ export const INITIAL_RESOURCES = [
         type: 'ZIP / STEP',
         size: '14.8 MB',
         downloads: 512,
-        description: 'Complete SolidWorks 3D CAD weldment package for AISI 4130 spaceframe cage along with ANSYS static structural stress simulation setups.',
+        description:
+            'Complete SolidWorks 3D CAD weldment package for AISI 4130 spaceframe cage along with ANSYS static structural stress simulation setups.',
         link: '#'
     },
     {
@@ -193,7 +205,8 @@ export const INITIAL_RESOURCES = [
         type: 'C++ / C',
         size: '850 KB',
         downloads: 289,
-        description: 'Production-ready STM32 HAL C++ wrapper for 500kbps CAN frame transmission, FIFO message filtering, and error handler interrupts.',
+        description:
+            'Production-ready STM32 HAL C++ wrapper for 500kbps CAN frame transmission, FIFO message filtering, and error handler interrupts.',
         link: '#'
     },
     {
@@ -203,7 +216,8 @@ export const INITIAL_RESOURCES = [
         type: 'PDF',
         size: '1.9 MB',
         downloads: 198,
-        description: 'Design rules for isolating high-current motor drivers from 5V/3.3V logic boards, star grounding techniques, and ferrite bead selection.',
+        description:
+            'Design rules for isolating high-current motor drivers from 5V/3.3V logic boards, star grounding techniques, and ferrite bead selection.',
         link: '#'
     }
 ];
@@ -212,7 +226,8 @@ export const HORIZON_BLOGS = [
     {
         id: 'blog-1',
         title: 'Building India’s First Student Autonomous Off-Road Vehicle: From Simulation to Dirt Proving Grounds',
-        subtitle: 'How Team Asterix engineered drive-by-wire actuators, stereo neural vision, and sensor fusion for SAE BAJA 2026.',
+        subtitle:
+            'How Team Asterix engineered drive-by-wire actuators, stereo neural vision, and sensor fusion for SAE BAJA 2026.',
         author: 'Ratheeswar S & Team Asterix Leads',
         authorRole: 'Team Asterix Core R&D',
         avatar: 'A',
@@ -220,7 +235,8 @@ export const HORIZON_BLOGS = [
         readTime: '6 min read',
         category: 'AUTONOMOUS ENGINEERING',
         image: 'https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=1200&q=80',
-        excerpt: 'When we set out to turn our BAJA vehicle into a fully autonomous off-road platform, simulation gave us hope, but the dirt track gave us reality. Here is an inside look at how we tackled sensor noise, steering lag, and harsh terrain.',
+        excerpt:
+            'When we set out to turn our BAJA vehicle into a fully autonomous off-road platform, simulation gave us hope, but the dirt track gave us reality. Here is an inside look at how we tackled sensor noise, steering lag, and harsh terrain.',
         content: `### The Journey from Paper to Dirt
 Building an autonomous off-road vehicle is fundamentally different from building an indoor AMR or highway self-driving car. There are no lane markings, weather conditions change instantly, and ground vibrations can break sensor mounts in minutes.
 
@@ -239,7 +255,8 @@ Stay tuned for our upcoming open-source release of the Asterix ROS2 Navigation s
     {
         id: 'blog-2',
         title: 'Deep Dive: Real-time Perception Pipelines on NVIDIA Jetson Orin for Off-Road Terrain',
-        subtitle: 'Optimizing tensor precision, zero-copy memory allocation, and CUDA kernels for low-latency obstacle tracking.',
+        subtitle:
+            'Optimizing tensor precision, zero-copy memory allocation, and CUDA kernels for low-latency obstacle tracking.',
         author: 'Kavya V',
         authorRole: 'Software & Perception Squad',
         avatar: 'K',
@@ -247,7 +264,8 @@ Stay tuned for our upcoming open-source release of the Asterix ROS2 Navigation s
         readTime: '8 min read',
         category: 'AI & VISION',
         image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
-        excerpt: 'Processing high-resolution stereo camera streams and 3D LiDAR point clouds concurrently on embedded hardware requires extreme memory optimization. Here is how we achieved 60 FPS perception.',
+        excerpt:
+            'Processing high-resolution stereo camera streams and 3D LiDAR point clouds concurrently on embedded hardware requires extreme memory optimization. Here is how we achieved 60 FPS perception.',
         content: `### Why FPS Matters in Off-Road Autonomy
 At speeds above 35 km/h over rough terrain, a 50ms perception delay equates to moving over half a meter blind. To ensure instant path re-planning, our perception stack must execute within 15-20ms.
 
@@ -261,7 +279,8 @@ Through these optimizations, our perception latency dropped from 82ms to **16.5m
     {
         id: 'blog-3',
         title: 'Designing Chromoly Spaceframes for Extreme Impact & Torsional Rigidity',
-        subtitle: 'Finite Element Analysis (FEA), triangulation strategies, and hands-on TIG fabrication tips.',
+        subtitle:
+            'Finite Element Analysis (FEA), triangulation strategies, and hands-on TIG fabrication tips.',
         author: 'Dharun M',
         authorRole: 'Chassis & Mechanical Lead',
         avatar: 'D',
@@ -269,7 +288,8 @@ Through these optimizations, our perception latency dropped from 82ms to **16.5m
         readTime: '5 min read',
         category: 'MECHANICAL & FEA',
         image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
-        excerpt: 'A spaceframe must withstand 20G front impact loads while keeping overall weight under 45kg. Here is how we optimized node triangulation and weld joint geometry.',
+        excerpt:
+            'A spaceframe must withstand 20G front impact loads while keeping overall weight under 45kg. Here is how we optimized node triangulation and weld joint geometry.',
         content: `### Structural Objectives
 The roll cage is the structural backbone of our vehicle. It protects the driver, mounts suspension control arms, and houses heavy sensor payloads without flexing under cornering loads.
 

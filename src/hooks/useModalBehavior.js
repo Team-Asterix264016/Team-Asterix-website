@@ -33,9 +33,11 @@ export function useModalBehavior(isOpen, onClose) {
         const focusables = () => {
             const root = containerRef.current;
             if (!root) return [];
-            return [...root.querySelectorAll(
-                'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-            )].filter(el => el.offsetParent !== null || el === document.activeElement);
+            return [
+                ...root.querySelectorAll(
+                    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )
+            ].filter((el) => el.offsetParent !== null || el === document.activeElement);
         };
 
         /* Move focus in, so the next Tab lands inside the dialog rather than

@@ -69,8 +69,7 @@ export function framingStyle(fit, position) {
  * Framing for a squad member, whose fields are prefixed to keep them clear of
  * the gallery's own `fit` / `position`.
  */
-export const memberFramingStyle = (member) =>
-    framingStyle(member?.photoFit, member?.photoPosition);
+export const memberFramingStyle = (member) => framingStyle(member?.photoFit, member?.photoPosition);
 
 /**
  * The frames a picture of each kind actually appears in, narrowest first.

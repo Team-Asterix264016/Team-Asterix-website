@@ -28,7 +28,7 @@ export default function FloatingBackground() {
             { ref: orb1Ref, factor: 0.35 },
             { ref: orb2Ref, factor: -0.25 },
             { ref: orb3Ref, factor: 0.18 },
-            { ref: gridRef, factor: 0.08 },
+            { ref: gridRef, factor: 0.08 }
         ];
 
         const paint = (y) => {
@@ -76,25 +76,25 @@ export default function FloatingBackground() {
     }, []);
 
     return (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none bg-gradient-to-b from-white via-sky-50/40 to-white">
+        <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-gradient-to-b from-white via-sky-50/40 to-white select-none">
             {/* Parallax Floating Sky Blue Ambient Light Blooms */}
             <div
                 ref={orb1Ref}
-                className="absolute top-[-5%] right-[-5%] w-[48rem] h-[48rem] bg-sky-400/12 rounded-full blur-3xl pointer-events-none will-change-transform"
+                className="pointer-events-none absolute top-[-5%] right-[-5%] h-[48rem] w-[48rem] rounded-full bg-sky-400/12 blur-3xl will-change-transform"
             />
             <div
                 ref={orb2Ref}
-                className="absolute top-[40%] left-[-10%] w-[44rem] h-[44rem] bg-sky-300/10 rounded-full blur-3xl pointer-events-none will-change-transform"
+                className="pointer-events-none absolute top-[40%] left-[-10%] h-[44rem] w-[44rem] rounded-full bg-sky-300/10 blur-3xl will-change-transform"
             />
             <div
                 ref={orb3Ref}
-                className="absolute top-[75%] right-[5%] w-[50rem] h-[50rem] bg-sky-400/12 rounded-full blur-3xl pointer-events-none will-change-transform"
+                className="pointer-events-none absolute top-[75%] right-[5%] h-[50rem] w-[50rem] rounded-full bg-sky-400/12 blur-3xl will-change-transform"
             />
 
             {/* Subtle Sky Blue Technical Grid with Parallax */}
             <div
                 ref={gridRef}
-                className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:36px_36px] opacity-[0.22] pointer-events-none will-change-transform"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:36px_36px] opacity-[0.22] will-change-transform"
             />
 
             {/* PHOTOREALISTIC 3D BAJA BUGGY WEBGL CANVAS */}

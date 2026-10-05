@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* =========================================================
    MOTION TOKENS
@@ -81,7 +81,6 @@
   --shadow-brutal-1-white: 1px 1px 0 #ffffff;
   --shadow-brutal-2-white: 2px 2px 0 #ffffff;
   --shadow-brutal-3-white: 3px 3px 0 #ffffff;
-
 }
 
 @layer base {
@@ -94,7 +93,9 @@
 
   /* Headings get even line lengths; prose avoids single-word last lines.
      Cheaper and more consistent than sprinkling `text-balance` per component. */
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     text-wrap: balance;
   }
 
@@ -201,7 +202,8 @@
   background: #ffffff;
   border: 3px solid var(--color-ink);
   box-shadow: 6px 6px 0px var(--color-ink);
-  transition: transform var(--dur-base) var(--ease-brutal),
+  transition:
+    transform var(--dur-base) var(--ease-brutal),
     box-shadow var(--dur-base) var(--ease-brutal);
 }
 
@@ -214,7 +216,8 @@
   background: #f0f9ff;
   border: 3px solid var(--color-brand);
   box-shadow: 6px 6px 0px var(--color-brand);
-  transition: transform var(--dur-base) var(--ease-brutal),
+  transition:
+    transform var(--dur-base) var(--ease-brutal),
     box-shadow var(--dur-base) var(--ease-brutal);
 }
 
@@ -231,7 +234,8 @@
   border: 2px solid var(--color-ink);
   box-shadow: 4px 4px 0px var(--color-ink);
   font-weight: 800;
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal);
 }
@@ -248,7 +252,8 @@
   border: 2px solid var(--color-ink);
   box-shadow: 4px 4px 0px var(--color-ink);
   font-weight: 800;
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal);
 }
@@ -267,7 +272,8 @@
    arbitrary Tailwind shadow and translate utilities the buttons carry.
 ========================================================= */
 .press {
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal),
     color var(--dur-fast) var(--ease-brutal);
@@ -308,7 +314,7 @@
 }
 
 /* Consistent keyboard focus ring across every interactive element. */
-:where(a, button, [role="button"], input, textarea, select, [tabindex]):focus-visible {
+:where(a, button, [role='button'], input, textarea, select, [tabindex]):focus-visible {
   outline: 3px solid var(--color-brand);
   outline-offset: 2px;
 }
@@ -469,8 +475,6 @@
   background: var(--color-brand);
 }
 
-
-
 /* =========================================================
    REDUCED MOTION
    Ambient loops stop outright. Interaction feedback (press, hover)
@@ -478,7 +482,6 @@
    interface still confirms input.
 ========================================================= */
 @media (prefers-reduced-motion: reduce) {
-
   .animate-marquee-left,
   .animate-marquee-right,
   .animate-spin-slow,
@@ -516,7 +519,8 @@
   opacity: 0;
   visibility: hidden;
   border-top: 2px solid #1e293b;
-  transition: max-height var(--dur-base) var(--ease-brutal),
+  transition:
+    max-height var(--dur-base) var(--ease-brutal),
     opacity var(--dur-fast) var(--ease-brutal),
     visibility 0s linear var(--dur-base);
 }
@@ -525,7 +529,8 @@
   max-height: 6rem;
   opacity: 1;
   visibility: visible;
-  transition: max-height var(--dur-base) var(--ease-brutal),
+  transition:
+    max-height var(--dur-base) var(--ease-brutal),
     opacity var(--dur-base) var(--ease-brutal),
     visibility 0s;
 }

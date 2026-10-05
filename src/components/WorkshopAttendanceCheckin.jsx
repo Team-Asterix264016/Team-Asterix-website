@@ -8,11 +8,14 @@ function getOrCreateDeviceId() {
         let id = localStorage.getItem(key);
         if (!id) {
             // Generate high entropy identifier
-            const randomPart = typeof crypto !== 'undefined' && crypto.randomUUID
-                ? crypto.randomUUID()
-                : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+            const randomPart =
+                typeof crypto !== 'undefined' && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
             const screenSignature = `${window.screen?.width || 0}x${window.screen?.height || 0}x${window.screen?.colorDepth || 0}`;
-            id = `dev_${btoa(randomPart + screenSignature).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)}`;
+            id = `dev_${btoa(randomPart + screenSignature)
+                .replace(/[^a-zA-Z0-9]/g, '')
+                .slice(0, 32)}`;
             localStorage.setItem(key, id);
         }
         return id;
@@ -100,12 +103,14 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                 throw new Error(data.error || 'Failed to record attendance');
             }
 
-            setSuccessData(data.attendance || {
-                name: 'Student Candidate',
-                rollNo: cleanRoll,
-                track: tokenInfo?.track || 'workshop',
-                checkedInAt: new Date().toISOString()
-            });
+            setSuccessData(
+                data.attendance || {
+                    name: 'Student Candidate',
+                    rollNo: cleanRoll,
+                    track: tokenInfo?.track || 'workshop',
+                    checkedInAt: new Date().toISOString()
+                }
+            );
         } catch (err) {
             console.error('Checkin failed:', err);
             setError(err.message || 'Could not record attendance. Please try again.');
@@ -117,21 +122,24 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
     const isSoftware = tokenInfo?.track === 'software';
 
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-100 font-mono flex flex-col justify-center items-center p-4 sm:p-6 select-none">
-            <div className="max-w-md w-full bg-white border-4 border-slate-900 shadow-brutal-8-brand text-slate-900 p-6 sm:p-8 relative">
-                
+        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 p-4 font-mono text-slate-100 select-none sm:p-6">
+            <div className="shadow-brutal-8-brand relative w-full max-w-md border-4 border-slate-900 bg-white p-6 text-slate-900 sm:p-8">
                 {/* Header Track Tag */}
-                <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3 mb-5">
+                <div className="mb-5 flex items-center justify-between border-b-2 border-slate-900 pb-3">
                     <div className="flex items-center gap-2">
-                        <span className={`w-3 h-3 border border-slate-900 ${isSoftware ? 'bg-sky-500' : 'bg-amber-500'}`}></span>
-                        <span className="text-xs font-black uppercase text-slate-900 tracking-wider">
+                        <span
+                            className={`h-3 w-3 border border-slate-900 ${isSoftware ? 'bg-sky-500' : 'bg-amber-500'}`}
+                        ></span>
+                        <span className="text-xs font-black tracking-wider text-slate-900 uppercase">
                             Team Asterix Workshop
                         </span>
                     </div>
                     {tokenInfo?.track && (
-                        <span className={`px-2 py-0.5 border border-slate-900 text-[10px] font-black uppercase ${
-                            isSoftware ? 'bg-sky-100 text-sky-900' : 'bg-amber-100 text-amber-900'
-                        }`}>
+                        <span
+                            className={`border border-slate-900 px-2 py-0.5 text-[10px] font-black uppercase ${
+                                isSoftware ? 'bg-sky-100 text-sky-900' : 'bg-amber-100 text-amber-900'
+                            }`}
+                        >
                             {isSoftware ? 'Software Track' : 'Powertrain Track'}
                         </span>
                     )}
@@ -139,50 +147,56 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
 
                 {/* SUCCESS CONFIRMATION PASS */}
                 {successData ? (
-                    <div className="space-y-5 text-center py-2">
-                        <div className="w-16 h-16 bg-emerald-100 border-4 border-slate-900 rounded-full flex items-center justify-center mx-auto shadow-brutal-3">
+                    <div className="space-y-5 py-2 text-center">
+                        <div className="shadow-brutal-3 mx-auto flex h-16 w-16 items-center justify-center rounded-full border-4 border-slate-900 bg-emerald-100">
                             <span className="text-3xl font-black text-emerald-600">✓</span>
                         </div>
 
                         <div>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100 px-2.5 py-1 border border-emerald-500">
+                            <span className="border border-emerald-500 bg-emerald-100 px-2.5 py-1 text-[10px] font-black tracking-widest text-emerald-700 uppercase">
                                 Attendance Confirmed
                             </span>
-                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase mt-2">
+                            <h2 className="mt-2 text-xl font-black text-slate-900 uppercase sm:text-2xl">
                                 {successData.name}
                             </h2>
-                            <p className="text-xs font-bold text-slate-600 font-mono">
+                            <p className="font-mono text-xs font-bold text-slate-600">
                                 Roll No: <strong className="text-slate-900">{successData.rollNo}</strong>
                             </p>
                         </div>
 
                         {/* Candidate Details Card */}
-                        <div className="p-3.5 bg-slate-50 border-2 border-slate-900 text-left text-xs font-mono space-y-1.5 shadow-brutal-2">
+                        <div className="shadow-brutal-2 space-y-1.5 border-2 border-slate-900 bg-slate-50 p-3.5 text-left font-mono text-xs">
                             <div className="flex justify-between border-b border-slate-200 pb-1">
-                                <span className="text-slate-500 text-[11px]">Track:</span>
-                                <span className="font-black text-slate-900 uppercase">{successData.track}</span>
+                                <span className="text-[11px] text-slate-500">Track:</span>
+                                <span className="font-black text-slate-900 uppercase">
+                                    {successData.track}
+                                </span>
                             </div>
                             {successData.department && (
                                 <div className="flex justify-between border-b border-slate-200 pb-1">
-                                    <span className="text-slate-500 text-[11px]">Department:</span>
-                                    <span className="font-bold text-slate-900 truncate max-w-[200px]">{successData.department}</span>
+                                    <span className="text-[11px] text-slate-500">Department:</span>
+                                    <span className="max-w-[200px] truncate font-bold text-slate-900">
+                                        {successData.department}
+                                    </span>
                                 </div>
                             )}
                             {successData.year && (
                                 <div className="flex justify-between border-b border-slate-200 pb-1">
-                                    <span className="text-slate-500 text-[11px]">Academic Year:</span>
+                                    <span className="text-[11px] text-slate-500">Academic Year:</span>
                                     <span className="font-bold text-slate-900">Year {successData.year}</span>
                                 </div>
                             )}
                             {successData.receiptNo && (
                                 <div className="flex justify-between border-b border-slate-200 pb-1">
-                                    <span className="text-slate-500 text-[11px]">Receipt No:</span>
-                                    <span className="font-mono font-bold text-sky-700">{successData.receiptNo}</span>
+                                    <span className="text-[11px] text-slate-500">Receipt No:</span>
+                                    <span className="font-mono font-bold text-sky-700">
+                                        {successData.receiptNo}
+                                    </span>
                                 </div>
                             )}
                             <div className="flex justify-between pt-0.5">
-                                <span className="text-slate-500 text-[11px]">Recorded At:</span>
-                                <span className="font-bold text-slate-700 text-[11px]">
+                                <span className="text-[11px] text-slate-500">Recorded At:</span>
+                                <span className="text-[11px] font-bold text-slate-700">
                                     {new Date(successData.checkedInAt).toLocaleTimeString('en-IN', {
                                         hour: '2-digit',
                                         minute: '2-digit',
@@ -197,7 +211,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             <button
                                 type="button"
                                 onClick={onGoHome}
-                                className="press w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase border-2 border-slate-900 shadow-brutal-3-brand cursor-pointer"
+                                className="press shadow-brutal-3-brand w-full cursor-pointer border-2 border-slate-900 bg-slate-900 py-2.5 text-xs font-black text-white uppercase hover:bg-slate-800"
                             >
                                 Back to Asterix Homepage ↗
                             </button>
@@ -207,20 +221,20 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                     /* ATTENDANCE CHECK-IN FORM */
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <h2 className="text-lg sm:text-xl font-black uppercase text-slate-900 leading-tight">
+                            <h2 className="text-lg leading-tight font-black text-slate-900 uppercase sm:text-xl">
                                 Session Attendance Check-in
                             </h2>
-                            <p className="text-[11px] font-bold text-slate-500 mt-1">
+                            <p className="mt-1 text-[11px] font-bold text-slate-500">
                                 Enter your registered details to verify your in-person presence.
                             </p>
                         </div>
 
                         {/* Error Alert */}
                         {error && (
-                            <div className="p-3 bg-rose-50 border-2 border-rose-600 text-rose-800 font-mono text-xs font-bold space-y-1">
+                            <div className="space-y-1 border-2 border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-800">
                                 <div>⚠️ {error}</div>
                                 {error.includes('expired') && (
-                                    <div className="text-[11px] text-rose-600 font-normal">
+                                    <div className="text-[11px] font-normal text-rose-600">
                                         Look at the classroom screen and scan the updated QR code.
                                     </div>
                                 )}
@@ -228,14 +242,15 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                         )}
 
                         {!token && (
-                            <div className="p-3 bg-amber-50 border-2 border-amber-600 text-amber-800 font-mono text-xs font-bold">
-                                ⚠️ No QR token detected. Please scan the QR code projected in class with your camera.
+                            <div className="border-2 border-amber-600 bg-amber-50 p-3 font-mono text-xs font-bold text-amber-800">
+                                ⚠️ No QR token detected. Please scan the QR code projected in class with your
+                                camera.
                             </div>
                         )}
 
                         {/* Roll Number Input */}
                         <div>
-                            <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">
+                            <label className="mb-1 block text-[11px] font-black text-slate-700 uppercase">
                                 Roll Number / Register No
                             </label>
                             <input
@@ -244,13 +259,13 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                                 value={rollNo}
                                 onChange={(e) => setRollNo(e.target.value.toUpperCase())}
                                 placeholder="715526..."
-                                className="w-full px-3 py-2 border-2 border-slate-900 font-mono text-sm font-bold bg-slate-50 focus:bg-white focus:outline-none"
+                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 font-mono text-sm font-bold focus:bg-white focus:outline-none"
                             />
                         </div>
 
                         {/* Email Input */}
                         <div>
-                            <label className="block text-[11px] font-black uppercase text-slate-700 mb-1">
+                            <label className="mb-1 block text-[11px] font-black text-slate-700 uppercase">
                                 College Email ID
                             </label>
                             <input
@@ -259,9 +274,9 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="rollno@psgitech.ac.in"
-                                className="w-full px-3 py-2 border-2 border-slate-900 font-mono text-sm font-medium bg-slate-50 focus:bg-white focus:outline-none"
+                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 font-mono text-sm font-medium focus:bg-white focus:outline-none"
                             />
-                            <span className="text-[10px] text-slate-500 font-medium block mt-1">
+                            <span className="mt-1 block text-[10px] font-medium text-slate-500">
                                 Must match the email used during workshop payment.
                             </span>
                         </div>
@@ -270,15 +285,15 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                         <button
                             type="submit"
                             disabled={isSubmitting || !token}
-                            className={`press w-full py-3 border-2 border-slate-900 font-black text-xs uppercase shadow-brutal-3 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 ${
+                            className={`press shadow-brutal-3 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 py-3 text-xs font-black uppercase disabled:opacity-50 ${
                                 isSoftware
-                                    ? 'bg-sky-400 hover:bg-sky-300 text-slate-950'
-                                    : 'bg-amber-400 hover:bg-amber-300 text-slate-950'
+                                    ? 'bg-sky-400 text-slate-950 hover:bg-sky-300'
+                                    : 'bg-amber-400 text-slate-950 hover:bg-amber-300'
                             }`}
                         >
                             {isSubmitting ? (
                                 <>
-                                    <span className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></span>
+                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-950 border-t-transparent"></span>
                                     <span>Verifying Check-In...</span>
                                 </>
                             ) : (
@@ -286,8 +301,8 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             )}
                         </button>
 
-                        <div className="text-center pt-2">
-                            <span className="text-[10px] text-slate-500 font-bold">
+                        <div className="pt-2 text-center">
+                            <span className="text-[10px] font-bold text-slate-500">
                                 Single device check-in active · Session verified
                             </span>
                         </div>

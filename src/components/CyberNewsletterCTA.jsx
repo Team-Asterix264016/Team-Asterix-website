@@ -36,12 +36,14 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
     };
 
     return (
-        <section id="subscribe" className="py-14 sm:py-24 px-4 sm:px-8 bg-sky-500 text-slate-900 border-t-4 border-slate-900 relative overflow-hidden z-10 select-none">
-
+        <section
+            id="subscribe"
+            className="relative z-10 overflow-hidden border-t-4 border-slate-900 bg-sky-500 px-4 py-14 text-slate-900 select-none sm:px-8 sm:py-24"
+        >
             {/* Background Parallax Watermark (Option A: Slow layer) */}
             <div
                 data-parallax="slow"
-                className="absolute right-4 sm:right-10 top-8 text-[6rem] sm:text-[10rem] md:text-[12rem] font-black text-white/[0.12] select-none pointer-events-none font-mono leading-none z-0 will-change-transform"
+                className="pointer-events-none absolute top-8 right-4 z-0 font-mono text-[6rem] leading-none font-black text-white/[0.12] will-change-transform select-none sm:right-10 sm:text-[10rem] md:text-[12rem]"
                 aria-hidden="true"
             >
                 // 06 ALLIANCE
@@ -51,29 +53,34 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="7"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-10 z-20 bg-white text-slate-950 border-3 border-slate-900 shadow-brutal-5 rounded-lg px-3.5 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="shadow-brutal-5 pointer-events-none absolute top-10 left-6 z-20 hidden rounded-lg border-3 border-slate-900 bg-white px-3.5 py-1.5 font-mono text-[11px] font-black tracking-wider text-slate-950 uppercase will-change-transform sm:left-12 lg:flex"
             >
                 <span>✦ PADDOCK ALLIANCE</span>
             </div>
 
-            <div className="max-w-5xl mx-auto relative z-10">
-                <div data-assemble="card" data-parallax="fast" data-parallax-speed="0.06" className="bg-white border-4 border-slate-900 shadow-brutal-10 p-8 sm:p-14 md:p-16 relative will-change-transform">
-
-                    <div data-assemble="header" className="text-center mb-8 sm:mb-10">
+            <div className="relative z-10 mx-auto max-w-5xl">
+                <div
+                    data-assemble="card"
+                    data-parallax="fast"
+                    data-parallax-speed="0.06"
+                    className="shadow-brutal-10 relative border-4 border-slate-900 bg-white p-8 will-change-transform sm:p-14 md:p-16"
+                >
+                    <div data-assemble="header" className="mb-8 text-center sm:mb-10">
                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                            <h2 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 uppercase leading-none tracking-tight">
+                            <h2 className="text-3xl leading-none font-black tracking-tight text-slate-900 uppercase sm:text-5xl md:text-6xl lg:text-7xl">
                                 JOIN THE
                             </h2>
-                            <h2 
-                                data-parallax="fast" 
+                            <h2
+                                data-parallax="fast"
                                 data-parallax-speed="0.18"
-                                className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-stroke-sky text-transparent uppercase leading-none tracking-tight will-change-transform"
+                                className="text-stroke-sky text-3xl leading-none font-black tracking-tight text-transparent uppercase will-change-transform sm:text-5xl md:text-6xl lg:text-7xl"
                             >
                                 ALLIANCE
                             </h2>
                         </div>
-                        <p className="mt-3 sm:mt-4 text-sm sm:text-lg text-slate-600 font-bold max-w-xl mx-auto">
-                            Support Team Asterix on the national stage. Partner with us or receive live telemetry feeds, race logs, and paddock access.
+                        <p className="mx-auto mt-3 max-w-xl text-sm font-bold text-slate-600 sm:mt-4 sm:text-lg">
+                            Support Team Asterix on the national stage. Partner with us or receive live
+                            telemetry feeds, race logs, and paddock access.
                         </p>
 
                         {/* Dedicated Action Button to Open Full Sponsorship Portal */}
@@ -84,7 +91,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     if (onOpenSponsor) onOpenSponsor();
                                     else window.location.hash = '#sponsor';
                                 }}
-                                className="press cyber-button px-5 sm:px-8 py-3 sm:py-4 text-xs sm:text-sm font-black uppercase tracking-wider cursor-pointer shadow-brutal-3 sm:shadow-brutal-4 bg-amber-300 hover:bg-amber-400 text-slate-900 inline-flex items-center justify-center gap-2 max-w-full text-center"
+                                className="press cyber-button shadow-brutal-3 sm:shadow-brutal-4 inline-flex max-w-full cursor-pointer items-center justify-center gap-2 bg-amber-300 px-5 py-3 text-center text-xs font-black tracking-wider text-slate-900 uppercase hover:bg-amber-400 sm:px-8 sm:py-4 sm:text-sm"
                             >
                                 <span>SPONSOR TEAM (VIEW FILES & DECK)</span>
                                 <span>→</span>
@@ -92,23 +99,27 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                         </div>
                     </div>
 
-                    <div className="relative border-t-2 border-slate-200 pt-8 mt-8">
-                        <span className="text-[11px] font-mono font-black uppercase text-slate-500 block text-center mb-4">
+                    <div className="relative mt-8 border-t-2 border-slate-200 pt-8">
+                        <span className="mb-4 block text-center font-mono text-[11px] font-black text-slate-500 uppercase">
                             -- OR SUBSCRIBE FOR PADDOCK RACE UPDATES & NEWSLETTER --
                         </span>
 
                         {statusNote && (
-                            <div className="mb-4 p-3 bg-rose-100 border-2 border-rose-600 text-rose-800 text-xs font-bold text-center">
+                            <div className="mb-4 border-2 border-rose-600 bg-rose-100 p-3 text-center text-xs font-bold text-rose-800">
                                 {statusNote}
                             </div>
                         )}
 
                         {submitted ? (
-                            <div className="p-6 bg-sky-100 border-3 border-slate-900 text-center font-black text-base text-slate-900 shadow-brutal-4">
-                                ✓ THANK YOU FOR JOINING THE ASTERIX RACING ALLIANCE! WE WILL REACH OUT SHORTLY.
+                            <div className="shadow-brutal-4 border-3 border-slate-900 bg-sky-100 p-6 text-center text-base font-black text-slate-900">
+                                ✓ THANK YOU FOR JOINING THE ASTERIX RACING ALLIANCE! WE WILL REACH OUT
+                                SHORTLY.
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-3xl mx-auto">
+                            <form
+                                onSubmit={handleSubmit}
+                                className="mx-auto flex max-w-3xl flex-col gap-4 sm:flex-row"
+                            >
                                 <input
                                     data-assemble="left"
                                     type="email"
@@ -116,7 +127,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter Your Corporate / Student Email"
-                                    className="flex-1 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white focus:shadow-brutal-4-brand transition-all"
+                                    className="focus:shadow-brutal-4-brand flex-1 border-3 border-slate-900 bg-sky-50 px-5 py-4 text-sm font-bold text-slate-900 transition-all placeholder:text-slate-500 focus:bg-white focus:outline-none"
                                 />
                                 <input
                                     data-assemble="up"
@@ -124,23 +135,21 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="Phone (Optional)"
-                                    className="sm:w-48 px-5 py-4 bg-sky-50 border-3 border-slate-900 font-bold text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:bg-white focus:shadow-brutal-4-brand transition-all"
+                                    className="focus:shadow-brutal-4-brand border-3 border-slate-900 bg-sky-50 px-5 py-4 text-sm font-bold text-slate-900 transition-all placeholder:text-slate-500 focus:bg-white focus:outline-none sm:w-48"
                                 />
                                 <button
                                     data-assemble="right"
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="press press-flat cyber-button px-8 py-4 text-xs font-black uppercase tracking-wider whitespace-nowrap cursor-pointer disabled:opacity-50"
+                                    className="press press-flat cyber-button cursor-pointer px-8 py-4 text-xs font-black tracking-wider whitespace-nowrap uppercase disabled:opacity-50"
                                 >
                                     {isSubmitting ? 'JOINING...' : 'SUBSCRIBE →'}
                                 </button>
                             </form>
                         )}
                     </div>
-
                 </div>
             </div>
         </section>
     );
 }
-

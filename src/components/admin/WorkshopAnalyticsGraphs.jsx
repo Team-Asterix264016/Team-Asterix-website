@@ -15,20 +15,61 @@ const DEPT_SHORT_CODES = {
 
 const DEPT_COLORS = [
     { bg: 'bg-sky-500', bar: '#0284c7', text: 'text-sky-700', badge: 'bg-sky-100 border-sky-400' },
-    { bg: 'bg-indigo-500', bar: '#6366f1', text: 'text-indigo-700', badge: 'bg-indigo-100 border-indigo-400' },
-    { bg: 'bg-violet-500', bar: '#8b5cf6', text: 'text-violet-700', badge: 'bg-violet-100 border-violet-400' },
+    {
+        bg: 'bg-indigo-500',
+        bar: '#6366f1',
+        text: 'text-indigo-700',
+        badge: 'bg-indigo-100 border-indigo-400'
+    },
+    {
+        bg: 'bg-violet-500',
+        bar: '#8b5cf6',
+        text: 'text-violet-700',
+        badge: 'bg-violet-100 border-violet-400'
+    },
     { bg: 'bg-teal-500', bar: '#14b8a6', text: 'text-teal-700', badge: 'bg-teal-100 border-teal-400' },
     { bg: 'bg-rose-500', bar: '#f43f5e', text: 'text-rose-700', badge: 'bg-rose-100 border-rose-400' },
     { bg: 'bg-amber-500', bar: '#f59e0b', text: 'text-amber-700', badge: 'bg-amber-100 border-amber-400' },
-    { bg: 'bg-emerald-500', bar: '#10b981', text: 'text-emerald-700', badge: 'bg-emerald-100 border-emerald-400' },
-    { bg: 'bg-orange-500', bar: '#f97316', text: 'text-orange-700', badge: 'bg-orange-100 border-orange-400' },
-    { bg: 'bg-cyan-500', bar: '#06b6d4', text: 'text-cyan-700', badge: 'bg-cyan-100 border-cyan-400' },
+    {
+        bg: 'bg-emerald-500',
+        bar: '#10b981',
+        text: 'text-emerald-700',
+        badge: 'bg-emerald-100 border-emerald-400'
+    },
+    {
+        bg: 'bg-orange-500',
+        bar: '#f97316',
+        text: 'text-orange-700',
+        badge: 'bg-orange-100 border-orange-400'
+    },
+    { bg: 'bg-cyan-500', bar: '#06b6d4', text: 'text-cyan-700', badge: 'bg-cyan-100 border-cyan-400' }
 ];
 
 const COURSE_CONFIG = {
-    software: { id: 'software', label: 'Software', fullLabel: 'Software & Perception', color: '#0284c7', bg: 'bg-sky-500', light: 'bg-sky-100 border-sky-400 text-sky-800' },
-    powertrain: { id: 'powertrain', label: 'Powertrain', fullLabel: 'Electronics & Powertrain', color: '#d97706', bg: 'bg-amber-500', light: 'bg-amber-100 border-amber-400 text-amber-800' },
-    combo: { id: 'combo', label: 'Combo', fullLabel: 'All-Access Combo', color: '#059669', bg: 'bg-emerald-500', light: 'bg-emerald-100 border-emerald-400 text-emerald-800' }
+    software: {
+        id: 'software',
+        label: 'Software',
+        fullLabel: 'Software & Perception',
+        color: '#0284c7',
+        bg: 'bg-sky-500',
+        light: 'bg-sky-100 border-sky-400 text-sky-800'
+    },
+    powertrain: {
+        id: 'powertrain',
+        label: 'Powertrain',
+        fullLabel: 'Electronics & Powertrain',
+        color: '#d97706',
+        bg: 'bg-amber-500',
+        light: 'bg-amber-100 border-amber-400 text-amber-800'
+    },
+    combo: {
+        id: 'combo',
+        label: 'Combo',
+        fullLabel: 'All-Access Combo',
+        color: '#059669',
+        bg: 'bg-emerald-500',
+        light: 'bg-emerald-100 border-emerald-400 text-emerald-800'
+    }
 };
 
 // Helper to compute SVG donut arc path between startAngle and endAngle
@@ -73,7 +114,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
     // Filter registrations based on scope
     const scopedList = useMemo(() => {
         if (datasetScope === 'paid') {
-            return registrations.filter(r => r.status === 'paid');
+            return registrations.filter((r) => r.status === 'paid');
         }
         return registrations;
     }, [registrations, datasetScope]);
@@ -82,9 +123,11 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
     const deptCourseStats = useMemo(() => {
         const deptMap = {};
 
-        scopedList.forEach(r => {
+        scopedList.forEach((r) => {
             const dept = (r.department || 'Not Specified').trim();
-            const pkg = String(r.package || 'software').toLowerCase().trim();
+            const pkg = String(r.package || 'software')
+                .toLowerCase()
+                .trim();
             const validPkg = ['software', 'powertrain', 'combo'].includes(pkg) ? pkg : 'software';
 
             if (!deptMap[dept]) {
@@ -196,13 +239,42 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
     // 2. TRACK & PACKAGE BREAKDOWN DATA
     const packageStats = useMemo(() => {
         const pkgs = {
-            software: { id: 'software', label: 'Software & Perception', count: 0, revenue: 0, color: '#0284c7', bg: 'bg-sky-50', border: 'border-sky-500', text: 'text-sky-700' },
-            powertrain: { id: 'powertrain', label: 'Electronics & Powertrain', count: 0, revenue: 0, color: '#d97706', bg: 'bg-amber-50', border: 'border-amber-500', text: 'text-amber-700' },
-            combo: { id: 'combo', label: 'All-Access Combo', count: 0, revenue: 0, color: '#059669', bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-700' }
+            software: {
+                id: 'software',
+                label: 'Software & Perception',
+                count: 0,
+                revenue: 0,
+                color: '#0284c7',
+                bg: 'bg-sky-50',
+                border: 'border-sky-500',
+                text: 'text-sky-700'
+            },
+            powertrain: {
+                id: 'powertrain',
+                label: 'Electronics & Powertrain',
+                count: 0,
+                revenue: 0,
+                color: '#d97706',
+                bg: 'bg-amber-50',
+                border: 'border-amber-500',
+                text: 'text-amber-700'
+            },
+            combo: {
+                id: 'combo',
+                label: 'All-Access Combo',
+                count: 0,
+                revenue: 0,
+                color: '#059669',
+                bg: 'bg-emerald-50',
+                border: 'border-emerald-500',
+                text: 'text-emerald-700'
+            }
         };
 
-        scopedList.forEach(r => {
-            const key = String(r.package || '').toLowerCase().trim();
+        scopedList.forEach((r) => {
+            const key = String(r.package || '')
+                .toLowerCase()
+                .trim();
             const target = pkgs[key] || pkgs.software;
             target.count += 1;
             target.revenue += Number(r.amount || 0);
@@ -212,7 +284,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
         const totalPkgRev = Object.values(pkgs).reduce((sum, p) => sum + p.revenue, 0) || 1;
 
         return {
-            items: Object.values(pkgs).map(p => ({
+            items: Object.values(pkgs).map((p) => ({
                 ...p,
                 countPct: ((p.count / totalPkgCount) * 100).toFixed(1),
                 revPct: ((p.revenue / totalPkgRev) * 100).toFixed(1)
@@ -228,23 +300,31 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
         const records = [];
         const dateCountMap = {};
 
-        scopedList.forEach(r => {
-            const raw = datasetScope === 'paid' ? (r.paidAt || r.createdAt) : r.createdAt;
+        scopedList.forEach((r) => {
+            const raw = datasetScope === 'paid' ? r.paidAt || r.createdAt : r.createdAt;
             if (!raw) return;
             const d = new Date(raw);
             if (isNaN(d.getTime())) return;
 
             // IST Conversions
-            const hourFormatter = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false });
+            const hourFormatter = new Intl.DateTimeFormat('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                hour: 'numeric',
+                hour12: false
+            });
             const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
-            const labelFormatter = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short' });
+            const labelFormatter = new Intl.DateTimeFormat('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                day: '2-digit',
+                month: 'short'
+            });
 
             const hour = parseInt(hourFormatter.format(d), 10);
             const dateKey = dateFormatter.format(d);
             const dateLabel = labelFormatter.format(d);
 
             records.push({ hour, dateKey, dateLabel, raw: d });
-            dateCountMap[dateKey] = (dateCountMap[dateKey] || { key: dateKey, label: dateLabel, count: 0 });
+            dateCountMap[dateKey] = dateCountMap[dateKey] || { key: dateKey, label: dateLabel, count: 0 };
             dateCountMap[dateKey].count += 1;
         });
 
@@ -252,16 +332,16 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
         const peakDate = availableDates[0] || null;
 
         // Determine which date filter applies
-        const activeDateKey = selectedDateFilter === 'peak'
-            ? peakDate?.key
-            : selectedDateFilter === 'all'
-                ? 'all'
-                : selectedDateFilter;
+        const activeDateKey =
+            selectedDateFilter === 'peak'
+                ? peakDate?.key
+                : selectedDateFilter === 'all'
+                  ? 'all'
+                  : selectedDateFilter;
 
         // Filter records for the active date selection
-        const targetRecords = activeDateKey === 'all'
-            ? records
-            : records.filter(r => r.dateKey === activeDateKey);
+        const targetRecords =
+            activeDateKey === 'all' ? records : records.filter((r) => r.dateKey === activeDateKey);
 
         // 24-Hour Histogram Array
         const hourlyBuckets = Array.from({ length: 24 }, (_, h) => ({
@@ -272,18 +352,19 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
             pct: 0
         }));
 
-        targetRecords.forEach(r => {
+        targetRecords.forEach((r) => {
             if (r.hour >= 0 && r.hour < 24) {
                 hourlyBuckets[r.hour].count += 1;
             }
         });
 
         const totalWindowRegistrations = targetRecords.length;
-        hourlyBuckets.forEach(b => {
-            b.pct = totalWindowRegistrations > 0 ? ((b.count / totalWindowRegistrations) * 100).toFixed(1) : 0;
+        hourlyBuckets.forEach((b) => {
+            b.pct =
+                totalWindowRegistrations > 0 ? ((b.count / totalWindowRegistrations) * 100).toFixed(1) : 0;
         });
 
-        const maxHourlyCount = Math.max(1, ...hourlyBuckets.map(b => b.count));
+        const maxHourlyCount = Math.max(1, ...hourlyBuckets.map((b) => b.count));
         const peakHourBucket = [...hourlyBuckets].sort((a, b) => b.count - a.count)[0];
 
         // Group into 4 Actionable Time-of-Day Slots
@@ -326,12 +407,12 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                 color: '#8b5cf6',
                 border: 'border-violet-500',
                 bg: 'bg-violet-50',
-                count: [
-                    ...hourlyBuckets.slice(21, 24),
-                    ...hourlyBuckets.slice(0, 6)
-                ].reduce((sum, b) => sum + b.count, 0)
+                count: [...hourlyBuckets.slice(21, 24), ...hourlyBuckets.slice(0, 6)].reduce(
+                    (sum, b) => sum + b.count,
+                    0
+                )
             }
-        ].map(slot => ({
+        ].map((slot) => ({
             ...slot,
             pct: totalWindowRegistrations > 0 ? ((slot.count / totalWindowRegistrations) * 100).toFixed(1) : 0
         }));
@@ -342,9 +423,10 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
             availableDates,
             peakDate,
             activeDateKey,
-            activeDateLabel: activeDateKey === 'all'
-                ? 'All Dates Combined'
-                : availableDates.find(d => d.key === activeDateKey)?.label || activeDateKey,
+            activeDateLabel:
+                activeDateKey === 'all'
+                    ? 'All Dates Combined'
+                    : availableDates.find((d) => d.key === activeDateKey)?.label || activeDateKey,
             hourlyBuckets,
             maxHourlyCount,
             peakHourBucket,
@@ -355,23 +437,28 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
     }, [scopedList, datasetScope, selectedDateFilter]);
 
     const formatCurrency = (amt) =>
-        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amt || 0);
+        new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(amt || 0);
 
     return (
-        <section className="bg-white border-2 border-slate-900 shadow-brutal-4 p-4 sm:p-5 font-mono">
+        <section className="shadow-brutal-4 border-2 border-slate-900 bg-white p-4 font-mono sm:p-5">
             {/* Header & Controls */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-slate-900 pb-3">
+            <div className="flex flex-col justify-between gap-3 border-b-2 border-slate-900 pb-3 sm:flex-row sm:items-center">
                 <div className="flex items-center gap-2">
                     <span className="text-xl">📊</span>
                     <div>
-                        <h3 className="text-sm sm:text-base font-black uppercase text-slate-900 tracking-wide flex items-center gap-2">
+                        <h3 className="flex items-center gap-2 text-sm font-black tracking-wide text-slate-900 uppercase sm:text-base">
                             <span>Workshop Analytics & Insights</span>
-                            <span className="text-[10px] px-2 py-0.5 bg-slate-900 text-white font-bold">
+                            <span className="bg-slate-900 px-2 py-0.5 text-[10px] font-bold text-white">
                                 {scopedList.length} {datasetScope === 'paid' ? 'Paid' : 'Total'}
                             </span>
                         </h3>
                         <p className="text-[11px] font-bold text-slate-500">
-                            Real-time breakdown for departments × courses, package split, and hourly rush analysis.
+                            Real-time breakdown for departments × courses, package split, and hourly rush
+                            analysis.
                         </p>
                     </div>
                 </div>
@@ -382,9 +469,9 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                         <button
                             type="button"
                             onClick={() => setDatasetScope('paid')}
-                            className={`px-2.5 py-1 cursor-pointer transition-colors ${
+                            className={`cursor-pointer px-2.5 py-1 transition-colors ${
                                 datasetScope === 'paid'
-                                    ? 'bg-emerald-400 text-slate-950 font-black shadow-brutal-1'
+                                    ? 'shadow-brutal-1 bg-emerald-400 font-black text-slate-950'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -393,9 +480,9 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                         <button
                             type="button"
                             onClick={() => setDatasetScope('all')}
-                            className={`px-2.5 py-1 cursor-pointer transition-colors ${
+                            className={`cursor-pointer px-2.5 py-1 transition-colors ${
                                 datasetScope === 'all'
-                                    ? 'bg-sky-400 text-slate-950 font-black shadow-brutal-1'
+                                    ? 'shadow-brutal-1 bg-sky-400 font-black text-slate-950'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
@@ -406,8 +493,8 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                     {/* Collapse / Expand Toggle */}
                     <button
                         type="button"
-                        onClick={() => setIsCollapsed(prev => !prev)}
-                        className="press px-2.5 py-1 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 text-[10px] font-black uppercase shadow-brutal-2 cursor-pointer"
+                        onClick={() => setIsCollapsed((prev) => !prev)}
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-2.5 py-1 text-[10px] font-black text-slate-900 uppercase hover:bg-slate-100"
                         title={isCollapsed ? 'Expand graphs' : 'Collapse graphs'}
                     >
                         {isCollapsed ? 'Show Graphs ▼' : 'Hide Graphs ▲'}
@@ -417,19 +504,20 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
 
             {/* Collapsible Content */}
             {!isCollapsed && (
-                <div className="pt-4 space-y-6">
+                <div className="space-y-6 pt-4">
                     {scopedList.length === 0 ? (
-                        <div className="p-8 text-center bg-slate-50 border-2 border-dashed border-slate-300 text-slate-500 text-xs font-bold">
-                            No registration records found for scope: <strong className="uppercase">{datasetScope}</strong>.
+                        <div className="border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center text-xs font-bold text-slate-500">
+                            No registration records found for scope:{' '}
+                            <strong className="uppercase">{datasetScope}</strong>.
                         </div>
                     ) : (
                         <>
                             {/* GRAPH 1: STACKED DEPARTMENT × COURSE PIE / SUNBURST CHART */}
-                            <div className="bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-3 space-y-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-300 pb-2.5">
+                            <div className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-slate-50 p-4">
+                                <div className="flex flex-col justify-between gap-3 border-b border-slate-300 pb-2.5 sm:flex-row sm:items-center">
                                     <div className="flex items-center gap-2">
-                                        <span className="w-3 h-3 bg-sky-500 border border-slate-900"></span>
-                                        <h4 className="text-xs sm:text-sm font-black uppercase text-slate-900">
+                                        <span className="h-3 w-3 border border-slate-900 bg-sky-500"></span>
+                                        <h4 className="text-xs font-black text-slate-900 uppercase sm:text-sm">
                                             1. Department × Registered Course (Stacked Pie / Sunburst)
                                         </h4>
                                     </div>
@@ -440,8 +528,10 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             <button
                                                 type="button"
                                                 onClick={() => setChartMode('sunburst')}
-                                                className={`px-2 py-0.5 cursor-pointer ${
-                                                    chartMode === 'sunburst' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                                                className={`cursor-pointer px-2 py-0.5 ${
+                                                    chartMode === 'sunburst'
+                                                        ? 'bg-slate-900 text-white'
+                                                        : 'text-slate-600 hover:text-slate-900'
                                                 }`}
                                             >
                                                 Stacked Pie ◐
@@ -449,8 +539,10 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             <button
                                                 type="button"
                                                 onClick={() => setChartMode('stackedBar')}
-                                                className={`px-2 py-0.5 cursor-pointer ${
-                                                    chartMode === 'stackedBar' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900'
+                                                className={`cursor-pointer px-2 py-0.5 ${
+                                                    chartMode === 'stackedBar'
+                                                        ? 'bg-slate-900 text-white'
+                                                        : 'text-slate-600 hover:text-slate-900'
                                                 }`}
                                             >
                                                 Stacked Bars ▤
@@ -460,29 +552,31 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                 </div>
 
                                 {/* Ring Legend Explainer */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 bg-white border border-slate-900 p-2 text-[10px]">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-900 bg-white p-2 text-[10px]">
                                     <div className="flex items-center gap-3">
-                                        <span className="font-black text-slate-900 uppercase">Ring Structure:</span>
+                                        <span className="font-black text-slate-900 uppercase">
+                                            Ring Structure:
+                                        </span>
                                         <span className="flex items-center gap-1 font-bold text-slate-700">
-                                            <span className="w-2.5 h-2.5 rounded-full border border-slate-900 bg-indigo-500 inline-block"></span>
+                                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-slate-900 bg-indigo-500"></span>
                                             Inner Ring: Department
                                         </span>
                                         <span className="flex items-center gap-1 font-bold text-slate-700">
-                                            <span className="w-2.5 h-2.5 rounded-full border border-slate-900 bg-sky-400 inline-block"></span>
+                                            <span className="inline-block h-2.5 w-2.5 rounded-full border border-slate-900 bg-sky-400"></span>
                                             Outer Ring: Enrolled Course
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 font-bold">
                                         <span className="flex items-center gap-1">
-                                            <span className="w-2 h-2 border border-slate-900 bg-[#0284c7]"></span>
+                                            <span className="h-2 w-2 border border-slate-900 bg-[#0284c7]"></span>
                                             <span>Software</span>
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <span className="w-2 h-2 border border-slate-900 bg-[#d97706]"></span>
+                                            <span className="h-2 w-2 border border-slate-900 bg-[#d97706]"></span>
                                             <span>Powertrain</span>
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <span className="w-2 h-2 border border-slate-900 bg-[#059669]"></span>
+                                            <span className="h-2 w-2 border border-slate-900 bg-[#059669]"></span>
                                             <span>Combo</span>
                                         </span>
                                     </div>
@@ -490,16 +584,24 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
 
                                 {/* SUNBURST OR STACKED BAR VIEW */}
                                 {chartMode === 'sunburst' ? (
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                                    <div className="grid grid-cols-1 items-center gap-5 lg:grid-cols-12">
                                         {/* SVG Concentric Donut / Sunburst Chart */}
-                                        <div className="lg:col-span-5 flex flex-col items-center justify-center p-2">
-                                            <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px]">
-                                                <svg viewBox="0 0 320 320" className="w-full h-full select-none">
+                                        <div className="flex flex-col items-center justify-center p-2 lg:col-span-5">
+                                            <div className="relative h-[280px] w-[280px] sm:h-[320px] sm:w-[320px]">
+                                                <svg
+                                                    viewBox="0 0 320 320"
+                                                    className="h-full w-full select-none"
+                                                >
                                                     {/* Outer Ring: Courses */}
                                                     <g>
                                                         {sunburstArcs.outer.map((arc, i) => {
-                                                            const isHovered = hoveredSlice?.type === 'outer' && hoveredSlice?.key === `${arc.dept.name}-${arc.courseKey}`;
-                                                            const isDeptDimmed = highlightDept && highlightDept !== arc.dept.name;
+                                                            const isHovered =
+                                                                hoveredSlice?.type === 'outer' &&
+                                                                hoveredSlice?.key ===
+                                                                    `${arc.dept.name}-${arc.courseKey}`;
+                                                            const isDeptDimmed =
+                                                                highlightDept &&
+                                                                highlightDept !== arc.dept.name;
 
                                                             return (
                                                                 <path
@@ -508,15 +610,23 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                     fill={arc.course.config.color}
                                                                     stroke="#0f172a"
                                                                     strokeWidth="1.5"
-                                                                    opacity={isDeptDimmed ? 0.25 : isHovered ? 1 : 0.9}
+                                                                    opacity={
+                                                                        isDeptDimmed
+                                                                            ? 0.25
+                                                                            : isHovered
+                                                                              ? 1
+                                                                              : 0.9
+                                                                    }
                                                                     className="cursor-pointer transition-all duration-200 hover:brightness-110"
-                                                                    onMouseEnter={() => setHoveredSlice({
-                                                                        type: 'outer',
-                                                                        key: `${arc.dept.name}-${arc.courseKey}`,
-                                                                        dept: arc.dept,
-                                                                        courseKey: arc.courseKey,
-                                                                        course: arc.course
-                                                                    })}
+                                                                    onMouseEnter={() =>
+                                                                        setHoveredSlice({
+                                                                            type: 'outer',
+                                                                            key: `${arc.dept.name}-${arc.courseKey}`,
+                                                                            dept: arc.dept,
+                                                                            courseKey: arc.courseKey,
+                                                                            course: arc.course
+                                                                        })
+                                                                    }
                                                                     onMouseLeave={() => setHoveredSlice(null)}
                                                                 />
                                                             );
@@ -526,8 +636,11 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                     {/* Inner Ring: Departments */}
                                                     <g>
                                                         {sunburstArcs.inner.map((arc, i) => {
-                                                            const isHovered = hoveredSlice?.type === 'inner' && hoveredSlice?.dept.name === arc.dept.name;
-                                                            const isHighlighted = highlightDept === arc.dept.name;
+                                                            const isHovered =
+                                                                hoveredSlice?.type === 'inner' &&
+                                                                hoveredSlice?.dept.name === arc.dept.name;
+                                                            const isHighlighted =
+                                                                highlightDept === arc.dept.name;
                                                             const isDimmed = highlightDept && !isHighlighted;
 
                                                             const rMid = 77;
@@ -541,10 +654,23 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                         fill={arc.dept.color.bar}
                                                                         stroke="#0f172a"
                                                                         strokeWidth="2"
-                                                                        opacity={isDimmed ? 0.25 : (isHovered || isHighlighted) ? 1 : 0.9}
+                                                                        opacity={
+                                                                            isDimmed
+                                                                                ? 0.25
+                                                                                : isHovered || isHighlighted
+                                                                                  ? 1
+                                                                                  : 0.9
+                                                                        }
                                                                         className="cursor-pointer transition-all duration-200 hover:brightness-115"
-                                                                        onMouseEnter={() => setHoveredSlice({ type: 'inner', dept: arc.dept })}
-                                                                        onMouseLeave={() => setHoveredSlice(null)}
+                                                                        onMouseEnter={() =>
+                                                                            setHoveredSlice({
+                                                                                type: 'inner',
+                                                                                dept: arc.dept
+                                                                            })
+                                                                        }
+                                                                        onMouseLeave={() =>
+                                                                            setHoveredSlice(null)
+                                                                        }
                                                                     />
                                                                     {arc.span > 0.25 && (
                                                                         <text
@@ -552,7 +678,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                             y={ly}
                                                                             textAnchor="middle"
                                                                             dominantBaseline="middle"
-                                                                            className="text-[9px] font-black fill-white pointer-events-none select-none drop-shadow"
+                                                                            className="pointer-events-none fill-white text-[9px] font-black drop-shadow select-none"
                                                                         >
                                                                             {arc.dept.shortCode}
                                                                         </text>
@@ -576,41 +702,93 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                     {hoveredSlice ? (
                                                         hoveredSlice.type === 'inner' ? (
                                                             <g className="pointer-events-none select-none">
-                                                                <text x="160" y="142" textAnchor="middle" className="text-[12px] font-black fill-slate-900 uppercase">
+                                                                <text
+                                                                    x="160"
+                                                                    y="142"
+                                                                    textAnchor="middle"
+                                                                    className="fill-slate-900 text-[12px] font-black uppercase"
+                                                                >
                                                                     {hoveredSlice.dept.shortCode}
                                                                 </text>
-                                                                <text x="160" y="158" textAnchor="middle" className="text-[14px] font-black fill-indigo-600">
+                                                                <text
+                                                                    x="160"
+                                                                    y="158"
+                                                                    textAnchor="middle"
+                                                                    className="fill-indigo-600 text-[14px] font-black"
+                                                                >
                                                                     {hoveredSlice.dept.total} Seats
                                                                 </text>
-                                                                <text x="160" y="174" textAnchor="middle" className="text-[9px] font-bold fill-slate-500">
+                                                                <text
+                                                                    x="160"
+                                                                    y="174"
+                                                                    textAnchor="middle"
+                                                                    className="fill-slate-500 text-[9px] font-bold"
+                                                                >
                                                                     {hoveredSlice.dept.pct}% Cohort
                                                                 </text>
                                                             </g>
                                                         ) : (
                                                             <g className="pointer-events-none select-none">
-                                                                <text x="160" y="138" textAnchor="middle" className="text-[10px] font-black fill-slate-900 uppercase truncate">
+                                                                <text
+                                                                    x="160"
+                                                                    y="138"
+                                                                    textAnchor="middle"
+                                                                    className="truncate fill-slate-900 text-[10px] font-black uppercase"
+                                                                >
                                                                     {hoveredSlice.dept.shortCode}
                                                                 </text>
-                                                                <text x="160" y="152" textAnchor="middle" className="text-[10px] font-black" fill={hoveredSlice.course.config.color}>
+                                                                <text
+                                                                    x="160"
+                                                                    y="152"
+                                                                    textAnchor="middle"
+                                                                    className="text-[10px] font-black"
+                                                                    fill={hoveredSlice.course.config.color}
+                                                                >
                                                                     {hoveredSlice.course.config.label}
                                                                 </text>
-                                                                <text x="160" y="166" textAnchor="middle" className="text-[13px] font-black fill-slate-900">
-                                                                    {hoveredSlice.course.count} ({hoveredSlice.course.pct}%)
+                                                                <text
+                                                                    x="160"
+                                                                    y="166"
+                                                                    textAnchor="middle"
+                                                                    className="fill-slate-900 text-[13px] font-black"
+                                                                >
+                                                                    {hoveredSlice.course.count} (
+                                                                    {hoveredSlice.course.pct}%)
                                                                 </text>
-                                                                <text x="160" y="179" textAnchor="middle" className="text-[8px] font-bold fill-slate-400">
+                                                                <text
+                                                                    x="160"
+                                                                    y="179"
+                                                                    textAnchor="middle"
+                                                                    className="fill-slate-400 text-[8px] font-bold"
+                                                                >
                                                                     of department
                                                                 </text>
                                                             </g>
                                                         )
                                                     ) : (
                                                         <g className="pointer-events-none select-none">
-                                                            <text x="160" y="148" textAnchor="middle" className="text-[17px] font-black fill-slate-900">
+                                                            <text
+                                                                x="160"
+                                                                y="148"
+                                                                textAnchor="middle"
+                                                                className="fill-slate-900 text-[17px] font-black"
+                                                            >
                                                                 {deptCourseStats.total}
                                                             </text>
-                                                            <text x="160" y="164" textAnchor="middle" className="text-[9px] font-black fill-slate-600 uppercase tracking-widest">
+                                                            <text
+                                                                x="160"
+                                                                y="164"
+                                                                textAnchor="middle"
+                                                                className="fill-slate-600 text-[9px] font-black tracking-widest uppercase"
+                                                            >
                                                                 STUDENTS
                                                             </text>
-                                                            <text x="160" y="178" textAnchor="middle" className="text-[8px] font-bold fill-sky-600">
+                                                            <text
+                                                                x="160"
+                                                                y="178"
+                                                                textAnchor="middle"
+                                                                className="fill-sky-600 text-[8px] font-bold"
+                                                            >
                                                                 Hover to inspect
                                                             </text>
                                                         </g>
@@ -620,14 +798,14 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         </div>
 
                                         {/* Right Side: Department Breakdown Cards */}
-                                        <div className="lg:col-span-7 space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
+                                        <div className="max-h-[360px] space-y-2.5 overflow-y-auto pr-1 lg:col-span-7">
                                             {deptCourseStats.list.map((dept) => {
                                                 const isHighlighted = highlightDept === dept.name;
 
                                                 return (
                                                     <div
                                                         key={dept.name}
-                                                        className={`p-2.5 bg-white border-2 border-slate-900 transition-all ${
+                                                        className={`border-2 border-slate-900 bg-white p-2.5 transition-all ${
                                                             isHighlighted
                                                                 ? 'shadow-brutal-4 bg-amber-50/50'
                                                                 : 'shadow-brutal-2 hover:bg-slate-50'
@@ -635,41 +813,56 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                         onMouseEnter={() => setHighlightDept(dept.name)}
                                                         onMouseLeave={() => setHighlightDept(null)}
                                                     >
-                                                        <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                                                        <div className="mb-1.5 flex items-center justify-between text-xs font-bold">
                                                             <div className="flex items-center gap-2 truncate pr-2">
-                                                                <span className={`px-1.5 py-0.2 border text-[9px] font-black shrink-0 ${dept.color.badge} text-slate-900`}>
+                                                                <span
+                                                                    className={`py-0.2 shrink-0 border px-1.5 text-[9px] font-black ${dept.color.badge} text-slate-900`}
+                                                                >
                                                                     {dept.shortCode}
                                                                 </span>
-                                                                <span className="truncate text-slate-900 text-[11px]" title={dept.name}>
+                                                                <span
+                                                                    className="truncate text-[11px] text-slate-900"
+                                                                    title={dept.name}
+                                                                >
                                                                     {dept.name}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <span className="font-black text-slate-900">{dept.total}</span>
-                                                                <span className="text-[10px] text-slate-500 font-bold">({dept.pct}%)</span>
+                                                            <div className="flex shrink-0 items-center gap-2">
+                                                                <span className="font-black text-slate-900">
+                                                                    {dept.total}
+                                                                </span>
+                                                                <span className="text-[10px] font-bold text-slate-500">
+                                                                    ({dept.pct}%)
+                                                                </span>
                                                             </div>
                                                         </div>
 
                                                         {/* Stacked Mini Bar */}
-                                                        <div className="w-full h-3 border border-slate-900 flex overflow-hidden bg-slate-200 mb-1.5">
+                                                        <div className="mb-1.5 flex h-3 w-full overflow-hidden border border-slate-900 bg-slate-200">
                                                             {dept.courses.software.count > 0 && (
                                                                 <div
                                                                     className="h-full bg-[#0284c7]"
-                                                                    style={{ width: `${dept.courses.software.pct}%` }}
+                                                                    style={{
+                                                                        width: `${dept.courses.software.pct}%`
+                                                                    }}
                                                                     title={`Software: ${dept.courses.software.count} (${dept.courses.software.pct}%)`}
                                                                 />
                                                             )}
                                                             {dept.courses.powertrain.count > 0 && (
                                                                 <div
                                                                     className="h-full bg-[#d97706]"
-                                                                    style={{ width: `${dept.courses.powertrain.pct}%` }}
+                                                                    style={{
+                                                                        width: `${dept.courses.powertrain.pct}%`
+                                                                    }}
                                                                     title={`Powertrain: ${dept.courses.powertrain.count} (${dept.courses.powertrain.pct}%)`}
                                                                 />
                                                             )}
                                                             {dept.courses.combo.count > 0 && (
                                                                 <div
                                                                     className="h-full bg-[#059669]"
-                                                                    style={{ width: `${dept.courses.combo.pct}%` }}
+                                                                    style={{
+                                                                        width: `${dept.courses.combo.pct}%`
+                                                                    }}
                                                                     title={`Combo: ${dept.courses.combo.count} (${dept.courses.combo.pct}%)`}
                                                                 />
                                                             )}
@@ -678,14 +871,38 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                         {/* Exact Course Count Badges */}
                                                         <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-sky-700">SW: <strong className="text-slate-900">{dept.courses.software.count}</strong></span>
+                                                                <span className="text-sky-700">
+                                                                    SW:{' '}
+                                                                    <strong className="text-slate-900">
+                                                                        {dept.courses.software.count}
+                                                                    </strong>
+                                                                </span>
                                                                 <span>·</span>
-                                                                <span className="text-amber-700">PT: <strong className="text-slate-900">{dept.courses.powertrain.count}</strong></span>
+                                                                <span className="text-amber-700">
+                                                                    PT:{' '}
+                                                                    <strong className="text-slate-900">
+                                                                        {dept.courses.powertrain.count}
+                                                                    </strong>
+                                                                </span>
                                                                 <span>·</span>
-                                                                <span className="text-emerald-700">Combo: <strong className="text-slate-900">{dept.courses.combo.count}</strong></span>
+                                                                <span className="text-emerald-700">
+                                                                    Combo:{' '}
+                                                                    <strong className="text-slate-900">
+                                                                        {dept.courses.combo.count}
+                                                                    </strong>
+                                                                </span>
                                                             </div>
                                                             <span className="text-[9px] text-slate-600">
-                                                                Top: {dept.courses.combo.count >= dept.courses.software.count && dept.courses.combo.count >= dept.courses.powertrain.count ? 'Combo' : dept.courses.software.count >= dept.courses.powertrain.count ? 'Software' : 'Powertrain'}
+                                                                Top:{' '}
+                                                                {dept.courses.combo.count >=
+                                                                    dept.courses.software.count &&
+                                                                dept.courses.combo.count >=
+                                                                    dept.courses.powertrain.count
+                                                                    ? 'Combo'
+                                                                    : dept.courses.software.count >=
+                                                                        dept.courses.powertrain.count
+                                                                      ? 'Software'
+                                                                      : 'Powertrain'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -697,61 +914,102 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                     /* STACKED HORIZONTAL BARS VIEW */
                                     <div className="space-y-3 pt-1">
                                         {deptCourseStats.list.map((dept) => {
-                                            const fillWidth = Math.max(10, (dept.total / deptCourseStats.list[0].total) * 100);
+                                            const fillWidth = Math.max(
+                                                10,
+                                                (dept.total / deptCourseStats.list[0].total) * 100
+                                            );
 
                                             return (
-                                                <div key={dept.name} className="space-y-1 bg-white p-3 border-2 border-slate-900 shadow-brutal-2">
+                                                <div
+                                                    key={dept.name}
+                                                    className="shadow-brutal-2 space-y-1 border-2 border-slate-900 bg-white p-3"
+                                                >
                                                     <div className="flex items-center justify-between text-xs font-bold">
                                                         <div className="flex items-center gap-2">
-                                                            <span className={`px-1.5 py-0.2 border text-[9px] font-black ${dept.color.badge} text-slate-900`}>
+                                                            <span
+                                                                className={`py-0.2 border px-1.5 text-[9px] font-black ${dept.color.badge} text-slate-900`}
+                                                            >
                                                                 {dept.shortCode}
                                                             </span>
-                                                            <span className="text-slate-900">{dept.name}</span>
+                                                            <span className="text-slate-900">
+                                                                {dept.name}
+                                                            </span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-black text-slate-900">{dept.total} candidates</span>
-                                                            <span className="text-[10px] text-slate-500">({dept.pct}%)</span>
+                                                            <span className="font-black text-slate-900">
+                                                                {dept.total} candidates
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-500">
+                                                                ({dept.pct}%)
+                                                            </span>
                                                         </div>
                                                     </div>
 
                                                     {/* Full Stacked Bar */}
                                                     <div
-                                                        className="h-5 border-2 border-slate-900 flex overflow-hidden bg-slate-100 relative"
+                                                        className="relative flex h-5 overflow-hidden border-2 border-slate-900 bg-slate-100"
                                                         style={{ width: `${fillWidth}%` }}
                                                     >
                                                         {dept.courses.software.count > 0 && (
                                                             <div
-                                                                className="h-full bg-[#0284c7] flex items-center justify-center text-[9px] font-black text-white px-1 border-r border-slate-900"
-                                                                style={{ width: `${dept.courses.software.pct}%` }}
+                                                                className="flex h-full items-center justify-center border-r border-slate-900 bg-[#0284c7] px-1 text-[9px] font-black text-white"
+                                                                style={{
+                                                                    width: `${dept.courses.software.pct}%`
+                                                                }}
                                                                 title={`Software: ${dept.courses.software.count}`}
                                                             >
-                                                                {dept.courses.software.count > 1 ? `SW:${dept.courses.software.count}` : dept.courses.software.count}
+                                                                {dept.courses.software.count > 1
+                                                                    ? `SW:${dept.courses.software.count}`
+                                                                    : dept.courses.software.count}
                                                             </div>
                                                         )}
                                                         {dept.courses.powertrain.count > 0 && (
                                                             <div
-                                                                className="h-full bg-[#d97706] flex items-center justify-center text-[9px] font-black text-white px-1 border-r border-slate-900"
-                                                                style={{ width: `${dept.courses.powertrain.pct}%` }}
+                                                                className="flex h-full items-center justify-center border-r border-slate-900 bg-[#d97706] px-1 text-[9px] font-black text-white"
+                                                                style={{
+                                                                    width: `${dept.courses.powertrain.pct}%`
+                                                                }}
                                                                 title={`Powertrain: ${dept.courses.powertrain.count}`}
                                                             >
-                                                                {dept.courses.powertrain.count > 1 ? `PT:${dept.courses.powertrain.count}` : dept.courses.powertrain.count}
+                                                                {dept.courses.powertrain.count > 1
+                                                                    ? `PT:${dept.courses.powertrain.count}`
+                                                                    : dept.courses.powertrain.count}
                                                             </div>
                                                         )}
                                                         {dept.courses.combo.count > 0 && (
                                                             <div
-                                                                className="h-full bg-[#059669] flex items-center justify-center text-[9px] font-black text-white px-1"
-                                                                style={{ width: `${dept.courses.combo.pct}%` }}
+                                                                className="flex h-full items-center justify-center bg-[#059669] px-1 text-[9px] font-black text-white"
+                                                                style={{
+                                                                    width: `${dept.courses.combo.pct}%`
+                                                                }}
                                                                 title={`Combo: ${dept.courses.combo.count}`}
                                                             >
-                                                                {dept.courses.combo.count > 1 ? `Combo:${dept.courses.combo.count}` : dept.courses.combo.count}
+                                                                {dept.courses.combo.count > 1
+                                                                    ? `Combo:${dept.courses.combo.count}`
+                                                                    : dept.courses.combo.count}
                                                             </div>
                                                         )}
                                                     </div>
 
-                                                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 pt-0.5">
-                                                        <span>Software: <strong className="text-sky-700">{dept.courses.software.count}</strong></span>
-                                                        <span>Powertrain: <strong className="text-amber-700">{dept.courses.powertrain.count}</strong></span>
-                                                        <span>Combo: <strong className="text-emerald-700">{dept.courses.combo.count}</strong></span>
+                                                    <div className="flex items-center gap-4 pt-0.5 text-[10px] font-bold text-slate-500">
+                                                        <span>
+                                                            Software:{' '}
+                                                            <strong className="text-sky-700">
+                                                                {dept.courses.software.count}
+                                                            </strong>
+                                                        </span>
+                                                        <span>
+                                                            Powertrain:{' '}
+                                                            <strong className="text-amber-700">
+                                                                {dept.courses.powertrain.count}
+                                                            </strong>
+                                                        </span>
+                                                        <span>
+                                                            Combo:{' '}
+                                                            <strong className="text-emerald-700">
+                                                                {dept.courses.combo.count}
+                                                            </strong>
+                                                        </span>
                                                     </div>
                                                 </div>
                                             );
@@ -761,14 +1019,14 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                             </div>
 
                             {/* ROW 2: GRAPH 2 (PACKAGES) & GRAPH 4 (TIME INTELLIGENCE / HOURLY RUSH) */}
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                            <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
                                 {/* GRAPH 2: TRACK & PACKAGE BREAKDOWN (5 cols) */}
-                                <div className="lg:col-span-4 bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-2 flex flex-col justify-between">
+                                <div className="shadow-brutal-2 flex flex-col justify-between border-2 border-slate-900 bg-slate-50 p-4 lg:col-span-4">
                                     <div>
-                                        <div className="flex items-center justify-between border-b border-slate-300 pb-2 mb-3">
+                                        <div className="mb-3 flex items-center justify-between border-b border-slate-300 pb-2">
                                             <div className="flex items-center gap-1.5">
-                                                <span className="w-2.5 h-2.5 bg-emerald-500 border border-slate-900"></span>
-                                                <h4 className="text-xs font-black uppercase text-slate-900">
+                                                <span className="h-2.5 w-2.5 border border-slate-900 bg-emerald-500"></span>
+                                                <h4 className="text-xs font-black text-slate-900 uppercase">
                                                     2. Track & Package Split
                                                 </h4>
                                             </div>
@@ -778,15 +1036,15 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         </div>
 
                                         {/* Multi-Segment Stacked Visual Bar */}
-                                        <div className="space-y-1 mb-4">
-                                            <span className="text-[10px] font-bold text-slate-600 block uppercase">
+                                        <div className="mb-4 space-y-1">
+                                            <span className="block text-[10px] font-bold text-slate-600 uppercase">
                                                 Overall Student Enrollment Share
                                             </span>
-                                            <div className="w-full h-4 border-2 border-slate-900 flex overflow-hidden bg-slate-200">
+                                            <div className="flex h-4 w-full overflow-hidden border-2 border-slate-900 bg-slate-200">
                                                 {packageStats.items.map((pkg) => (
                                                     <div
                                                         key={pkg.id}
-                                                        className="h-full transition-all duration-500 relative group"
+                                                        className="group relative h-full transition-all duration-500"
                                                         style={{
                                                             width: `${pkg.countPct}%`,
                                                             backgroundColor: pkg.color
@@ -802,19 +1060,20 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             {packageStats.items.map((pkg) => (
                                                 <div
                                                     key={pkg.id}
-                                                    className="p-2.5 border-2 border-slate-900 bg-white shadow-brutal-2 flex items-center justify-between"
+                                                    className="shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-white p-2.5"
                                                 >
                                                     <div className="flex items-center gap-2">
                                                         <span
-                                                            className="w-3 h-3 border border-slate-900 shrink-0"
+                                                            className="h-3 w-3 shrink-0 border border-slate-900"
                                                             style={{ backgroundColor: pkg.color }}
                                                         />
                                                         <div>
                                                             <div className="text-xs font-black text-slate-900">
                                                                 {pkg.label}
                                                             </div>
-                                                            <div className="text-[10px] text-slate-500 font-bold">
-                                                                {pkg.count} enrolled · {pkg.countPct}% of seats
+                                                            <div className="text-[10px] font-bold text-slate-500">
+                                                                {pkg.count} enrolled · {pkg.countPct}% of
+                                                                seats
                                                             </div>
                                                         </div>
                                                     </div>
@@ -833,23 +1092,35 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                     </div>
 
                                     {/* Package Summary Footnote */}
-                                    <div className="mt-4 pt-2.5 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-500">
-                                        <span>Total Seats: <strong className="text-slate-900 font-bold">{packageStats.totalCount}</strong></span>
-                                        <span>Total: <strong className="text-emerald-700 font-black">{formatCurrency(packageStats.totalRevenue)}</strong></span>
+                                    <div className="mt-4 flex items-center justify-between border-t border-slate-300 pt-2.5 text-[10px] text-slate-500">
+                                        <span>
+                                            Total Seats:{' '}
+                                            <strong className="font-bold text-slate-900">
+                                                {packageStats.totalCount}
+                                            </strong>
+                                        </span>
+                                        <span>
+                                            Total:{' '}
+                                            <strong className="font-black text-emerald-700">
+                                                {formatCurrency(packageStats.totalRevenue)}
+                                            </strong>
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* GRAPH 4: TIME INTELLIGENCE & HOURLY RUSH ANALYSIS (8 cols) */}
-                                <div className="lg:col-span-8 bg-slate-50 border-2 border-slate-900 p-4 shadow-brutal-2 flex flex-col justify-between space-y-4">
+                                <div className="shadow-brutal-2 flex flex-col justify-between space-y-4 border-2 border-slate-900 bg-slate-50 p-4 lg:col-span-8">
                                     <div>
                                         {/* Header & Date Scope Controls */}
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-300 pb-2.5">
+                                        <div className="flex flex-col justify-between gap-2.5 border-b border-slate-300 pb-2.5 sm:flex-row sm:items-center">
                                             <div className="flex items-center gap-2">
-                                                <span className="w-2.5 h-2.5 bg-amber-500 border border-slate-900"></span>
+                                                <span className="h-2.5 w-2.5 border border-slate-900 bg-amber-500"></span>
                                                 <div>
-                                                    <h4 className="text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
-                                                        <span>4. Registration Time Intelligence & Hourly Rush</span>
-                                                        <span className="text-[9px] px-1.5 py-0.2 bg-amber-200 text-amber-900 font-black border border-amber-500">
+                                                    <h4 className="flex items-center gap-1.5 text-xs font-black text-slate-900 uppercase">
+                                                        <span>
+                                                            4. Registration Time Intelligence & Hourly Rush
+                                                        </span>
+                                                        <span className="py-0.2 border border-amber-500 bg-amber-200 px-1.5 text-[9px] font-black text-amber-900">
                                                             IST (24H)
                                                         </span>
                                                     </h4>
@@ -858,21 +1129,24 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
 
                                             {/* Date Selector Filter */}
                                             <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase">Window:</span>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                                    Window:
+                                                </span>
                                                 <select
                                                     value={selectedDateFilter}
                                                     onChange={(e) => setSelectedDateFilter(e.target.value)}
-                                                    className="px-2 py-1 bg-white border border-slate-900 text-[10px] font-black text-slate-900 focus:outline-none cursor-pointer shadow-brutal-1"
+                                                    className="shadow-brutal-1 cursor-pointer border border-slate-900 bg-white px-2 py-1 text-[10px] font-black text-slate-900 focus:outline-none"
                                                 >
                                                     {timeIntelligence.peakDate && (
                                                         <option value="peak">
-                                                            🔥 Peak Surge: {timeIntelligence.peakDate.label} ({timeIntelligence.peakDate.count})
+                                                            🔥 Peak Surge: {timeIntelligence.peakDate.label} (
+                                                            {timeIntelligence.peakDate.count})
                                                         </option>
                                                     )}
                                                     <option value="all">
                                                         All Dates Combined ({scopedList.length})
                                                     </option>
-                                                    {timeIntelligence.availableDates.map(d => (
+                                                    {timeIntelligence.availableDates.map((d) => (
                                                         <option key={d.key} value={d.key}>
                                                             {d.label} ({d.count} registrations)
                                                         </option>
@@ -882,43 +1156,53 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         </div>
 
                                         {/* Highlight Badges Bar */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3">
-                                            <div className="p-2 bg-white border border-slate-900 shadow-brutal-1">
-                                                <span className="text-[9px] font-bold text-slate-500 uppercase block">Selected Window</span>
-                                                <span className="text-xs font-black text-slate-900 block truncate">
+                                        <div className="my-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                            <div className="shadow-brutal-1 border border-slate-900 bg-white p-2">
+                                                <span className="block text-[9px] font-bold text-slate-500 uppercase">
+                                                    Selected Window
+                                                </span>
+                                                <span className="block truncate text-xs font-black text-slate-900">
                                                     {timeIntelligence.activeDateLabel}
                                                 </span>
-                                                <span className="text-[9px] text-slate-500 font-mono">
+                                                <span className="font-mono text-[9px] text-slate-500">
                                                     {timeIntelligence.totalInScope} signups
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-amber-50 border border-slate-900 shadow-brutal-1">
-                                                <span className="text-[9px] font-black text-amber-800 uppercase block">🔥 Peak Rush Hour</span>
-                                                <span className="text-xs font-black text-amber-900 block truncate">
+                                            <div className="shadow-brutal-1 border border-slate-900 bg-amber-50 p-2">
+                                                <span className="block text-[9px] font-black text-amber-800 uppercase">
+                                                    🔥 Peak Rush Hour
+                                                </span>
+                                                <span className="block truncate text-xs font-black text-amber-900">
                                                     {timeIntelligence.peakHourBucket?.range}
                                                 </span>
-                                                <span className="text-[9px] font-bold text-amber-700 font-mono">
-                                                    {timeIntelligence.peakHourBucket?.count} candidates ({timeIntelligence.peakHourBucket?.pct}%)
+                                                <span className="font-mono text-[9px] font-bold text-amber-700">
+                                                    {timeIntelligence.peakHourBucket?.count} candidates (
+                                                    {timeIntelligence.peakHourBucket?.pct}%)
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-rose-50 border border-slate-900 shadow-brutal-1">
-                                                <span className="text-[9px] font-black text-rose-800 uppercase block">⚡ Prime Time Slot</span>
-                                                <span className="text-xs font-black text-rose-900 block truncate">
+                                            <div className="shadow-brutal-1 border border-slate-900 bg-rose-50 p-2">
+                                                <span className="block text-[9px] font-black text-rose-800 uppercase">
+                                                    ⚡ Prime Time Slot
+                                                </span>
+                                                <span className="block truncate text-xs font-black text-rose-900">
                                                     {timeIntelligence.primeSlot?.label}
                                                 </span>
-                                                <span className="text-[9px] font-bold text-rose-700 font-mono">
-                                                    {timeIntelligence.primeSlot?.count} signups ({timeIntelligence.primeSlot?.pct}%)
+                                                <span className="font-mono text-[9px] font-bold text-rose-700">
+                                                    {timeIntelligence.primeSlot?.count} signups (
+                                                    {timeIntelligence.primeSlot?.pct}%)
                                                 </span>
                                             </div>
 
-                                            <div className="p-2 bg-sky-50 border border-slate-900 shadow-brutal-1">
-                                                <span className="text-[9px] font-black text-sky-800 uppercase block">Avg Speed / Hour</span>
-                                                <span className="text-xs font-black text-slate-900 block">
+                                            <div className="shadow-brutal-1 border border-slate-900 bg-sky-50 p-2">
+                                                <span className="block text-[9px] font-black text-sky-800 uppercase">
+                                                    Avg Speed / Hour
+                                                </span>
+                                                <span className="block text-xs font-black text-slate-900">
                                                     {(timeIntelligence.totalInScope / 24).toFixed(1)} / hr
                                                 </span>
-                                                <span className="text-[9px] font-bold text-sky-700 font-mono">
+                                                <span className="font-mono text-[9px] font-bold text-sky-700">
                                                     Peak: {timeIntelligence.maxHourlyCount} / hr
                                                 </span>
                                             </div>
@@ -927,31 +1211,50 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         {/* 24-HOUR HOURLY HISTOGRAM */}
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-[10px] font-bold text-slate-600">
-                                                <span className="uppercase">Hour-by-Hour Activity (00:00 → 23:59 IST)</span>
-                                                <span className="text-slate-500">Hover bar to inspect specific hour</span>
+                                                <span className="uppercase">
+                                                    Hour-by-Hour Activity (00:00 → 23:59 IST)
+                                                </span>
+                                                <span className="text-slate-500">
+                                                    Hover bar to inspect specific hour
+                                                </span>
                                             </div>
 
-                                            <div className="relative pt-6 pb-2 overflow-x-auto bg-white border border-slate-900 p-2 shadow-brutal-2">
-                                                <div className="min-w-[540px] h-32 flex items-end gap-1 sm:gap-1.5 border-b-2 border-slate-900 px-1">
+                                            <div className="shadow-brutal-2 relative overflow-x-auto border border-slate-900 bg-white p-2 pt-6 pb-2">
+                                                <div className="flex h-32 min-w-[540px] items-end gap-1 border-b-2 border-slate-900 px-1 sm:gap-1.5">
                                                     {timeIntelligence.hourlyBuckets.map((bucket) => {
-                                                        const isPeak = bucket.count === timeIntelligence.maxHourlyCount && bucket.count > 0;
+                                                        const isPeak =
+                                                            bucket.count ===
+                                                                timeIntelligence.maxHourlyCount &&
+                                                            bucket.count > 0;
                                                         const isHovered = hoveredHour === bucket.hour;
-                                                        const heightPct = bucket.count > 0
-                                                            ? Math.max(10, (bucket.count / timeIntelligence.maxHourlyCount) * 100)
-                                                            : 2;
+                                                        const heightPct =
+                                                            bucket.count > 0
+                                                                ? Math.max(
+                                                                      10,
+                                                                      (bucket.count /
+                                                                          timeIntelligence.maxHourlyCount) *
+                                                                          100
+                                                                  )
+                                                                : 2;
 
                                                         return (
                                                             <div
                                                                 key={bucket.hour}
-                                                                className="flex-1 flex flex-col items-center h-full justify-end group cursor-pointer relative"
-                                                                onMouseEnter={() => setHoveredHour(bucket.hour)}
+                                                                className="group relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
+                                                                onMouseEnter={() =>
+                                                                    setHoveredHour(bucket.hour)
+                                                                }
                                                                 onMouseLeave={() => setHoveredHour(null)}
                                                             >
                                                                 {/* Count label above bar */}
                                                                 {bucket.count > 0 && (
-                                                                    <div className={`text-[9px] font-black mb-0.5 transition-all ${
-                                                                        isPeak || isHovered ? 'text-slate-900 scale-110 font-black' : 'text-slate-500'
-                                                                    }`}>
+                                                                    <div
+                                                                        className={`mb-0.5 text-[9px] font-black transition-all ${
+                                                                            isPeak || isHovered
+                                                                                ? 'scale-110 font-black text-slate-900'
+                                                                                : 'text-slate-500'
+                                                                        }`}
+                                                                    >
                                                                         {bucket.count}
                                                                     </div>
                                                                 )}
@@ -960,12 +1263,12 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                 <div
                                                                     className={`w-full max-w-[20px] transition-all duration-300 ${
                                                                         bucket.count === 0
-                                                                            ? 'bg-slate-200 h-[2px]'
+                                                                            ? 'h-[2px] bg-slate-200'
                                                                             : isPeak
-                                                                                ? 'bg-amber-400 border border-slate-900 shadow-brutal-1'
-                                                                                : isHovered
-                                                                                    ? 'bg-sky-500 border border-slate-900'
-                                                                                    : 'bg-sky-400 hover:bg-sky-300 border border-slate-900'
+                                                                              ? 'shadow-brutal-1 border border-slate-900 bg-amber-400'
+                                                                              : isHovered
+                                                                                ? 'border border-slate-900 bg-sky-500'
+                                                                                : 'border border-slate-900 bg-sky-400 hover:bg-sky-300'
                                                                     }`}
                                                                     style={{ height: `${heightPct}%` }}
                                                                 >
@@ -977,17 +1280,28 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                 </div>
 
                                                                 {/* Hour label below axis (every 2 hours on compact, all on hover) */}
-                                                                <span className={`text-[8px] font-bold mt-1.5 tracking-tighter truncate ${
-                                                                    isHovered || isPeak ? 'text-slate-900 font-black' : 'text-slate-500'
-                                                                }`}>
-                                                                    {bucket.hour % 3 === 0 ? formatHourLabel(bucket.hour) : '·'}
+                                                                <span
+                                                                    className={`mt-1.5 truncate text-[8px] font-bold tracking-tighter ${
+                                                                        isHovered || isPeak
+                                                                            ? 'font-black text-slate-900'
+                                                                            : 'text-slate-500'
+                                                                    }`}
+                                                                >
+                                                                    {bucket.hour % 3 === 0
+                                                                        ? formatHourLabel(bucket.hour)
+                                                                        : '·'}
                                                                 </span>
 
                                                                 {/* Hover Tooltip Floating Card */}
                                                                 {isHovered && (
-                                                                    <div className="absolute -top-14 z-30 bg-slate-900 text-white px-2.5 py-1 text-[10px] font-bold border border-slate-700 shadow-xl whitespace-nowrap pointer-events-none">
-                                                                        <div className="font-mono text-sky-300">{bucket.range}</div>
-                                                                        <div>{bucket.count} candidates ({bucket.pct}% of period)</div>
+                                                                    <div className="pointer-events-none absolute -top-14 z-30 border border-slate-700 bg-slate-900 px-2.5 py-1 text-[10px] font-bold whitespace-nowrap text-white shadow-xl">
+                                                                        <div className="font-mono text-sky-300">
+                                                                            {bucket.range}
+                                                                        </div>
+                                                                        <div>
+                                                                            {bucket.count} candidates (
+                                                                            {bucket.pct}% of period)
+                                                                        </div>
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -998,14 +1312,14 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                         </div>
 
                                         {/* 4 TIME-OF-DAY SLOTS COMPARISON */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3">
-                                            {timeIntelligence.timeSlots.map(slot => (
+                                        <div className="grid grid-cols-2 gap-2 pt-3 sm:grid-cols-4">
+                                            {timeIntelligence.timeSlots.map((slot) => (
                                                 <div
                                                     key={slot.id}
-                                                    className={`p-2 border-2 border-slate-900 ${slot.bg} shadow-brutal-2 flex flex-col justify-between`}
+                                                    className={`border-2 border-slate-900 p-2 ${slot.bg} shadow-brutal-2 flex flex-col justify-between`}
                                                 >
                                                     <div>
-                                                        <div className="flex items-center justify-between text-xs font-black text-slate-900 mb-0.5">
+                                                        <div className="mb-0.5 flex items-center justify-between text-xs font-black text-slate-900">
                                                             <span className="flex items-center gap-1">
                                                                 <span>{slot.icon}</span>
                                                                 <span className="truncate">{slot.label}</span>
@@ -1018,14 +1332,24 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
 
                                                     <div className="pt-2">
                                                         <div className="flex items-center justify-between text-xs font-black">
-                                                            <span className="text-slate-900">{slot.count} seats</span>
-                                                            <span className="text-[10px]" style={{ color: slot.color }}>{slot.pct}%</span>
+                                                            <span className="text-slate-900">
+                                                                {slot.count} seats
+                                                            </span>
+                                                            <span
+                                                                className="text-[10px]"
+                                                                style={{ color: slot.color }}
+                                                            >
+                                                                {slot.pct}%
+                                                            </span>
                                                         </div>
                                                         {/* Mini progress bar */}
-                                                        <div className="w-full h-1.5 bg-slate-200 border border-slate-900 mt-1 overflow-hidden">
+                                                        <div className="mt-1 h-1.5 w-full overflow-hidden border border-slate-900 bg-slate-200">
                                                             <div
                                                                 className="h-full"
-                                                                style={{ width: `${slot.pct}%`, backgroundColor: slot.color }}
+                                                                style={{
+                                                                    width: `${slot.pct}%`,
+                                                                    backgroundColor: slot.color
+                                                                }}
                                                             />
                                                         </div>
                                                     </div>
@@ -1035,9 +1359,14 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                     </div>
 
                                     {/* Time Intelligence Footnote */}
-                                    <div className="pt-2.5 border-t border-slate-300 flex flex-wrap items-center justify-between text-[10px] text-slate-500">
-                                        <span>Timezone: <strong>Indian Standard Time (IST / UTC+05:30)</strong></span>
-                                        <span>Insight: <strong>{timeIntelligence.primeSlot?.label}</strong> is the most active registration period.</span>
+                                    <div className="flex flex-wrap items-center justify-between border-t border-slate-300 pt-2.5 text-[10px] text-slate-500">
+                                        <span>
+                                            Timezone: <strong>Indian Standard Time (IST / UTC+05:30)</strong>
+                                        </span>
+                                        <span>
+                                            Insight: <strong>{timeIntelligence.primeSlot?.label}</strong> is
+                                            the most active registration period.
+                                        </span>
                                     </div>
                                 </div>
                             </div>
