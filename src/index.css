@@ -15,9 +15,13 @@
      overrides they resolve to Tailwind's own stacks, and the `font-sans` on
      the app root then beat the `body` rule below -- so the entire site
      rendered in system-ui, and every `font-mono` label in whatever monospace
-     the browser happened to default to. Space Grotesk was never used at all. */
+     the browser happened to default to. Space Grotesk was never used at all.
+     Space Grotesk is also a proportional grotesque, not a monospace, so
+     `--font-mono` now binds a real monospace and Space Grotesk moved to
+     `--font-display`. */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
@@ -486,4 +490,34 @@
   .countdown-rail {
     transition: none !important;
   }
+}
+
+/* =========================================================
+   NEO-BRUTALIST CUSTOM SCROLLBAR & OVERFLOW HELPERS
+   Allows mouse wheel scrolling and visible drag thumbs inside
+   modals and overlay containers.
+========================================================= */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-left: 2px solid #0f172a;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #38bdf8;
+  border: 2px solid #0f172a;
+  box-shadow: inset 1px 1px 0px #ffffff;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #38bdf8 #f1f5f9;
 }

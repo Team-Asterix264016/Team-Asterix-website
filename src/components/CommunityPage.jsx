@@ -598,22 +598,30 @@ export default function CommunityPage({ onBack }) {
 
             {/* MODAL 1: Discussion Thread Viewer */}
             {activeThread && (
-                <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    data-lenis-prevent-wheel="true"
+                >
                     <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
                         {/* Header */}
-                        <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between">
+                        <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between flex-shrink-0 z-10">
                             <span className="font-mono text-xs font-black uppercase text-sky-400">// DISCUSSION THREAD</span>
                             <button onClick={() => setActiveThread(null)} className="press text-white hover:text-amber-300 font-black text-base cursor-pointer">✕ CLOSE</button>
                         </div>
 
                         {/* Thread Content */}
-                        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                        <div
+                            className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar"
+                            data-lenis-prevent="true"
+                            data-lenis-prevent-wheel="true"
+                        >
                             <div className="space-y-3 border-b-2 border-slate-200 pb-5">
                                 <div className="flex items-center gap-2">
                                     <span className="px-2 py-0.5 bg-sky-100 text-sky-900 border border-slate-900 font-mono text-[9px] font-black uppercase">{activeThread.categoryLabel}</span>
                                     <span className="text-[10px] font-mono text-slate-500">Posted by <strong>{activeThread.author}</strong> ({activeThread.timestamp})</span>
                                 </div>
-                                <h3 className="text-xl font-black uppercase text-slate-900">{activeThread.title}</h3>
+                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-900 leading-snug">{activeThread.title}</h3>
                                 <div className="bg-slate-50 border-2 border-slate-900 p-4 font-mono text-xs leading-relaxed text-slate-800 whitespace-pre-line">
                                     {activeThread.content}
                                 </div>
@@ -656,16 +664,24 @@ export default function CommunityPage({ onBack }) {
 
             {/* MODAL 2: Full Horizon Blog Post Reader */}
             {activeBlog && (
-                <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    data-lenis-prevent-wheel="true"
+                >
                     <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
                         {/* Header */}
-                        <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between">
+                        <div className="p-4 bg-slate-900 text-white border-b-4 border-slate-900 flex items-center justify-between flex-shrink-0 z-10">
                             <span className="font-mono text-xs font-black uppercase text-rose-400">// "HORIZON" TECH ARTICLE</span>
                             <button onClick={() => setActiveBlog(null)} className="press text-white hover:text-rose-400 font-black text-base cursor-pointer">✕ CLOSE ARTICLE</button>
                         </div>
 
                         {/* Article Scroll Body */}
-                        <div className="p-6 sm:p-10 overflow-y-auto space-y-6 flex-1">
+                        <div
+                            className="p-6 sm:p-10 overflow-y-auto space-y-6 flex-1 custom-scrollbar"
+                            data-lenis-prevent="true"
+                            data-lenis-prevent-wheel="true"
+                        >
                             <div className="space-y-3 border-b-4 border-slate-900 pb-6">
                                 <span className="px-2.5 py-1 bg-rose-400 text-slate-900 border-2 border-slate-900 font-mono text-xs font-black uppercase">
                                     {activeBlog.category}
@@ -696,8 +712,12 @@ export default function CommunityPage({ onBack }) {
 
             {/* MODAL 3: New Discussion Form */}
             {isNewDiscussionOpen && (
-                <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    data-lenis-prevent-wheel="true"
+                >
+                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                             <h3 className="font-black uppercase text-lg text-slate-900">Start New Discussion</h3>
                             <button onClick={() => setIsNewDiscussionOpen(false)} className="font-mono font-black text-slate-400 hover:text-slate-900">✕</button>
@@ -729,8 +749,12 @@ export default function CommunityPage({ onBack }) {
 
             {/* MODAL 4: New Project Form */}
             {isNewProjectOpen && (
-                <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4">
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    data-lenis-prevent-wheel="true"
+                >
+                    <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                             <h3 className="font-black uppercase text-lg text-slate-900">Submit Project Showcase</h3>
                             <button onClick={() => setIsNewProjectOpen(false)} className="font-mono font-black text-slate-400 hover:text-slate-900">✕</button>
