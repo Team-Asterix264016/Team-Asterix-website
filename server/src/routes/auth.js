@@ -84,6 +84,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
+        res.locals.whatsappActivity = { name: user.name || user.username };
         res.json({
             success: true,
             token,

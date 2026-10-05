@@ -2,9 +2,16 @@ import { sendWhatsAppAlert } from '../lib/whatsapp.js';
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const READ_ONLY_POSTS = new Set([
-    '/api/auth/login',
     '/api/workshop/receipt-lookup',
     '/api/workshop/projects/lookup'
+]);
+
+const LOGIN_PATH = '/api/auth/login';
+const STUDENT_EVENT_PATHS = new Set([
+    '/api/workshop/register',
+    '/api/workshop/attendance/checkin',
+    '/api/workshop/attendance/manual-mark',
+    '/api/workshop/projects'
 ]);
 
 const RESOURCE_LABELS = {
@@ -61,13 +68,38 @@ export function whatsappActivityMiddleware(req, res, next) {
 
     res.once('finish', () => {
         if (res.statusCode < 200 || res.statusCode >= 300) return;
+        if (READ_ONLY_POSTS.has(pathname) || /^\/api\/quiz\/[^/]+\/lookup-result\/?$/.test(pathname)) return;
+
+        const event = res.locals?.whatsappActivity;
+        let message;
+
+        if (pathname === LOGIN_PATH) {
+            if (!event?.name) return;
+            message = `Admin ${event.name} logged in with a new session`;
+        } else if (STUDENT_EVENT_PATHS.has(pathname)) {
+            if (!event?.type) return;
+            const studentName = event.name ? `: ${event.name}` : '';
+            if (event.type === 'registration') message = `New workshop student registered${studentName}`;
+            else if (event.type === 'project') message = `Workshop project submitted${studentName}`;
+            else if (event.type === 'attendance') message = `Workshop attendance marked${studentName}`;
+            else return;
+        } else if (req.user) {
+            const adminName = String(req.user.name || req.user.username || 'Admin').replace(/[\r\n]/g, ' ').slice(0, 80);
+            const changedResource = describeWebsiteChange(method, pathname)
+                .replace(/^(a|an)\s+/i, '')
+                .replace(/\s+(was|were)\s+(added or changed|removed|updated)$/i, '')
+                .toLowerCase();
+            message = `${adminName} changed ${changedResource}`;
+        } else {
+            return;
+        }
 
         const timestamp = new Intl.DateTimeFormat('en-GB', {
             dateStyle: 'medium',
             timeStyle: 'short',
             timeZone: 'UTC'
         }).format(new Date());
-        const message = `${describeWebsiteChange(method, pathname)}. Time: ${timestamp} UTC.`;
+        message = `${message}. Time: ${timestamp} UTC.`;
 
         sendWhatsAppAlert(message).catch(error => {
             console.error('[WhatsApp alerts] Delivery failed:', error.message);

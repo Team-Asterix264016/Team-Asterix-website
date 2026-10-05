@@ -231,6 +231,7 @@ router.post('/checkin', async (req, res) => {
             checkedInAt: new Date()
         });
 
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
         return res.status(201).json({
             success: true,
             message: 'Attendance confirmed successfully!',
@@ -421,6 +422,7 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
             checkedInAt: new Date()
         });
 
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
         return res.json({
             success: true,
             message: `✓ Manually marked ${registration.name} (${cleanRoll}) as present.`,

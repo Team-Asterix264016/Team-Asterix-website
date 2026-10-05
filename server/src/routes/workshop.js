@@ -431,6 +431,7 @@ router.post('/register', requireDb, async (req, res) => {
         registration.razorpayOrderId = order.id;
         await registration.save();
 
+        res.locals.whatsappActivity = { type: 'registration', name: data.name };
         res.status(201).json({
             success: true,
             registrationId: registration._id.toString(),

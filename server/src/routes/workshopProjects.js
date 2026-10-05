@@ -159,6 +159,7 @@ router.post('/', requireDb, async (req, res) => {
             { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
         );
 
+        res.locals.whatsappActivity = { type: 'project', name: registration.name };
         res.json({ success: true, message: 'Project submission saved.', submission: publicSubmission(submission) });
     } catch (error) {
         console.error('Error saving workshop project submission:', error);
