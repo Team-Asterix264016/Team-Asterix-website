@@ -439,7 +439,7 @@ export default function AdminDashboard({ onExit }) {
             <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
                 <div className="w-full max-w-md bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-8">
                     <div className="text-center mb-6">
-                        <span className="text-[11px] font-mono font-black text-sky-600 tracking-wider uppercase block mb-1">
+                        <span className="text-[11px] font-mono font-black text-sky-700 tracking-wider uppercase block mb-1">
                             RESTRICTED ACCESS
                         </span>
                         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase">
@@ -489,7 +489,7 @@ export default function AdminDashboard({ onExit }) {
                             <button
                                 type="submit"
                                 disabled={isLoggingIn}
-                                className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#0f172a] cursor-pointer disabled:opacity-50"
                             >
                                 {isLoggingIn ? 'Verifying Credentials...' : 'Login to Dashboard →'}
                             </button>
@@ -499,7 +499,7 @@ export default function AdminDashboard({ onExit }) {
                     <div className="mt-6 pt-4 border-t-2 border-slate-200 flex items-center justify-between text-[11px] font-mono font-bold text-slate-500">
                         <button
                             onClick={onExit}
-                            className="press press-flat text-sky-600 hover:text-slate-900 underline cursor-pointer"
+                            className="press press-flat text-sky-700 hover:text-slate-900 underline cursor-pointer"
                         >
                             ← Back to Website
                         </button>
@@ -532,9 +532,9 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
+                { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
             ]
         },
-        { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
         { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
         { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
         { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
@@ -554,6 +554,8 @@ export default function AdminDashboard({ onExit }) {
                         title="Return to Live Website Homepage"
                     >
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={teamLogo}
                             alt="Team Asterix"
                             className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
@@ -630,7 +632,7 @@ export default function AdminDashboard({ onExit }) {
 
                 {/* Sidebar Navigation */}
                 <aside className="md:col-span-1 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 h-fit flex flex-col gap-1.5">
-                    <span className="text-[10px] font-mono font-black text-sky-600 uppercase tracking-widest block mb-2 px-2">
+                    <span className="text-[10px] font-mono font-black text-sky-700 uppercase tracking-widest block mb-2 px-2">
                         // NAVIGATION
                     </span>
                     {tabs.map(tab => {
@@ -685,7 +687,7 @@ export default function AdminDashboard({ onExit }) {
                                                         onClick={() => setActiveTab(child.id)}
                                                         className={`press press-flat w-full text-left px-3 py-2 border-2 font-mono text-[11px] uppercase cursor-pointer flex items-center justify-between gap-2 transition-all ${
                                                             isActive
-                                                                ? 'bg-sky-500 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1 font-black'
+                                                                ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1 font-black'
                                                                 : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300 font-bold'
                                                         }`}
                                                         aria-current={isActive ? 'page' : undefined}
@@ -716,7 +718,7 @@ export default function AdminDashboard({ onExit }) {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`press press-flat w-full text-left px-3.5 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-between gap-2 ${activeTab === tab.id
-                                    ? 'bg-sky-500 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1'
+                                    ? 'bg-sky-500 text-slate-950 border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1'
                                     : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300'
                                     }`}
                                 aria-current={activeTab === tab.id ? 'page' : undefined}
@@ -762,7 +764,7 @@ export default function AdminDashboard({ onExit }) {
                             {/* Key Stats Cards */}
                             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                                 <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-sky-600 uppercase block">Subsystems</span>
+                                    <span className="text-[10px] font-mono font-black text-sky-700 uppercase block">Subsystems</span>
                                     <span className="text-3xl font-black text-slate-900">{siteData.subsystems.length}</span>
                                 </div>
                                 <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
@@ -1016,7 +1018,7 @@ export default function AdminDashboard({ onExit }) {
                                 <span>{siteData.story.length} Characters • ~{siteData.story.split(/\s+/).filter(Boolean).length} Words</span>
                                 <button
                                     onClick={() => showStatus('Story updated and saved!')}
-                                    className="press px-4 py-2 bg-sky-500 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
                                 >
                                     Save Story Changes
                                 </button>
@@ -1146,7 +1148,7 @@ export default function AdminDashboard({ onExit }) {
                                     {(currentSubsystem.teamMembers || []).map((m, idx) => (
                                         <div key={idx} className="p-3.5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] relative flex flex-col justify-between">
                                             <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200">
-                                                <span className="font-mono text-[10px] font-black text-sky-600 uppercase">
+                                                <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
                                                     # Pos {idx + 1} of {currentSubsystem.teamMembers.length}
                                                 </span>
                                                 <div className="flex items-center gap-1">
@@ -1208,7 +1210,7 @@ export default function AdminDashboard({ onExit }) {
                                                     value={m.role}
                                                     onChange={e => updateTeamMember(currentSubsystem.id, idx, { role: e.target.value })}
                                                     placeholder="Role Title"
-                                                    className="w-full font-mono text-xs text-sky-600 font-bold border-b border-slate-200 pb-0.5 focus:border-slate-900 focus:outline-none"
+                                                    className="w-full font-mono text-xs text-sky-700 font-bold border-b border-slate-200 pb-0.5 focus:border-slate-900 focus:outline-none"
                                                 />
                                                 <input
                                                     type="text"
@@ -1369,7 +1371,7 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.brochureUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="text-[11px] font-mono font-black text-sky-700 hover:text-sky-800 underline"
                                             >
                                                 Preview Document ↗
                                             </a>
@@ -1416,7 +1418,7 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.deckUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="text-[11px] font-mono font-black text-sky-700 hover:text-sky-800 underline"
                                             >
                                                 Preview Document ↗
                                             </a>
@@ -1463,7 +1465,7 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.letterUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="text-[11px] font-mono font-black text-sky-700 hover:text-sky-800 underline"
                                             >
                                                 Preview Document ↗
                                             </a>
@@ -1506,7 +1508,7 @@ export default function AdminDashboard({ onExit }) {
                                     <div>
                                         <h3 className="text-lg font-black uppercase text-slate-900 flex items-center gap-2">
                                             <span>Corporate Sponsor Inquiries</span>
-                                            <span className="text-xs px-2 py-0.5 bg-sky-500 text-white font-mono font-bold">
+                                            <span className="text-xs px-2 py-0.5 bg-sky-500 text-slate-950 font-mono font-bold">
                                                 {sponsorInquiries.length}
                                             </span>
                                         </h3>
@@ -1729,7 +1731,7 @@ export default function AdminDashboard({ onExit }) {
                                                 onChange={e => updateGalleryItem(item.id, { title: e.target.value })}
                                                 className="font-black text-xs border-b border-slate-300 pb-0.5 w-full focus:outline-none"
                                             />
-                                            <span className="text-[10px] font-mono text-sky-600 block mt-1">
+                                            <span className="text-[10px] font-mono text-sky-700 block mt-1">
                                                 {item.category} • {item.year}
                                             </span>
                                             <p className="text-[11px] font-mono text-slate-600 mt-1 line-clamp-2">
@@ -1826,7 +1828,7 @@ export default function AdminDashboard({ onExit }) {
                                                     value={upd.tag || ''}
                                                     onChange={e => updateUpdate(upd.id, { tag: e.target.value })}
                                                     placeholder="Tag (e.g. FEB 2026 • PIT LANE)"
-                                                    className="w-full text-[10px] font-mono text-sky-600 border-b border-slate-200 focus:outline-none mt-1"
+                                                    className="w-full text-[10px] font-mono text-sky-700 border-b border-slate-200 focus:outline-none mt-1"
                                                 />
                                             </div>
                                             <button
@@ -1876,7 +1878,7 @@ export default function AdminDashboard({ onExit }) {
                                     <button
                                         onClick={handleExportSubscribersCSV}
                                         disabled={subscribers.length === 0}
-                                        className="press px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white border-2 border-slate-900 text-xs font-mono font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                        className="press px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 border-2 border-slate-900 text-xs font-mono font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50"
                                     >
                                         Export CSV ↓
                                     </button>
@@ -2046,7 +2048,7 @@ export default function AdminDashboard({ onExit }) {
                                         {(dbAccounts.length > 0 ? dbAccounts : siteData.accounts).map(acc => (
                                             <tr key={acc.id} className="hover:bg-slate-50">
                                                 <td className="p-2.5 font-bold">{acc.name}</td>
-                                                <td className="p-2.5 text-sky-600 font-bold">{acc.username}</td>
+                                                <td className="p-2.5 text-sky-700 font-bold">{acc.username}</td>
                                                 <td className="p-2.5 text-slate-700 font-bold">{acc.phone || '—'}</td>
                                                 <td className="p-2.5">{acc.role}</td>
                                                 <td className="p-2.5">
@@ -2113,7 +2115,7 @@ export default function AdminDashboard({ onExit }) {
                                     </p>
                                     <button
                                         onClick={handleDownloadBackup}
-                                        className="press px-4 py-2 bg-sky-500 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                        className="press px-4 py-2 bg-sky-500 text-slate-950 font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
                                     >
                                         Download Backup JSON ↓
                                     </button>
