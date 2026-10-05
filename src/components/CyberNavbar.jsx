@@ -4,7 +4,7 @@ import TextDock, { DockTextItem } from './Dock';
 import { useWebsiteData } from '../context/WebsiteDataContext';
 import Icon from './Icon';
 
-export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPage = 'home', onBackToHome, onOpenSponsor, onOpenWorkshop }) {
+export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPage = 'home', onBackToHome, onOpenSponsor, onOpenWorkshop, onOpenCommunity }) {
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
     const { contact } = siteData;
@@ -423,6 +423,27 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                                         <span className="text-[9px]">✦</span>
                                     </DockTextItem>
 
+                                    {/* Community Button */}
+                                    <DockTextItem
+                                        mouseX={mouseX}
+                                        onClick={() => {
+                                            if (onOpenCommunity) onOpenCommunity();
+                                            else window.location.hash = '#community';
+                                        }}
+                                        className={`border-slate-900 cursor-pointer ${
+                                            currentPage === 'community'
+                                                ? 'bg-emerald-400 text-slate-900 font-black shadow-[inset_2px_2px_0px_#000]'
+                                                : 'bg-emerald-300 text-slate-900 hover:bg-emerald-400 font-black'
+                                        } ${
+                                            isScrolled
+                                                ? 'px-2.5 py-1 text-[11px] rounded-md border hover:shadow-[2px_2px_0px_#0f172a]'
+                                                : 'px-3.5 py-1.5 text-xs border-2 shadow-[2px_2px_0px_#0f172a] hover:shadow-[3px_3px_0px_#0f172a]'
+                                        }`}
+                                    >
+                                        <span>COMMUNITY</span>
+                                        <span className="text-[9px]">💬</span>
+                                    </DockTextItem>
+
 
                                     {/* Sponsor Team Button */}
                                     <DockTextItem
@@ -626,6 +647,17 @@ export default function CyberNavbar({ onSelectSubsystem, isDetailPage, currentPa
                             >
                                 <span>Workshops 2026</span>
                                 <span>✦</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setMobileOpen(false);
+                                    if (onOpenCommunity) onOpenCommunity();
+                                    else window.location.hash = '#community';
+                                }}
+                                className="w-full p-2.5 bg-emerald-300 text-slate-900 border-2 border-slate-900 text-center flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#0f172a] font-black text-xs uppercase cursor-pointer hover:bg-emerald-400"
+                            >
+                                <span>Community & Horizon</span>
+                                <span>💬</span>
                             </button>
                             <button
                                 onClick={() => {

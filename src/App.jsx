@@ -25,6 +25,7 @@ const WorkshopAttendanceProjector = lazy(() => import("./components/admin/Worksh
 const WorkshopAttendanceCheckin = lazy(() => import("./components/WorkshopAttendanceCheckin"));
 const WorkshopProjectSubmissionPage = lazy(() => import("./components/WorkshopProjectSubmissionPage"));
 const QuizRunner = lazy(() => import("./components/quiz/QuizRunner"));
+const CommunityPage = lazy(() => import("./components/CommunityPage"));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -32,6 +33,7 @@ function MainApp() {
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
+    const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash === '#community');
     const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(() => window.location.hash === '#workshop-project-submit');
     const [isAttendancePage, setIsAttendancePage] = useState(() => window.location.hash.startsWith('#attendance') && !window.location.hash.startsWith('#attendance-projector'));
     const [isProjectorPage, setIsProjectorPage] = useState(() => window.location.hash.startsWith('#attendance-projector'));
@@ -57,6 +59,7 @@ function MainApp() {
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
             setIsWorkshopPage(hash === '#workshop');
+            setIsCommunityPage(hash === '#community');
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
@@ -76,7 +79,7 @@ function MainApp() {
 
     useEffect(() => {
         scrollToTop();
-    }, [isSponsorPage, isWorkshopPage, isWorkshopProjectPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
+    }, [isSponsorPage, isWorkshopPage, isCommunityPage, isWorkshopProjectPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
 
     useEffect(() => {
         // Readers who ask for reduced motion get the browser's native scroll.
@@ -134,6 +137,7 @@ function MainApp() {
         setIsAdminOpen(false);
         setIsSponsorPage(false);
         setIsWorkshopPage(false);
+        setIsCommunityPage(false);
         setIsWorkshopProjectPage(false);
     };
 
@@ -163,6 +167,13 @@ function MainApp() {
         scrollToTop();
     };
 
+    const handleOpenCommunity = () => {
+        closeAll();
+        setIsCommunityPage(true);
+        window.location.hash = '#community';
+        scrollToTop();
+    };
+
     const handleOpenAdmin = () => {
         closeAll();
         setIsAdminOpen(true);
@@ -173,7 +184,7 @@ function MainApp() {
     const handleBackToHome = () => {
         closeAll();
         const hash = window.location.hash;
-        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#workshop-project-submit', '#model'].includes(hash)) {
+        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#community', '#workshop-project-submit', '#model'].includes(hash)) {
             window.history.replaceState(null, '', window.location.pathname);
         }
         scrollToTop();
@@ -199,6 +210,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <WorkshopPage onBack={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isCommunityPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <CommunityPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
@@ -272,6 +291,7 @@ function MainApp() {
                     onBackToHome={handleBackToHome}
                     onOpenSponsor={handleOpenSponsor}
                     onOpenWorkshop={handleOpenWorkshop}
+                    onOpenCommunity={handleOpenCommunity}
                 />
 
                 {isModelPage ? (
