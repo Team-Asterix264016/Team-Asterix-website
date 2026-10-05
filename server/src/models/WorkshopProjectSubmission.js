@@ -25,7 +25,8 @@ const WorkshopProjectSubmissionSchema = new mongoose.Schema({
     tracksEnrolled: { type: [{ type: String }], default: [] },
     driveLink: { type: String, required: true, trim: true },
     feedback: { type: String, default: '', trim: true, maxlength: 3000 },
-    answers: { type: [AnswerSchema], default: [] }
+    answers: { type: [AnswerSchema], default: [] },
+    submittedAt: { type: Date, default: Date.now, index: true }
 }, { timestamps: true });
 
 export default mongoose.models.WorkshopProjectSubmission

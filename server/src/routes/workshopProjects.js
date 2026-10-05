@@ -152,7 +152,8 @@ router.post('/', requireDb, async (req, res) => {
                     registrationId: registration._id,
                     driveLink: String(body.driveLink).trim(),
                     feedback: String(body.feedback || '').trim().slice(0, 3000),
-                    answers
+                    answers,
+                    submittedAt: new Date()
                 }
             },
             { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }

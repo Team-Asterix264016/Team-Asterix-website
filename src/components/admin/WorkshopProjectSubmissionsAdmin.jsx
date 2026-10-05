@@ -3,6 +3,20 @@ import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 
 const FIELD_CLASS = 'w-full min-h-10 border-2 border-slate-300 bg-white px-2.5 py-2 text-sm font-bold text-slate-900 focus:border-sky-600 focus:outline-none';
+const SUBMISSION_TIME_CLASS = 'font-mono text-[11px] font-bold text-slate-600 whitespace-nowrap';
+
+function formatSubmissionTime(submission) {
+    if (!submission) return '—';
+    const date = new Date(submission.submittedAt || submission.createdAt);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
 
 function adminHeaders(json = false) {
     const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
@@ -141,6 +155,8 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
     const [config, setConfig] = useState(null);
     const [registrations, setRegistrations] = useState([]);
     const [query, setQuery] = useState('');
+    const [submissionFilter, setSubmissionFilter] = useState('all');
+    const [submissionSort, setSubmissionSort] = useState('desc');
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
@@ -182,12 +198,29 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
         return () => { active = false; };
     }, []);
 
-    const filteredRegistrations = registrations.filter(registration => {
-        const needle = query.trim().toLowerCase();
-        if (!needle) return true;
-        return [registration.name, registration.email, registration.rollNo, registration.department, registration.phone]
-            .some(value => String(value || '').toLowerCase().includes(needle));
-    });
+    const filteredRegistrations = registrations
+        .filter(registration => {
+            const hasSubmission = Boolean(registration.projectSubmission);
+            if (submissionFilter === 'submitted' && !hasSubmission) return false;
+            if (submissionFilter === 'not-submitted' && hasSubmission) return false;
+
+            const needle = query.trim().toLowerCase();
+            if (!needle) return true;
+            return [registration.name, registration.email, registration.rollNo, registration.department, registration.phone]
+                .some(value => String(value || '').toLowerCase().includes(needle));
+        })
+        .sort((left, right) => {
+            const leftTime = left.projectSubmission
+                ? new Date(left.projectSubmission.submittedAt || left.projectSubmission.createdAt).getTime()
+                : Number.NaN;
+            const rightTime = right.projectSubmission
+                ? new Date(right.projectSubmission.submittedAt || right.projectSubmission.createdAt).getTime()
+                : Number.NaN;
+            const leftMissing = !Number.isFinite(leftTime);
+            const rightMissing = !Number.isFinite(rightTime);
+            if (leftMissing || rightMissing) return Number(leftMissing) - Number(rightMissing);
+            return submissionSort === 'desc' ? rightTime - leftTime : leftTime - rightTime;
+        });
 
     const handleSaveConfig = async event => {
         event.preventDefault();
@@ -268,19 +301,26 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                 <FeedbackAnalytics registrations={registrations} />
             ) : (
                 <section>
-                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <label className="block w-full max-w-md text-[10px] font-black uppercase">Search registered students<input className={`${FIELD_CLASS} mt-1.5`} value={query} onChange={event => setQuery(event.target.value)} placeholder="Name, email, registered number..." /></label>
+                    <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="grid gap-3 sm:grid-cols-3 lg:flex lg:items-end">
+                            <label className="block w-full min-w-52 text-[10px] font-black uppercase">Search registered students<input className={`${FIELD_CLASS} mt-1.5`} value={query} onChange={event => setQuery(event.target.value)} placeholder="Name, email, registered number..." /></label>
+                            <label className="block text-[10px] font-black uppercase">Submission status<select className={`${FIELD_CLASS} mt-1.5`} value={submissionFilter} onChange={event => setSubmissionFilter(event.target.value)}><option value="all">All students</option><option value="submitted">Submitted</option><option value="not-submitted">Not submitted</option></select></label>
+                            <button type="button" onClick={() => setSubmissionSort(current => current === 'desc' ? 'asc' : 'desc')} aria-label={`Sort submissions ${submissionSort === 'desc' ? 'oldest first' : 'newest first'}`} className="min-h-10 border-2 border-slate-900 bg-amber-300 px-3 py-2 text-[10px] font-black uppercase shadow-[2px_2px_0px_#0f172a] hover:bg-amber-200">
+                                Submission time: {submissionSort === 'desc' ? 'Newest first ↓' : 'Oldest first ↑'}
+                            </button>
+                        </div>
                         <span className="text-xs font-bold text-slate-500">Showing {filteredRegistrations.length} / {registrations.length}</span>
                     </div>
                     {!filteredRegistrations.length ? <p className="border-2 border-dashed border-slate-300 bg-white p-6 text-center text-sm font-bold text-slate-500">No registrations match this search.</p> : (
                         <div className="overflow-x-auto border-2 border-slate-900 bg-white">
                             <table className="w-full min-w-[760px] text-left text-xs">
-                                <thead className="bg-slate-900 text-[10px] font-black uppercase text-white"><tr><th className="p-3">Student</th><th className="p-3">Registration</th><th className="p-3">Project</th></tr></thead>
+                                <thead className="bg-slate-900 text-[10px] font-black uppercase text-white"><tr><th className="p-3">Student</th><th className="p-3">Registration</th><th className="p-3">Submitted at</th><th className="p-3">Project</th></tr></thead>
                                 <tbody className="divide-y divide-slate-200">
                                     {filteredRegistrations.map(registration => (
                                         <tr key={registration._id} className="align-top hover:bg-slate-50">
                                             <td className="p-3"><div className="font-black">{registration.name}</div><div className="mt-1 text-[11px] text-slate-500">{registration.email}</div><div className="text-[11px] text-slate-500">{registration.department} · Year {registration.year}</div></td>
                                             <td className="p-3"><div className="font-bold">{registration.rollNo}</div><div className="mt-1 text-[10px] font-black uppercase text-slate-500">{registration.status} · {registration.package}</div><div className="text-[11px] text-slate-500">{registration.phone}</div></td>
+                                            <td className={`p-3 ${SUBMISSION_TIME_CLASS}`}>{formatSubmissionTime(registration.projectSubmission)}</td>
                                             <td className="p-3">
                                                 {registration.projectSubmission ? <div className="space-y-1.5"><a href={registration.projectSubmission.driveLink} target="_blank" rel="noreferrer" className="font-black text-sky-700 underline">Open project link ↗</a><details className="max-w-sm"><summary className="cursor-pointer text-[10px] font-black uppercase text-slate-600">Feedback &amp; answers</summary><p className="mt-1 whitespace-pre-wrap text-[11px]">{registration.projectSubmission.feedback || 'No feedback provided.'}</p>{(registration.projectSubmission.answers || []).map(answer => <p key={answer.questionId} className="mt-2 text-[11px]"><strong>{answer.label}:</strong> {answer.answer || '—'}</p>)}</details></div> : <span className="text-[10px] font-black uppercase text-slate-400">Not submitted</span>}
                                             </td>
