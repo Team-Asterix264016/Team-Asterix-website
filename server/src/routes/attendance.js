@@ -516,11 +516,19 @@ router.post('/profile', async (req, res) => {
             searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
         }
 
-        const candidate = await WorkshopRegistration.findOne({
-            $or: searchConditions
-        }).lean();
+        // Only paid registrations get a profile. One person can have several attempts (a failed
+        // payment, then a paid one), so take the most recently paid.
+        const candidate = await WorkshopRegistration.findOne({ $or: searchConditions, status: 'paid' })
+            .sort({ paidAt: -1, createdAt: -1 })
+            .lean();
 
         if (!candidate) {
+            const unpaid = await WorkshopRegistration.exists({ $or: searchConditions });
+            if (unpaid) {
+                return res.status(403).json({
+                    error: "We found your registration but payment isn't complete yet. Finish the payment or contact the workshop team."
+                });
+            }
             return res.status(404).json({
                 error: `No candidate registration found matching "${queryRaw}". Please verify your email ID or phone number.`
             });
