@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n \"CLIENT,SERVER\" -c \"cyan.bold,magenta.bold\" \"vite\" \"node server/src/index.js\"",
+    "dev": "concurrently -n \"CLIENT,SERVER\" -c \"cyan.bold,magenta.bold\" \"vite\" \"node --watch server/src/index.js\"",
     "dev:watch": "concurrently -n \"CLIENT,SERVER\" -c \"cyan.bold,magenta.bold\" \"vite\" \"node --watch server/src/index.js\"",
     "dev:frontend": "vite",
     "dev:backend": "node server/src/index.js",
