@@ -4,6 +4,8 @@ import { safeHref } from '../lib/safeHref';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
 import { downloadAllIcsFile } from '../utils/calendarUtils';
 import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
+import SessionNotesModal from './SessionNotesModal';
+import { resourceBadge } from '../lib/resourceTypes';
 
 const SUBSYSTEMS_PORTAL_DATA = [
     {
@@ -37,21 +39,6 @@ const SUBSYSTEMS_PORTAL_DATA = [
         phone: '+91 97900 11223'
     }
 ];
-
-const RESOURCE_TYPE_BADGES = {
-    pdf: '📄 PDF',
-    slides: '📊 Slides',
-    colab: '🌐 Colab',
-    notebook: '📓 Notebook',
-    github: '🐙 GitHub',
-    code: '💻 Code',
-    markdown: '📝 Markdown',
-    drive: '📁 Drive',
-    video: '🎬 Video',
-    link: '↗ Link',
-    doc: '📝 Doc',
-    dataset: '🗂️ Dataset'
-};
 
 function receiptRows(record) {
     return [
@@ -180,6 +167,9 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const [timetableSearch, setTimetableSearch] = useState('');
     const [notesModuleFilter, setNotesModuleFilter] = useState('all');
     const [notesSearch, setNotesSearch] = useState('');
+    const [selectedSession, setSelectedSession] = useState(null);
+    // Today's date in IST (YYYY-MM-DD), read once per visit, for picking the next session.
+    const [todayIst] = useState(() => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10));
 
     const fetchProfile = useCallback(async (queryVal) => {
         const target = queryVal || identifier;
@@ -204,10 +194,12 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             } else {
                 setError(data.error || 'No participant registration found for this query.');
                 setProfile(null);
+                setSelectedSession(null);
             }
         } catch {
             setError('Could not connect to server. Check your connection and try again.');
             setProfile(null);
+            setSelectedSession(null);
         } finally {
             setLoading(false);
         }
@@ -258,6 +250,16 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             item.resources?.some((res) => res.label?.toLowerCase().includes(notesQuery))
         );
     });
+    const notesBySession = new Map();
+    notesResources.forEach((r) => {
+        if (!r.sessionId) return;
+        if (!notesBySession.has(r.sessionId)) notesBySession.set(r.sessionId, []);
+        notesBySession.get(r.sessionId).push(r);
+    });
+    const multiTrack = (profile?.candidate?.tracksEnrolled?.length || 0) > 1;
+    // Holidays and optional catch-ups don't count toward attendance.
+    const countedSessions = (profile?.sessionTimeline || []).filter((s) => s.type !== 'holiday' && s.type !== 'catchup').length;
+    const nextSession = profile?.sessionTimeline?.find((s) => s.type !== 'holiday' && s.isoDate && s.isoDate >= todayIst);
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-900 selection:bg-amber-300">
@@ -383,23 +385,14 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                 </main>
             ) : (
                 <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
-                    {/* Header Bar to Switch Candidate */}
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b-4 border-white/20 pb-4 text-white">
-                        <div>
-                            <span className="font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
-                                Permanent Member Profile
-                            </span>
-                            <h1 className="text-2xl font-black uppercase text-white sm:text-3xl">
-                                {profile.candidate.name}&apos;s Permanent Locker &amp; Portfolio
-                            </h1>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => setProfile(null)}
-                            className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-300"
-                        >
-                            🔍 Search Another Candidate
-                        </button>
+                    {/* Greeting */}
+                    <div className="mb-6 border-b-4 border-white/20 pb-4 text-white">
+                        <span className="font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
+                            Permanent Member Profile
+                        </span>
+                        <h1 className="text-2xl font-black uppercase text-white sm:text-3xl">
+                            Hey {profile.candidate.name}, ready to learn something new today!!
+                        </h1>
                     </div>
 
                     {/* Profile Dashboard */}
@@ -465,18 +458,34 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             {profile.attendanceSummary.isEligibleForCertificate ? '✓ Eligible (≥75%)' : '⚠️ Under 75%'}
                                         </strong>
                                     </div>
-                                    <div className="border-2 border-slate-900 bg-slate-100 p-3 shadow-brutal-2">
-                                        <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">Payment Status</span>
-                                        <strong className="mt-0.5 block text-xs font-black text-slate-950 uppercase">
-                                            Paid ₹{profile.candidate.amount || 1000}
-                                        </strong>
-                                    </div>
+                                    {nextSession ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedSession(nextSession)}
+                                            className="w-full min-w-0 border-2 border-slate-900 bg-slate-100 p-3 text-left shadow-brutal-2 hover:bg-white"
+                                        >
+                                            <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">Next Session</span>
+                                            <strong className="mt-0.5 block text-xs font-black text-slate-950 uppercase">
+                                                {nextSession.date}{nextSession.isoDate === todayIst ? ' · Today' : ''}
+                                            </strong>
+                                            <span className="block truncate text-[11px] font-bold text-slate-600" title={nextSession.title}>
+                                                {nextSession.title}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <div className="border-2 border-slate-900 bg-slate-100 p-3 shadow-brutal-2">
+                                            <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">Next Session</span>
+                                            <strong className="mt-0.5 block text-xs font-black text-slate-950 uppercase">
+                                                Workshop complete
+                                            </strong>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* 4 Main Navigation Tabs */}
+                            {/* 3 Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">
-                                <div className="grid grid-cols-2 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase md:grid-cols-4">
+                                <div className="grid grid-cols-1 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase sm:grid-cols-3">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('attendance')}
@@ -509,17 +518,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         }`}
                                     >
                                         📚 Notes ({profile.resources?.length || 0})
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('subsystems')}
-                                        className={`px-3 py-3 text-center transition-all ${
-                                            activeTab === 'subsystems'
-                                                ? 'bg-purple-400 text-slate-950 shadow-brutal-2'
-                                                : 'text-slate-300 hover:text-white'
-                                        }`}
-                                    >
-                                        🛠️ Decks ({SUBSYSTEMS_PORTAL_DATA.length})
                                     </button>
                                 </div>
                             </div>
@@ -659,7 +657,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             <div className="mt-3 grid grid-cols-2 gap-2">
                                                 <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
                                                     <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Total Sessions</span>
-                                                    <strong className="block text-xl font-black text-slate-900">{profile.sessionTimeline?.length || 0}</strong>
+                                                    <strong className="block text-xl font-black text-slate-900">{countedSessions}</strong>
                                                 </div>
                                                 <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
                                                     <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Conducted</span>
@@ -672,7 +670,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
                                                     <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Upcoming</span>
                                                     <strong className="block text-xl font-black text-amber-700">
-                                                        {(profile.sessionTimeline?.length || 0) - (profile.attendanceSummary.totalConducted || 0)}
+                                                        {countedSessions - (profile.attendanceSummary.totalConducted || 0)}
                                                     </strong>
                                                 </div>
                                             </div>
@@ -683,95 +681,17 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </div>
                                     </div>
 
-                                    {/* Session Heatmap Matrix Grid */}
-                                    <div className="mt-8 border-t-4 border-slate-900 pt-6">
-                                        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                                            <div>
-                                                <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                                    Visual Session Grid &amp; QR Scan Logs
-                                                </span>
-                                                <h4 className="mt-0.5 text-xl font-black uppercase text-slate-900">
-                                                    Session Heatmap &amp; Timeline Nodes ({profile.sessionTimeline.length} Sessions)
-                                                </h4>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 font-mono text-[11px] font-black uppercase">
-                                                <span className="flex items-center gap-1.5 border border-slate-900 bg-emerald-100 px-2 py-1 text-emerald-950">
-                                                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                                    <span>Present</span>
-                                                </span>
-                                                <span className="flex items-center gap-1.5 border border-slate-900 bg-sky-100 px-2 py-1 text-sky-950">
-                                                    <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span>
-                                                    <span>Upcoming / Scan Lab QR</span>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                            {profile.sessionTimeline.map((item) => {
-                                                const isPresent = item.status === 'PRESENT';
-                                                const isAbsent = item.status === 'ABSENT';
-
-                                                return (
-                                                    <div
-                                                        key={item.id}
-                                                        className={`border-3 border-slate-900 p-4 shadow-brutal-4 transition-all ${
-                                                            isPresent
-                                                                ? 'bg-emerald-50/90 border-emerald-900'
-                                                                : isAbsent
-                                                                ? 'bg-rose-50/90 border-rose-900'
-                                                                : 'bg-sky-50/60'
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900/20 pb-2">
-                                                            <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
-                                                                {item.label}
-                                                            </span>
-                                                            <span className="font-mono text-[11px] font-black text-slate-700">
-                                                                {item.date} ({item.days})
-                                                            </span>
-                                                        </div>
-
-                                                        <div className="mt-3 space-y-1">
-                                                            <h5 className="text-sm font-black uppercase text-slate-900 line-clamp-2">
-                                                                {item.title}
-                                                            </h5>
-                                                            <p className="font-mono text-[11px] font-bold text-slate-600">
-                                                                👤 Handled by: <strong>{item.instructor}</strong>
-                                                            </p>
-                                                            <p className="font-mono text-[10px] font-bold text-slate-500">
-                                                                📍 {item.venue}
-                                                            </p>
-                                                        </div>
-
-                                                        <div className="mt-4 pt-2 border-t-2 border-slate-900/20">
-                                                            {isPresent ? (
-                                                                <div className="flex items-center justify-between border-2 border-emerald-700 bg-emerald-400 p-2 text-slate-950">
-                                                                    <div className="flex items-center gap-1.5 font-mono text-xs font-black uppercase">
-                                                                        <span>✅ VERIFIED PRESENT</span>
-                                                                    </div>
-                                                                    {item.checkedInAt && (
-                                                                        <span className="font-mono text-[10px] font-bold">
-                                                                            {new Date(item.checkedInAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            ) : isAbsent ? (
-                                                                <div className="flex items-center justify-between border-2 border-rose-700 bg-rose-500 p-2 text-white font-mono text-xs font-black uppercase">
-                                                                    <span>❌ MISSED SESSION</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center justify-between border-2 border-slate-900 bg-white p-2 font-mono text-xs font-bold text-slate-700">
-                                                                    <span className="flex items-center gap-1 text-sky-800">
-                                                                        <span>🕒 UPCOMING</span>
-                                                                    </span>
-                                                                    <span className="text-[10px] font-black text-slate-900">Scan QR in Lab</span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                                    <div className="mt-8 flex flex-col justify-between gap-3 border-t-4 border-slate-900 pt-6 sm:flex-row sm:items-center">
+                                        <p className="font-mono text-xs font-bold text-slate-700">
+                                            Each session&apos;s status, notes and key takeaways are in the Timetable tab.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('timetable')}
+                                            className="press shadow-brutal-2 shrink-0 border-2 border-slate-900 bg-sky-400 px-3 py-1.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-sky-300"
+                                        >
+                                            Open timetable →
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -808,38 +728,39 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         const trkInfo = (profile.trackInfo && profile.trackInfo[tId]) || WORKSHOP_TRACKS[tId];
                                         if (!trkInfo) return null;
                                         return (
-                                            <div key={tId} className="border-3 border-slate-900 bg-amber-50/70 p-5 shadow-brutal-4">
-                                                <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-900 pb-3">
-                                                    <span className="border border-slate-900 bg-slate-900 px-2.5 py-1 font-mono text-xs font-black text-amber-300 uppercase">
-                                                        ⚡ {trkInfo.name.toUpperCase()} TRACK TIMETABLE
+                                            <details key={tId} className="group border-3 border-slate-900 bg-amber-50/70 shadow-brutal-2">
+                                                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase [&::-webkit-details-marker]:hidden">
+                                                    <span>⚡ {trkInfo.name} · track info</span>
+                                                    <span className="flex items-center gap-2">
+                                                        <span>{trkInfo.dates}</span>
+                                                        <span className="transition-transform group-open:rotate-180">▾</span>
                                                     </span>
-                                                    <span className="font-mono text-xs font-bold text-slate-800">
-                                                        {trkInfo.dates}
-                                                    </span>
-                                                </div>
+                                                </summary>
 
-                                                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 font-mono text-xs">
-                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase">📅 CLASS DAYS</span>
-                                                        <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.days}</strong>
+                                                <div className="border-t-2 border-slate-900 p-4">
+                                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 font-mono text-xs">
+                                                        <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase">📅 CLASS DAYS</span>
+                                                            <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.days}</strong>
+                                                        </div>
+                                                        <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase">🕒 SESSION TIMINGS</span>
+                                                            <strong className="block mt-0.5 font-black text-sky-900">{trkInfo.timing}</strong>
+                                                        </div>
+                                                        <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase">📍 LAB VENUE</span>
+                                                            <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.venue}</strong>
+                                                        </div>
                                                     </div>
-                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase">🕒 SESSION TIMINGS</span>
-                                                        <strong className="block mt-0.5 font-black text-sky-900">{trkInfo.timing}</strong>
-                                                    </div>
-                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
-                                                        <span className="text-[10px] font-black text-slate-500 uppercase">📍 LAB VENUE</span>
-                                                        <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.venue}</strong>
-                                                    </div>
-                                                </div>
 
-                                                {trkInfo.reportingInstructions && (
-                                                    <div className="mt-4 border-2 border-slate-900 bg-amber-200 p-3 font-mono text-xs shadow-brutal-2">
-                                                        <strong className="block font-black text-slate-950 uppercase">🚨 REPORTING &amp; LAB GUIDELINES:</strong>
-                                                        <span className="mt-0.5 block font-bold text-slate-900">{trkInfo.reportingInstructions}</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    {trkInfo.reportingInstructions && (
+                                                        <div className="mt-4 border-2 border-slate-900 bg-amber-200 p-3 font-mono text-xs shadow-brutal-2">
+                                                            <strong className="block font-black text-slate-950 uppercase">🚨 REPORTING &amp; LAB GUIDELINES:</strong>
+                                                            <span className="mt-0.5 block font-bold text-slate-900">{trkInfo.reportingInstructions}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </details>
                                         );
                                     })}
 
@@ -897,13 +818,38 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 );
                                             })
                                             .map((session) => {
+                                                const isHoliday = session.type === 'holiday';
+                                                const sessionNoteCount = notesBySession.get(session.id)?.length || 0;
                                                 return (
-                                                    <div key={session.id} className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-4 flex flex-col justify-between">
+                                                    <div
+                                                        key={session.id}
+                                                        role={isHoliday ? undefined : 'button'}
+                                                        tabIndex={isHoliday ? undefined : 0}
+                                                        onClick={isHoliday ? undefined : () => setSelectedSession(session)}
+                                                        onKeyDown={isHoliday ? undefined : (e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                if (e.key === ' ') e.preventDefault();
+                                                                setSelectedSession(session);
+                                                            }
+                                                        }}
+                                                        className={`border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-4 flex flex-col justify-between${
+                                                            isHoliday ? '' : ' cursor-pointer hover:bg-white hover:-translate-y-0.5 transition-all'
+                                                        }`}
+                                                    >
                                                         <div>
                                                             <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900/20 pb-2">
-                                                                <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
-                                                                    {session.label}
-                                                                </span>
+                                                                <div className="flex flex-wrap items-center gap-1">
+                                                                    <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                                        {session.label}
+                                                                    </span>
+                                                                    {multiTrack && (
+                                                                        <span className={`border border-slate-900 px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
+                                                                            session.track === 'powertrain' ? 'bg-amber-200' : 'bg-sky-200'
+                                                                        }`}>
+                                                                            {session.track === 'powertrain' ? 'POWERTRAIN' : 'SOFTWARE'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <span className="font-mono text-xs font-black text-slate-800">
                                                                     {session.date} ({session.days})
                                                                 </span>
@@ -922,14 +868,33 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
 
                                                         <div className="mt-4 pt-3 border-t-2 border-slate-900/20 flex items-center justify-between gap-2">
                                                             <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
-                                                                session.status === 'PRESENT'
+                                                                isHoliday
+                                                                    ? 'bg-slate-200 text-slate-700'
+                                                                    : session.status === 'PRESENT'
                                                                     ? 'bg-emerald-400 text-slate-950'
                                                                     : session.status === 'ABSENT'
                                                                     ? 'bg-rose-500 text-white'
+                                                                    : session.status === 'OPTIONAL'
+                                                                    ? 'bg-violet-200 text-violet-950'
                                                                     : 'bg-sky-200 text-sky-950'
                                                             }`}>
-                                                                {session.status === 'PRESENT' ? '✅ Verified Present' : session.status === 'ABSENT' ? '❌ Missed' : '🕒 Upcoming'}
+                                                                {isHoliday
+                                                                    ? '🎉 Holiday · no class'
+                                                                    : session.status === 'PRESENT'
+                                                                    ? '✅ Verified Present'
+                                                                    : session.status === 'ABSENT'
+                                                                    ? '❌ Missed'
+                                                                    : session.status === 'OPTIONAL'
+                                                                    ? '💬 Optional · not counted'
+                                                                    : '🕒 Upcoming'}
                                                             </span>
+                                                            {!isHoliday && (
+                                                                <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
+                                                                    {sessionNoteCount > 0
+                                                                        ? `📚 ${sessionNoteCount} note${sessionNoteCount === 1 ? '' : 's'} →`
+                                                                        : 'View details →'}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
@@ -1018,7 +983,11 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     {/* Resources Grid */}
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         {filteredNotes
-                                            .map((item, idx) => (
+                                            .map((item, idx) => {
+                                                const noteSession = item.sessionId
+                                                    ? profile.sessionTimeline?.find((s) => s.id === item.sessionId)
+                                                    : null;
+                                                return (
                                                 <div key={item._id || item.id || idx} className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/60 p-5 flex flex-col justify-between">
                                                     <div>
                                                         <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
@@ -1031,6 +1000,14 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                 </span>
                                                             )}
                                                         </div>
+                                                        {noteSession && (
+                                                            <span
+                                                                className="mt-2 block truncate font-mono text-[10px] font-black text-sky-800 uppercase"
+                                                                title={`${noteSession.date} · ${noteSession.title}`}
+                                                            >
+                                                                🗓 {noteSession.date} · {noteSession.title}
+                                                            </span>
+                                                        )}
 
                                                         <h4 className="mt-3 text-lg font-black uppercase text-slate-900">{item.title}</h4>
                                                         {item.description && (
@@ -1038,11 +1015,22 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                 {item.description}
                                                             </p>
                                                         )}
+                                                        {item.takeaways?.length > 0 && (
+                                                            <div className="mt-3">
+                                                                <span className="font-mono text-[10px] font-black tracking-widest text-slate-500 uppercase">
+                                                                    Key takeaways
+                                                                </span>
+                                                                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs font-bold text-slate-700">
+                                                                    {item.takeaways.map((point, ti) => (
+                                                                        <li key={ti}>{point}</li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <div className="mt-4 space-y-2 border-t-2 border-slate-300 pt-3">
                                                         {item.resources?.map((res, i) => {
-                                                            const resType = (res.type || '').trim().toLowerCase();
                                                             return (
                                                             <a
                                                                 key={i}
@@ -1052,86 +1040,26 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                 className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-white px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
                                                             >
                                                                 <span>{res.label}</span>
-                                                                <span>
-                                                                    {Object.hasOwn(RESOURCE_TYPE_BADGES, resType)
-                                                                        ? RESOURCE_TYPE_BADGES[resType]
-                                                                        : resType
-                                                                        ? `↗ ${resType.toUpperCase()}`
-                                                                        : '↗ Open'}
-                                                                </span>
+                                                                <span>{resourceBadge(res.type)}</span>
                                                             </a>
                                                             );
                                                         })}
                                                     </div>
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                     </div>
                                     </>
                                     )}
                                 </div>
                             )}
-
-                            {/* TAB 4: Subsystem Decks & Official Contacts */}
-                            {activeTab === 'subsystems' && (
-                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                    <div className="border-b-4 border-slate-900 pb-5">
-                                        <span className="font-mono text-xs font-black tracking-widest text-purple-700 uppercase">
-                                            Official Subsystem Decks &amp; Team Contacts
-                                        </span>
-                                        <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
-                                            Subsystem Decks Directory
-                                        </h3>
-                                        <p className="mt-1 font-mono text-xs font-bold text-slate-600">
-                                            Explore official subsystem technical specifications, CAD models, and contact lines safely listed on the official Subsystem Portal.
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        {SUBSYSTEMS_PORTAL_DATA.map((sub) => (
-                                            <div
-                                                key={sub.id}
-                                                className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-slate-50 p-5 transition-all hover:bg-white sm:last:odd:col-span-2 sm:last:odd:mx-auto sm:last:odd:w-[calc(50%-0.75rem)]"
-                                            >
-                                                <div>
-                                                    <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
-                                                        <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${sub.color}`}>
-                                                            {sub.badge}
-                                                        </span>
-                                                        <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
-                                                            OFFICIAL DECK
-                                                        </span>
-                                                    </div>
-
-                                                    <h4 className="mt-3 text-xl font-black uppercase text-slate-900">{sub.name}</h4>
-                                                    <p className="mt-1 font-mono text-xs font-bold text-slate-700 leading-relaxed">
-                                                        {sub.tagline}
-                                                    </p>
-
-                                                    <p className="mt-2 text-xs text-slate-600 leading-relaxed font-medium">
-                                                        {sub.details}
-                                                    </p>
-
-                                                    <div className="mt-3 border-t-2 border-slate-200 pt-2 font-mono text-[11px] space-y-0.5 text-slate-700">
-                                                        <div>📧 <strong>Official Email:</strong> {sub.officialContact}</div>
-                                                        <div>📞 <strong>Official Contact:</strong> {sub.phone}</div>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleSubsystemNavigate(sub.id)}
-                                                    className="press shadow-brutal-2 mt-4 flex w-full items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
-                                                >
-                                                    <span>Explore Subsystem Deck &amp; Team Contacts</span>
-                                                    <span>→</span>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
+                    <SessionNotesModal
+                        session={selectedSession}
+                        notes={selectedSession ? notesBySession.get(selectedSession.id) || [] : []}
+                        onClose={() => setSelectedSession(null)}
+                    />
                 </main>
             )}
         </div>

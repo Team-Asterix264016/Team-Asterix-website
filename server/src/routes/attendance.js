@@ -571,16 +571,20 @@ router.post('/profile', async (req, res) => {
                 const dateKey = `${trackId}|${sessionIsoDate(sessionItem.date, trackConfig)}`;
                 const att = attendanceByDate.get(dateKey);
                 const isHoliday = sessionItem.type === 'holiday';
+                // Catch-ups are optional knowledge-sharing sessions: shown, never counted or marked missed.
+                const isOptional = sessionItem.type === 'catchup';
 
-                let status = 'UPCOMING';
+                let status = isOptional ? 'OPTIONAL' : 'UPCOMING';
                 let checkedInAt = null;
 
                 if (!isHoliday && att) {
                     status = 'PRESENT';
                     checkedInAt = att.checkedInAt;
-                    totalPresent += 1;
-                    totalConducted += 1;
-                } else if (!isHoliday && conductedDates.has(dateKey)) {
+                    if (!isOptional) {
+                        totalPresent += 1;
+                        totalConducted += 1;
+                    }
+                } else if (!isHoliday && !isOptional && conductedDates.has(dateKey)) {
                     status = 'ABSENT';
                     totalConducted += 1;
                 }
@@ -599,10 +603,15 @@ router.post('/profile', async (req, res) => {
                     project: sessionItem.project || null,
                     subject: sessionItem.subject || null,
                     status,
-                    checkedInAt
+                    checkedInAt,
+                    isoDate: sessionIsoDate(sessionItem.date, trackConfig)
                 });
             });
         });
+
+        // One date-ordered timetable across tracks (combo students otherwise saw every software
+        // session before any powertrain one). Undated sessions sink to the end.
+        sessionTimeline.sort((a, b) => (a.isoDate || '9999').localeCompare(b.isoDate || '9999'));
 
         const attendancePercentage = totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : 100;
         const isEligibleForCertificate = attendancePercentage >= 75;
