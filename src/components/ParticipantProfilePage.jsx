@@ -343,7 +343,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             {SUBSYSTEMS_PORTAL_DATA.map((sub) => (
                                 <div
                                     key={sub.id}
-                                    className="shadow-brutal-6 flex flex-col justify-between border-4 border-slate-900 bg-white p-6 transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
+                                    className="shadow-brutal-6 flex flex-col justify-between border-4 border-slate-900 bg-white p-6 transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] sm:last:odd:col-span-2 sm:last:odd:mx-auto sm:last:odd:w-[calc(50%-0.75rem)]"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-3">
@@ -1087,7 +1087,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         {SUBSYSTEMS_PORTAL_DATA.map((sub) => (
                                             <div
                                                 key={sub.id}
-                                                className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-slate-50 p-5 transition-all hover:bg-white"
+                                                className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-slate-50 p-5 transition-all hover:bg-white sm:last:odd:col-span-2 sm:last:odd:mx-auto sm:last:odd:w-[calc(50%-0.75rem)]"
                                             >
                                                 <div>
                                                     <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
