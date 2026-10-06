@@ -1133,16 +1133,26 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             {/* TAB 3: Autonomous Domain Achievements */}
                             {activeTab === 'achievements' && (
                                 <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                    <div className="border-b-4 border-slate-900 pb-5">
-                                        <span className="font-mono text-xs font-black tracking-widest text-emerald-700 uppercase">
-                                            Permanent Autonomous Domain Achievements &amp; Projects
-                                        </span>
-                                        <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
-                                            Autonomous Engineering Achievements
-                                        </h3>
-                                        <p className="mt-1 font-mono text-xs font-bold text-slate-600">
-                                            Permanent record of R&amp;D projects completed in ROS 2, LTspice Powertrain simulations, OpenCV Perception pipelines, and drive-by-wire hardware.
-                                        </p>
+                                    <div className="flex flex-col justify-between gap-3 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
+                                        <div>
+                                            <span className="font-mono text-xs font-black tracking-widest text-emerald-700 uppercase">
+                                                Permanent Autonomous Domain Achievements &amp; Projects
+                                            </span>
+                                            <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
+                                                Autonomous Engineering Achievements
+                                            </h3>
+                                            <p className="mt-1 font-mono text-xs font-bold text-slate-600">
+                                                Permanent record of R&amp;D projects completed in ROS 2, LTspice Powertrain simulations, OpenCV Perception pipelines, and drive-by-wire hardware.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.location.assign('#workshop-project-submit')}
+                                            className="press shadow-brutal-3 flex shrink-0 items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-4 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-emerald-300"
+                                        >
+                                            <span>📤 Upload / Submit Project</span>
+                                            <span>→</span>
+                                        </button>
                                     </div>
 
                                     <div className="mt-6 space-y-4">
