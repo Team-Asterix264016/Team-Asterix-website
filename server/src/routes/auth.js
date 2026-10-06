@@ -248,12 +248,18 @@ router.put('/accounts/:id', authenticateToken, async (req, res) => {
 router.delete('/accounts/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const targetId = req.params.id;
-        if (targetId === req.user.id || targetId === req.user.username) {
-            return res.status(400).json({ error: 'You cannot delete your own active SuperAdmin account.' });
+        const filter = User.base.isValidObjectId(targetId) ? { _id: targetId } : { username: targetId.toLowerCase() };
+        const targetUser = await User.findOne(filter);
+
+        if (!targetUser) {
+            return res.status(404).json({ error: 'Account not found.' });
         }
 
-        const filter = User.base.isValidObjectId(targetId) ? { _id: targetId } : { username: targetId.toLowerCase() };
-        await User.findOneAndDelete(filter);
+        if (targetUser.accessLevel === 'SuperAdmin' || targetUser.username === 'admin1') {
+            return res.status(403).json({ error: 'SuperAdmin accounts cannot be deleted.' });
+        }
+
+        await User.deleteOne({ _id: targetUser._id });
         res.json({ success: true, message: 'Account removed successfully.' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete account', details: err.message });
