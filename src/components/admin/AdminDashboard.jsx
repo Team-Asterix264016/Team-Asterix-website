@@ -2544,7 +2544,7 @@ export default function AdminDashboard({ onExit }) {
                                                         </span>
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                        {acc.username !== 'admin' && (
+                                                        {acc.accessLevel !== 'SuperAdmin' && !['admin', 'admin1'].includes(acc.username) && (
                                                             <button
                                                                 onClick={async () => {
                                                                     if (
