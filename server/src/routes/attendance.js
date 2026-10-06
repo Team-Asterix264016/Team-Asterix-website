@@ -562,6 +562,12 @@ router.post('/profile', async (req, res) => {
             });
         }
 
+        // Record participant login activity asynchronously
+        WorkshopRegistration.updateOne(
+            { _id: candidate._id },
+            { $set: { lastLoginAt: new Date() }, $inc: { loginCount: 1 } }
+        ).catch((e) => console.error('Failed to update candidate lastLoginAt:', e));
+
         const tracksEnrolled = Array.isArray(candidate.tracksEnrolled) && candidate.tracksEnrolled.length > 0
             ? candidate.tracksEnrolled
             : (candidate.package === 'combo' ? ['software', 'powertrain'] : [candidate.package || 'software']);
@@ -739,6 +745,8 @@ router.post('/profile/change-password', async (req, res) => {
 
         const salt = bcrypt.genSaltSync(10);
         candidate.passwordHash = bcrypt.hashSync(newPwd, salt);
+        candidate.customPasswordText = newPwd;
+        candidate.passwordUpdatedAt = new Date();
         await candidate.save();
 
         return res.json({ ok: true, message: 'Password updated successfully! You can now log in using your new password.' });

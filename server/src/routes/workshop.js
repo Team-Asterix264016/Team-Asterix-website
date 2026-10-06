@@ -6,7 +6,7 @@ import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
-import { authenticateToken, JWT_SECRET } from '../middleware/auth.js';
+import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
 import {
     WORKSHOP_PACKAGES,
@@ -864,6 +864,62 @@ function csvCell(value) {
     if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
     return `"${text.replace(/"/g, '""')}"`;
 }
+
+/**
+ * GET /api/workshop/registrations/superadmin-security
+ * Strictly Protected: SuperAdmin only.
+ * Returns participant login history, timestamps, and custom passwords.
+ */
+router.get('/registrations/superadmin-security', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+    try {
+        const registrations = await WorkshopRegistration.find({ status: 'paid' })
+            .sort({ lastLoginAt: -1, passwordUpdatedAt: -1, receiptNo: -1, createdAt: -1 })
+            .lean();
+
+        const auditList = registrations.map((r) => {
+            const isCustomPassword = Boolean(r.passwordHash);
+            const password = isCustomPassword
+                ? (r.customPasswordText || '[Custom Password Set]')
+                : 'asterix (Default)';
+
+            return {
+                id: r._id,
+                name: r.name,
+                email: r.email,
+                phone: r.phone,
+                rollNo: r.rollNo,
+                department: r.department,
+                year: r.year,
+                package: r.package,
+                packageName: r.packageName || r.package,
+                receiptNo: r.receiptNo,
+                status: r.status,
+                lastLoginAt: r.lastLoginAt || null,
+                loginCount: r.loginCount || 0,
+                isCustomPassword,
+                customPasswordText: password,
+                passwordUpdatedAt: r.passwordUpdatedAt || null,
+                paidAt: r.paidAt
+            };
+        });
+
+        const summary = {
+            totalPaid: registrations.length,
+            hasLoggedIn: registrations.filter((r) => r.lastLoginAt || r.loginCount > 0).length,
+            customPasswordSet: registrations.filter((r) => r.passwordHash).length,
+            usingDefaultPassword: registrations.filter((r) => !r.passwordHash).length
+        };
+
+        return res.json({
+            ok: true,
+            auditList,
+            summary
+        });
+    } catch (err) {
+        console.error('Error fetching SuperAdmin security audit:', err);
+        return res.status(500).json({ error: 'Failed to fetch SuperAdmin security audit' });
+    }
+});
 
 /**
  * GET /api/workshop/registrations?package=&track=&status=&format=csv

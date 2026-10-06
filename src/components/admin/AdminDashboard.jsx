@@ -9,6 +9,7 @@ import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
 import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
+import ParticipantPasswordsAdmin from './ParticipantPasswordsAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 export default function AdminDashboard({ onExit }) {
@@ -593,7 +594,10 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
                 { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
-                { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' }
+                { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
+                ...(isSuperAdmin
+                    ? [{ id: 'participant-passwords', label: 'Participant Passwords & Logins 🔐', icon: 'users' }]
+                    : [])
             ]
         },
         { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
@@ -1963,6 +1967,10 @@ export default function AdminDashboard({ onExit }) {
                     )}
 
                     {activeTab === 'quiz-manager' && <QuizAdmin showStatus={showStatus} />}
+
+                    {activeTab === 'participant-passwords' && isSuperAdmin && (
+                        <ParticipantPasswordsAdmin showStatus={showStatus} />
+                    )}
 
                     {/* TAB 5: GALLERY & MEDIA */}
                     {activeTab === 'gallery' && (

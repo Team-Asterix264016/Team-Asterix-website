@@ -35,7 +35,11 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
     // do not collide on the unique index.
     receiptNo: { type: String, unique: true, sparse: true },
     paidAt: { type: Date, default: null },
-    passwordHash: { type: String, default: '', trim: true }
+    passwordHash: { type: String, default: '', trim: true },
+    customPasswordText: { type: String, default: '', trim: true },
+    lastLoginAt: { type: Date, default: null },
+    loginCount: { type: Number, default: 0 },
+    passwordUpdatedAt: { type: Date, default: null }
 }, {
     timestamps: true
 });
