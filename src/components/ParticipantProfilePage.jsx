@@ -286,7 +286,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         if (onSelectSubsystem) {
             onSelectSubsystem(subsystemId);
         } else {
-            window.location.hash = `#subsystem`;
+            window.location.assign('#subsystem');
         }
     };
 
@@ -356,23 +356,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             </div>
                         )}
 
-                        <div className="mt-8 grid grid-cols-1 gap-3 border-t-4 border-slate-900 pt-6 sm:grid-cols-3">
-                            <div className="border-2 border-slate-900 bg-sky-50 p-3.5 text-center shadow-brutal-2">
-                                <span className="text-xl">📊</span>
-                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Live QR Attendance</h4>
-                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">Track check-ins &amp; 75% certificate qualification</p>
-                            </div>
-                            <div className="border-2 border-slate-900 bg-emerald-50 p-3.5 text-center shadow-brutal-2">
-                                <span className="text-xl">📚</span>
-                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Subsystem Materials</h4>
-                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">ROS 2, OpenCV, LTspice &amp; ESP32 notes</p>
-                            </div>
-                            <div className="border-2 border-slate-900 bg-amber-50 p-3.5 text-center shadow-brutal-2">
-                                <span className="text-xl">💳</span>
-                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Verified Receipt</h4>
-                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">Download official payment receipt PNG</p>
-                            </div>
-                        </div>
+
                     </div>
 
                     {/* Official Subsystems & Team Portal Hub */}
@@ -413,11 +397,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         <p className="mt-3 text-xs text-slate-600 leading-relaxed font-medium">
                                             {sub.details}
                                         </p>
-
-                                        <div className="mt-4 border-t-2 border-slate-200 pt-3 font-mono text-[11px] space-y-1">
-                                            <div>📧 <strong>Official Email:</strong> {sub.officialContact}</div>
-                                            <div>📞 <strong>Official Contact:</strong> {sub.phone}</div>
-                                        </div>
                                     </div>
 
                                     <button
@@ -481,6 +460,14 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     <div className="flex flex-wrap items-center gap-2">
                                         <button
                                             type="button"
+                                            onClick={() => window.location.assign('#workshop-project-submit')}
+                                            className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-emerald-300"
+                                        >
+                                            <span>📤 Upload Project</span>
+                                            <span>→</span>
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => downloadReceipt(receiptRows(profile.candidate), profile.candidate.receiptNo || profile.candidate.rollNo)}
                                             className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-900 px-4 py-2.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                                         >
@@ -518,9 +505,9 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
                             </div>
 
-                            {/* 4 Main Navigation Tabs */}
+                            {/* 5 Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">
-                                <div className="grid grid-cols-2 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase md:grid-cols-4">
+                                <div className="grid grid-cols-2 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase sm:grid-cols-3 md:grid-cols-5">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('attendance')}
@@ -534,25 +521,36 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('notes')}
+                                        onClick={() => setActiveTab('timetable')}
                                         className={`px-3 py-3 text-center transition-all ${
-                                            activeTab === 'notes'
+                                            activeTab === 'timetable'
                                                 ? 'bg-sky-400 text-slate-950 shadow-brutal-2'
                                                 : 'text-slate-300 hover:text-white'
                                         }`}
                                     >
-                                        📚 Notes &amp; Schedule ({profile.resources.length})
+                                        🗓️ Timetable ({profile.sessionTimeline?.length || 0})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('notes')}
+                                        className={`px-3 py-3 text-center transition-all ${
+                                            activeTab === 'notes'
+                                                ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
+                                                : 'text-slate-300 hover:text-white'
+                                        }`}
+                                    >
+                                        📚 Notes ({profile.resources?.length || 0})
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('achievements')}
                                         className={`px-3 py-3 text-center transition-all ${
                                             activeTab === 'achievements'
-                                                ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
+                                                ? 'bg-amber-400 text-slate-950 shadow-brutal-2'
                                                 : 'text-slate-300 hover:text-white'
                                         }`}
                                     >
-                                        🏎️ Autonomous Projects ({ACHIEVEMENTS_DATA.length})
+                                        🏎️ Projects ({ACHIEVEMENTS_DATA.length})
                                     </button>
                                     <button
                                         type="button"
@@ -563,7 +561,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 : 'text-slate-300 hover:text-white'
                                         }`}
                                     >
-                                        🛠️ Subsystem Decks ({SUBSYSTEMS_PORTAL_DATA.length})
+                                        🛠️ Decks ({SUBSYSTEMS_PORTAL_DATA.length})
                                     </button>
                                 </div>
                             </div>
@@ -583,23 +581,11 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={async () => {
-                                                    if (window.confirm('Clear all attendance activity from the database?')) {
-                                                        try {
-                                                            const res = await fetch(apiUrl('/api/workshop/attendance/clear-all'), {
-                                                                method: 'POST'
-                                                            });
-                                                            const d = await res.json();
-                                                            alert(d.message || 'Attendance activity cleared.');
-                                                            fetchProfile();
-                                                        } catch {
-                                                            alert('Failed to clear DB attendance records.');
-                                                        }
-                                                    }
-                                                }}
-                                                className="press shadow-brutal-2 border-2 border-slate-900 bg-rose-500 px-3 py-1.5 font-mono text-xs font-black uppercase text-white hover:bg-rose-600"
+                                                onClick={() => window.location.assign('#workshop-project-submit')}
+                                                className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-emerald-300"
                                             >
-                                                🧹 Clear DB Attendance Activity
+                                                <span>📤 UPLOAD / SUBMIT PROJECT</span>
+                                                <span>→</span>
                                             </button>
                                         </div>
                                     </div>
@@ -832,56 +818,314 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
                             )}
 
-                            {/* TAB 2: Notes & Study Materials & Calendar Export */}
-                            {activeTab === 'notes' && (
-                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
+                            {/* TAB 2: Workshop Timetable & Schedule */}
+                            {activeTab === 'timetable' && (
+                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8 space-y-6">
+                                    {/* Header & Sync Bar */}
                                     <div className="flex flex-col justify-between gap-4 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
                                         <div>
                                             <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                                Lecture Slides, Circuit Files, Code Repos &amp; Handouts
+                                                Interactive Workshop Timetable &amp; Master Schedule
                                             </span>
                                             <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
-                                                Workshop Study Materials &amp; Schedule
+                                                Workshop Timetable &amp; Session Schedule
                                             </h3>
+                                            <p className="mt-1 text-xs font-bold text-slate-600">
+                                                Track all session dates, timings, lab venues, handled instructors, mini projects, and reporting instructions.
+                                            </p>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => downloadAllIcsFile(profile.sessionTimeline || [])}
-                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
-                                        >
-                                            📅 Sync All Sessions to Calendar (.ics)
-                                        </button>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => downloadAllIcsFile(profile.sessionTimeline || [], profile.candidate.packageName || 'Team Asterix Workshop')}
+                                                className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-4 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
+                                            >
+                                                📅 Sync All Sessions to Google Calendar (.ics)
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        {profile.resources.map((item, idx) => (
-                                            <div key={item.id || idx} className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/60 p-5">
-                                                <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
-                                                    {item.track?.toUpperCase()} RESOURCE
-                                                </span>
-                                                <h4 className="mt-2 text-lg font-black uppercase text-slate-900">{item.title}</h4>
-                                                {item.description && (
-                                                    <p className="mt-1 text-xs font-bold text-slate-700 leading-relaxed">
-                                                        {item.description}
-                                                    </p>
-                                                )}
-
-                                                <div className="mt-4 space-y-2 border-t-2 border-slate-300 pt-3">
-                                                    {item.resources?.map((res, i) => (
-                                                        <a
-                                                            key={i}
-                                                            href={res.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-white px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
-                                                        >
-                                                            <span>{res.label}</span>
-                                                            <span>{res.type === 'pdf' ? '📄 PDF' : res.type === 'code' ? '💻 Code' : '↗ Open'}</span>
-                                                        </a>
-                                                    ))}
+                                    {/* Track Guideline / Venue & Timing Cards */}
+                                    {profile.candidate.tracksEnrolled?.map((tId) => {
+                                        const trkInfo = (profile.trackInfo && profile.trackInfo[tId]) || WORKSHOP_TRACKS[tId];
+                                        if (!trkInfo) return null;
+                                        return (
+                                            <div key={tId} className="border-3 border-slate-900 bg-amber-50/70 p-5 shadow-brutal-4">
+                                                <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-900 pb-3">
+                                                    <span className="border border-slate-900 bg-slate-900 px-2.5 py-1 font-mono text-xs font-black text-amber-300 uppercase">
+                                                        ⚡ {trkInfo.name.toUpperCase()} TRACK TIMETABLE
+                                                    </span>
+                                                    <span className="font-mono text-xs font-bold text-slate-800">
+                                                        {trkInfo.dates}
+                                                    </span>
                                                 </div>
+
+                                                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 font-mono text-xs">
+                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase">📅 CLASS DAYS</span>
+                                                        <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.days}</strong>
+                                                    </div>
+                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase">🕒 SESSION TIMINGS</span>
+                                                        <strong className="block mt-0.5 font-black text-sky-900">{trkInfo.timing}</strong>
+                                                    </div>
+                                                    <div className="border-2 border-slate-900 bg-white p-3 shadow-brutal-2">
+                                                        <span className="text-[10px] font-black text-slate-500 uppercase">📍 LAB VENUE</span>
+                                                        <strong className="block mt-0.5 font-black text-slate-900">{trkInfo.venue}</strong>
+                                                    </div>
+                                                </div>
+
+                                                {trkInfo.reportingInstructions && (
+                                                    <div className="mt-4 border-2 border-slate-900 bg-amber-200 p-3 font-mono text-xs shadow-brutal-2">
+                                                        <strong className="block font-black text-slate-950 uppercase">🚨 REPORTING &amp; LAB GUIDELINES:</strong>
+                                                        <span className="mt-0.5 block font-bold text-slate-900">{trkInfo.reportingInstructions}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        ))}
+                                        );
+                                    })}
+
+                                    {/* Search & Filter Toolbar */}
+                                    <div className="flex flex-col gap-3 border-t-4 border-slate-900 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                                        {/* Filter Pills */}
+                                        <div className="flex flex-wrap gap-1.5 font-mono text-xs font-black uppercase">
+                                            {[
+                                                { id: 'all', label: 'All Sessions' },
+                                                { id: 'lecture', label: 'Core Lectures' },
+                                                { id: 'handson', label: 'Hands-on Labs' },
+                                                { id: 'expert', label: 'Industry Experts' },
+                                                { id: 'catchup', label: 'Catch-up' }
+                                            ].map((f) => (
+                                                <button
+                                                    key={f.id}
+                                                    type="button"
+                                                    onClick={() => setTimetableFilter(f.id)}
+                                                    className={`border-2 border-slate-900 px-3 py-1.5 transition-all ${
+                                                        timetableFilter === f.id
+                                                            ? 'bg-amber-300 text-slate-950 shadow-brutal-2'
+                                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                    }`}
+                                                >
+                                                    {f.label}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Search Input */}
+                                        <div className="w-full sm:w-72">
+                                            <input
+                                                type="text"
+                                                value={timetableSearch}
+                                                onChange={(e) => setTimetableSearch(e.target.value)}
+                                                placeholder="🔍 Search sessions, topics, venue..."
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Session Timetable Grid */}
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {profile.sessionTimeline
+                                            .filter((item) => {
+                                                if (timetableFilter !== 'all' && item.type !== timetableFilter) return false;
+                                                if (!timetableSearch.trim()) return true;
+                                                const q = timetableSearch.toLowerCase();
+                                                return (
+                                                    item.title?.toLowerCase().includes(q) ||
+                                                    item.instructor?.toLowerCase().includes(q) ||
+                                                    item.venue?.toLowerCase().includes(q) ||
+                                                    item.label?.toLowerCase().includes(q) ||
+                                                    item.project?.toLowerCase().includes(q)
+                                                );
+                                            })
+                                            .map((session) => {
+                                                const gCalUrl = getGoogleCalendarUrl({
+                                                    title: `${session.label}: ${session.title}`,
+                                                    description: `Handled by: ${session.instructor}. Venue: ${session.venue}. Milestone: ${session.project || 'Workshop Session'}`,
+                                                    location: session.venue,
+                                                    date: session.date,
+                                                    timing: '5:10 PM – 6:50 PM'
+                                                });
+
+                                                return (
+                                                    <div key={session.id} className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-4 flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900/20 pb-2">
+                                                                <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                                    {session.label}
+                                                                </span>
+                                                                <span className="font-mono text-xs font-black text-slate-800">
+                                                                    {session.date} ({session.days})
+                                                                </span>
+                                                            </div>
+
+                                                            <h4 className="mt-3 text-base font-black uppercase text-slate-900">{session.title}</h4>
+
+                                                            <div className="mt-2 space-y-1 font-mono text-xs font-bold text-slate-600">
+                                                                <div>👤 <strong>Instructor:</strong> {session.instructor}</div>
+                                                                <div>📍 <strong>Venue:</strong> {session.venue}</div>
+                                                                {session.project && (
+                                                                    <div className="text-amber-900">🚀 <strong>Milestone:</strong> {session.project}</div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-4 pt-3 border-t-2 border-slate-900/20 flex items-center justify-between gap-2">
+                                                            <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
+                                                                session.status === 'PRESENT'
+                                                                    ? 'bg-emerald-400 text-slate-950'
+                                                                    : session.status === 'ABSENT'
+                                                                    ? 'bg-rose-500 text-white'
+                                                                    : 'bg-sky-200 text-sky-950'
+                                                            }`}>
+                                                                {session.status === 'PRESENT' ? '✅ Verified Present' : session.status === 'ABSENT' ? '❌ Missed' : '🕒 Upcoming'}
+                                                            </span>
+
+                                                            <a
+                                                                href={gCalUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="press shadow-brutal-2 border-2 border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-amber-300 no-underline"
+                                                            >
+                                                                📅 Add to Cal
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB 3: Notes, Slides & Study Materials */}
+                            {activeTab === 'notes' && (
+                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8 space-y-6">
+                                    <div className="flex flex-col justify-between gap-4 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
+                                        <div>
+                                            <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                                                Official Lecture Slides, Colab Notebooks, LTspice Models &amp; Repos
+                                            </span>
+                                            <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
+                                                Workshop Notes &amp; Study Materials
+                                            </h3>
+                                            <p className="mt-1 text-xs font-bold text-slate-600">
+                                                Access all class notes, presentation slides, Jupyter notebooks, circuit simulation files, and code repositories to help you cope up and excel.
+                                            </p>
+                                        </div>
+                                        <a
+                                            href="https://github.com/Team-Asterix264016"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase text-amber-300 hover:bg-slate-800 no-underline"
+                                        >
+                                            💻 Team Asterix GitHub Vault ↗
+                                        </a>
+                                    </div>
+
+                                    {/* Search & Filter Controls */}
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                        {/* Module Filters */}
+                                        <div className="flex flex-wrap gap-1.5 font-mono text-xs font-black uppercase">
+                                            {[
+                                                { id: 'all', label: 'All Topics' },
+                                                { id: 'Syllabus & Guides', label: 'Syllabus' },
+                                                { id: 'System Design', label: 'System Design' },
+                                                { id: 'Computer Vision', label: 'Computer Vision' },
+                                                { id: 'Machine Learning', label: 'Machine Learning' },
+                                                { id: 'ROS 2 & Agentic AI', label: 'ROS 2 & AI' },
+                                                { id: 'Circuit Analysis', label: 'Circuit Analysis' },
+                                                { id: 'ESP32 & Microcontrollers', label: 'ESP32' },
+                                                { id: 'Analog Circuits & Power', label: 'Analog & Power' },
+                                                { id: 'Electric Motors', label: 'Motors' },
+                                                { id: 'PCB Design', label: 'PCB Design' }
+                                            ].map((m) => (
+                                                <button
+                                                    key={m.id}
+                                                    type="button"
+                                                    onClick={() => setNotesModuleFilter(m.id)}
+                                                    className={`border-2 border-slate-900 px-3 py-1 transition-all ${
+                                                        notesModuleFilter === m.id
+                                                            ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
+                                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                                    }`}
+                                                >
+                                                    {m.label}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Search Bar */}
+                                        <div className="w-full sm:w-72">
+                                            <input
+                                                type="text"
+                                                value={notesSearch}
+                                                onChange={(e) => setNotesSearch(e.target.value)}
+                                                placeholder="🔍 Search notes by keyword..."
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Resources Grid */}
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        {profile.resources
+                                            .filter((item) => {
+                                                if (notesModuleFilter !== 'all' && item.module !== notesModuleFilter) return false;
+                                                if (!notesSearch.trim()) return true;
+                                                const q = notesSearch.toLowerCase();
+                                                return (
+                                                    item.title?.toLowerCase().includes(q) ||
+                                                    item.description?.toLowerCase().includes(q) ||
+                                                    item.module?.toLowerCase().includes(q) ||
+                                                    item.track?.toLowerCase().includes(q)
+                                                );
+                                            })
+                                            .map((item, idx) => (
+                                                <div key={item.id || idx} className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/60 p-5 flex flex-col justify-between">
+                                                    <div>
+                                                        <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
+                                                            <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                                {item.track?.toUpperCase()} RESOURCE
+                                                            </span>
+                                                            {item.module && (
+                                                                <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
+                                                                    {item.module}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <h4 className="mt-3 text-lg font-black uppercase text-slate-900">{item.title}</h4>
+                                                        {item.description && (
+                                                            <p className="mt-1 text-xs font-bold text-slate-700 leading-relaxed">
+                                                                {item.description}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="mt-4 space-y-2 border-t-2 border-slate-300 pt-3">
+                                                        {item.resources?.map((res, i) => (
+                                                            <a
+                                                                key={i}
+                                                                href={res.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-white px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                                                            >
+                                                                <span>{res.label}</span>
+                                                                <span>
+                                                                    {res.type === 'pdf'
+                                                                        ? '📄 PDF Slides'
+                                                                        : res.type === 'colab'
+                                                                        ? '🌐 Colab'
+                                                                        : res.type === 'code'
+                                                                        ? '💻 Code Repo'
+                                                                        : '↗ Open'}
+                                                                </span>
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
                                     </div>
                                 </div>
                             )}
