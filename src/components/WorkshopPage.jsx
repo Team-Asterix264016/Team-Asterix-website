@@ -851,33 +851,6 @@ export default function WorkshopPage({ onBack }) {
                             Team Asterix engineering subsystems.
                         </p>
 
-                        {/* Dual Subsystem Pill Cards */}
-                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div className="shadow-brutal-4 border-3 border-slate-900 bg-white p-4">
-                                <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
-                                    SUBSYSTEM 01
-                                </span>
-                                <h3 className="mt-1 text-xl font-black text-slate-900 uppercase">
-                                    Software &amp; Perception
-                                </h3>
-                                <p className="mt-1 text-xs font-bold text-slate-600">
-                                    ROS 2 • Computer Vision • OpenCV • Machine Learning • Agentic AI
-                                </p>
-                            </div>
-
-                            <div className="shadow-brutal-4 border-3 border-slate-900 bg-white p-4">
-                                <span className="font-mono text-[10px] font-black tracking-widest text-amber-700 uppercase">
-                                    SUBSYSTEM 02
-                                </span>
-                                <h3 className="mt-1 text-xl font-black text-slate-900 uppercase">
-                                    Electronics &amp; Powertrain
-                                </h3>
-                                <p className="mt-1 text-xs font-bold text-slate-600">
-                                    Circuits • LTspice • ESP32 • Buck/Boost • Motor Drivers • KiCad PCB
-                                </p>
-                            </div>
-                        </div>
-
                         {/* Quick CTA Actions */}
                         <div className="mt-8 flex flex-wrap gap-3">
                             <button
@@ -1630,6 +1603,7 @@ export default function WorkshopPage({ onBack }) {
 }
 
 function TrackDetail({ track, onPreviewSyllabus }) {
+    const [activeFilter, setActiveFilter] = useState('all');
     const isSoftware = track.id === 'software';
 
     const hasSyllabus = Boolean(track.syllabus);
@@ -1641,7 +1615,7 @@ function TrackDetail({ track, onPreviewSyllabus }) {
     // Subsystem specific tool guides
     const toolGuides = isSoftware
         ? [
-              { name: 'ROS 2 Humble / Ubuntu 22.04', desc: 'Core robotics framework & node setup guide', link: 'https://docs.ros.org/en/humble/' },
+              { name: 'ROS 2 Humble / Ubuntu 24.04', desc: 'Core robotics framework & node setup guide', link: 'https://docs.ros.org/en/humble/' },
               { name: 'OpenCV & Python Setup', desc: 'Computer vision & image processing environment', link: 'https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html' },
               { name: 'PyTorch / ML Stack', desc: 'Machine learning fundamentals for perception', link: 'https://pytorch.org/get-started/locally/' },
               { name: 'Agentic AI & LLM Tools', desc: 'Building autonomous decision-making agents', link: 'https://github.com/' }
@@ -1653,12 +1627,50 @@ function TrackDetail({ track, onPreviewSyllabus }) {
               { name: 'KiCad EDA PCB Design', desc: 'Schematic capture and multi-layer PCB layout', link: 'https://www.kicad.org/' }
           ];
 
+    const allSchedule = track.schedule || [];
+    const filteredSchedule = useMemo(() => {
+        if (activeFilter === 'lecture') return allSchedule.filter((s) => s.type === 'lecture');
+        if (activeFilter === 'handson') return allSchedule.filter((s) => s.type === 'handson');
+        if (activeFilter === 'expert') return allSchedule.filter((s) => s.type === 'expert');
+        if (activeFilter === 'bonus') return allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type));
+        return allSchedule;
+    }, [allSchedule, activeFilter]);
+
+    const counts = useMemo(() => ({
+        all: allSchedule.length,
+        lecture: allSchedule.filter((s) => s.type === 'lecture').length,
+        handson: allSchedule.filter((s) => s.type === 'handson').length,
+        expert: allSchedule.filter((s) => s.type === 'expert').length,
+        bonus: allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type)).length
+    }), [allSchedule]);
+
+    const renderTypeBadge = (type) => {
+        switch (type) {
+            case 'lecture':
+                return <span className="border border-slate-900 bg-indigo-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">📖 Core Talk</span>;
+            case 'handson':
+                return <span className="border border-slate-900 bg-emerald-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">💻 Hands-on Lab</span>;
+            case 'expert':
+                return <span className="border border-slate-900 bg-purple-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">🎓 Expert Session</span>;
+            case 'online':
+                return <span className="border border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🌐 Pre-Workshop</span>;
+            case 'catchup':
+                return <span className="border border-slate-900 bg-amber-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🔄 Weekly Catch-up</span>;
+            case 'complimentary':
+                return <span className="border border-slate-900 bg-teal-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🎁 Complimentary</span>;
+            case 'holiday':
+                return <span className="border border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">🌴 Holiday</span>;
+            default:
+                return null;
+        }
+    };
+
     return (
         <article
             className="shadow-brutal-8 anim-pop mt-8 border-4 border-slate-900 bg-white p-5 sm:p-8"
             role="tabpanel"
         >
-            {/* Header */}
+            {/* Header & Quick Navigation Bar */}
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                 <div>
                     <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase sm:text-xs">
@@ -1671,10 +1683,27 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                     <span className="border-2 border-slate-900 bg-emerald-400 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase shadow-brutal-2">
-                        RECORD DECK LIVE
+                        OFFICIAL SYLLABUS LIVE
                     </span>
                 </div>
             </div>
+
+            {/* Quick Navigation Jump Anchors */}
+            <nav aria-label="Deck section navigation" className="mt-4 flex flex-wrap items-center gap-2 border-y-2 border-slate-900 py-3">
+                <span className="font-mono text-xs font-black text-slate-500 uppercase">Quick Jump:</span>
+                <a href="#topics-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                    Topics ↓
+                </a>
+                <a href="#timetable-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-400">
+                    Timetable ({allSchedule.length}) ↓
+                </a>
+                <a href="#resources-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                    Tools &amp; Resources ↓
+                </a>
+                <a href="#safety-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                    Lab Rules ↓
+                </a>
+            </nav>
 
             <p className="mt-4 max-w-4xl text-sm leading-relaxed font-bold text-slate-700 sm:text-base">
                 {track.overview}
@@ -1701,7 +1730,7 @@ function TrackDetail({ track, onPreviewSyllabus }) {
             </dl>
 
             {/* Topics Covered */}
-            <div className="mt-8">
+            <div id="topics-section" className="mt-8">
                 <h4 className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                     01 / Core Curriculum Topics
                 </h4>
@@ -1723,16 +1752,16 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                 </div>
             </div>
 
-            {/* Interactive Session Schedule & One-Click Calendar Integration */}
-            {track.schedule && track.schedule.length > 0 && (
-                <div className="mt-10 border-t-4 border-slate-900 pt-8">
+            {/* Interactive Session Schedule & Filter Tabs */}
+            {allSchedule.length > 0 && (
+                <div id="timetable-section" className="mt-10 border-t-4 border-slate-900 pt-8">
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                         <div>
                             <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                02 / Subsystem Masterclass Timeline &amp; Calendar
+                                02 / Subsystem Masterclass Timeline &amp; Interactive Timetable
                             </span>
                             <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
-                                Session Schedule &amp; Calendar Export
+                                Session Schedule ({filteredSchedule.length} of {allSchedule.length})
                             </h4>
                         </div>
                         <span className="inline-block border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black uppercase shadow-brutal-2">
@@ -1740,8 +1769,70 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                         </span>
                     </div>
 
+                    {/* Timeline Category Filters */}
+                    <div className="mt-5 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setActiveFilter('all')}
+                            className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                activeFilter === 'all'
+                                    ? 'bg-slate-900 text-amber-300 shadow-brutal-2'
+                                    : 'bg-white text-slate-900 hover:bg-amber-100'
+                            }`}
+                        >
+                            All ({counts.all})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveFilter('lecture')}
+                            className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                activeFilter === 'lecture'
+                                    ? 'bg-indigo-600 text-white shadow-brutal-2'
+                                    : 'bg-indigo-50 text-indigo-950 hover:bg-indigo-100'
+                            }`}
+                        >
+                            📖 Core Talks ({counts.lecture})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveFilter('handson')}
+                            className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                activeFilter === 'handson'
+                                    ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
+                                    : 'bg-emerald-50 text-emerald-950 hover:bg-emerald-100'
+                            }`}
+                        >
+                            💻 Hands-on Labs ({counts.handson})
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveFilter('expert')}
+                            className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                activeFilter === 'expert'
+                                    ? 'bg-purple-600 text-white shadow-brutal-2'
+                                    : 'bg-purple-50 text-purple-950 hover:bg-purple-100'
+                            }`}
+                        >
+                            🎓 Industry Experts ({counts.expert})
+                        </button>
+                        {counts.bonus > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setActiveFilter('bonus')}
+                                className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                    activeFilter === 'bonus'
+                                        ? 'bg-amber-400 text-slate-950 shadow-brutal-2'
+                                        : 'bg-amber-50 text-amber-950 hover:bg-amber-100'
+                                }`}
+                            >
+                                🔄 Bonus &amp; Catch-ups ({counts.bonus})
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Timeline List */}
                     <div className="mt-6 space-y-4">
-                        {track.schedule.map((item) => {
+                        {filteredSchedule.map((item) => {
                             const googleCalUrl = getGoogleCalendarUrl({
                                 title: `${track.name} - ${item.title}`,
                                 description: item.reportingInstructions || track.overview,
@@ -1753,10 +1844,18 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                             return (
                                 <div
                                     key={item.id}
-                                    className="border-3 border-slate-900 bg-sky-50/60 p-4 shadow-brutal-4 transition-all hover:bg-sky-50"
+                                    className={`border-3 border-slate-900 p-4 shadow-brutal-4 transition-all ${
+                                        item.type === 'handson'
+                                            ? 'bg-emerald-50/70 hover:bg-emerald-50'
+                                            : item.type === 'expert'
+                                            ? 'bg-purple-50/70 hover:bg-purple-50'
+                                            : item.type === 'holiday'
+                                            ? 'bg-rose-50/70 opacity-75'
+                                            : 'bg-sky-50/60 hover:bg-sky-50'
+                                    }`}
                                 >
                                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5 min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
                                                     {item.label}
@@ -1764,48 +1863,75 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                                                 <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase">
                                                     {item.days} ({item.date})
                                                 </span>
-                                                <span className="font-mono text-[10px] font-bold text-slate-600">
-                                                    📍 {item.venue}
-                                                </span>
+                                                {renderTypeBadge(item.type)}
+                                                {item.subject && (
+                                                    <span className="border border-slate-900 bg-slate-200 px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase">
+                                                        📚 {item.subject}
+                                                    </span>
+                                                )}
                                             </div>
-                                            <h5 className="text-lg font-black uppercase text-slate-900">
+                                            <h5 className="text-base font-black uppercase text-slate-900 sm:text-lg">
                                                 {item.title}
                                             </h5>
+
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 font-mono text-xs font-bold text-slate-700">
+                                                {item.instructor && item.instructor !== '-' && (
+                                                    <span className="flex items-center gap-1 text-slate-900">
+                                                        <span>👤 Handled by:</span>
+                                                        <strong className="font-black text-sky-800">{item.instructor}</strong>
+                                                    </span>
+                                                )}
+                                                {item.venue && item.venue !== '-' && (
+                                                    <span className="flex items-center gap-1 text-slate-700">
+                                                        <span>📍 Venue:</span>
+                                                        <strong>{item.venue}</strong>
+                                                    </span>
+                                                )}
+                                                {item.project && (
+                                                    <span className="flex items-center gap-1 text-emerald-800">
+                                                        <span>🚀 Milestone:</span>
+                                                        <strong className="font-black">{item.project}</strong>
+                                                    </span>
+                                                )}
+                                            </div>
+
                                             {item.reportingInstructions && (
-                                                <p className="text-xs font-bold text-slate-700">
+                                                <p className="text-xs font-bold text-slate-700 pt-0.5">
                                                     ℹ️ {item.reportingInstructions}
                                                 </p>
                                             )}
                                         </div>
 
                                         {/* Calendar Buttons */}
-                                        <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                            <a
-                                                href={googleCalUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="press shadow-brutal-2-brand inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
-                                            >
-                                                <span>Google Cal</span>
-                                                <span>📅</span>
-                                            </a>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    downloadIcsFile({
-                                                        title: `${track.name} - ${item.title}`,
-                                                        description: item.reportingInstructions || track.overview,
-                                                        location: item.venue || track.venue,
-                                                        date: item.date,
-                                                        timing: track.timing
-                                                    })
-                                                }
-                                                className="press shadow-brutal-2 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-3 py-1.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
-                                            >
-                                                <span>Download .ICS</span>
-                                                <span>📥</span>
-                                            </button>
-                                        </div>
+                                        {item.type !== 'holiday' && (
+                                            <div className="flex shrink-0 flex-wrap items-center gap-2 pt-2 md:pt-0">
+                                                <a
+                                                    href={googleCalUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="press shadow-brutal-2-brand inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                                                >
+                                                    <span>Google Cal</span>
+                                                    <span>📅</span>
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        downloadIcsFile({
+                                                            title: `${track.name} - ${item.title}`,
+                                                            description: item.reportingInstructions || track.overview,
+                                                            location: item.venue || track.venue,
+                                                            date: item.date,
+                                                            timing: track.timing
+                                                        })
+                                                    }
+                                                    className="press shadow-brutal-2 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-3 py-1.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
+                                                >
+                                                    <span>Download .ICS</span>
+                                                    <span>📥</span>
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -1815,7 +1941,7 @@ function TrackDetail({ track, onPreviewSyllabus }) {
             )}
 
             {/* Resource Library & Handouts */}
-            <div className="mt-10 border-t-4 border-slate-900 pt-8">
+            <div id="resources-section" className="mt-10 border-t-4 border-slate-900 pt-8">
                 <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                     03 / Subsystem Software &amp; Tool Setup Guides
                 </span>
@@ -1877,7 +2003,7 @@ function TrackDetail({ track, onPreviewSyllabus }) {
             </div>
 
             {/* Lab Noticeboard & Guidelines */}
-            <div className="mt-10 border-t-4 border-slate-900 pt-8">
+            <div id="safety-section" className="mt-10 border-t-4 border-slate-900 pt-8">
                 <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                     04 / Lab Guidelines &amp; Venue Directions
                 </span>

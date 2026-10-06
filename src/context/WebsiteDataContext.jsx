@@ -465,44 +465,14 @@ const normalizeWorkshop = (ws) => {
         const canonical = WORKSHOP_TRACKS[key];
         const incoming = tracksSource[key] || {};
 
-        // Reconcile schedule: Ensure Week 0 is present for both software and powertrain,
-        // and migrate legacy date ranges/stale strings to canonical dates.
         let reconciledSchedule = canonical.schedule;
-        if (Array.isArray(incoming.schedule) && incoming.schedule.length > 0) {
-            const validIncoming = incoming.schedule.filter(
-                (s) =>
-                    !STALE_WORKSHOP_REMOVED_IDS.includes(s?.id) &&
-                    s?.label !== 'Bonus III' &&
-                    s?.label !== 'Bonus IV'
-            );
-            const hasWeek0 = validIncoming.some(
-                (s) =>
-                    s?.id === `sch-${key === 'software' ? 'sw' : 'pt'}-0` ||
-                    s?.label?.trim().toLowerCase() === 'week 0'
-            );
-            if (hasWeek0) {
-                reconciledSchedule = validIncoming.map((item, idx) => {
-                    const isStale = STALE_WORKSHOP_ITEM_DATES.includes(item?.date?.trim());
-                    const canMatch = canonical.schedule.find(
-                        (c) => c.id === item?.id || c.label === item?.label
-                    );
-                    return {
-                        id: item?.id || canMatch?.id || `sch-${key}-${idx}`,
-                        label: item?.label || canMatch?.label || `Week ${idx}`,
-                        days: item?.days || canMatch?.days || '',
-                        date: isStale && canMatch ? canMatch.date : item?.date || canMatch?.date || '',
-                        title: item?.title || canMatch?.title || '',
-                        venue: item?.venue !== undefined ? item.venue : canMatch?.venue || 'To be announced',
-                        reportingInstructions:
-                            item?.reportingInstructions !== undefined
-                                ? item.reportingInstructions
-                                : canMatch?.reportingInstructions ||
-                                  'Arrive 10 minutes prior to session timing.'
-                    };
-                });
-            } else {
-                // Incoming cache is from pre-Week 0 schema -> load canonical schedule with Week 0
-                reconciledSchedule = canonical.schedule;
+        if (Array.isArray(incoming.schedule) && incoming.schedule.length === canonical.schedule.length) {
+            const allMatch = canonical.schedule.every((cItem, i) => incoming.schedule[i]?.id === cItem.id);
+            if (allMatch) {
+                reconciledSchedule = incoming.schedule.map((item, idx) => ({
+                    ...canonical.schedule[idx],
+                    ...item
+                }));
             }
         }
 
@@ -510,27 +480,18 @@ const normalizeWorkshop = (ws) => {
             ...canonical,
             ...incoming,
             id: canonical.id,
-            name: incoming.name || canonical.name,
-            syllabus: incoming.syllabus || canonical.syllabus,
-            timing: incoming.timing || canonical.timing,
-            dates:
-                incoming.dates && !STALE_WORKSHOP_DATES.includes(incoming.dates.trim())
-                    ? incoming.dates
-                    : canonical.dates,
-            days: incoming.days || canonical.days,
-            startLabel:
-                incoming.startLabel && !STALE_WORKSHOP_START_LABELS.includes(incoming.startLabel.trim())
-                    ? incoming.startLabel
-                    : canonical.startLabel,
-            format: incoming.format || canonical.format,
-            audience: incoming.audience || canonical.audience,
-            venue: incoming.venue !== undefined ? incoming.venue : canonical.venue || '',
-            reportingInstructions:
-                incoming.reportingInstructions !== undefined
-                    ? incoming.reportingInstructions
-                    : canonical.reportingInstructions || '',
+            name: canonical.name,
+            syllabus: canonical.syllabus,
+            timing: canonical.timing,
+            dates: canonical.dates,
+            days: canonical.days,
+            startLabel: canonical.startLabel,
+            format: canonical.format,
+            audience: canonical.audience,
+            venue: canonical.venue,
+            reportingInstructions: canonical.reportingInstructions,
             bonus: canonical.bonus,
-            ongoingWeek: incoming.ongoingWeek || canonical.ongoingWeek || 'Week 0',
+            ongoingWeek: canonical.ongoingWeek,
             startDate: canonical.startDate,
             schedule: reconciledSchedule
         };
