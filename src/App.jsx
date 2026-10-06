@@ -80,10 +80,11 @@ function MainApp() {
             }
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
-            setIsWorkshopPage(hash === '#workshop');
+            setIsWorkshopPage(false);
             setIsProfilePage(
                 hash === '#workshop-profile' ||
                 hash === '#profile' ||
+                hash === '#workshop' ||
                 window.location.pathname.startsWith('/workshop/profile')
             );
             setIsCommunityPage(hash === '#community');
@@ -205,14 +206,9 @@ function MainApp() {
     };
 
     const handleOpenWorkshop = () => {
-        const token = localStorage.getItem('workshop_jwt');
-        if (!token) {
-            setLoginModalOpen(true);
-            return;
-        }
         closeAll();
-        setIsWorkshopPage(true);
-        window.location.hash = '#workshop';
+        setIsProfilePage(true);
+        window.location.hash = '#workshop-profile';
         scrollToTop();
     };
 
