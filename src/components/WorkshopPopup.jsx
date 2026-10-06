@@ -85,14 +85,8 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                     <span className="shadow-brutal-1 inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black tracking-wider text-amber-300 uppercase">
                         ✦ WORKSHOPS 2026
                     </span>
-                    <span
-                        className={`inline-block rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
-                            state.isPaused
-                                ? 'border-amber-700 bg-amber-100 font-black text-amber-950'
-                                : 'border-rose-700 bg-rose-50 text-rose-700'
-                        }`}
-                    >
-                        {badgeText}
+                    <span className="inline-block rounded-md border border-emerald-700 bg-emerald-100 px-1.5 py-0.5 font-mono text-[9px] font-black text-emerald-950 uppercase">
+                        DECK ACTIVE
                     </span>
                 </div>
 
@@ -100,21 +94,21 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                     id="workshop-popup-title"
                     className="pr-5 text-sm leading-snug font-black text-slate-900 uppercase transition-colors group-hover:text-sky-950 sm:text-base"
                 >
-                    Engineering Workshops
+                    Subsystem Info Deck
                 </h2>
 
                 <p className="mt-1 text-[11px] leading-tight font-bold text-slate-800">
-                    Software & Perception · Electronics & Powertrain
+                    Registration Closed • Participant Locker & Subsystem Deck Live
                 </p>
 
                 <div className="mt-2.5 flex items-center justify-between border-t border-slate-900/20 pt-2">
-                    <span className="font-mono text-[10px] font-bold text-slate-700">Starts 29 Sep</span>
+                    <span className="font-mono text-[10px] font-bold text-slate-700">Both Subsystems</span>
                     <button
                         type="button"
                         onClick={onOpenWorkshop}
                         className="press shadow-brutal-2-brand flex cursor-pointer items-center gap-1 rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-sky-100"
                     >
-                        <span>View Details</span>
+                        <span>Open Deck</span>
                         <span aria-hidden="true">↗</span>
                     </button>
                 </div>
