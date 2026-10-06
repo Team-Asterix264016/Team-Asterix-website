@@ -2,22 +2,9 @@
  * Builds one combined .ics calendar file for Team Asterix workshop sessions.
  */
 
-const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+import { parseSessionDate, trackYear } from '../../server/src/config/sessionDates.js';
+
 const IST_OFFSET_MINUTES = 5 * 60 + 30;
-
-/* Session dates are written like "13 Oct" with the year implied by the track's startDate;
-   ISO "2026-10-13" is accepted too. Returns null when the date can't be read. */
-function parseSessionDate(dateStr, fallbackYear) {
-    const text = String(dateStr || '').trim();
-    const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-    if (iso) return { year: +iso[1], month: +iso[2] - 1, day: +iso[3] };
-
-    const short = text.match(/^(\d{1,2})\s+([a-z]{3})[a-z]*\.?(?:\s+(\d{4}))?$/i);
-    if (!short) return null;
-    const month = MONTHS.indexOf(short[2].toLowerCase());
-    if (month === -1) return null;
-    return { year: short[3] ? +short[3] : fallbackYear, month, day: +short[1] };
-}
 
 function extractClockTimes(text) {
     return [...String(text || '').matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi)].slice(0, 2).map((m) => {
@@ -108,8 +95,7 @@ export function downloadAllIcsFile(items, calendarName = 'Team Asterix Workshop'
     (items || []).forEach((item, index) => {
         if (item.type === 'holiday') return;
         const track = tracksById[item.track] || {};
-        const fallbackYear = parseInt(String(track.startDate || '').slice(0, 4), 10) || new Date().getFullYear();
-        const date = parseSessionDate(item.date, fallbackYear);
+        const date = parseSessionDate(item.date, trackYear(track));
         if (!date) return;
 
         const minutes = resolveSessionMinutes(item, track);

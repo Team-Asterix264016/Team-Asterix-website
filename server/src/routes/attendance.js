@@ -4,7 +4,9 @@ import mongoose from 'mongoose';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopResource from '../models/WorkshopResource.js';
+import SiteConfig from '../models/SiteConfig.js';
 import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
+import { sessionIsoDate } from '../config/sessionDates.js';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -528,44 +530,51 @@ router.post('/profile', async (req, res) => {
             ? candidate.tracksEnrolled
             : (candidate.package === 'combo' ? ['software', 'powertrain'] : [candidate.package || 'software']);
 
-        // Fetch attendance records
-        const attendanceRecords = await WorkshopAttendance.find({
-            rollNo: candidate.rollNo
-        }).lean();
-
-        const attendanceMap = new Map();
-        attendanceRecords.forEach((att) => {
-            if (att.sessionId) attendanceMap.set(att.sessionId, att);
+        // The schedule admins edit in Workshop Schedule lives in SiteConfig; the config file is the fallback.
+        const siteConfig = await SiteConfig.findOne({ key: 'main' }, { workshop: 1 }).lean();
+        const editedTracks = siteConfig?.workshop?.tracks || {};
+        const tracks = {};
+        tracksEnrolled.forEach((trackId) => {
+            if (WORKSHOP_TRACKS[trackId]) tracks[trackId] = { ...WORKSHOP_TRACKS[trackId], ...editedTracks[trackId] };
         });
 
-        // Date helper (IST reference)
-        const todayStr = '2026-10-06';
+        // Check-ins are keyed by the date the admin opened the QR session for, not by schedule id,
+        // so sessions are matched on track + date. A session counts as conducted once anyone has
+        // checked in to it; only then can a participant be marked as having missed it.
+        const [attendanceRecords, conductedSessions] = await Promise.all([
+            WorkshopAttendance.find({ rollNo: candidate.rollNo }).lean(),
+            WorkshopAttendance.aggregate([
+                { $match: { track: { $in: tracksEnrolled } } },
+                { $group: { _id: { track: '$track', date: '$sessionDate' } } }
+            ])
+        ]);
+        const attendanceByDate = new Map(attendanceRecords.map((att) => [`${att.track}|${att.sessionDate}`, att]));
+        const conductedDates = new Set(conductedSessions.map(({ _id }) => `${_id.track}|${_id.date}`));
 
         // Build session timeline for enrolled track(s)
         const sessionTimeline = [];
         let totalConducted = 0;
         let totalPresent = 0;
 
-        tracksEnrolled.forEach((trackId) => {
-            const trackConfig = WORKSHOP_TRACKS[trackId];
-            if (!trackConfig || !Array.isArray(trackConfig.schedule)) return;
+        Object.entries(tracks).forEach(([trackId, trackConfig]) => {
+            if (!Array.isArray(trackConfig.schedule)) return;
 
             trackConfig.schedule.forEach((sessionItem) => {
-                const att = attendanceMap.get(sessionItem.id);
+                const dateKey = `${trackId}|${sessionIsoDate(sessionItem.date, trackConfig)}`;
+                const att = attendanceByDate.get(dateKey);
                 const isHoliday = sessionItem.type === 'holiday';
 
                 let status = 'UPCOMING';
                 let checkedInAt = null;
 
-                if (att) {
+                if (!isHoliday && att) {
                     status = 'PRESENT';
                     checkedInAt = att.checkedInAt;
-                    if (!isHoliday) {
-                        totalPresent += 1;
-                        totalConducted += 1;
-                    }
-                } else if (!isHoliday) {
-                    status = 'UPCOMING';
+                    totalPresent += 1;
+                    totalConducted += 1;
+                } else if (!isHoliday && conductedDates.has(dateKey)) {
+                    status = 'ABSENT';
+                    totalConducted += 1;
                 }
 
                 sessionTimeline.push({
@@ -595,14 +604,6 @@ router.post('/profile', async (req, res) => {
             track: { $in: [...tracksEnrolled, 'common'] }
         }).sort({ sessionNumber: 1, createdAt: 1 }).lean();
 
-        const trackInfo = {};
-        tracksEnrolled.forEach((tId) => {
-            const trk = WORKSHOP_TRACKS[tId];
-            if (trk) {
-                trackInfo[tId] = trk;
-            }
-        });
-
         return res.json({
             ok: true,
             candidate: {
@@ -631,7 +632,7 @@ router.post('/profile', async (req, res) => {
                     : `⚠️ ${75 - attendancePercentage}% away from 75% certificate threshold`
             },
             sessionTimeline,
-            trackInfo,
+            trackInfo: tracks,
             resources
         });
     } catch (err) {
