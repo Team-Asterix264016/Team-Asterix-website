@@ -15,6 +15,7 @@ import CyberFooter from './components/CyberFooter';
 import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
 import WorkshopPopup from './components/WorkshopPopup';
+import WorkshopLoginModal from './components/WorkshopLoginModal';
 import { WebsiteDataProvider } from './context/WebsiteDataContext';
 
 const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
@@ -26,6 +27,7 @@ const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttend
 const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
 const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
 const CommunityPage = lazy(() => import('./components/CommunityPage'));
+const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -33,6 +35,12 @@ function MainApp() {
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
+    const [isProfilePage, setIsProfilePage] = useState(
+        () =>
+            window.location.hash === '#workshop-profile' ||
+            window.location.hash === '#profile' ||
+            window.location.pathname.startsWith('/workshop/profile')
+    );
     const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash === '#community');
     const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
         () => window.location.hash === '#workshop-project-submit'
@@ -46,6 +54,7 @@ function MainApp() {
         window.location.hash.startsWith('#attendance-projector')
     );
     const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [lenisInstance, setLenisInstance] = useState(null);
 
     const scrollToTop = () => {
@@ -71,6 +80,11 @@ function MainApp() {
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
             setIsWorkshopPage(hash === '#workshop');
+            setIsProfilePage(
+                hash === '#workshop-profile' ||
+                hash === '#profile' ||
+                window.location.pathname.startsWith('/workshop/profile')
+            );
             setIsCommunityPage(hash === '#community');
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
@@ -98,6 +112,7 @@ function MainApp() {
     }, [
         isSponsorPage,
         isWorkshopPage,
+        isProfilePage,
         isCommunityPage,
         isWorkshopProjectPage,
         isAttendancePage,
@@ -164,6 +179,7 @@ function MainApp() {
         setIsAdminOpen(false);
         setIsSponsorPage(false);
         setIsWorkshopPage(false);
+        setIsProfilePage(false);
         setIsCommunityPage(false);
         setIsWorkshopProjectPage(false);
     };
@@ -188,9 +204,21 @@ function MainApp() {
     };
 
     const handleOpenWorkshop = () => {
+        const token = localStorage.getItem('workshop_jwt');
+        if (!token) {
+            setLoginModalOpen(true);
+            return;
+        }
         closeAll();
         setIsWorkshopPage(true);
         window.location.hash = '#workshop';
+        scrollToTop();
+    };
+
+    const handleOpenProfile = () => {
+        closeAll();
+        setIsProfilePage(true);
+        window.location.hash = '#workshop-profile';
         scrollToTop();
     };
 
@@ -213,7 +241,7 @@ function MainApp() {
         const hash = window.location.hash;
         if (
             hash.startsWith('#admin') ||
-            ['#sponsor', '#workshop', '#community', '#workshop-project-submit', '#model'].includes(hash)
+            ['#sponsor', '#workshop', '#workshop-profile', '#profile', '#community', '#workshop-project-submit', '#model'].includes(hash)
         ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
@@ -234,6 +262,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <AdminDashboard onExit={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isProfilePage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <ParticipantProfilePage onBack={handleBackToHome} />
             </Suspense>
         );
     }
@@ -324,6 +360,7 @@ function MainApp() {
                     onOpenSponsor={handleOpenSponsor}
                     onOpenWorkshop={handleOpenWorkshop}
                     onOpenCommunity={handleOpenCommunity}
+                    onOpenProfile={handleOpenProfile}
                 />
 
                 {isModelPage ? (
@@ -386,6 +423,18 @@ function MainApp() {
                     onOpenWorkshop={handleOpenWorkshop}
                 />
             </div>
+
+            <WorkshopLoginModal
+                isOpen={loginModalOpen}
+                onClose={() => setLoginModalOpen(false)}
+                onSuccess={() => {
+                    setLoginModalOpen(false);
+                    closeAll();
+                    setIsWorkshopPage(true);
+                    window.location.hash = '#workshop';
+                    scrollToTop();
+                }}
+            />
         </div>
     );
 }

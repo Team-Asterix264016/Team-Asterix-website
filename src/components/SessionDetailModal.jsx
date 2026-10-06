@@ -1,0 +1,296 @@
+import { useState, useEffect } from 'react';
+import { apiUrl } from '../lib/api';
+
+export default function SessionDetailModal({ session, trackName, student, isOpen, onClose, onTakeQuiz }) {
+    const [attendanceStatus, setAttendanceStatus] = useState(null); // 'present' | 'absent' | 'upcoming' | null
+    const [checkInTime, setCheckInTime] = useState(null);
+    const [loadingAttendance, setLoadingAttendance] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !session || !student) {
+            setAttendanceStatus(null);
+            setCheckInTime(null);
+            return;
+        }
+
+        const fetchStudentAttendance = async () => {
+            setLoadingAttendance(true);
+            try {
+                const token = localStorage.getItem('workshop_jwt');
+                const res = await fetch(
+                    `${apiUrl}/api/workshop/student-status?rollNo=${encodeURIComponent(
+                        student.rollNo || ''
+                    )}&email=${encodeURIComponent(student.email || '')}`,
+                    {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {}
+                    }
+                );
+                const data = await res.json();
+                if (data.success && Array.isArray(data.attendance)) {
+                    // Check if candidate checked in for this session ID or session date
+                    const matched = data.attendance.find(
+                        (att) =>
+                            att.sessionId === session.id ||
+                            (att.sessionNumber && session.id && session.id.includes(`s${att.sessionNumber}`)) ||
+                            (att.sessionDate && session.date && session.date.includes(att.sessionDate))
+                    );
+
+                    if (matched) {
+                        setAttendanceStatus('present');
+                        setCheckInTime(matched.checkedInAt);
+                    } else {
+                        // Check if session date is in the past
+                        setAttendanceStatus('absent');
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching attendance status:', err);
+            } finally {
+                setLoadingAttendance(false);
+            }
+        };
+
+        fetchStudentAttendance();
+    }, [isOpen, session, student]);
+
+    if (!isOpen || !session) return null;
+
+    // Contact info lookup based on instructor
+    const getInstructorContacts = (instructorName) => {
+        const name = String(instructorName || '').toLowerCase();
+        if (name.includes('rithvin')) {
+            return {
+                role: 'Team Lead & Autonomous Perception Lead',
+                email: 'rithvin.asterix@psgitech.ac.in',
+                phone: '+91 98765 43210',
+                whatsapp: 'https://wa.me/919876543210'
+            };
+        }
+        if (name.includes('preethika')) {
+            return {
+                role: 'Autonomous Perception & Software Co-Lead',
+                email: 'preethika.asterix@psgitech.ac.in',
+                phone: '+91 98765 43211',
+                whatsapp: 'https://wa.me/919876543211'
+            };
+        }
+        if (name.includes('mahavishnu')) {
+            return {
+                role: 'Computer Vision Specialist & AI Mentor',
+                email: 'mahavishnu.asterix@psgitech.ac.in',
+                phone: '+91 98765 43212',
+                whatsapp: 'https://wa.me/919876543212'
+            };
+        }
+        return {
+            role: 'Subsystem Instructor & Lead Engineer',
+            email: 'software.asterix@psgitech.ac.in',
+            phone: '+91 94420 00000',
+            whatsapp: 'https://wa.me/919442000000'
+        };
+    };
+
+    const contactInfo = getInstructorContacts(session.instructor);
+
+    // Mock notes & resources attached to session
+    const notes = [
+        {
+            title: `${session.title} - Official Lecture Notes & Slides`,
+            type: 'PDF / Slides',
+            size: '2.4 MB',
+            link: '/workshop/software-perception-syllabus.pdf'
+        },
+        {
+            title: `Session Code Examples & Jupyter Notebooks`,
+            type: 'GitHub Repository',
+            size: 'Code Repo',
+            link: 'https://github.com/Team-Asterix264016/'
+        }
+    ];
+
+    // Quiz for session
+    const hasQuiz = session.type !== 'holiday' && session.type !== 'catchup';
+    const quizTitle = `${session.title} - Session Quiz`;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+            <div className="shadow-brutal-6 relative max-h-[90vh] w-full max-w-2xl overflow-y-auto border-4 border-slate-900 bg-white p-6">
+                {/* Close Button */}
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="press absolute top-4 right-4 flex h-8 w-8 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-sm font-black text-slate-900 hover:bg-amber-400"
+                >
+                    ✕
+                </button>
+
+                {/* Session Header */}
+                <div className="space-y-2 border-b-4 border-slate-900 pb-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-xs font-black text-amber-300 uppercase">
+                            {session.label}
+                        </span>
+                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-xs font-black text-slate-900 uppercase">
+                            {session.days} ({session.date})
+                        </span>
+                        <span className="border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-xs font-black text-sky-900 uppercase">
+                            {trackName}
+                        </span>
+                    </div>
+                    <h3 className="text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                        {session.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-4 font-mono text-xs font-bold text-slate-700">
+                        <span>📍 Venue: <strong>{session.venue || 'Autonomous Systems Lab'}</strong></span>
+                        <span>⏰ Time: <strong>5:10 PM – 6:50 PM</strong></span>
+                    </div>
+                </div>
+
+                {/* Body Content Sections */}
+                <div className="mt-5 space-y-6">
+                    {/* 1. Who is taking the class & Contact Details */}
+                    <div className="border-3 border-slate-900 bg-sky-50/70 p-4 shadow-brutal-2">
+                        <div className="flex items-center gap-2 font-mono text-xs font-black tracking-widest text-sky-800 uppercase">
+                            <span>👤 INSTRUCTOR &amp; CONTACT DETAILS</span>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                            <h4 className="text-base font-black text-slate-900">
+                                {session.instructor && session.instructor !== '-'
+                                    ? session.instructor
+                                    : 'Team Asterix Lead Instructors'}
+                            </h4>
+                            <p className="text-xs font-bold text-sky-900">{contactInfo.role}</p>
+                            <div className="mt-3 flex flex-wrap gap-3 font-mono text-xs font-bold">
+                                <a
+                                    href={`mailto:${contactInfo.email}`}
+                                    className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
+                                >
+                                    <span>✉️ {contactInfo.email}</span>
+                                </a>
+                                <a
+                                    href={`tel:${contactInfo.phone}`}
+                                    className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
+                                >
+                                    <span>📞 {contactInfo.phone}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Attendance Status */}
+                    <div className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-2">
+                        <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-black tracking-widest text-slate-700 uppercase">
+                                📊 STUDENT ATTENDANCE STATUS
+                            </span>
+                            {student && (
+                                <span className="font-mono text-xs font-bold text-slate-600">
+                                    Candidate: {student.name} ({student.rollNo})
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-3">
+                            {!student ? (
+                                <div className="flex items-center justify-between border-2 border-amber-500 bg-amber-50 p-3 font-mono text-xs font-bold text-amber-900">
+                                    <span>🔒 Please login to check your attendance status for this class.</span>
+                                </div>
+                            ) : loadingAttendance ? (
+                                <div className="font-mono text-xs font-bold text-slate-600">
+                                    Checking attendance logs...
+                                </div>
+                            ) : attendanceStatus === 'present' ? (
+                                <div className="flex items-center gap-3 border-2 border-emerald-600 bg-emerald-50 p-3 text-emerald-900">
+                                    <span className="text-xl">✅</span>
+                                    <div>
+                                        <div className="font-mono text-sm font-black uppercase">
+                                            Status: PRESENT
+                                        </div>
+                                        <div className="font-mono text-xs font-bold text-emerald-800">
+                                            Attendance verified &amp; recorded
+                                            {checkInTime ? ` on ${new Date(checkInTime).toLocaleString('en-IN')}` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-3 border-2 border-rose-600 bg-rose-50 p-3 text-rose-900">
+                                    <span className="text-xl">❌</span>
+                                    <div>
+                                        <div className="font-mono text-sm font-black uppercase">
+                                            Status: ABSENT / NOT CHECKED IN
+                                        </div>
+                                        <div className="font-mono text-xs font-bold text-rose-800">
+                                            No attendance scan recorded yet for this session.
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 3. Notes Shared & Resources */}
+                    <div className="border-3 border-slate-900 bg-amber-50/70 p-4 shadow-brutal-2">
+                        <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
+                            📚 SHARED NOTES &amp; CLASS MATERIALS
+                        </span>
+                        <div className="mt-3 space-y-2">
+                            {notes.map((note, idx) => (
+                                <div
+                                    key={idx}
+                                    className="flex flex-col justify-between gap-2 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center"
+                                >
+                                    <div>
+                                        <h5 className="font-mono text-xs font-black text-slate-900">
+                                            {note.title}
+                                        </h5>
+                                        <span className="font-mono text-[10px] font-bold text-slate-500">
+                                            Format: {note.type} · {note.size}
+                                        </span>
+                                    </div>
+                                    <a
+                                        href={note.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="press shadow-brutal-2 inline-flex items-center gap-1 border border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 no-underline hover:bg-amber-400"
+                                    >
+                                        <span>Download Notes</span>
+                                        <span>📥</span>
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 4. Session Quiz */}
+                    {hasQuiz && (
+                        <div className="border-3 border-slate-900 bg-purple-50 p-4 shadow-brutal-2">
+                            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                                <div>
+                                    <span className="font-mono text-xs font-black tracking-widest text-purple-900 uppercase">
+                                        ⚡ SESSION KNOWLEDGE QUIZ
+                                    </span>
+                                    <h5 className="text-base font-black text-slate-900">
+                                        {quizTitle}
+                                    </h5>
+                                    <p className="text-xs font-bold text-slate-600">
+                                        Test your understanding of the concepts covered in this masterclass.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onClose();
+                                        if (onTakeQuiz) onTakeQuiz(session);
+                                    }}
+                                    className="press shadow-brutal-4-brand shrink-0 border-2 border-slate-900 bg-purple-600 px-4 py-2 font-mono text-xs font-black uppercase text-white hover:bg-purple-700"
+                                >
+                                    <span>✍️ Take Quiz Now</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

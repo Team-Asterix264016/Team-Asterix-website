@@ -95,3 +95,49 @@ export function downloadIcsFile({ title, description, location, date, timing }) 
     link.click();
     document.body.removeChild(link);
 }
+
+/**
+ * Generates and triggers download of a single combined .ics file for ALL workshop sessions
+ */
+export function downloadAllIcsFile(scheduleItems, trackName = 'Team Asterix Workshop') {
+    const validItems = (scheduleItems || []).filter((item) => item.type !== 'holiday');
+    if (validItems.length === 0) return;
+
+    const events = validItems.map((item) => {
+        const startIso = formatICSDatetime(item.date, '5:10 PM');
+        const endIso = formatICSDatetime(item.date, '6:50 PM');
+        const desc = `Handled by: ${item.instructor || 'Team Asterix'}. ${item.project ? 'Milestone: ' + item.project : ''}`.trim();
+        const loc = item.venue || 'Autonomous Systems & Robotics Lab, PSG iTech';
+
+        return [
+            'BEGIN:VEVENT',
+            `SUMMARY:Team Asterix ${trackName}: ${item.title}`,
+            `DESCRIPTION:${desc.replace(/\n/g, '\\n')}`,
+            `LOCATION:${loc}`,
+            `DTSTART:${startIso}`,
+            `DTEND:${endIso}`,
+            'STATUS:CONFIRMED',
+            'END:VEVENT'
+        ].join('\r\n');
+    });
+
+    const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Team Asterix//Workshop Schedule//EN',
+        'CALSCALE:GREGORIAN',
+        'X-WR-CALNAME:Team Asterix Workshop Master Schedule',
+        ...events,
+        'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    const fileName = `${trackName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_full_schedule.ics`;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+

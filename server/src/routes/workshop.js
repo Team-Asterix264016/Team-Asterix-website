@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
+import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
 import {
     WORKSHOP_PACKAGES,
@@ -1167,4 +1169,149 @@ router.delete('/registrations/:id', authenticateToken, requireLeadOrAdmin, requi
     }
 });
 
+/**
+ * POST /api/workshop/login
+ * Public endpoint: Paid student logins with Mobile Number or Email ID.
+ * Issues a JWT token valid for 30 days if a paid registration exists.
+ */
+router.post('/login', async (req, res) => {
+    try {
+        const { identifier, phone, email } = req.body || {};
+        const input = String(identifier || phone || email || '').trim();
+
+        if (!input) {
+            return res.status(400).json({ error: 'Mobile number or Email ID is required.' });
+        }
+
+        const isEmail = EMAIL_RE.test(input.toLowerCase());
+        const cleanEmail = input.toLowerCase();
+        const cleanPhone = normalizePhone(input);
+
+        let query = {};
+        if (isEmail) {
+            query = { email: cleanEmail };
+        } else if (cleanPhone.length >= 10) {
+            query = { phone: cleanPhone };
+        } else {
+            query = {
+                $or: [
+                    { email: cleanEmail },
+                    { phone: cleanPhone }
+                ]
+            };
+        }
+
+        if (!isMongoConnected()) {
+            return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
+        }
+
+        // Search registration in database
+        const registration = await WorkshopRegistration.findOne(query);
+
+        if (!registration) {
+            return res.status(404).json({
+                error: `No workshop registration found for "${input}". Please enter the Mobile Number or Email ID used during registration.`
+            });
+        }
+
+        if (registration.status !== 'paid') {
+            return res.status(403).json({
+                error: `Your registration status is "${registration.status}". Workshop access is restricted to confirmed paid candidates only.`,
+                status: registration.status
+            });
+        }
+
+        // Create JWT token for paid student
+        const tokenPayload = {
+            registrationId: registration._id.toString(),
+            name: registration.name,
+            rollNo: registration.rollNo,
+            email: registration.email,
+            phone: registration.phone,
+            package: registration.package,
+            tracksEnrolled: registration.tracksEnrolled || (registration.package === 'combo' ? ['software', 'powertrain'] : [registration.package]),
+            status: registration.status,
+            receiptNo: registration.receiptNo,
+            type: 'workshop_student'
+        };
+
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '30d' });
+
+        return res.json({
+            success: true,
+            token,
+            student: tokenPayload
+        });
+    } catch (err) {
+        console.error('Workshop student login error:', err);
+        return res.status(500).json({ error: 'Failed to process workshop login', details: err.message });
+    }
+});
+
+/**
+ * GET /api/workshop/student-status
+ * Authenticated / Public query: Retrieves student registration and attendance records.
+ */
+router.get('/student-status', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        let decodedStudent = null;
+
+        if (token) {
+            try {
+                decodedStudent = jwt.verify(token, JWT_SECRET);
+            } catch (err) {
+                // Invalid or expired token
+            }
+        }
+
+        const rollNo = String(req.query.rollNo || decodedStudent?.rollNo || '').trim().toUpperCase();
+        const email = String(req.query.email || decodedStudent?.email || '').trim().toLowerCase();
+
+        if (!rollNo && !email && !decodedStudent) {
+            return res.status(400).json({ error: 'Roll number, email, or token required.' });
+        }
+
+        let attendanceRecords = [];
+        let registration = null;
+
+        if (isMongoConnected()) {
+            if (decodedStudent?.registrationId) {
+                registration = await WorkshopRegistration.findById(decodedStudent.registrationId);
+            }
+            if (!registration && (rollNo || email)) {
+                registration = await WorkshopRegistration.findOne({
+                    $or: [
+                        { rollNo: rollNo || '___none___' },
+                        { email: email || '___none___' }
+                    ]
+                });
+            }
+
+            const searchRoll = registration?.rollNo || rollNo;
+            const searchEmail = registration?.email || email;
+
+            if (searchRoll || searchEmail) {
+                attendanceRecords = await WorkshopAttendance.find({
+                    $or: [
+                        { rollNo: searchRoll || '___none___' },
+                        { email: searchEmail || '___none___' }
+                    ]
+                }).select('sessionId sessionNumber sessionDate sessionTopic checkedInAt verifiedBy track');
+            }
+        }
+
+        return res.json({
+            success: true,
+            student: decodedStudent || (registration ? publicView(registration) : null),
+            attendance: attendanceRecords
+        });
+    } catch (err) {
+        console.error('Error in student-status:', err);
+        return res.status(500).json({ error: 'Failed to fetch student status', details: err.message });
+    }
+});
+
 export default router;
+

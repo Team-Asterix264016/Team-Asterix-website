@@ -11,7 +11,8 @@ export default function CyberNavbar({
     onBackToHome,
     onOpenSponsor,
     onOpenWorkshop,
-    onOpenCommunity
+    onOpenCommunity,
+    onOpenProfile
 }) {
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
@@ -445,6 +446,26 @@ export default function CyberNavbar({
                                         <span className="text-[9px]">✦</span>
                                     </DockTextItem>
 
+                                    {/* Profile & Attendance Button */}
+                                    <DockTextItem
+                                        mouseX={mouseX}
+                                        onClick={() => {
+                                            if (onOpenProfile) onOpenProfile();
+                                            else window.location.hash = '#workshop-profile';
+                                        }}
+                                        className={`cursor-pointer border-slate-900 ${
+                                            currentPage === 'profile'
+                                                ? 'bg-purple-400 font-black text-slate-900 shadow-[inset_2px_2px_0px_#000]'
+                                                : 'bg-purple-300 font-black text-slate-900 hover:bg-purple-400'
+                                        } ${
+                                            isScrolled
+                                                ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
+                                                : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
+                                        }`}
+                                    >
+                                        <span>PROFILE 🔓</span>
+                                    </DockTextItem>
+
                                     {/* Community Button */}
                                     <DockTextItem
                                         mouseX={mouseX}
@@ -663,6 +684,16 @@ export default function CyberNavbar({
 
                         {/* Direct Action Button */}
                         <div className="flex flex-col gap-2 pt-1">
+                            <button
+                                onClick={() => {
+                                    setMobileOpen(false);
+                                    if (onOpenProfile) onOpenProfile();
+                                    else window.location.hash = '#workshop-profile';
+                                }}
+                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-purple-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-purple-400"
+                            >
+                                <span>My Profile & Notes 🔓</span>
+                            </button>
                             <button
                                 onClick={() => {
                                     setMobileOpen(false);

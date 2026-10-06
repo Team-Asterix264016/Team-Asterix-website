@@ -2,6 +2,8 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
+import WorkshopResource from '../models/WorkshopResource.js';
+import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -490,4 +492,204 @@ router.get('/export', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/workshop/attendance/profile
+ * Public endpoint: Candidate inputs email ID, phone, or roll number to view individual profile,
+ * complete session attendance history, and workshop notes/slides/resources.
+ */
+router.post('/profile', async (req, res) => {
+    try {
+        const queryRaw = String(req.body.identifier || req.body.email || req.body.phone || req.body.rollNo || '').trim();
+        if (!queryRaw) {
+            return res.status(400).json({ error: 'Please enter your Email ID, Phone Number, or Roll Number.' });
+        }
+
+        const queryLower = queryRaw.toLowerCase();
+        const digits = queryRaw.replace(/\D/g, '');
+        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
+        if (phoneDigits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({
+            $or: searchConditions
+        }).lean();
+
+        if (!candidate) {
+            return res.status(404).json({
+                error: `No candidate registration found matching "${queryRaw}". Please verify your email ID or phone number.`
+            });
+        }
+
+        const tracksEnrolled = Array.isArray(candidate.tracksEnrolled) && candidate.tracksEnrolled.length > 0
+            ? candidate.tracksEnrolled
+            : (candidate.package === 'combo' ? ['software', 'powertrain'] : [candidate.package || 'software']);
+
+        // Fetch attendance records
+        const attendanceRecords = await WorkshopAttendance.find({
+            rollNo: candidate.rollNo
+        }).lean();
+
+        const attendanceMap = new Map();
+        attendanceRecords.forEach((att) => {
+            if (att.sessionId) attendanceMap.set(att.sessionId, att);
+        });
+
+        // Date helper (IST reference)
+        const todayStr = '2026-10-06';
+
+        // Build session timeline for enrolled track(s)
+        const sessionTimeline = [];
+        let totalConducted = 0;
+        let totalPresent = 0;
+
+        tracksEnrolled.forEach((trackId) => {
+            const trackConfig = WORKSHOP_TRACKS[trackId];
+            if (!trackConfig || !Array.isArray(trackConfig.schedule)) return;
+
+            trackConfig.schedule.forEach((sessionItem) => {
+                const att = attendanceMap.get(sessionItem.id);
+                const isHoliday = sessionItem.type === 'holiday';
+
+                let status = 'UPCOMING';
+                let checkedInAt = null;
+
+                if (att) {
+                    status = 'PRESENT';
+                    checkedInAt = att.checkedInAt;
+                    if (!isHoliday) {
+                        totalPresent += 1;
+                        totalConducted += 1;
+                    }
+                } else if (!isHoliday) {
+                    // Check if session date has passed (e.g., date before current workshop timeline)
+                    // If session already happened before today or is past core session
+                    const isPast = ['sch-sw-0', 'sch-sw-1', 'sch-pt-1'].includes(sessionItem.id);
+                    if (isPast) {
+                        status = 'ABSENT';
+                        totalConducted += 1;
+                    }
+                }
+
+                sessionTimeline.push({
+                    id: sessionItem.id,
+                    track: trackId,
+                    trackName: trackConfig.name,
+                    label: sessionItem.label,
+                    days: sessionItem.days,
+                    date: sessionItem.date,
+                    title: sessionItem.title,
+                    instructor: sessionItem.instructor || '-',
+                    venue: sessionItem.venue || trackConfig.venue,
+                    type: sessionItem.type || 'lecture',
+                    project: sessionItem.project || null,
+                    subject: sessionItem.subject || null,
+                    status,
+                    checkedInAt
+                });
+            });
+        });
+
+        const attendancePercentage = totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : 100;
+        const isEligibleForCertificate = attendancePercentage >= 75;
+
+        // Fetch dynamic resources
+        const dynamicResources = await WorkshopResource.find({
+            track: { $in: [...tracksEnrolled, 'common'] }
+        }).sort({ sessionNumber: 1 }).lean();
+
+        // Built-in resources per track
+        const defaultResources = [];
+        tracksEnrolled.forEach((tId) => {
+            const trk = WORKSHOP_TRACKS[tId];
+            if (trk) {
+                defaultResources.push({
+                    id: `default-${tId}-syllabus`,
+                    track: tId,
+                    title: `${trk.name} Official Syllabus & Lab Guide`,
+                    description: trk.overview,
+                    resources: [
+                        { label: 'Download PDF Syllabus', url: trk.syllabus, type: 'pdf' }
+                    ]
+                });
+            }
+        });
+
+        return res.json({
+            ok: true,
+            candidate: {
+                registrationId: candidate.registrationId || candidate._id,
+                name: candidate.name,
+                rollNo: candidate.rollNo,
+                email: candidate.email,
+                phone: candidate.phone,
+                department: candidate.department,
+                year: candidate.year,
+                package: candidate.package,
+                packageName: candidate.packageName || candidate.package,
+                tracksEnrolled,
+                receiptNo: candidate.receiptNo,
+                status: candidate.status,
+                amount: candidate.amount,
+                paidAt: candidate.paidAt
+            },
+            attendanceSummary: {
+                totalConducted,
+                totalPresent,
+                attendancePercentage,
+                isEligibleForCertificate,
+                certificateMessage: isEligibleForCertificate
+                    ? '✓ Certificate Eligible (≥ 75% attendance maintained)'
+                    : `⚠️ ${75 - attendancePercentage}% away from 75% certificate threshold`
+            },
+            sessionTimeline,
+            resources: [...defaultResources, ...dynamicResources]
+        });
+    } catch (err) {
+        console.error('Error fetching participant profile:', err);
+        return res.status(500).json({ error: 'Failed to load participant profile. Please try again.' });
+    }
+});
+
+/**
+ * GET & POST /api/workshop/attendance/resources
+ * Manage dynamic notes, slides, and links for workshop sessions
+ */
+router.get('/resources', async (req, res) => {
+    try {
+        const track = req.query.track ? String(req.query.track).toLowerCase() : null;
+        const query = track ? { track: { $in: [track, 'common'] } } : {};
+        const resources = await WorkshopResource.find(query).sort({ sessionNumber: 1 }).lean();
+        return res.json({ resources });
+    } catch (err) {
+        return res.status(500).json({ error: 'Failed to fetch workshop resources' });
+    }
+});
+
+router.post('/resources', authenticateToken, async (req, res) => {
+    try {
+        const { track, sessionId, sessionNumber, title, description, resources } = req.body;
+        if (!track || !sessionId || !title) {
+            return res.status(400).json({ error: 'track, sessionId, and title are required' });
+        }
+
+        const newResource = await WorkshopResource.create({
+            track,
+            sessionId,
+            sessionNumber: sessionNumber || 1,
+            title,
+            description: description || '',
+            resources: Array.isArray(resources) ? resources : []
+        });
+
+        return res.status(201).json({ success: true, resource: newResource });
+    } catch (err) {
+        console.error('Error creating resource:', err);
+        return res.status(500).json({ error: 'Failed to create workshop resource' });
+    }
+});
+
 export default router;
+

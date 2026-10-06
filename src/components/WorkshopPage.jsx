@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiUrl } from '../lib/api';
 import { useWebsiteData } from '../context/WebsiteDataContext';
-import { getGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarUtils';
+import { getGoogleCalendarUrl, downloadIcsFile, downloadAllIcsFile } from '../utils/calendarUtils';
+import SessionDetailModal from './SessionDetailModal';
+import WorkshopLoginModal from './WorkshopLoginModal';
 /* Shared with the backend so the page and the server can never disagree on
    what a package includes or costs. The server still looks the price up on
    its own side when it creates the order; this import is for display only. */
@@ -396,6 +398,14 @@ export default function WorkshopPage({ onBack }) {
     const [registerOpen, setRegisterOpen] = useState(false);
     const [lookupOpen, setLookupOpen] = useState(false);
     const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+    const [student, setStudent] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('workshop_student')) || null;
+        } catch {
+            return null;
+        }
+    });
     const [form, setForm] = useState(EMPTY_FORM);
     const [fieldErrors, setFieldErrors] = useState({});
     // form -> review -> paying -> verifying -> success | unconfirmed
@@ -801,13 +811,40 @@ export default function WorkshopPage({ onBack }) {
                         >
                             ← Main<span className="hidden sm:inline"> Website</span>
                         </button>
-                        {/* Participant Locker Lookup Button in Header */}
+                        {/* Student JWT Login Status / Button */}
+                        {student ? (
+                            <div className="flex items-center gap-2 border-2 border-slate-900 bg-emerald-400 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase shadow-brutal-2">
+                                <span>👤 {student.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        localStorage.removeItem('workshop_jwt');
+                                        localStorage.removeItem('workshop_student');
+                                        setStudent(null);
+                                    }}
+                                    className="press border border-slate-900 bg-white px-2 py-0.5 text-[10px] text-slate-900 uppercase hover:bg-rose-200"
+                                >
+                                    Logout
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setLoginModalOpen(true)}
+                                className="press shadow-brutal-3 border-2 border-slate-900 bg-sky-300 px-3 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-sky-400 sm:px-4"
+                            >
+                                🔑 Student Login
+                            </button>
+                        )}
+                        {/* Participant Locker / Profile Button in Header */}
                         <button
                             type="button"
-                            onClick={() => setLookupOpen(true)}
+                            onClick={() => {
+                                window.location.hash = '#workshop-profile';
+                            }}
                             aria-haspopup="dialog"
-                            aria-label="Participant Verification Locker"
-                            className="press shadow-brutal-3-brand inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-emerald-300 sm:px-4"
+                            aria-label="Participant Profile and Attendance Locker"
+                            className="press shadow-brutal-3-brand inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-purple-300 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-400 sm:px-4"
                         >
                             <svg
                                 className="h-4 w-4 shrink-0 stroke-[2.5]"
@@ -821,7 +858,7 @@ export default function WorkshopPage({ onBack }) {
                                     d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
                                 />
                             </svg>
-                            <span>Participant Locker 🔓</span>
+                            <span>Profile & Notes 🔓</span>
                         </button>
                     </div>
                 </div>
@@ -855,10 +892,12 @@ export default function WorkshopPage({ onBack }) {
                         <div className="mt-8 flex flex-wrap gap-3">
                             <button
                                 type="button"
-                                onClick={() => setLookupOpen(true)}
-                                className="press shadow-brutal-4-brand flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
+                                onClick={() => {
+                                    window.location.hash = '#workshop-profile';
+                                }}
+                                className="press shadow-brutal-4-brand flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-purple-400 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-300"
                             >
-                                <span>Unlock Participant Locker</span>
+                                <span>My Profile & Attendance Notes</span>
                                 <span>🔓</span>
                             </button>
                             <button
@@ -960,6 +999,7 @@ export default function WorkshopPage({ onBack }) {
                         <TrackDetail
                             key={track.id}
                             track={track}
+                            student={student}
                             onPreviewSyllabus={(url, name) => setPreviewSyllabus({ url, name })}
                         />
 
@@ -1210,7 +1250,6 @@ export default function WorkshopPage({ onBack }) {
                                 One track or both. Registration takes a minute; payment is handled securely by
                                 Razorpay.
                             </p>
-                            <ClosingDate className="mt-4" dark />
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             <button
@@ -1265,7 +1304,6 @@ export default function WorkshopPage({ onBack }) {
                                         Prices are yet to be announced. Payments open as soon as they are.
                                     </p>
                                 )}
-                                <ClosingDate className="mb-5" />
 
                                 {/* Package first: it is what they came here to pick. */}
                                 <fieldset data-field-wrap>
@@ -1597,13 +1635,23 @@ export default function WorkshopPage({ onBack }) {
                         />
                     </RegisterDialog>
                 )}
+
+                <WorkshopLoginModal
+                    isOpen={loginModalOpen}
+                    onClose={() => setLoginModalOpen(false)}
+                    onSuccess={(std) => {
+                        setStudent(std);
+                        setLoginModalOpen(false);
+                    }}
+                />
             </main>
         </div>
     );
 }
 
-function TrackDetail({ track, onPreviewSyllabus }) {
+function TrackDetail({ track, student, onPreviewSyllabus }) {
     const [activeFilter, setActiveFilter] = useState('all');
+    const [selectedSession, setSelectedSession] = useState(null);
     const isSoftware = track.id === 'software';
 
     const hasSyllabus = Boolean(track.syllabus);
@@ -1764,9 +1812,13 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                                 Session Schedule ({filteredSchedule.length} of {allSchedule.length})
                             </h4>
                         </div>
-                        <span className="inline-block border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black uppercase shadow-brutal-2">
-                            ✦ One-Click Sync
-                        </span>
+                        <button
+                            type="button"
+                            onClick={() => downloadAllIcsFile(filteredSchedule, track.name)}
+                            className="press border-2 border-slate-900 bg-amber-300 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2 hover:bg-amber-400"
+                        >
+                            📅 Sync All Sessions to Calendar (.ICS)
+                        </button>
                     </div>
 
                     {/* Timeline Category Filters */}
@@ -1833,25 +1885,18 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                     {/* Timeline List */}
                     <div className="mt-6 space-y-4">
                         {filteredSchedule.map((item) => {
-                            const googleCalUrl = getGoogleCalendarUrl({
-                                title: `${track.name} - ${item.title}`,
-                                description: item.reportingInstructions || track.overview,
-                                location: item.venue || track.venue,
-                                date: item.date,
-                                timing: track.timing
-                            });
-
                             return (
                                 <div
                                     key={item.id}
-                                    className={`border-3 border-slate-900 p-4 shadow-brutal-4 transition-all ${
+                                    onClick={() => setSelectedSession(item)}
+                                    className={`group cursor-pointer border-3 border-slate-900 p-4 shadow-brutal-4 transition-all hover:border-sky-600 ${
                                         item.type === 'handson'
-                                            ? 'bg-emerald-50/70 hover:bg-emerald-50'
+                                            ? 'bg-emerald-50/70 hover:bg-emerald-100/80'
                                             : item.type === 'expert'
-                                            ? 'bg-purple-50/70 hover:bg-purple-50'
+                                            ? 'bg-purple-50/70 hover:bg-purple-100/80'
                                             : item.type === 'holiday'
                                             ? 'bg-rose-50/70 opacity-75'
-                                            : 'bg-sky-50/60 hover:bg-sky-50'
+                                            : 'bg-sky-50/60 hover:bg-sky-100/80'
                                     }`}
                                 >
                                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -1870,7 +1915,7 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h5 className="text-base font-black uppercase text-slate-900 sm:text-lg">
+                                            <h5 className="text-base font-black uppercase text-slate-900 group-hover:text-sky-900 sm:text-lg">
                                                 {item.title}
                                             </h5>
 
@@ -1902,36 +1947,13 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                                             )}
                                         </div>
 
-                                        {/* Calendar Buttons */}
-                                        {item.type !== 'holiday' && (
-                                            <div className="flex shrink-0 flex-wrap items-center gap-2 pt-2 md:pt-0">
-                                                <a
-                                                    href={googleCalUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="press shadow-brutal-2-brand inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
-                                                >
-                                                    <span>Google Cal</span>
-                                                    <span>📅</span>
-                                                </a>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        downloadIcsFile({
-                                                            title: `${track.name} - ${item.title}`,
-                                                            description: item.reportingInstructions || track.overview,
-                                                            location: item.venue || track.venue,
-                                                            date: item.date,
-                                                            timing: track.timing
-                                                        })
-                                                    }
-                                                    className="press shadow-brutal-2 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-3 py-1.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
-                                                >
-                                                    <span>Download .ICS</span>
-                                                    <span>📥</span>
-                                                </button>
-                                            </div>
-                                        )}
+                                        {/* Clickable Details Indicator */}
+                                        <div className="flex shrink-0 flex-wrap items-center gap-2 pt-2 md:pt-0">
+                                            <span className="press shadow-brutal-2 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase group-hover:bg-amber-300">
+                                                <span>View Details &amp; Notes</span>
+                                                <span>→</span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -1939,6 +1961,19 @@ function TrackDetail({ track, onPreviewSyllabus }) {
                     </div>
                 </div>
             )}
+
+            {/* Session Detail Modal */}
+            <SessionDetailModal
+                session={selectedSession}
+                trackName={track.name}
+                student={student}
+                isOpen={Boolean(selectedSession)}
+                onClose={() => setSelectedSession(null)}
+                onTakeQuiz={(sess) => {
+                    window.location.hash = `#quiz/${sess.id || 'system-design'}`;
+                }}
+            />
+
 
             {/* Resource Library & Handouts */}
             <div id="resources-section" className="mt-10 border-t-4 border-slate-900 pt-8">
@@ -2159,21 +2194,6 @@ function Field({ label, error, children }) {
             {children}
             {error && <span className="mt-1 block font-mono text-xs font-black text-red-600">{error}</span>}
         </label>
-    );
-}
-
-function ClosingDate({ className = '', dark = false }) {
-    return (
-        <p
-            className={`inline-flex flex-wrap items-center gap-2 border-2 px-3 py-1.5 font-mono text-xs font-black uppercase ${
-                dark ? 'border-amber-300 text-amber-300' : 'border-slate-900 bg-white text-slate-900'
-            } ${className}`}
-        >
-            <span aria-hidden="true">⏳</span>
-            <span>
-                Software Reopens Mon 6:00 AM · Closes Tue 11:59 PM (or when remaining seats are filled)
-            </span>
-        </p>
     );
 }
 
