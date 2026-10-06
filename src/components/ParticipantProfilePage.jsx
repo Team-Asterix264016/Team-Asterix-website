@@ -123,17 +123,7 @@ export default function ParticipantProfilePage({ onBack }) {
     const [profile, setProfile] = useState(null);
     const [activeTab, setActiveTab] = useState('attendance');
 
-    useEffect(() => {
-        // Auto-search from URL search params
-        const params = new URLSearchParams(window.location.search);
-        const queryParam = params.get('query') || params.get('id') || params.get('email') || params.get('phone');
-        if (queryParam) {
-            setIdentifier(queryParam);
-            fetchProfile(queryParam);
-        }
-    }, []);
-
-    const fetchProfile = async (queryVal) => {
+    const fetchProfile = useCallback(async (queryVal) => {
         const target = queryVal || identifier;
         if (!target.trim()) {
             setError('Please enter your Email ID, Phone Number, or Roll Number.');
@@ -163,7 +153,17 @@ export default function ParticipantProfilePage({ onBack }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [identifier]);
+
+    useEffect(() => {
+        // Auto-search from URL search params
+        const params = new URLSearchParams(window.location.search);
+        const queryParam = params.get('query') || params.get('id') || params.get('email') || params.get('phone');
+        if (queryParam) {
+            setIdentifier(queryParam);
+            fetchProfile(queryParam);
+        }
+    }, [fetchProfile]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -171,15 +171,21 @@ export default function ParticipantProfilePage({ onBack }) {
     };
 
     return (
-        <div className="min-h-screen bg-slate-100 font-sans text-slate-900 selection:bg-amber-300">
+    return (
+        <div className="min-h-screen bg-slate-900 font-sans text-slate-900 selection:bg-amber-300">
             {/* Header */}
             <header className="sticky top-0 z-50 border-b-4 border-slate-900 bg-white/95 px-4 py-3.5 shadow-[0_4px_0px_#0f172a] backdrop-blur-md sm:px-8">
                 <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-                    <div>
-                        <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                            Team Asterix
+                    <div className="flex items-center gap-3">
+                        <span className="border-2 border-slate-900 bg-amber-300 px-2.5 py-0.5 font-mono text-xs font-black text-slate-950 uppercase">
+                            AST-LOCKER
                         </span>
-                        <strong className="block text-sm font-black uppercase">Participant Portal 🔓</strong>
+                        <div>
+                            <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
+                                Team Asterix Workshop 2026
+                            </span>
+                            <strong className="block text-xs font-black uppercase sm:text-sm">Official Participant Portal 🔓</strong>
+                        </div>
                     </div>
                     <button
                         type="button"
@@ -191,48 +197,93 @@ export default function ParticipantProfilePage({ onBack }) {
                 </div>
             </header>
 
-            <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
-                {/* Search Bar Banner */}
-                <div className="shadow-brutal-6 border-4 border-slate-900 bg-slate-900 p-6 text-white sm:p-8">
-                    <span className="inline-block border-2 border-amber-300 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
-                        ✦ INDIVIDUAL PARTICIPANT LOCKER
-                    </span>
-                    <h1 className="mt-3 text-2xl font-black uppercase sm:text-4xl">
-                        View Attendance, Notes &amp; Verified Records
-                    </h1>
-                    <p className="mt-2 max-w-2xl text-xs font-bold text-slate-300 sm:text-sm">
-                        Enter your college email ID, registered phone number, or roll number below to access your individual workshop attendance summary, class lecture slides, SPICE circuits, Colab notebooks, and receipt.
-                    </p>
+            {!profile ? (
+                /* Unauthenticated / Search View: Vertically & Horizontally Centered Landing */
+                <main className="flex min-h-[calc(100vh-73px)] flex-col items-center justify-center p-4 sm:p-8">
+                    <div className="shadow-brutal-8 my-auto w-full max-w-3xl border-4 border-slate-900 bg-white p-6 text-slate-900 sm:p-10">
+                        <div className="text-center">
+                            <span className="inline-block border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
+                                ✦ OFFICIAL PARTICIPANT LOCKER PORTAL
+                            </span>
+                            <h1 className="mt-4 text-3xl font-black uppercase tracking-tight text-slate-900 sm:text-5xl">
+                                UNLOCK YOUR WORKSHOP LOCKER
+                            </h1>
+                            <p className="mx-auto mt-3 max-w-xl text-xs font-bold leading-relaxed text-slate-600 sm:text-sm">
+                                Enter your college email ID, registered phone number, or roll number below to access your individual workshop attendance summary, class lecture slides, SPICE circuits, Colab notebooks, and payment receipt.
+                            </p>
+                        </div>
 
-                    <form onSubmit={handleSearch} className="mt-6 flex flex-col gap-3 sm:flex-row">
-                        <input
-                            type="text"
-                            value={identifier}
-                            onChange={(e) => setIdentifier(e.target.value)}
-                            placeholder="College Email ID / Phone No / Roll No (e.g. 26M125)"
-                            className="w-full min-h-12 border-3 border-white bg-white px-4 py-3 font-mono text-sm font-black text-slate-900 placeholder:text-slate-500 focus:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
+                        <form onSubmit={handleSearch} className="mt-8 flex flex-col gap-3 sm:flex-row">
+                            <input
+                                type="text"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
+                                placeholder="College Email ID / Phone No / Roll No (e.g. 26M125)"
+                                className="min-h-14 w-full border-3 border-slate-900 bg-slate-50 px-4 py-3.5 font-mono text-base font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none focus:ring-3 focus:ring-amber-400"
+                                autoFocus
+                            />
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="press shadow-brutal-4-brand min-h-14 shrink-0 border-3 border-slate-900 bg-amber-300 px-8 py-3.5 font-mono text-sm font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-60"
+                            >
+                                {loading ? 'Searching Profile…' : 'Open Profile 🔓'}
+                            </button>
+                        </form>
+
+                        {error && (
+                            <div className="mt-4 border-2 border-rose-600 bg-rose-50 p-3 text-center font-mono text-xs font-black uppercase text-rose-800">
+                                ⚠️ {error}
+                            </div>
+                        )}
+
+                        {/* Dedicated Features Grid */}
+                        <div className="mt-8 grid grid-cols-1 gap-3 border-t-4 border-slate-900 pt-6 sm:grid-cols-3">
+                            <div className="border-2 border-slate-900 bg-sky-50 p-3.5 text-center shadow-brutal-2">
+                                <span className="text-xl">📊</span>
+                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Live QR Attendance</h4>
+                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">Track check-ins &amp; 75% certificate qualification</p>
+                            </div>
+                            <div className="border-2 border-slate-900 bg-emerald-50 p-3.5 text-center shadow-brutal-2">
+                                <span className="text-xl">📚</span>
+                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Subsystem Materials</h4>
+                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">ROS 2, OpenCV, LTspice &amp; ESP32 notes</p>
+                            </div>
+                            <div className="border-2 border-slate-900 bg-amber-50 p-3.5 text-center shadow-brutal-2">
+                                <span className="text-xl">💳</span>
+                                <h4 className="mt-1 font-mono text-xs font-black uppercase text-slate-900">Verified Receipt</h4>
+                                <p className="mt-0.5 font-mono text-[10px] font-bold text-slate-600">Download official payment receipt PNG</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            ) : (
+                /* Authenticated Profile View */
+                <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+                    {/* Header Bar to Switch Candidate */}
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b-4 border-white/20 pb-4 text-white">
+                        <div>
+                            <span className="font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
+                                Active Locker Profile
+                            </span>
+                            <h1 className="text-2xl font-black uppercase text-white sm:text-3xl">
+                                {profile.candidate.name}&apos;s Participant Locker
+                            </h1>
+                        </div>
                         <button
-                            type="submit"
-                            disabled={loading}
-                            className="press shadow-brutal-4-brand min-h-12 shrink-0 border-3 border-amber-400 bg-amber-400 px-6 py-3 font-mono text-sm font-black text-slate-950 uppercase hover:bg-amber-300 disabled:opacity-60"
+                            type="button"
+                            onClick={() => setProfile(null)}
+                            className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-300"
                         >
-                            {loading ? 'Searching Profile…' : 'Open Profile 🔓'}
+                            🔍 Search Another Candidate
                         </button>
-                    </form>
+                    </div>
 
-                    {error && (
-                        <p className="mt-4 border-2 border-rose-500 bg-rose-950/80 p-3 font-mono text-xs font-black text-rose-200 uppercase">
-                            ⚠️ {error}
-                        </p>
-                    )}
-                </div>
-
-                {/* Profile Dashboard */}
-                {profile && profile.candidate && (
-                    <div className="mt-8 space-y-8">
-                        {/* Verified Candidate Profile Card */}
-                        <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
+                    {/* Profile Dashboard */}
+                    {profile && profile.candidate && (
+                        <div className="space-y-8">
+                            {/* Verified Candidate Profile Card */}
+                            <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
                             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">

@@ -65,38 +65,46 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
 
     if (!isOpen || !session) return null;
 
-    // Instructor contact lookup
+    // Instructor contact lookup using legitimate subsystem lead details
     const getInstructorContacts = (instructorName) => {
         const name = String(instructorName || '').toLowerCase();
-        if (name.includes('rithvin')) {
+        if (name.includes('joel') || name.includes('powertrain')) {
             return {
-                role: 'Team Lead & Autonomous Perception Lead',
-                email: 'rithvin.asterix@psgitech.ac.in',
-                phone: '+91 98765 43210',
-                whatsapp: 'https://wa.me/919876543210'
+                role: 'Powertrain Subsystem Lead',
+                email: 'powertrain.asterix@psgitech.ac.in',
+                phone: '+91 72079 60077',
+                whatsapp: 'https://wa.me/917207960077'
             };
         }
         if (name.includes('preethika')) {
             return {
                 role: 'Autonomous Perception & Software Co-Lead',
-                email: 'preethika.asterix@psgitech.ac.in',
-                phone: '+91 98765 43211',
-                whatsapp: 'https://wa.me/919876543211'
+                email: 'software.asterix@psgitech.ac.in',
+                phone: '+91 86089 44644',
+                whatsapp: 'https://wa.me/918608944644'
             };
         }
         if (name.includes('mahavishnu')) {
             return {
                 role: 'Computer Vision Specialist & AI Mentor',
-                email: 'mahavishnu.asterix@psgitech.ac.in',
-                phone: '+91 98765 43212',
-                whatsapp: 'https://wa.me/919876543212'
+                email: 'software.asterix@psgitech.ac.in',
+                phone: '+91 86089 44644',
+                whatsapp: 'https://wa.me/918608944644'
+            };
+        }
+        if (name.includes('rithvin') || name.includes('ratheeswar')) {
+            return {
+                role: 'Team Lead & Autonomous Perception Lead',
+                email: 'software.asterix@psgitech.ac.in',
+                phone: '+91 86089 44644',
+                whatsapp: 'https://wa.me/918608944644'
             };
         }
         return {
-            role: `${trackName} Instructor & Subsystem Engineer`,
+            role: isSoftwareTrack ? 'Software & Perception Subsystem Lead' : 'Powertrain Subsystem Lead',
             email: isSoftwareTrack ? 'software.asterix@psgitech.ac.in' : 'powertrain.asterix@psgitech.ac.in',
-            phone: '+91 94420 00000',
-            whatsapp: 'https://wa.me/919442000000'
+            phone: isSoftwareTrack ? '+91 86089 44644' : '+91 72079 60077',
+            whatsapp: isSoftwareTrack ? 'https://wa.me/918608944644' : 'https://wa.me/917207960077'
         };
     };
 

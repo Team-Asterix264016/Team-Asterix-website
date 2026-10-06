@@ -191,22 +191,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     </span>
                                 </button>
 
-                                {[
-                                    { name: 'Photo Gallery', href: '#gallery' },
-                                    { name: 'Team Updates', href: '#updates' },
-                                    { name: 'Our Story', href: '#story' }
-                                ].map((item) => (
-                                    <a
-                                        key={item.name}
-                                        href={item.href}
-                                        className="hover:shadow-brutal-2 group -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-transparent p-2 text-slate-800 transition-all hover:border-slate-900 hover:bg-slate-100"
-                                    >
-                                        <span>{item.name}</span>
-                                        <span className="font-mono text-[11px] text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-slate-900">
-                                            →
-                                        </span>
-                                    </a>
-                                ))}
+
 
                                 <a
                                     href="#hero"

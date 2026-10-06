@@ -130,20 +130,7 @@ export default function CyberNavbar({
         }
     };
 
-    const handleNavigate = (hash) => {
-        setShopOpen(false);
-        setContactOpen(false);
-        if (isDetailPage && onBackToHome) {
-            onBackToHome();
-            setTimeout(() => {
-                const el = document.querySelector(hash);
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-        } else {
-            const el = document.querySelector(hash);
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
+
 
     return (
         <>
@@ -245,106 +232,7 @@ export default function CyberNavbar({
                                         </DockTextItem>
                                     )}
 
-                                    {isScrolled ? (
-                                        /* Scrolled: Compact Merged Explore / Sections Dropdown */
-                                        <div className="relative">
-                                            <DockTextItem
-                                                mouseX={mouseX}
-                                                onClick={() => {
-                                                    setMobileOpen((prev) => !prev);
-                                                    setShopOpen(false);
-                                                    setContactOpen(false);
-                                                }}
-                                                className={`press hover:shadow-brutal-2 flex items-center gap-1 rounded-md border border-slate-900 bg-white px-2.5 py-1 text-[11px] font-bold hover:bg-sky-100 ${
-                                                    mobileOpen ? '!bg-sky-200' : ''
-                                                }`}
-                                            >
-                                                <span>EXPLORE</span>
-                                                <span className="text-[9px]">▼</span>
-                                            </DockTextItem>
 
-                                            {mobileOpen && (
-                                                <div
-                                                    className="shadow-brutal-6 anim-pop absolute top-full left-1/2 z-50 mt-2.5 w-56 -translate-x-1/2 rounded-xl border-3 border-slate-900 bg-white p-3"
-                                                    onMouseLeave={() => setMobileOpen(false)}
-                                                >
-                                                    <div className="mb-2 flex items-center justify-between border-b-2 border-slate-200 pb-1">
-                                                        <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
-                                                            // SECTIONS
-                                                        </span>
-                                                        <button
-                                                            onClick={() => setMobileOpen(false)}
-                                                            className="press press-flat cursor-pointer text-xs font-black text-slate-500 hover:text-slate-900"
-                                                        >
-                                                            ✕
-                                                        </button>
-                                                    </div>
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <button
-                                                            onClick={() => {
-                                                                setMobileOpen(false);
-                                                                handleNavigate('#gallery');
-                                                            }}
-                                                            className="flex cursor-pointer items-center justify-between rounded border border-slate-900 bg-sky-50 p-1.5 text-left text-xs font-bold transition-colors hover:bg-sky-500 hover:text-slate-950"
-                                                        >
-                                                            <span>Gallery</span>
-                                                            <span>→</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setMobileOpen(false);
-                                                                handleNavigate('#updates');
-                                                            }}
-                                                            className="flex cursor-pointer items-center justify-between rounded border border-slate-900 bg-sky-50 p-1.5 text-left text-xs font-bold transition-colors hover:bg-sky-500 hover:text-slate-950"
-                                                        >
-                                                            <span>Updates</span>
-                                                            <span>→</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                setMobileOpen(false);
-                                                                handleNavigate('#story');
-                                                            }}
-                                                            className="flex cursor-pointer items-center justify-between rounded border border-slate-900 bg-sky-50 p-1.5 text-left text-xs font-bold transition-colors hover:bg-sky-500 hover:text-slate-950"
-                                                        >
-                                                            <span>Our Story</span>
-                                                            <span>→</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        /* Top State: Full Links */
-                                        <>
-                                            {/* Gallery */}
-                                            <DockTextItem
-                                                mouseX={mouseX}
-                                                onClick={() => handleNavigate('#gallery')}
-                                                className="shadow-brutal-2 hover:shadow-brutal-3 border-2 border-slate-900 bg-white px-3 py-1.5 text-xs hover:bg-sky-100"
-                                            >
-                                                <span>Gallery</span>
-                                            </DockTextItem>
-
-                                            {/* Updates */}
-                                            <DockTextItem
-                                                mouseX={mouseX}
-                                                onClick={() => handleNavigate('#updates')}
-                                                className="shadow-brutal-2 hover:shadow-brutal-3 border-2 border-slate-900 bg-white px-3 py-1.5 text-xs hover:bg-sky-100"
-                                            >
-                                                <span>Updates</span>
-                                            </DockTextItem>
-
-                                            {/* Our Story */}
-                                            <DockTextItem
-                                                mouseX={mouseX}
-                                                onClick={() => handleNavigate('#story')}
-                                                className="shadow-brutal-2 hover:shadow-brutal-3 border-2 border-slate-900 bg-white px-3 py-1.5 text-xs hover:bg-sky-100"
-                                            >
-                                                <span>Our Story</span>
-                                            </DockTextItem>
-                                        </>
-                                    )}
 
                                     {/* Contact Us Button */}
                                     <div className="relative">
@@ -595,36 +483,7 @@ export default function CyberNavbar({
                             </button>
                         </div>
 
-                        {/* Navigation Sections */}
-                        <div className="mb-3 grid grid-cols-3 gap-2">
-                            <button
-                                onClick={() => {
-                                    setMobileOpen(false);
-                                    handleNavigate('#gallery');
-                                }}
-                                className="shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-50 p-2 text-center text-xs font-black uppercase hover:bg-sky-200"
-                            >
-                                Gallery
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setMobileOpen(false);
-                                    handleNavigate('#updates');
-                                }}
-                                className="shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-50 p-2 text-center text-xs font-black uppercase hover:bg-sky-200"
-                            >
-                                Updates
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setMobileOpen(false);
-                                    handleNavigate('#story');
-                                }}
-                                className="shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-50 p-2 text-center text-xs font-black uppercase hover:bg-sky-200"
-                            >
-                                Story
-                            </button>
-                        </div>
+
 
                         {/* Subsystems List */}
                         <div className="mb-3">

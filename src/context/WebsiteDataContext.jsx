@@ -208,8 +208,8 @@ const initialSponsorshipData = {
     brochureUrl: '',
     deckUrl: '',
     contactPerson: 'Ratheeswar & Team Leads',
-    contactEmail: 'asterix.psgitech@gmail.com',
-    contactPhone: '+91 98765 43210'
+    contactEmail: 'software.asterix@psgitech.ac.in',
+    contactPhone: '+91 86089 44644'
 };
 
 /* Recruitment portal — static content only.
