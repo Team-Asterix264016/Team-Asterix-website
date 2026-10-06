@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiUrl } from '../lib/api';
+import { safeHref } from '../lib/safeHref';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
-import { downloadAllIcsFile, getGoogleCalendarUrl } from '../utils/calendarUtils';
+import { downloadAllIcsFile } from '../utils/calendarUtils';
 import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
 
 const SUBSYSTEMS_PORTAL_DATA = [
@@ -89,6 +90,18 @@ const ACHIEVEMENTS_DATA = [
         tech: ['SolidWorks', 'ANSYS FEA', 'Gazebo Sim', 'Rviz2']
     }
 ];
+
+const RESOURCE_TYPE_BADGES = {
+    pdf: '📄 PDF',
+    slides: '📊 Slides',
+    colab: '🌐 Colab',
+    code: '💻 Code',
+    drive: '📁 Drive',
+    video: '🎬 Video',
+    link: '↗ Link',
+    doc: '📝 Doc',
+    dataset: '🗂️ Dataset'
+};
 
 function receiptRows(record) {
     return [
@@ -279,6 +292,22 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             window.location.assign('#subsystem');
         }
     };
+
+    const notesResources = profile?.resources || [];
+    const notesModules = [...new Set(notesResources.map((item) => item.module).filter((mod) => typeof mod === 'string' && mod.trim()))];
+    const activeNotesModule = notesModules.includes(notesModuleFilter) ? notesModuleFilter : 'all';
+    const notesQuery = notesSearch.trim().toLowerCase();
+    const filteredNotes = notesResources.filter((item) => {
+        if (activeNotesModule !== 'all' && item.module !== activeNotesModule) return false;
+        if (!notesQuery) return true;
+        return (
+            item.title?.toLowerCase().includes(notesQuery) ||
+            item.description?.toLowerCase().includes(notesQuery) ||
+            item.module?.toLowerCase().includes(notesQuery) ||
+            item.track?.toLowerCase().includes(notesQuery) ||
+            item.resources?.some((res) => res.label?.toLowerCase().includes(notesQuery))
+        );
+    });
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-900 selection:bg-amber-300">
@@ -827,7 +856,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => downloadAllIcsFile(profile.sessionTimeline || [], profile.candidate.packageName || 'Team Asterix Workshop')}
+                                                onClick={() => downloadAllIcsFile(profile.sessionTimeline || [], profile.candidate.packageName || 'Team Asterix Workshop', profile.trackInfo || {})}
                                                 className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-4 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
                                             >
                                                 📅 Sync All Sessions to Google Calendar (.ics)
@@ -929,14 +958,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 );
                                             })
                                             .map((session) => {
-                                                const gCalUrl = getGoogleCalendarUrl({
-                                                    title: `${session.label}: ${session.title}`,
-                                                    description: `Handled by: ${session.instructor}. Venue: ${session.venue}. Milestone: ${session.project || 'Workshop Session'}`,
-                                                    location: session.venue,
-                                                    date: session.date,
-                                                    timing: '5:10 PM – 6:50 PM'
-                                                });
-
                                                 return (
                                                     <div key={session.id} className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-4 flex flex-col justify-between">
                                                         <div>
@@ -970,15 +991,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                             }`}>
                                                                 {session.status === 'PRESENT' ? '✅ Verified Present' : session.status === 'ABSENT' ? '❌ Missed' : '🕒 Upcoming'}
                                                             </span>
-
-                                                            <a
-                                                                href={gCalUrl}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="press shadow-brutal-2 border-2 border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-amber-300 no-underline"
-                                                            >
-                                                                📅 Add to Cal
-                                                            </a>
                                                         </div>
                                                     </div>
                                                 );
@@ -993,13 +1005,13 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     <div className="flex flex-col justify-between gap-4 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
                                         <div>
                                             <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                                Official Lecture Slides, Colab Notebooks, LTspice Models &amp; Repos
+                                                Shared by the workshop team
                                             </span>
                                             <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
                                                 Workshop Notes &amp; Study Materials
                                             </h3>
                                             <p className="mt-1 text-xs font-bold text-slate-600">
-                                                Access all class notes, presentation slides, Jupyter notebooks, circuit simulation files, and code repositories to help you cope up and excel.
+                                                Notes, slides and links for your sessions, added as the workshop goes on.
                                             </p>
                                         </div>
                                         <a
@@ -1012,29 +1024,30 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </a>
                                     </div>
 
+                                    {notesResources.length === 0 ? (
+                                        <div className="shadow-brutal-4 border-3 border-slate-900 bg-slate-50 p-6 text-center">
+                                            <p className="text-lg font-black uppercase text-slate-900">No notes published yet</p>
+                                            <p className="mt-1 font-mono text-xs font-bold text-slate-600">
+                                                Session notes, slides and links will appear here once the workshop team uploads them.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                    <>
                                     {/* Search & Filter Controls */}
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                         {/* Module Filters */}
+                                        {notesModules.length > 0 && (
                                         <div className="flex flex-wrap gap-1.5 font-mono text-xs font-black uppercase">
                                             {[
-                                                { id: 'all', label: 'All Topics' },
-                                                { id: 'Syllabus & Guides', label: 'Syllabus' },
-                                                { id: 'System Design', label: 'System Design' },
-                                                { id: 'Computer Vision', label: 'Computer Vision' },
-                                                { id: 'Machine Learning', label: 'Machine Learning' },
-                                                { id: 'ROS 2 & Agentic AI', label: 'ROS 2 & AI' },
-                                                { id: 'Circuit Analysis', label: 'Circuit Analysis' },
-                                                { id: 'ESP32 & Microcontrollers', label: 'ESP32' },
-                                                { id: 'Analog Circuits & Power', label: 'Analog & Power' },
-                                                { id: 'Electric Motors', label: 'Motors' },
-                                                { id: 'PCB Design', label: 'PCB Design' }
+                                                { id: 'all', label: 'All' },
+                                                ...notesModules.map((mod) => ({ id: mod, label: mod }))
                                             ].map((m) => (
                                                 <button
                                                     key={m.id}
                                                     type="button"
                                                     onClick={() => setNotesModuleFilter(m.id)}
                                                     className={`border-2 border-slate-900 px-3 py-1 transition-all ${
-                                                        notesModuleFilter === m.id
+                                                        activeNotesModule === m.id
                                                             ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
                                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                                     }`}
@@ -1043,6 +1056,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 </button>
                                             ))}
                                         </div>
+                                        )}
 
                                         {/* Search Bar */}
                                         <div className="w-full sm:w-72">
@@ -1056,22 +1070,17 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </div>
                                     </div>
 
+                                    {filteredNotes.length === 0 && (
+                                        <div className="border-3 border-slate-900 bg-slate-50 p-5 text-center font-mono text-xs font-black uppercase text-slate-600">
+                                            No notes match your search.
+                                        </div>
+                                    )}
+
                                     {/* Resources Grid */}
                                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        {profile.resources
-                                            .filter((item) => {
-                                                if (notesModuleFilter !== 'all' && item.module !== notesModuleFilter) return false;
-                                                if (!notesSearch.trim()) return true;
-                                                const q = notesSearch.toLowerCase();
-                                                return (
-                                                    item.title?.toLowerCase().includes(q) ||
-                                                    item.description?.toLowerCase().includes(q) ||
-                                                    item.module?.toLowerCase().includes(q) ||
-                                                    item.track?.toLowerCase().includes(q)
-                                                );
-                                            })
+                                        {filteredNotes
                                             .map((item, idx) => (
-                                                <div key={item.id || idx} className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/60 p-5 flex flex-col justify-between">
+                                                <div key={item._id || item.id || idx} className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/60 p-5 flex flex-col justify-between">
                                                     <div>
                                                         <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
                                                             <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
@@ -1093,30 +1102,33 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                     </div>
 
                                                     <div className="mt-4 space-y-2 border-t-2 border-slate-300 pt-3">
-                                                        {item.resources?.map((res, i) => (
+                                                        {item.resources?.map((res, i) => {
+                                                            const resType = (res.type || '').trim().toLowerCase();
+                                                            return (
                                                             <a
                                                                 key={i}
-                                                                href={res.url}
+                                                                href={safeHref(res.url)}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-white px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
                                                             >
                                                                 <span>{res.label}</span>
                                                                 <span>
-                                                                    {res.type === 'pdf'
-                                                                        ? '📄 PDF Slides'
-                                                                        : res.type === 'colab'
-                                                                        ? '🌐 Colab'
-                                                                        : res.type === 'code'
-                                                                        ? '💻 Code Repo'
+                                                                    {Object.hasOwn(RESOURCE_TYPE_BADGES, resType)
+                                                                        ? RESOURCE_TYPE_BADGES[resType]
+                                                                        : resType
+                                                                        ? `↗ ${resType.toUpperCase()}`
                                                                         : '↗ Open'}
                                                                 </span>
                                                             </a>
-                                                        ))}
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                             ))}
                                     </div>
+                                    </>
+                                    )}
                                 </div>
                             )}
 

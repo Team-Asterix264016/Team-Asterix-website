@@ -8,9 +8,16 @@ const workshopResourceSchema = new mongoose.Schema(
             enum: ['software', 'powertrain', 'common'],
             index: true
         },
+        // Free-text grouping shown as a filter on the participant Notes tab, e.g. "Computer Vision".
+        module: {
+            type: String,
+            default: '',
+            trim: true,
+            maxlength: 60
+        },
         sessionId: {
             type: String,
-            required: true,
+            default: '',
             index: true
         },
         sessionNumber: {
@@ -20,22 +27,22 @@ const workshopResourceSchema = new mongoose.Schema(
         title: {
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            maxlength: 160
         },
         description: {
             type: String,
             default: '',
-            trim: true
+            trim: true,
+            maxlength: 2000
         },
         resources: [
             {
-                label: { type: String, required: true },
-                url: { type: String, required: true },
-                type: {
-                    type: String,
-                    enum: ['slides', 'drive', 'code', 'pdf', 'video', 'link'],
-                    default: 'link'
-                }
+                label: { type: String, required: true, trim: true, maxlength: 120 },
+                url: { type: String, required: true, trim: true },
+                // Admin-chosen and free-form (pdf, slides, colab, code, ... or anything custom);
+                // the participant page maps known values to badges and shows the raw text otherwise.
+                type: { type: String, default: 'link', trim: true, lowercase: true, maxlength: 30 }
             }
         ]
     },

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopResource from '../models/WorkshopResource.js';
@@ -589,163 +590,16 @@ router.post('/profile', async (req, res) => {
         const attendancePercentage = totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : 100;
         const isEligibleForCertificate = attendancePercentage >= 75;
 
-        // Fetch dynamic resources
-        const dynamicResources = await WorkshopResource.find({
+        // Notes are whatever the workshop team has published from the admin portal; nothing is built in.
+        const resources = await WorkshopResource.find({
             track: { $in: [...tracksEnrolled, 'common'] }
-        }).sort({ sessionNumber: 1 }).lean();
+        }).sort({ sessionNumber: 1, createdAt: 1 }).lean();
 
-        // Built-in comprehensive resources per track
-        const TRACK_DEFAULT_RESOURCES = {
-            software: [
-                {
-                    id: 'res-sw-syllabus',
-                    track: 'software',
-                    module: 'Syllabus & Guides',
-                    title: 'Software & Perception Official Syllabus & Lab Guide',
-                    description: 'Complete 5-week course outline covering System Design, OpenCV, Machine Learning, ROS 2, and Agentic AI capstone projects.',
-                    resources: [
-                        { label: 'Download PDF Syllabus', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-sw-sysdesign',
-                    track: 'software',
-                    module: 'System Design',
-                    title: 'System Design I & II: Subsystem Decomposition & Loop Timing Notes',
-                    description: 'ATV sensor-processor-actuator breakdown, Sense-Plan-Act control loop timing analysis, interface contracts & Mini-Projects 1 & 2 slides.',
-                    resources: [
-                        { label: 'Download System Design Slides (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' },
-                        { label: 'System Design Diagramming Template', url: 'https://excalidraw.com', type: 'link' }
-                    ]
-                },
-                {
-                    id: 'res-sw-cv',
-                    track: 'software',
-                    module: 'Computer Vision',
-                    title: 'Computer Vision: Image Processing, HSV Thresholding & Contours',
-                    description: 'NumPy pixel matrices, Gaussian blur filtering, HSV color space thresholding for cone detection, and OpenCV contour tracking.',
-                    resources: [
-                        { label: 'OpenCV Colab Notebook', url: 'https://colab.research.google.com', type: 'colab' },
-                        { label: 'Asterix Vision Starter Repo (GitHub)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'OpenCV Function Cheat Sheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-sw-ml',
-                    track: 'software',
-                    module: 'Machine Learning',
-                    title: 'Machine Learning: Vehicle Telemetry Data Analytics & Regression',
-                    description: 'Jupyter notebooks and CSV dataset parsing for telemetry logs. Pandas data cleaning, K-Means clustering, and Linear Regression speed estimation.',
-                    resources: [
-                        { label: 'Vehicle Telemetry ML Notebook', url: 'https://colab.research.google.com', type: 'colab' },
-                        { label: 'Sample BAJA Telemetry CSV (12k logs)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'Scikit-Learn Cheat Sheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-sw-ros',
-                    track: 'software',
-                    module: 'ROS 2 & Agentic AI',
-                    title: 'ROS 2 & Agentic AI: Nodes, Topics & LLM Vehicle Control Loop',
-                    description: 'ROS 2 node creation, publisher-subscriber communication CLI, and building LLM-powered decision agents with autonomous safety guardrails.',
-                    resources: [
-                        { label: 'Asterix ROS 2 Starter Kit (GitHub)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'ROS 2 CLI & Architecture Cheatsheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' },
-                        { label: 'Agentic AI Reasoning Notebook', url: 'https://colab.research.google.com', type: 'colab' }
-                    ]
-                }
-            ],
-            powertrain: [
-                {
-                    id: 'res-pt-syllabus',
-                    track: 'powertrain',
-                    module: 'Syllabus & Guides',
-                    title: 'Electronics & Powertrain Official Syllabus & Lab Manual',
-                    description: 'Complete 21-hour lab guide covering Network Analysis, Electronic Devices, Microcontrollers, Analog Circuits, Motors, and PCB layout.',
-                    resources: [
-                        { label: 'Download PDF Syllabus', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-pt-circuits',
-                    track: 'powertrain',
-                    module: 'Circuit Analysis',
-                    title: 'Network Analysis: Ohm\'s Law, KVL/KCL & RC Circuits Notes',
-                    description: 'Fundamental electrical engineering principles, voltage divider equations, RC time constants, and LTspice simulation setup files.',
-                    resources: [
-                        { label: 'Circuit Analysis Lecture Slides (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' },
-                        { label: 'LTspice RC Filter Schematic (.asc)', url: 'https://github.com/Team-Asterix264016', type: 'code' }
-                    ]
-                },
-                {
-                    id: 'res-pt-transistors',
-                    track: 'powertrain',
-                    module: 'Circuit Analysis',
-                    title: 'Electronic Devices: BJT & MOSFET Switching Circuits Notes',
-                    description: 'Transistor saturation modes, gate drive design, flyback protection diodes, and PSpice/LTspice transistor switch simulation.',
-                    resources: [
-                        { label: 'LTspice MOSFET Switch Simulation', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'Transistor Switching Guide (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-pt-esp32',
-                    track: 'powertrain',
-                    module: 'ESP32 & Microcontrollers',
-                    title: 'Microcontrollers: ESP32 Firmware & Buggy Start-Up Notes',
-                    description: 'ESP32 GPIO pinout guide, Arduino IDE setup, PWM signal generation, safety kill-switch logic, and Tinkercad interactive circuit simulation.',
-                    resources: [
-                        { label: 'ESP32 Buggy Start-Up Firmware (.ino)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'Tinkercad ESP32 Interactive Simulator', url: 'https://www.tinkercad.com', type: 'link' },
-                        { label: 'ESP32 Pinout Cheat Sheet (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-pt-analog',
-                    track: 'powertrain',
-                    module: 'Analog Circuits & Power',
-                    title: 'Analog Circuits: Buck-Boost Converters, Op-Amps & Active Filters Notes',
-                    description: 'DC-DC buck-boost converters, operational amplifiers for sensor signal conditioning, active low-pass filters, and MATLAB scripts.',
-                    resources: [
-                        { label: 'Op-Amp & Power Regulator Slides (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' },
-                        { label: 'MATLAB Active Filter Simulation Script', url: 'https://github.com/Team-Asterix264016', type: 'code' }
-                    ]
-                },
-                {
-                    id: 'res-pt-motors',
-                    track: 'powertrain',
-                    module: 'Electric Motors',
-                    title: 'Electric Machines & Motors: DC, BLDC, Stepper & Servo Control Notes',
-                    description: 'Operating principles of electric motors, H-bridge motor drivers, PWM torque control, and MATLAB Simulink motor performance models.',
-                    resources: [
-                        { label: 'MATLAB Simulink Motor Model File', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'Motor Driver & PWM Selection Manual', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
-                    ]
-                },
-                {
-                    id: 'res-pt-pcb',
-                    track: 'powertrain',
-                    module: 'PCB Design',
-                    title: 'PCB Design: KiCad Schematic Capture & PCB Layout Walkthrough',
-                    description: 'Step-by-step PCB layout guide, component footprint selection, trace width calculator, Design Rule Checks (DRC), and vehicle PCB tour.',
-                    resources: [
-                        { label: 'KiCad PCB Project & Component Libraries', url: 'https://github.com/Team-Asterix264016', type: 'code' },
-                        { label: 'PCB Design Rules & Trace Width Guide', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
-                    ]
-                }
-            ]
-        };
-
-        const defaultResources = [];
         const trackInfo = {};
-
         tracksEnrolled.forEach((tId) => {
             const trk = WORKSHOP_TRACKS[tId];
             if (trk) {
                 trackInfo[tId] = trk;
-            }
-            if (TRACK_DEFAULT_RESOURCES[tId]) {
-                defaultResources.push(...TRACK_DEFAULT_RESOURCES[tId]);
             }
         });
 
@@ -778,7 +632,7 @@ router.post('/profile', async (req, res) => {
             },
             sessionTimeline,
             trackInfo,
-            resources: [...defaultResources, ...dynamicResources]
+            resources
         });
     } catch (err) {
         console.error('Error fetching participant profile:', err);
@@ -786,15 +640,59 @@ router.post('/profile', async (req, res) => {
     }
 });
 
+const RESOURCE_TRACKS = ['software', 'powertrain', 'common'];
+
+// Links end up in participants' hrefs, so only http(s) and same-site paths are accepted;
+// anything else (javascript:, data:, protocol-relative //host) is rejected.
+function isSafeResourceUrl(url) {
+    if (url.startsWith('/')) return !url.startsWith('//');
+    try {
+        const { protocol } = new URL(url);
+        return protocol === 'https:' || protocol === 'http:';
+    } catch {
+        return false;
+    }
+}
+
+function parseResourceBody(body) {
+    const track = String(body.track || '').trim().toLowerCase();
+    const title = String(body.title || '').trim();
+    if (!RESOURCE_TRACKS.includes(track)) return { error: `track must be one of: ${RESOURCE_TRACKS.join(', ')}` };
+    if (!title) return { error: 'title is required' };
+
+    const links = [];
+    for (const link of Array.isArray(body.resources) ? body.resources : []) {
+        const label = String(link?.label || '').trim();
+        const url = String(link?.url || '').trim();
+        if (!label && !url) continue;
+        if (!label || !url) return { error: 'Every link needs both a label and a URL' };
+        if (!isSafeResourceUrl(url)) return { error: `Link "${label}" must be an http(s) URL or a site path starting with /` };
+        links.push({ label, url, type: String(link?.type || 'link').trim().toLowerCase() || 'link' });
+    }
+
+    const sessionNumber = Number(body.sessionNumber);
+    return {
+        doc: {
+            track,
+            module: String(body.module || '').trim(),
+            sessionId: String(body.sessionId || '').trim(),
+            sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : 1,
+            title,
+            description: String(body.description || '').trim(),
+            resources: links
+        }
+    };
+}
+
 /**
- * GET & POST /api/workshop/attendance/resources
- * Manage dynamic notes, slides, and links for workshop sessions
+ * /api/workshop/attendance/resources
+ * Workshop notes, slides and links. Reads are public; writes need an admin token.
  */
 router.get('/resources', async (req, res) => {
     try {
         const track = req.query.track ? String(req.query.track).toLowerCase() : null;
         const query = track ? { track: { $in: [track, 'common'] } } : {};
-        const resources = await WorkshopResource.find(query).sort({ sessionNumber: 1 }).lean();
+        const resources = await WorkshopResource.find(query).sort({ sessionNumber: 1, createdAt: 1 }).lean();
         return res.json({ resources });
     } catch (err) {
         return res.status(500).json({ error: 'Failed to fetch workshop resources' });
@@ -803,24 +701,41 @@ router.get('/resources', async (req, res) => {
 
 router.post('/resources', authenticateToken, async (req, res) => {
     try {
-        const { track, sessionId, sessionNumber, title, description, resources } = req.body;
-        if (!track || !sessionId || !title) {
-            return res.status(400).json({ error: 'track, sessionId, and title are required' });
-        }
+        const { doc, error } = parseResourceBody(req.body || {});
+        if (error) return res.status(400).json({ error });
 
-        const newResource = await WorkshopResource.create({
-            track,
-            sessionId,
-            sessionNumber: sessionNumber || 1,
-            title,
-            description: description || '',
-            resources: Array.isArray(resources) ? resources : []
-        });
-
+        const newResource = await WorkshopResource.create(doc);
         return res.status(201).json({ success: true, resource: newResource });
     } catch (err) {
         console.error('Error creating resource:', err);
         return res.status(500).json({ error: 'Failed to create workshop resource' });
+    }
+});
+
+router.put('/resources/:id', authenticateToken, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Note not found' });
+        const { doc, error } = parseResourceBody(req.body || {});
+        if (error) return res.status(400).json({ error });
+
+        const updated = await WorkshopResource.findByIdAndUpdate(req.params.id, doc, { new: true, runValidators: true });
+        if (!updated) return res.status(404).json({ error: 'Note not found' });
+        return res.json({ success: true, resource: updated });
+    } catch (err) {
+        console.error('Error updating resource:', err);
+        return res.status(500).json({ error: 'Failed to update workshop resource' });
+    }
+});
+
+router.delete('/resources/:id', authenticateToken, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Note not found' });
+        const deleted = await WorkshopResource.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Note not found' });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting resource:', err);
+        return res.status(500).json({ error: 'Failed to delete workshop resource' });
     }
 });
 
