@@ -158,8 +158,8 @@ router.post('/accounts', authenticateToken, async (req, res) => {
         if (!username || !password || !name) {
             return res.status(400).json({ error: 'Username, password, and name are required.' });
         }
-        if (String(password).length < 8) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+        if (!password || String(password).trim().length < 4) {
+            return res.status(400).json({ error: 'Password must be at least 4 characters.' });
         }
 
         const requestedLevel = accessLevel || 'Lead';

@@ -2462,11 +2462,11 @@ export default function AdminDashboard({ onExit }) {
                                             accessLevel: newAccount.accessLevel || 'Lead'
                                         };
 
-                                        // 1. Add to siteData accounts array immediately (persists in localStorage, Firestore, and MongoDB)
+                                        // 1. Add to siteData accounts array immediately
                                         addAccount(createdAccount);
 
                                         // 2. Register in backend DB if token is available
-                                        const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
+                                        const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
                                         if (token) {
                                             try {
                                                 const res = await fetch(apiUrl('/api/auth/accounts'), {
@@ -2482,11 +2482,15 @@ export default function AdminDashboard({ onExit }) {
                                                     if (data.account) {
                                                         setDbAccounts((prev) => [
                                                             ...prev.filter(
-                                                                (a) => a.username !== cleanUsername
+                                                                (a) => a.username !== cleanUsername && a.id !== createdAccount.id
                                                             ),
                                                             data.account
                                                         ]);
                                                     }
+                                                    fetchAccounts();
+                                                } else {
+                                                    const errData = await res.json().catch(() => ({}));
+                                                    return alert(`⚠️ Failed to create member account: ${errData.error || 'Server error'}`);
                                                 }
                                             } catch (err) {
                                                 console.warn('Backend API account notice:', err);

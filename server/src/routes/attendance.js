@@ -562,8 +562,8 @@ router.post('/profile', async (req, res) => {
             });
         }
 
-        // Record participant login activity asynchronously
-        WorkshopRegistration.updateOne(
+        // Record participant login activity permanently in database
+        await WorkshopRegistration.updateOne(
             { _id: candidate._id },
             { $set: { lastLoginAt: new Date() }, $inc: { loginCount: 1 } }
         ).catch((e) => console.error('Failed to update candidate lastLoginAt:', e));

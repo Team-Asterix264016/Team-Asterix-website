@@ -1301,6 +1301,11 @@ router.post('/login', async (req, res) => {
             });
         }
 
+        // Record participant login activity permanently in database
+        registration.lastLoginAt = new Date();
+        registration.loginCount = (registration.loginCount || 0) + 1;
+        await registration.save().catch((err) => console.error('Failed to save candidate login timestamp:', err));
+
         // Create JWT token for paid student
         const tokenPayload = {
             registrationId: registration._id.toString(),
