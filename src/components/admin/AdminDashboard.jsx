@@ -300,6 +300,14 @@ export default function AdminDashboard({ onExit }) {
             try {
                 const parsed = JSON.parse(event.target.result);
                 if (parsed && typeof parsed === 'object') {
+                    if (
+                        !window.confirm(
+                            'Restore this backup? It replaces ALL current site content (hero, subsystems, team, workshop schedule, etc.) and cannot be undone.'
+                        )
+                    ) {
+                        e.target.value = '';
+                        return;
+                    }
                     loadFromBackup(parsed);
                     showStatus('Backup restored successfully! ✓');
                 } else {
@@ -1344,9 +1352,14 @@ export default function AdminDashboard({ onExit }) {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() =>
-                                                            deleteTeamMember(currentSubsystem.id, idx)
-                                                        }
+                                                        onClick={() => {
+                                                            if (
+                                                                window.confirm(
+                                                                    `Remove ${m.name || 'this member'} from ${currentSubsystem.name || 'this subsystem'}?`
+                                                                )
+                                                            )
+                                                                deleteTeamMember(currentSubsystem.id, idx);
+                                                        }}
                                                         className="press cursor-pointer border border-slate-900 bg-rose-50 px-2 py-0.5 font-mono text-[10px] font-black text-rose-600 uppercase hover:bg-rose-100"
                                                         title="Delete Member"
                                                     >
@@ -1665,7 +1678,14 @@ export default function AdminDashboard({ onExit }) {
                                         {siteData.sponsorship?.brochureUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ brochureUrl: '' })}
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the brochure link and fall back to the default document?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ brochureUrl: '' });
+                                                }}
                                                 className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default auto-generated document"
                                             >
@@ -1719,7 +1739,14 @@ export default function AdminDashboard({ onExit }) {
                                         {siteData.sponsorship?.deckUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ deckUrl: '' })}
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the pitch deck link and fall back to the default tech brief?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ deckUrl: '' });
+                                                }}
                                                 className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default tech brief"
                                             >
@@ -1773,7 +1800,14 @@ export default function AdminDashboard({ onExit }) {
                                         {siteData.sponsorship?.letterUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ letterUrl: '' })}
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the endorsement letter link and fall back to the default document?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ letterUrl: '' });
+                                                }}
                                                 className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default credential document"
                                             >
@@ -1875,7 +1909,14 @@ export default function AdminDashboard({ onExit }) {
                                                         </td>
                                                         <td className="p-2.5 text-right">
                                                             <button
-                                                                onClick={() => handleDeleteInquiry(inq.id)}
+                                                                onClick={() => {
+                                                                    if (
+                                                                        window.confirm(
+                                                                            `Delete the sponsor inquiry from ${inq.companyName || 'this company'}? This cannot be undone.`
+                                                                        )
+                                                                    )
+                                                                        handleDeleteInquiry(inq.id);
+                                                                }}
                                                                 className="press press-flat cursor-pointer text-xs font-black text-rose-600 hover:text-rose-900"
                                                             >
                                                                 Delete ✕
@@ -2079,7 +2120,10 @@ export default function AdminDashboard({ onExit }) {
                                         </div>
                                         <div className="mt-2 flex justify-end border-t border-slate-200 pt-2">
                                             <button
-                                                onClick={() => deleteGalleryItem(item.id)}
+                                                onClick={() => {
+                                                    if (window.confirm('Delete this gallery photo?'))
+                                                        deleteGalleryItem(item.id);
+                                                }}
                                                 className="press press-flat cursor-pointer font-mono text-xs font-black text-rose-600 hover:text-rose-800"
                                             >
                                                 Delete Photo ✕
@@ -2198,7 +2242,16 @@ export default function AdminDashboard({ onExit }) {
                                                 />
                                             </div>
                                             <button
-                                                onClick={() => deleteUpdate(upd.id)}
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            upd.label
+                                                                ? `Delete the update "${upd.label}"?`
+                                                                : 'Delete this update?'
+                                                        )
+                                                    )
+                                                        deleteUpdate(upd.id);
+                                                }}
                                                 className="press press-flat shrink-0 cursor-pointer font-mono text-xs font-black text-rose-600 hover:text-rose-800"
                                             >
                                                 Delete ✕
@@ -2298,7 +2351,14 @@ export default function AdminDashboard({ onExit }) {
                                                     </td>
                                                     <td className="p-2.5 text-right">
                                                         <button
-                                                            onClick={() => handleDeleteSubscriber(sub.id)}
+                                                            onClick={() => {
+                                                                if (
+                                                                    window.confirm(
+                                                                        `Delete ${sub.email || 'this subscriber'} from the subscriber list? This cannot be undone.`
+                                                                    )
+                                                                )
+                                                                    handleDeleteSubscriber(sub.id);
+                                                            }}
                                                             className="press press-flat cursor-pointer font-black text-rose-600 hover:text-rose-900"
                                                         >
                                                             Delete ✕
