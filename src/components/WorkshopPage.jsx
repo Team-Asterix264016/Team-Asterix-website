@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiUrl } from '../lib/api';
 import { useWebsiteData } from '../context/WebsiteDataContext';
+import { getGoogleCalendarUrl, downloadIcsFile } from '../utils/calendarUtils';
 /* Shared with the backend so the page and the server can never disagree on
    what a package includes or costs. The server still looks the price up on
    its own side when it creates the order; this import is for display only. */
@@ -800,34 +801,16 @@ export default function WorkshopPage({ onBack }) {
                         >
                             ← Main<span className="hidden sm:inline"> Website</span>
                         </button>
-                        {/* Prominent Upgrade to Combo Button in Header */}
-                        <button
-                            type="button"
-                            onClick={() => setUpgradeModalOpen(true)}
-                            aria-haspopup="dialog"
-                            aria-label="Upgrade to Dual-Track Combo"
-                            className="press shadow-brutal-3-brand inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-2.5 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300 sm:px-3.5"
-                        >
-                            <span className="text-amber-950">★</span>
-                            <span className="sm:hidden">
-                                {softwareSeats.isPaused ? 'Upgrade ⏸' : 'Upgrade ₹750'}
-                            </span>
-                            <span className="hidden sm:inline">
-                                {softwareSeats.isPaused
-                                    ? 'Upgrade to Combo (Paused)'
-                                    : 'Upgrade to Combo (₹750)'}
-                            </span>
-                        </button>
-                        {/* Check registration & receipt lookup button */}
+                        {/* Participant Locker Lookup Button in Header */}
                         <button
                             type="button"
                             onClick={() => setLookupOpen(true)}
                             aria-haspopup="dialog"
-                            aria-label="Check registration"
-                            className="press shadow-brutal-3 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-2.5 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300 sm:px-4"
+                            aria-label="Participant Verification Locker"
+                            className="press shadow-brutal-3-brand inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-emerald-300 sm:px-4"
                         >
                             <svg
-                                className="h-3.5 w-3.5 shrink-0 stroke-[2.5]"
+                                className="h-4 w-4 shrink-0 stroke-[2.5]"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -835,109 +818,96 @@ export default function WorkshopPage({ onBack }) {
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
                                 />
                             </svg>
-                            <span className="sm:hidden">Check Reg</span>
-                            <span className="hidden sm:inline">Check Registration</span>
+                            <span>Participant Locker 🔓</span>
                         </button>
                     </div>
                 </div>
             </header>
 
             <main>
-                {/* Overview */}
-                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-16 sm:px-8 sm:py-24">
+                {/* Information Deck Overview Hero */}
+                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-12 sm:px-8 sm:py-20">
                     <div className="mx-auto max-w-6xl">
-                        <span className="inline-block border-2 border-slate-900 bg-slate-900 px-3 py-1 font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
-                            ✦ Workshop 2026
-                        </span>
-                        <h1 className="mt-5 max-w-5xl text-4xl leading-[0.9] font-black tracking-tight uppercase sm:text-7xl">
-                            Engineer autonomy with the team that builds it
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-block border-2 border-slate-900 bg-slate-900 px-3 py-1 font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
+                                ✦ WORKSHOP INFORMATION DECK
+                            </span>
+                            <span className="inline-block border-2 border-slate-900 bg-rose-600 px-3 py-1 font-mono text-xs font-black tracking-widest text-white uppercase">
+                                REGISTRATION OFFICIALLY CLOSED
+                            </span>
+                            <span className="inline-block border-2 border-slate-900 bg-emerald-400 px-3 py-1 font-mono text-xs font-black tracking-widest text-slate-950 uppercase">
+                                PARTICIPANT PORTAL LIVE
+                            </span>
+                        </div>
+
+                        <h1 className="mt-5 max-w-5xl text-3xl leading-[0.95] font-black tracking-tight uppercase sm:text-6xl">
+                            Autonomous Subsystems Masterclass Deck
                         </h1>
-                        <p className="mt-6 max-w-3xl text-base leading-relaxed font-bold sm:text-xl">
-                            Two hands-on tracks. One autonomous vehicle.
-                            <br className="hidden sm:inline" />
-                            Learn the software that makes it think, or the electronics and powertrain that
-                            make it move.
-                        </p>
-                        <p className="mt-3 max-w-3xl text-sm leading-relaxed font-bold text-slate-800 sm:text-base">
-                            Sessions led by Team Asterix engineers and industry experts with real hardware,
-                            handbooks and project work.
-                        </p>
-                        <p className="mt-2 max-w-3xl text-sm leading-relaxed font-bold text-slate-800 sm:text-base">
-                            Choose one track, or take both with the combo package.
+                        <p className="mt-4 max-w-3xl text-base leading-relaxed font-bold text-slate-900 sm:text-xl">
+                            Official curriculum, session schedules, software guides, and project portal for both
+                            Team Asterix engineering subsystems.
                         </p>
 
-                        {/* Prominent Bank Maintenance Notice */}
-                        {softwareSeats.isPaused && (
-                            <div className="shadow-brutal-6 mt-8 border-4 border-slate-900 bg-white p-5 sm:p-6">
-                                <div className="mb-2 flex flex-wrap items-center gap-2">
-                                    <span className="border-2 border-slate-900 bg-rose-500 px-2.5 py-0.5 font-mono text-[11px] font-black text-white uppercase">
-                                        ⏸ Registrations Temporarily Paused
-                                    </span>
-                                    <span className="border-2 border-slate-900 bg-amber-400 px-2.5 py-0.5 font-mono text-[11px] font-black text-slate-950 uppercase">
-                                        ⚡ Reopening Monday 6:00 AM
-                                    </span>
-                                </div>
-                                <h3 className="text-xl leading-tight font-black text-slate-950 uppercase sm:text-2xl">
-                                    Fixing a technical issue on the bank's side
+                        {/* Dual Subsystem Pill Cards */}
+                        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div className="shadow-brutal-4 border-3 border-slate-900 bg-white p-4">
+                                <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
+                                    SUBSYSTEM 01
+                                </span>
+                                <h3 className="mt-1 text-xl font-black text-slate-900 uppercase">
+                                    Software &amp; Perception
                                 </h3>
-                                <p className="mt-2 max-w-3xl text-sm leading-relaxed font-bold text-slate-800 sm:text-base">
-                                    Registrations are temporarily paused while our team resolves a technical
-                                    issue on the banking partner's end. Software &amp; Autonomous Systems
-                                    registrations will resume tomorrow (Monday) morning at 6:00 AM and will
-                                    close on Tuesday, 6 October at 11:59 PM (or when remaining seats are
-                                    filled, whichever comes first).
+                                <p className="mt-1 text-xs font-bold text-slate-600">
+                                    ROS 2 • Computer Vision • OpenCV • Machine Learning • Agentic AI
                                 </p>
-                                <div className="mt-3.5 flex flex-wrap items-center gap-2 font-mono text-xs font-black text-slate-900 sm:gap-4">
-                                    <span className="inline-block border border-slate-900 bg-emerald-100 px-2.5 py-1">
-                                        ✦ Only {softwareSeats.seatsLeft ?? 15} Seats Left
-                                    </span>
-                                    <span className="inline-block border border-slate-900 bg-sky-100 px-2.5 py-1">
-                                        ✦ Final Deadline: Tuesday 11:59 PM
-                                    </span>
-                                </div>
                             </div>
-                        )}
 
+                            <div className="shadow-brutal-4 border-3 border-slate-900 bg-white p-4">
+                                <span className="font-mono text-[10px] font-black tracking-widest text-amber-700 uppercase">
+                                    SUBSYSTEM 02
+                                </span>
+                                <h3 className="mt-1 text-xl font-black text-slate-900 uppercase">
+                                    Electronics &amp; Powertrain
+                                </h3>
+                                <p className="mt-1 text-xs font-bold text-slate-600">
+                                    Circuits • LTspice • ESP32 • Buck/Boost • Motor Drivers • KiCad PCB
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Quick CTA Actions */}
                         <div className="mt-8 flex flex-wrap gap-3">
                             <button
                                 type="button"
-                                onClick={() => openRegister()}
-                                className="press shadow-brutal-4-brand border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
+                                onClick={() => setLookupOpen(true)}
+                                className="press shadow-brutal-4-brand flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                             >
-                                {softwareSeats.isPaused
-                                    ? '⏸ Registration Paused · Reopens Mon 6 AM'
-                                    : 'Register now →'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setUpgradeModalOpen(true)}
-                                className="press shadow-brutal-4 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
-                            >
-                                <span>
-                                    {softwareSeats.isPaused
-                                        ? '⏸ Upgrade to Combo (Reopens Mon 6 AM)'
-                                        : '★ Already in Powertrain? Upgrade for ₹750'}
-                                </span>
-                                <span>→</span>
+                                <span>Unlock Participant Locker</span>
+                                <span>🔓</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => scrollToEl(detailRef.current)}
                                 className="press shadow-brutal-4 border-2 border-slate-900 bg-white px-5 py-3 font-mono text-xs font-black uppercase hover:bg-sky-100"
                             >
-                                Explore the tracks ↓
+                                Browse Subsystem Decks ↓
                             </button>
                             <a
                                 href="#workshop-project-submit"
-                                className="press shadow-brutal-4 inline-flex items-center border-2 border-slate-900 bg-emerald-300 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase no-underline hover:bg-emerald-400"
+                                className="press shadow-brutal-4 inline-flex items-center border-2 border-slate-900 bg-emerald-400 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase no-underline hover:bg-emerald-300"
                             >
-                                Submit workshop project →
+                                Submit Mini-Project →
+                            </a>
+                            <a
+                                href="#quiz"
+                                className="press shadow-brutal-4 inline-flex items-center border-2 border-slate-900 bg-sky-300 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase no-underline hover:bg-sky-400"
+                            >
+                                Take Track Quiz 📝
                             </a>
                         </div>
-                        <ClosingDate className="mt-5" />
                     </div>
                 </section>
 
@@ -948,20 +918,18 @@ export default function WorkshopPage({ onBack }) {
                 >
                     <div className="mx-auto max-w-6xl">
                         <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                            01 / Choose a track
+                            01 / Select Subsystem Deck
                         </span>
-                        <h2 className="mt-2 text-3xl font-black uppercase sm:text-5xl">The tracks</h2>
+                        <h2 className="mt-2 text-3xl font-black uppercase sm:text-5xl">Subsystem Decks</h2>
 
                         <div
                             className="mt-8 grid grid-cols-2 gap-3 sm:gap-4"
                             role="tablist"
-                            aria-label="Workshop tracks"
+                            aria-label="Subsystem Information Decks"
                         >
                             {TRACK_ORDER.map((id) => {
                                 const t = WORKSHOP_TRACKS[id];
                                 const active = id === activeTrack;
-                                const trackSeatStats = id === 'powertrain' ? powertrainSeats : softwareSeats;
-                                const badgeInfo = getSeatBadgeInfo(trackSeatStats);
 
                                 return (
                                     <button
@@ -984,7 +952,7 @@ export default function WorkshopPage({ onBack }) {
                                                         : 'text-sky-700 group-hover:text-sky-700'
                                                 }`}
                                             >
-                                                <span>{active ? '● Selected' : '○ View Track'}</span>
+                                                <span>{active ? '● Active Subsystem' : '○ View Subsystem'}</span>
                                             </span>
                                             <span
                                                 className={`font-mono text-xs font-black ${
@@ -999,29 +967,11 @@ export default function WorkshopPage({ onBack }) {
                                         <span className="mt-1.5 block text-sm leading-tight font-black uppercase sm:mt-2 sm:text-2xl lg:text-3xl">
                                             {t.name}
                                         </span>
-                                        {/* Display seats left: >25 -> 'Limited seats available', <=25 -> 'x seats left' */}
-                                        {badgeInfo && (
-                                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                                <span
-                                                    className={`inline-flex items-center gap-1 border-2 border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase sm:text-xs ${
-                                                        badgeInfo.isSoldOut
-                                                            ? 'bg-rose-500 text-white'
-                                                            : badgeInfo.isPaused
-                                                              ? 'shadow-brutal-2 bg-amber-300 text-slate-950'
-                                                              : 'shadow-brutal-2 bg-amber-400 text-slate-950'
-                                                    }`}
-                                                >
-                                                    <span>
-                                                        {badgeInfo.isSoldOut
-                                                            ? '✕'
-                                                            : badgeInfo.isPaused
-                                                              ? '⏸'
-                                                              : '⚡'}
-                                                    </span>
-                                                    <span>{badgeInfo.text}</span>
-                                                </span>
-                                            </div>
-                                        )}
+                                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                            <span className="inline-flex items-center gap-1 border-2 border-slate-900 bg-emerald-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase sm:text-xs">
+                                                <span>✦ DECK READY</span>
+                                            </span>
+                                        </div>
                                         <span
                                             className={`mt-2 hidden text-sm font-bold sm:block ${
                                                 active ? 'text-slate-300' : 'text-slate-600'
@@ -1037,44 +987,34 @@ export default function WorkshopPage({ onBack }) {
                         <TrackDetail
                             key={track.id}
                             track={track}
-                            powertrainSeats={powertrainSeats}
-                            softwareSeats={softwareSeats}
-                            onRegister={openRegister}
-                            onOpenUpgrade={() => setUpgradeModalOpen(true)}
                             onPreviewSyllabus={(url, name) => setPreviewSyllabus({ url, name })}
                         />
 
-                        {/* Flexible Upgrade Anytime Banner on Home Page */}
+                        {/* Participant Locker Quick Card */}
                         <div className="shadow-brutal-6 mt-8 border-4 border-slate-900 bg-amber-300 p-5 sm:p-6">
                             <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                                 <div className="space-y-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase sm:text-xs">
-                                            ★ Flexible Upgrade Policy
+                                            🔓 Registered Participant Access
                                         </span>
-                                        <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase sm:text-xs">
-                                            ₹750 to Upgrade
+                                        <span className="inline-block border-2 border-slate-900 bg-emerald-400 px-2.5 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase sm:text-xs">
+                                            Instant Verification
                                         </span>
                                     </div>
                                     <h3 className="text-lg leading-tight font-black text-slate-900 uppercase sm:text-2xl">
-                                        {softwareSeats.isPaused
-                                            ? 'Powertrain to Combo Upgrade (Reopens Mon 6 AM)'
-                                            : 'Already in Powertrain? Upgrade for ₹750'}
+                                        Check Your Registered Track &amp; Attendance Records
                                     </h3>
                                     <p className="max-w-2xl text-xs font-bold text-slate-800 sm:text-sm">
-                                        {softwareSeats.isPaused
-                                            ? 'Registered for Electronics & Powertrain? Combo upgrades to add Software & Autonomous Systems are temporarily paused and will reopen tomorrow (Monday) at 6:00 AM alongside Software registrations.'
-                                            : 'Registered for Electronics & Powertrain? You can upgrade to the Dual-Track Combo for just ₹750 to unlock the Software & Autonomous Systems track once it reopens. (Note: Since Powertrain slots are 100% completed, upgrades from Software to Combo are unavailable).'}
+                                        Registered for the workshop? Enter your registered email or phone number to unlock your verified participant status, downloadable payment receipt, attendance logs, and project submissions.
                                     </p>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setUpgradeModalOpen(true)}
+                                    onClick={() => setLookupOpen(true)}
                                     className="press shadow-brutal-3-brand shrink-0 cursor-pointer border-2 border-slate-900 bg-slate-900 px-6 py-3.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                                 >
-                                    {softwareSeats.isPaused
-                                        ? '⏸ Upgrades Reopen Mon 6 AM'
-                                        : 'Upgrade to Combo for ₹750 ★'}
+                                    Unlock Participant Locker 🔓
                                 </button>
                             </div>
                         </div>
@@ -1689,33 +1629,8 @@ export default function WorkshopPage({ onBack }) {
     );
 }
 
-function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpenUpgrade }) {
+function TrackDetail({ track, onPreviewSyllabus }) {
     const isSoftware = track.id === 'software';
-    const isPowertrain = track.id === 'powertrain';
-    const otherTrackName = isSoftware ? 'Powertrain' : 'Software';
-    const trackSeats = isPowertrain ? powertrainSeats : softwareSeats;
-    const badgeInfo = getSeatBadgeInfo(trackSeats);
-
-    const comboSeats = {
-        seatsLeft:
-            powertrainSeats?.seatsLeft !== null && softwareSeats?.seatsLeft !== null
-                ? Math.min(powertrainSeats.seatsLeft, softwareSeats.seatsLeft)
-                : (powertrainSeats?.seatsLeft ?? softwareSeats?.seatsLeft ?? null),
-        soldOut: Boolean(powertrainSeats?.soldOut || softwareSeats?.soldOut || softwareSeats?.isPaused),
-        isPaused: softwareSeats?.isPaused
-    };
-    const comboBadgeInfo = getSeatBadgeInfo(comboSeats);
-
-    const facts = [
-        ['Dates', track.dates],
-        ['Schedule', track.days],
-        ['Timing', track.timing],
-        ['Price', formatPrice(WORKSHOP_PACKAGES.find((p) => p.id === track.id))]
-    ];
-
-    if (badgeInfo) {
-        facts.push(['Seats Left', badgeInfo.fullText]);
-    }
 
     const hasSyllabus = Boolean(track.syllabus);
     const isImageKit = typeof track.syllabus === 'string' && track.syllabus.includes('ik.imagekit.io');
@@ -1723,274 +1638,299 @@ function TrackDetail({ track, powertrainSeats, softwareSeats, onRegister, onOpen
         ? `${track.syllabus}${track.syllabus.includes('?') ? '&' : '?'}ik-attachment=true`
         : track.syllabus;
 
+    // Subsystem specific tool guides
+    const toolGuides = isSoftware
+        ? [
+              { name: 'ROS 2 Humble / Ubuntu 22.04', desc: 'Core robotics framework & node setup guide', link: 'https://docs.ros.org/en/humble/' },
+              { name: 'OpenCV & Python Setup', desc: 'Computer vision & image processing environment', link: 'https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html' },
+              { name: 'PyTorch / ML Stack', desc: 'Machine learning fundamentals for perception', link: 'https://pytorch.org/get-started/locally/' },
+              { name: 'Agentic AI & LLM Tools', desc: 'Building autonomous decision-making agents', link: 'https://github.com/' }
+          ]
+        : [
+              { name: 'LTspice Simulation Software', desc: 'Circuit design, transient analysis & SPICE simulation', link: 'https://www.analog.com/en/design-center/design-tools-and-calculators/ltspice-simulator.html' },
+              { name: 'Tinkercad Circuits', desc: 'Virtual microcontroller lab & interlock testbed', link: 'https://www.tinkercad.com/' },
+              { name: 'Arduino IDE / ESP32 Core', desc: 'Flashing firmware & motor controller code', link: 'https://docs.espressif.com/projects/arduino-esp32/en/latest/' },
+              { name: 'KiCad EDA PCB Design', desc: 'Schematic capture and multi-layer PCB layout', link: 'https://www.kicad.org/' }
+          ];
+
     return (
         <article
             className="shadow-brutal-8 anim-pop mt-8 border-4 border-slate-900 bg-white p-5 sm:p-8"
             role="tabpanel"
         >
-            <h3 className="text-2xl font-black uppercase sm:text-4xl">{track.name}</h3>
-            {track.tagline && (
-                <p className="mt-2 text-base font-bold text-sky-700 sm:text-lg">{track.tagline}</p>
-            )}
-
-            {/* Prominent seat limit display */}
-            {badgeInfo && (
-                <div className="mt-4 flex flex-wrap items-center gap-2.5">
-                    <span
-                        className={`shadow-brutal-3 inline-flex items-center gap-1.5 border-2 border-slate-900 px-3.5 py-1.5 font-mono text-xs font-black uppercase ${
-                            badgeInfo.isSoldOut
-                                ? 'bg-rose-500 text-white'
-                                : badgeInfo.isPaused
-                                  ? 'bg-amber-300 text-slate-950'
-                                  : 'bg-amber-300 text-slate-950'
-                        }`}
-                    >
-                        <span>{badgeInfo.isSoldOut ? '🚫' : badgeInfo.isPaused ? '⏸' : '⚡'}</span>
-                        <span>{badgeInfo.isSoldOut ? 'SOLD OUT' : badgeInfo.text.toUpperCase()}</span>
+            {/* Header */}
+            <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                <div>
+                    <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase sm:text-xs">
+                        ✦ {isSoftware ? 'SOFTWARE & AUTONOMOUS SUBSYSTEM DECK' : 'ELECTRONICS & POWERTRAIN SUBSYSTEM DECK'}
+                    </span>
+                    <h3 className="mt-2 text-2xl font-black uppercase sm:text-4xl">{track.name}</h3>
+                    {track.tagline && (
+                        <p className="mt-1 text-sm font-bold text-sky-700 sm:text-lg">{track.tagline}</p>
+                    )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="border-2 border-slate-900 bg-emerald-400 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase shadow-brutal-2">
+                        RECORD DECK LIVE
                     </span>
                 </div>
-            )}
+            </div>
 
-            {/* When Software is paused for technical issue */}
-            {isSoftware && softwareSeats?.isPaused && (
-                <div className="shadow-brutal-4 mt-5 space-y-2.5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="border-2 border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[11px] font-black text-white uppercase">
-                            ⏸ Registrations Temporarily Paused
-                        </span>
-                        <span className="border-2 border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[11px] font-black text-amber-300 uppercase">
-                            ⚡ Reopens Monday 6:00 AM
-                        </span>
-                    </div>
-                    <h4 className="text-base font-black text-slate-900 uppercase sm:text-lg">
-                        Fixing a technical issue on the bank's side
-                    </h4>
-                    <p className="text-xs leading-relaxed font-bold text-slate-700 sm:text-sm">
-                        We are currently resolving a technical issue on our banking partner's end. Software
-                        &amp; Autonomous Systems registrations will reopen tomorrow (Monday) morning at 6:00
-                        AM and will remain open until Tuesday, 6 October at 11:59 PM (or when remaining seats
-                        are filled, whichever comes first).
-                    </p>
-                    <p className="font-mono text-xs font-bold text-slate-700">
-                        ★{' '}
-                        <strong className="font-black text-slate-950">
-                            Only {softwareSeats.seatsLeft ?? 15} seats left
-                        </strong>
-                        . Be ready when the window reopens!
-                    </p>
-                </div>
-            )}
-
-            {/* When Powertrain is full: display prominent notice that only Software is available, encourage registering for Software, and stay tuned note */}
-            {isPowertrain && powertrainSeats?.soldOut && (
-                <div className="shadow-brutal-4 mt-5 space-y-2.5 border-3 border-slate-900 bg-amber-100 p-4 sm:p-5">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="border-2 border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[11px] font-black text-white uppercase">
-                            ✕ Powertrain Track Sold Out
-                        </span>
-                        <span className="border-2 border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[11px] font-black text-amber-300 uppercase">
-                            ⚡ Software Track Reopens Mon 6 AM
-                        </span>
-                    </div>
-                    <h4 className="text-base font-black text-slate-900 uppercase sm:text-lg">
-                        Powertrain seats are completely filled!
-                    </h4>
-                    <p className="text-xs leading-relaxed font-bold text-slate-700 sm:text-sm">
-                        Missed a seat in Powertrain? Don't worry — the{' '}
-                        <strong className="text-slate-950">Software &amp; Autonomous Systems</strong> track
-                        reopens tomorrow (Monday) at 6:00 AM! Understanding perception stacks, ROS navigation,
-                        and real-time computer vision is what brings vehicle electronics and motors to life.
-                        Mastering the software layer gives you the complete picture of how autonomous machines
-                        think and act.
-                    </p>
-                    <p className="font-mono text-xs font-bold text-slate-600">
-                        ★ Stay tuned for future workshops and bootcamps by our team.
-                    </p>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
-                        <button
-                            type="button"
-                            onClick={() => onRegister('software')}
-                            className="press shadow-brutal-3-brand cursor-pointer border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
-                        >
-                            View Software Track →
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onOpenUpgrade}
-                            className="press shadow-brutal-3 cursor-pointer border-2 border-slate-900 bg-amber-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
-                        >
-                            <span>
-                                {softwareSeats?.isPaused
-                                    ? '⏸ Upgrade Paused · Reopens Mon 6 AM'
-                                    : '★ Already in Powertrain? Upgrade to Combo (₹750)'}
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed font-bold text-slate-600 sm:text-base">
+            <p className="mt-4 max-w-4xl text-sm leading-relaxed font-bold text-slate-700 sm:text-base">
                 {track.overview}
             </p>
-            {track.highlight && (
-                <p className="shadow-brutal-3 mt-4 inline-block border-2 border-slate-900 bg-green-400 px-3 py-1.5 font-mono text-xs font-black uppercase">
-                    ⏱ {track.highlight}
-                </p>
-            )}
 
-            <dl className={`mt-6 grid grid-cols-2 gap-3 ${badgeInfo ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
-                {facts.map(([label, value]) => (
-                    <div
-                        key={label}
-                        className={`border-2 border-slate-900 p-3 ${label === 'Price' ? 'bg-amber-300' : label === 'Seats Left' ? (badgeInfo?.isSoldOut ? 'bg-rose-100' : 'bg-amber-100') : 'bg-sky-50'}`}
-                    >
-                        <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">
-                            {label}
-                        </dt>
-                        <dd
-                            className={`mt-1 text-sm font-black ${label === 'Seats Left' && badgeInfo?.isSoldOut ? 'text-rose-600' : ''}`}
-                        >
-                            {value}
-                        </dd>
-                    </div>
-                ))}
+            {/* Quick Stats Grid */}
+            <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="border-2 border-slate-900 bg-amber-100 p-3 shadow-brutal-2">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Dates</dt>
+                    <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.dates}</dd>
+                </div>
+                <div className="border-2 border-slate-900 bg-sky-100 p-3 shadow-brutal-2">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Schedule</dt>
+                    <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.days}</dd>
+                </div>
+                <div className="border-2 border-slate-900 bg-amber-100 p-3 shadow-brutal-2">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Session Timing</dt>
+                    <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.timing}</dd>
+                </div>
+                <div className="border-2 border-slate-900 bg-emerald-100 p-3 shadow-brutal-2">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Primary Venue</dt>
+                    <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm truncate">{track.venue?.split('(')[0] || 'PSG iTech Labs'}</dd>
+                </div>
             </dl>
-            <p className="mt-3 font-mono text-xs font-bold text-slate-600">{track.audience}</p>
 
-            <h4 className="mt-6 font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                What you will learn
-            </h4>
-            <p className="mt-2 text-sm leading-relaxed font-bold text-slate-700">
-                {track.topics.map((topic) => topic.title).join(' · ')}.
-            </p>
-            <p className="mt-1 text-xs font-bold text-slate-500">
-                Full topic list, weekly lab breakdown, and milestone schedule in the syllabus PDF.
-            </p>
+            {/* Topics Covered */}
+            <div className="mt-8">
+                <h4 className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                    01 / Core Curriculum Topics
+                </h4>
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {track.topics?.map((topic, i) => (
+                        <div key={i} className="border-2 border-slate-900 bg-slate-50 p-4 shadow-brutal-3">
+                            <span className="font-mono text-[10px] font-black text-sky-700 uppercase">Topic 0{i + 1}</span>
+                            <h5 className="mt-1 text-base font-black uppercase text-slate-900">{topic.title}</h5>
+                            <ul className="mt-2 space-y-1">
+                                {topic.points?.map((pt, idx) => (
+                                    <li key={idx} className="flex items-start gap-1.5 text-xs font-bold text-slate-600">
+                                        <span className="text-amber-600">▪</span>
+                                        <span>{pt}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-            {/* Simplified Curriculum Document Card: title alone, one download button, no description */}
-            {hasSyllabus && (
-                <div className="shadow-brutal-4 mt-6 flex flex-col justify-between gap-3 border-3 border-slate-900 bg-sky-50 p-3.5 sm:flex-row sm:items-center sm:p-4">
-                    <h4 className="text-sm font-black text-slate-900 uppercase sm:text-base">
-                        {track.name} Syllabus &amp; Weekly Plan
-                    </h4>
-                    <a
-                        href={downloadUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download={`${track.id}_syllabus.pdf`}
-                        className="press shadow-brutal-2-brand inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black text-amber-300 uppercase no-underline hover:bg-slate-800"
-                    >
-                        <span>Download Syllabus</span>
-                        <span>↓</span>
-                    </a>
+            {/* Interactive Session Schedule & One-Click Calendar Integration */}
+            {track.schedule && track.schedule.length > 0 && (
+                <div className="mt-10 border-t-4 border-slate-900 pt-8">
+                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                        <div>
+                            <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                                02 / Subsystem Masterclass Timeline &amp; Calendar
+                            </span>
+                            <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                                Session Schedule &amp; Calendar Export
+                            </h4>
+                        </div>
+                        <span className="inline-block border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black uppercase shadow-brutal-2">
+                            ✦ One-Click Sync
+                        </span>
+                    </div>
+
+                    <div className="mt-6 space-y-4">
+                        {track.schedule.map((item) => {
+                            const googleCalUrl = getGoogleCalendarUrl({
+                                title: `${track.name} - ${item.title}`,
+                                description: item.reportingInstructions || track.overview,
+                                location: item.venue || track.venue,
+                                date: item.date,
+                                timing: track.timing
+                            });
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="border-3 border-slate-900 bg-sky-50/60 p-4 shadow-brutal-4 transition-all hover:bg-sky-50"
+                                >
+                                    <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+                                        <div className="space-y-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                    {item.label}
+                                                </span>
+                                                <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase">
+                                                    {item.days} ({item.date})
+                                                </span>
+                                                <span className="font-mono text-[10px] font-bold text-slate-600">
+                                                    📍 {item.venue}
+                                                </span>
+                                            </div>
+                                            <h5 className="text-lg font-black uppercase text-slate-900">
+                                                {item.title}
+                                            </h5>
+                                            {item.reportingInstructions && (
+                                                <p className="text-xs font-bold text-slate-700">
+                                                    ℹ️ {item.reportingInstructions}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Calendar Buttons */}
+                                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                            <a
+                                                href={googleCalUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="press shadow-brutal-2-brand inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                                            >
+                                                <span>Google Cal</span>
+                                                <span>📅</span>
+                                            </a>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    downloadIcsFile({
+                                                        title: `${track.name} - ${item.title}`,
+                                                        description: item.reportingInstructions || track.overview,
+                                                        location: item.venue || track.venue,
+                                                        date: item.date,
+                                                        timing: track.timing
+                                                    })
+                                                }
+                                                className="press shadow-brutal-2 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-3 py-1.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
+                                            >
+                                                <span>Download .ICS</span>
+                                                <span>📥</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
 
-            {/* Handbook & guided resources note */}
-            <div className="shadow-brutal-2 mt-5 inline-flex items-center gap-2 border-2 border-slate-900 bg-sky-50 px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase">
-                <span className="text-sky-700">✦</span>
-                <span>Handbook + guided resources included.</span>
-            </div>
+            {/* Resource Library & Handouts */}
+            <div className="mt-10 border-t-4 border-slate-900 pt-8">
+                <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                    03 / Subsystem Software &amp; Tool Setup Guides
+                </span>
+                <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                    Resource Library &amp; Documentation
+                </h4>
 
-            {/* Cross-track combo offer card: only shown for Powertrain because Powertrain is full and Software holders cannot upgrade to Combo */}
-            {!isSoftware && (
-                <div className="mt-6 border-3 border-dashed border-slate-900 bg-amber-50 p-4 sm:p-5">
-                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                        <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-mono text-[10px] font-black tracking-wider text-amber-900 uppercase sm:text-[11px]">
-                                    ★ Dual-Track Bundle Discount
-                                </span>
-                                {comboBadgeInfo && (
-                                    <span
-                                        className={`border px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
-                                            comboBadgeInfo.isSoldOut
-                                                ? 'border-rose-700 bg-rose-500 text-white'
-                                                : 'border-slate-900 bg-amber-300 text-slate-900'
-                                        }`}
-                                    >
-                                        {comboBadgeInfo.isSoldOut
-                                            ? softwareSeats?.isPaused
-                                                ? 'Paused ⏸'
-                                                : 'Combo Full'
-                                            : comboBadgeInfo.text}
-                                    </span>
-                                )}
+                <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {toolGuides.map((guide, idx) => (
+                        <a
+                            key={idx}
+                            href={guide.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="press group border-2 border-slate-900 bg-white p-4 shadow-brutal-3 no-underline transition-all hover:bg-amber-100"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="font-mono text-[10px] font-black text-sky-700 uppercase">Guide 0{idx + 1}</span>
+                                <span className="font-mono text-xs font-black text-slate-900 group-hover:translate-x-0.5">↗</span>
                             </div>
-                            <p className="mt-0.5 text-base font-black text-slate-900 uppercase sm:text-lg">
-                                Want both tracks? Add {otherTrackName} for just ₹750 more →
-                            </p>
-                            <p className="mt-1 text-xs font-bold text-slate-600">
-                                {softwareSeats?.isPaused
-                                    ? 'Combo upgrades will reopen tomorrow (Monday) at 6:00 AM once Software registrations resume.'
-                                    : 'Get Software + Powertrain for ₹1,750 (Save ₹250). Includes both full tracks and all bonus sessions.'}
-                            </p>
+                            <h5 className="mt-1.5 text-sm font-black uppercase text-slate-900">{guide.name}</h5>
+                            <p className="mt-1 text-xs font-bold text-slate-600">{guide.desc}</p>
+                        </a>
+                    ))}
+                </div>
+
+                {/* Syllabus PDF download card */}
+                {hasSyllabus && (
+                    <div className="shadow-brutal-4 mt-6 flex flex-col justify-between gap-3 border-3 border-slate-900 bg-amber-100 p-4 sm:flex-row sm:items-center">
+                        <div>
+                            <span className="font-mono text-[10px] font-black tracking-wider text-amber-900 uppercase">Official Curriculum Document</span>
+                            <h5 className="text-base font-black text-slate-900 uppercase sm:text-lg">
+                                {track.name} Official Syllabus &amp; Lab Manual PDF
+                            </h5>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <button
-                                type="button"
-                                onClick={onOpenUpgrade}
-                                className="press shadow-brutal-3 shrink-0 cursor-pointer border-2 border-slate-900 bg-amber-400 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
+                            {onPreviewSyllabus && (
+                                <button
+                                    type="button"
+                                    onClick={() => onPreviewSyllabus(track.syllabus, track.name)}
+                                    className="press shadow-brutal-2 border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-sky-100"
+                                >
+                                    Preview PDF 👁️
+                                </button>
+                            )}
+                            <a
+                                href={downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={`${track.id}_syllabus.pdf`}
+                                className="press shadow-brutal-2-brand inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-black text-amber-300 uppercase no-underline hover:bg-slate-800"
                             >
-                                {softwareSeats?.isPaused
-                                    ? '⏸ Upgrades Reopen Mon 6 AM'
-                                    : '★ Upgrade to Combo (₹750)'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => onRegister('combo')}
-                                disabled={comboSeats.soldOut}
-                                className={`press shadow-brutal-3 shrink-0 border-2 border-slate-900 px-4 py-2.5 font-mono text-xs font-black uppercase ${
-                                    comboSeats.soldOut
-                                        ? 'cursor-not-allowed bg-slate-300 text-slate-500'
-                                        : 'cursor-pointer bg-amber-300 text-slate-900 hover:bg-amber-400'
-                                }`}
-                            >
-                                {comboSeats.soldOut
-                                    ? softwareSeats?.isPaused
-                                        ? 'Paused ⏸'
-                                        : 'Combo Sold Out ✕'
-                                    : 'Get Combo (1,750) ✦'}
-                            </button>
+                                <span>Download PDF</span>
+                                <span>↓</span>
+                            </a>
                         </div>
                     </div>
-                </div>
-            )}
-
-            <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                    type="button"
-                    onClick={() => onRegister(track.id)}
-                    disabled={badgeInfo?.isSoldOut || trackSeats?.isPaused}
-                    className={`press shadow-brutal-4 border-2 border-slate-900 px-5 py-3 font-mono text-xs font-black uppercase ${
-                        badgeInfo?.isSoldOut || trackSeats?.isPaused
-                            ? 'cursor-not-allowed bg-slate-300 text-slate-600'
-                            : 'cursor-pointer bg-amber-300 text-slate-900 hover:bg-amber-400'
-                    }`}
-                >
-                    {trackSeats?.isPaused
-                        ? '⏸ Paused · Reopens Mon 6 AM'
-                        : badgeInfo?.isSoldOut
-                          ? 'Sold Out ✕'
-                          : 'Register ✦'}
-                </button>
-                {!isSoftware && (
-                    <button
-                        type="button"
-                        onClick={onOpenUpgrade}
-                        className="press shadow-brutal-4 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
-                    >
-                        <span>
-                            {softwareSeats?.isPaused
-                                ? '⏸ Upgrade Paused · Reopens Mon 6 AM'
-                                : '★ Upgrade to Combo (₹750)'}
-                        </span>
-                    </button>
                 )}
             </div>
-            <p className="mt-4 font-mono text-[10px] font-bold text-slate-500 uppercase">
-                * Syllabus, schedule and other details are subject to change.
-            </p>
+
+            {/* Lab Noticeboard & Guidelines */}
+            <div className="mt-10 border-t-4 border-slate-900 pt-8">
+                <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                    04 / Lab Guidelines &amp; Venue Directions
+                </span>
+                <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                    Reporting Instructions &amp; Lab Safety
+                </h4>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-brutal-3">
+                        <span className="font-mono text-[10px] font-black text-sky-700 uppercase">📍 Primary Venue</span>
+                        <h5 className="mt-1 text-base font-black text-slate-900 uppercase">{track.venue}</h5>
+                        <p className="mt-2 text-xs font-bold text-slate-700 leading-relaxed">
+                            {track.reportingInstructions}
+                        </p>
+                    </div>
+
+                    <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-brutal-3">
+                        <span className="font-mono text-[10px] font-black text-amber-700 uppercase">⚠️ Mandatory Gear &amp; Attendance</span>
+                        <h5 className="mt-1 text-base font-black text-slate-900 uppercase">Safety &amp; Hardware Rules</h5>
+                        <ul className="mt-2 space-y-1 text-xs font-bold text-slate-700">
+                            <li>▪ Closed-toe shoes mandatory inside all laboratory bays.</li>
+                            <li>▪ Bring laptop with power chargers for every hands-on lab.</li>
+                            <li>▪ Arrive 10 minutes prior to session timing for check-in.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Direct Shortcuts */}
+            <div className="mt-10 border-t-4 border-slate-900 pt-8">
+                <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900 p-5 text-white shadow-brutal-6">
+                    <div>
+                        <span className="font-mono text-[10px] font-black text-amber-300 uppercase">PARTICIPANT ACTIONS</span>
+                        <h4 className="text-lg font-black uppercase text-white sm:text-xl">
+                            Ready to test your knowledge or submit your project?
+                        </h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                        <a
+                            href="#quiz"
+                            className="press shadow-brutal-2-white inline-flex items-center border-2 border-white bg-amber-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase no-underline hover:bg-amber-300"
+                        >
+                            Launch Track Quiz 📝
+                        </a>
+                        <a
+                            href="#workshop-project-submit"
+                            className="press shadow-brutal-2-white inline-flex items-center border-2 border-white bg-emerald-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase no-underline hover:bg-emerald-300"
+                        >
+                            Submit Mini-Project 🚀
+                        </a>
+                    </div>
+                </div>
+            </div>
         </article>
     );
 }
