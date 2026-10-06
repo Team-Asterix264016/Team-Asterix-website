@@ -11,7 +11,6 @@ export default function CyberNavbar({
     currentPage = 'home',
     onBackToHome,
     onOpenSponsor,
-    onOpenWorkshop,
     onOpenCommunity,
     onOpenProfile
 }) {
@@ -325,20 +324,6 @@ export default function CyberNavbar({
                                         )}
                                     </div>
 
-                                    {/* Workshop Button -- amber so it stands apart from the sky links */}
-                                    <DockTextItem
-                                        mouseX={mouseX}
-                                        onClick={() => onOpenWorkshop?.()}
-                                        className={`flex cursor-pointer items-center gap-1 border-slate-900 bg-amber-300 font-black text-slate-900 hover:bg-amber-400 ${
-                                            isScrolled
-                                                ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
-                                                : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
-                                        }`}
-                                    >
-                                        <span>WORKSHOP</span>
-                                        <span className="text-[9px]">✦</span>
-                                    </DockTextItem>
-
                                     {/* Profile & Attendance Button */}
                                     <DockTextItem
                                         mouseX={mouseX}
@@ -440,14 +425,6 @@ export default function CyberNavbar({
                     <img src={teamLogo} alt="Asterix Racing" className="h-6 w-auto object-contain" />
                 </button>
                 <div className="flex items-center gap-1.5">
-                    <button
-                        type="button"
-                        onClick={() => onOpenWorkshop?.()}
-                        className="press shadow-brutal-1 flex cursor-pointer items-center gap-1 rounded border border-slate-900 bg-amber-300 px-2 py-0.5 text-[10px] font-black text-slate-900 uppercase"
-                    >
-                        <span>Workshop</span>
-                        <span className="text-[9px]">✦</span>
-                    </button>
                     <span className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-mono text-[9px] font-bold text-slate-700 uppercase">
                         AUTONOMY
                     </span>
@@ -571,16 +548,6 @@ export default function CyberNavbar({
                                 className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-purple-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-purple-400"
                             >
                                 <span>My Profile & Notes 🔓</span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setMobileOpen(false);
-                                    onOpenWorkshop?.();
-                                }}
-                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
-                            >
-                                <span>Workshops 2026</span>
-                                <span>✦</span>
                             </button>
                             <button
                                 onClick={() => {

@@ -11,7 +11,6 @@ import CyberNewsletterCTA from './components/CyberNewsletterCTA';
 import CyberFooter from './components/CyberFooter';
 import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
-import WorkshopPopup from './components/WorkshopPopup';
 import WorkshopLoginModal from './components/WorkshopLoginModal';
 import { WebsiteDataProvider } from './context/WebsiteDataContext';
 import { CommunityAuthProvider } from './context/CommunityAuthContext';
@@ -343,9 +342,6 @@ function MainApp() {
             {/* Photorealistic 3D Floating Baja Buggy Canvas & Swimming Goldfish */}
             <FloatingBackground />
 
-            {/* Workshop Popup Announcement on Landing Page */}
-            <WorkshopPopup onOpenWorkshop={handleOpenWorkshop} />
-
             {/* Main Content Layer */}
             <div className="relative z-10">
                 {/* Cyberbites Chunky Brutalist Navigation */}
@@ -355,7 +351,6 @@ function MainApp() {
                     currentPage={currentPage}
                     onBackToHome={handleBackToHome}
                     onOpenSponsor={handleOpenSponsor}
-                    onOpenWorkshop={handleOpenWorkshop}
                     onOpenCommunity={handleOpenCommunity}
                     onOpenProfile={handleOpenProfile}
                 />

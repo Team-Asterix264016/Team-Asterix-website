@@ -287,7 +287,7 @@ Through these optimizations, our perception latency dropped from 82ms to **16.5m
         date: 'September 12, 2026',
         readTime: '5 min read',
         category: 'MECHANICAL & FEA',
-        image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80',
+        image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=1200&q=80',
         excerpt:
             'A spaceframe must withstand 20G front impact loads while keeping overall weight under 45kg. Here is how we optimized node triangulation and weld joint geometry.',
         content: `### Structural Objectives

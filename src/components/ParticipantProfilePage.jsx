@@ -34,16 +34,6 @@ const SUBSYSTEMS_PORTAL_DATA = [
         details: 'Engineers structural safety cage, TIG welding fabrication, dynamic damper valving, and high-impact crash worthiness.',
         officialContact: 'ananya.mech@psgitech.ac.in',
         phone: '+91 97900 11223'
-    },
-    {
-        id: 'leads-admin',
-        name: 'Embedded Comms & Telemetry',
-        badge: 'HARDWARE & GATEWAYS',
-        color: 'bg-purple-400 text-slate-950',
-        tagline: 'ESP32 Microcontrollers, FreeRTOS, ISO 11898 CAN Bus Gateway & Wireless Pit Wall Telemetry.',
-        details: 'Interfaces drive-by-wire actuators, pedal encoders, emergency stop relays, and live telemetry data streaming.',
-        officialContact: 'asterix.psgitech@gmail.com',
-        phone: '+91 86089 44644'
     }
 ];
 
