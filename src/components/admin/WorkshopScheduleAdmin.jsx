@@ -294,6 +294,177 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* SECTION 3: TRACK LEAD CONTACT DETAILS */}
+                    <div className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-white p-5">
+                        <div className="border-b border-slate-200 pb-3">
+                            <h3 className="text-lg font-black text-slate-900 uppercase">
+                                👤 Track Lead &amp; Default Contact Details
+                            </h3>
+                            <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                Set contact details for candidates requesting support or accessing details for this track.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label className={labelClass}>Subsystem Lead Name(s)</label>
+                                <input
+                                    type="text"
+                                    value={currentTrack.leadName || ''}
+                                    onChange={(e) => patchTrack({ leadName: e.target.value })}
+                                    placeholder="e.g. Ratheeswar, Preethika"
+                                    className={input}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={labelClass}>Lead Designation / Role</label>
+                                <input
+                                    type="text"
+                                    value={currentTrack.leadRole || ''}
+                                    onChange={(e) => patchTrack({ leadRole: e.target.value })}
+                                    placeholder="e.g. Team Lead & Autonomous Perception Lead"
+                                    className={input}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={labelClass}>Official Lead Email ID</label>
+                                <input
+                                    type="email"
+                                    value={currentTrack.leadEmail || ''}
+                                    onChange={(e) => patchTrack({ leadEmail: e.target.value })}
+                                    placeholder="e.g. software.asterix@psgitech.ac.in"
+                                    className={input}
+                                />
+                            </div>
+
+                            <div>
+                                <label className={labelClass}>Official Lead Phone Number</label>
+                                <input
+                                    type="text"
+                                    value={currentTrack.leadPhone || ''}
+                                    onChange={(e) => patchTrack({ leadPhone: e.target.value })}
+                                    placeholder="e.g. +91 86089 44644"
+                                    className={input}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 4: SESSIONS & INSTRUCTORS DIRECTORY */}
+                    <div className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-white p-5">
+                        <div className="border-b border-slate-200 pb-3">
+                            <h3 className="text-lg font-black text-slate-900 uppercase">
+                                📚 Session Schedule &amp; Instructor Directory ({currentTrack.schedule?.length || 0} Sessions)
+                            </h3>
+                            <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                Edit individual session titles, venues, instructor names, roles, emails, and phone numbers shown in student session modals.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            {currentTrack.schedule?.map((sess, idx) => (
+                                <div key={sess.id || idx} className="border-2 border-slate-900 bg-slate-50 p-4 shadow-brutal-2">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 pb-2">
+                                        <span className="font-mono text-xs font-black uppercase text-slate-900">
+                                            {sess.label} ({sess.date} - {sess.days})
+                                        </span>
+                                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
+                                            {sess.type || 'lecture'}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                        <div className="lg:col-span-2">
+                                            <label className={labelClass}>Session Title</label>
+                                            <input
+                                                type="text"
+                                                value={sess.title || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], title: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                className={input}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Venue Location</label>
+                                            <input
+                                                type="text"
+                                                value={sess.venue || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], venue: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                placeholder="e.g. Autonomous Systems Lab"
+                                                className={input}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Instructor Name(s)</label>
+                                            <input
+                                                type="text"
+                                                value={sess.instructor || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], instructor: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                placeholder="e.g. Ratheeswar, Preethika"
+                                                className={input}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Instructor Role / Designation</label>
+                                            <input
+                                                type="text"
+                                                value={sess.instructorRole || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], instructorRole: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                placeholder="e.g. Autonomous Perception Lead"
+                                                className={input}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Instructor Email ID</label>
+                                            <input
+                                                type="email"
+                                                value={sess.instructorEmail || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], instructorEmail: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                placeholder="e.g. software.asterix@psgitech.ac.in"
+                                                className={input}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Instructor Phone Number</label>
+                                            <input
+                                                type="text"
+                                                value={sess.instructorPhone || ''}
+                                                onChange={(e) => {
+                                                    const newSch = [...(currentTrack.schedule || [])];
+                                                    newSch[idx] = { ...newSch[idx], instructorPhone: e.target.value };
+                                                    patchTrack({ schedule: newSch });
+                                                }}
+                                                placeholder="e.g. +91 86089 44644"
+                                                className={input}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </>
             )}
         </div>

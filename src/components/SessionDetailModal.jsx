@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { apiUrl } from '../lib/api';
+import { useWebsiteData } from '../context/WebsiteDataContext';
 
 export default function SessionDetailModal({ session, trackName, student, isOpen, onClose, onTakeQuiz }) {
+    const { siteData } = useWebsiteData();
     const [attendanceStatus, setAttendanceStatus] = useState(null); // 'present' | 'absent' | 'upcoming' | null
     const [checkInTime, setCheckInTime] = useState(null);
     const [loadingAttendance, setLoadingAttendance] = useState(false);
 
     const isSoftwareTrack = String(trackName || '').toLowerCase().includes('software');
     const sessionTrackId = isSoftwareTrack ? 'software' : 'powertrain';
+    const activeTrackData = siteData?.workshop?.tracks?.[sessionTrackId] || {};
 
     // Track entitlement check: Combo students access both!
     const isCombo = student?.package === 'combo';
@@ -65,8 +68,33 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
 
     if (!isOpen || !session) return null;
 
-    // Instructor contact lookup using legitimate subsystem lead details
-    const getInstructorContacts = (instructorName) => {
+    // Instructor contact lookup: prioritized admin DB overrides -> name match -> defaults
+    const getInstructorContacts = (sessionObj, instructorName) => {
+        // 1. Session-level custom fields edited in Admin Portal
+        if (sessionObj?.instructorEmail || sessionObj?.instructorPhone || sessionObj?.instructorRole) {
+            const phoneStr = sessionObj.instructorPhone || (isSoftwareTrack ? '+91 86089 44644' : '+91 72079 60077');
+            const cleanPhone = phoneStr.replace(/[^0-9]/g, '');
+            return {
+                role: sessionObj.instructorRole || 'Session Instructor & Subsystem Engineer',
+                email: sessionObj.instructorEmail || (isSoftwareTrack ? 'software.asterix@psgitech.ac.in' : 'powertrain.asterix@psgitech.ac.in'),
+                phone: phoneStr,
+                whatsapp: cleanPhone ? `https://wa.me/${cleanPhone}` : '#'
+            };
+        }
+
+        // 2. Track-level lead fields edited in Admin Portal
+        if (activeTrackData?.leadEmail || activeTrackData?.leadPhone || activeTrackData?.leadRole) {
+            const phoneStr = activeTrackData.leadPhone || (isSoftwareTrack ? '+91 86089 44644' : '+91 72079 60077');
+            const cleanPhone = phoneStr.replace(/[^0-9]/g, '');
+            return {
+                role: activeTrackData.leadRole || (isSoftwareTrack ? 'Software & Perception Subsystem Lead' : 'Powertrain Subsystem Lead'),
+                email: activeTrackData.leadEmail || (isSoftwareTrack ? 'software.asterix@psgitech.ac.in' : 'powertrain.asterix@psgitech.ac.in'),
+                phone: phoneStr,
+                whatsapp: cleanPhone ? `https://wa.me/${cleanPhone}` : '#'
+            };
+        }
+
+        // 3. Defaults based on instructor name
         const name = String(instructorName || '').toLowerCase();
         if (name.includes('joel') || name.includes('powertrain')) {
             return {
@@ -108,7 +136,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
         };
     };
 
-    const contactInfo = getInstructorContacts(session.instructor);
+    const contactInfo = getInstructorContacts(session, session.instructor);
 
     // Track-Specific Notes & Resources
     const notes = isSoftwareTrack

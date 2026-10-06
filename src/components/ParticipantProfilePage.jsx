@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiUrl } from '../lib/api';
+import { useCommunityAuth } from '../context/CommunityAuthContext';
 
 function receiptRows(record) {
     return [
@@ -117,6 +118,8 @@ function downloadReceipt(rows, fileId) {
 }
 
 export default function ParticipantProfilePage({ onBack }) {
+    const communityAuth = useCommunityAuth();
+    const currentMember = communityAuth?.currentMember;
     const [identifier, setIdentifier] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -156,14 +159,22 @@ export default function ParticipantProfilePage({ onBack }) {
     }, [identifier]);
 
     useEffect(() => {
-        // Auto-search from URL search params
+        // Auto-search from URL search params or active community member session
         const params = new URLSearchParams(window.location.search);
-        const queryParam = params.get('query') || params.get('id') || params.get('email') || params.get('phone');
+        const queryParam =
+            params.get('query') ||
+            params.get('id') ||
+            params.get('email') ||
+            params.get('phone') ||
+            currentMember?.rollNo ||
+            currentMember?.email ||
+            currentMember?.phone;
+
         if (queryParam) {
             setIdentifier(queryParam);
             fetchProfile(queryParam);
         }
-    }, [fetchProfile]);
+    }, [fetchProfile, currentMember]);
 
     const handleSearch = (e) => {
         e.preventDefault();
