@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiUrl } from '../lib/api';
 import { useWebsiteData } from '../context/WebsiteDataContext';
-import { getGoogleCalendarUrl, downloadIcsFile, downloadAllIcsFile } from '../utils/calendarUtils';
+import { downloadAllIcsFile } from '../utils/calendarUtils';
 import SessionDetailModal from './SessionDetailModal';
 import WorkshopLoginModal from './WorkshopLoginModal';
 /* Shared with the backend so the page and the server can never disagree on
@@ -1846,7 +1846,13 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                         </div>
                         <button
                             type="button"
-                            onClick={() => downloadAllIcsFile(filteredSchedule, track.name)}
+                            onClick={() =>
+                                downloadAllIcsFile(
+                                    filteredSchedule.map((s) => ({ ...s, track: activeTrack })),
+                                    track.name,
+                                    { [activeTrack]: track }
+                                )
+                            }
                             className="press border-2 border-slate-900 bg-amber-300 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2 hover:bg-amber-400"
                         >
                             📅 Sync All Sessions to Calendar (.ICS)
