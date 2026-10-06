@@ -573,6 +573,8 @@ export default function AdminDashboard({ onExit }) {
             currentUser.accessLevel === 'SuperAdmin' ||
             currentUser.role === 'Admin' ||
             currentUser.role === 'SuperAdmin');
+    // Matches the server's requireSuperAdmin, which reads accessLevel only.
+    const isSuperAdmin = currentUser?.accessLevel === 'SuperAdmin';
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: 'overview' },
@@ -1954,9 +1956,7 @@ export default function AdminDashboard({ onExit }) {
                         />
                     )}
 
-                    {activeTab === 'workshop-notes' && (
-                        <WorkshopNotesAdmin showStatus={showStatus} />
-                    )}
+                    {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}
 
                     {activeTab === 'workshop-project-submissions' && (
                         <WorkshopProjectSubmissionsAdmin showStatus={showStatus} />
@@ -2642,33 +2642,35 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
                             </div>
 
-                            {/* Reset Section */}
-                            <div className="border-t-2 border-slate-200 pt-6">
-                                <div className="space-y-2 border-2 border-rose-600 bg-rose-50 p-4">
-                                    <h3 className="font-mono text-xs font-black text-rose-700 uppercase">
-                                        Reset to Factory Defaults
-                                    </h3>
-                                    <p className="text-xs text-rose-800">
-                                        Clears all customized edits in local storage and restores the initial
-                                        original Team Asterix data.
-                                    </p>
-                                    <button
-                                        onClick={() => {
-                                            if (
-                                                window.confirm(
-                                                    'Are you sure you want to reset all content to default settings?'
-                                                )
-                                            ) {
-                                                resetToDefaults();
-                                                showStatus('Reset completed successfully!');
-                                            }
-                                        }}
-                                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-rose-600 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-rose-700"
-                                    >
-                                        Reset All Content
-                                    </button>
+                            {/* Reset Section: wipes all site content, so SuperAdmin only */}
+                            {isSuperAdmin && (
+                                <div className="border-t-2 border-slate-200 pt-6">
+                                    <div className="space-y-2 border-2 border-rose-600 bg-rose-50 p-4">
+                                        <h3 className="font-mono text-xs font-black text-rose-700 uppercase">
+                                            Reset to Factory Defaults
+                                        </h3>
+                                        <p className="text-xs text-rose-800">
+                                            Clears all customized edits in local storage and restores the
+                                            initial original Team Asterix data.
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    window.confirm(
+                                                        'Are you sure you want to reset all content to default settings?'
+                                                    )
+                                                ) {
+                                                    resetToDefaults();
+                                                    showStatus('Reset completed successfully!');
+                                                }
+                                            }}
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-rose-600 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-rose-700"
+                                        >
+                                            Reset All Content
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </main>
