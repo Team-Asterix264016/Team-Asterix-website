@@ -11,6 +11,7 @@ export default function CyberNavbar({
     currentPage = 'home',
     onBackToHome,
     onOpenSponsor,
+    onOpenCommunity,
     onOpenProfile
 }) {
     const { siteData } = useWebsiteData();
@@ -357,6 +358,27 @@ export default function CyberNavbar({
                                         )}
                                     </DockTextItem>
 
+                                    {/* Community Button */}
+                                    <DockTextItem
+                                        mouseX={mouseX}
+                                        onClick={() => {
+                                            if (onOpenCommunity) onOpenCommunity();
+                                            else window.location.hash = '#community';
+                                        }}
+                                        className={`cursor-pointer border-slate-900 ${
+                                            currentPage === 'community'
+                                                ? 'bg-emerald-400 font-black text-slate-900 shadow-[inset_2px_2px_0px_#000]'
+                                                : 'bg-emerald-300 font-black text-slate-900 hover:bg-emerald-400'
+                                        } ${
+                                            isScrolled
+                                                ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
+                                                : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
+                                        }`}
+                                    >
+                                        <span>COMMUNITY</span>
+                                        <span className="text-[9px]">💬</span>
+                                    </DockTextItem>
+
                                     {/* Sponsor Team Button */}
                                     <DockTextItem
                                         mouseX={mouseX}
@@ -526,6 +548,17 @@ export default function CyberNavbar({
                                 className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-purple-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-purple-400"
                             >
                                 <span>My Profile & Notes 🔓</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setMobileOpen(false);
+                                    if (onOpenCommunity) onOpenCommunity();
+                                    else window.location.hash = '#community';
+                                }}
+                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-emerald-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-emerald-400"
+                            >
+                                <span>Community & Horizon</span>
+                                <span>💬</span>
                             </button>
                             <button
                                 onClick={() => {

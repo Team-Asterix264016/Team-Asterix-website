@@ -26,7 +26,6 @@ const WorkshopAttendanceProjector = lazy(() => import('./components/admin/Worksh
 const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttendanceCheckin'));
 const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
 const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
-const CommunityPage = lazy(() => import('./components/CommunityPage'));
 const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
 
 function MainApp() {
@@ -218,6 +217,13 @@ function MainApp() {
         scrollToTop();
     };
 
+    const handleOpenCommunity = () => {
+        closeAll();
+        setIsCommunityPage(true);
+        window.location.hash = '#community';
+        scrollToTop();
+    };
+
     const handleOpenAdmin = () => {
         closeAll();
         setIsAdminOpen(true);
@@ -273,9 +279,25 @@ function MainApp() {
 
     if (isCommunityPage) {
         return (
-            <Suspense fallback={pageFallback}>
-                <CommunityPage onBack={handleBackToHome} />
-            </Suspense>
+            <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4 text-center">
+                <div className="shadow-brutal-8 w-full max-w-lg border-4 border-slate-900 bg-white p-8 sm:p-10">
+                    <span className="inline-block border-2 border-slate-900 bg-emerald-300 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
+                        Community &amp; Horizon 💬
+                    </span>
+                    <h1 className="mt-4 text-4xl font-black text-slate-900 uppercase sm:text-5xl">Coming soon</h1>
+                    <p className="mt-3 text-sm font-bold text-slate-600">
+                        We're building a space for Team Asterix members and workshop participants to share projects
+                        and connect. Check back soon.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleBackToHome}
+                        className="press shadow-brutal-3 mt-8 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
+                    >
+                        ← Back to home
+                    </button>
+                </div>
+            </div>
         );
     }
 
@@ -344,6 +366,7 @@ function MainApp() {
                     currentPage={currentPage}
                     onBackToHome={handleBackToHome}
                     onOpenSponsor={handleOpenSponsor}
+                    onOpenCommunity={handleOpenCommunity}
                     onOpenProfile={handleOpenProfile}
                 />
 
