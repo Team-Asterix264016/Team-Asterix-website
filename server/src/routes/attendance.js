@@ -4,7 +4,7 @@ import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopResource from '../models/WorkshopResource.js';
 import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -828,7 +828,7 @@ router.post('/resources', authenticateToken, async (req, res) => {
  * POST /api/workshop/attendance/clear-all
  * Endpoint to clear all present/absent activity from database
  */
-router.post('/clear-all', async (req, res) => {
+router.post('/clear-all', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { isMongoConnected } = await import('../db/mongodb.js');
         if (!isMongoConnected()) {
