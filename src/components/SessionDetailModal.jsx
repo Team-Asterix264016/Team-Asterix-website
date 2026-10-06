@@ -6,6 +6,17 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
     const [checkInTime, setCheckInTime] = useState(null);
     const [loadingAttendance, setLoadingAttendance] = useState(false);
 
+    const isSoftwareTrack = String(trackName || '').toLowerCase().includes('software');
+    const sessionTrackId = isSoftwareTrack ? 'software' : 'powertrain';
+
+    // Track entitlement check: Combo students access both!
+    const isCombo = student?.package === 'combo';
+    const isEnrolledInTrack =
+        !student ||
+        isCombo ||
+        student.package === sessionTrackId ||
+        (Array.isArray(student.tracksEnrolled) && student.tracksEnrolled.includes(sessionTrackId));
+
     useEffect(() => {
         if (!isOpen || !session || !student) {
             setAttendanceStatus(null);
@@ -39,7 +50,6 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                         setAttendanceStatus('present');
                         setCheckInTime(matched.checkedInAt);
                     } else {
-                        // Check if session date is in the past
                         setAttendanceStatus('absent');
                     }
                 }
@@ -55,7 +65,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
 
     if (!isOpen || !session) return null;
 
-    // Contact info lookup based on instructor
+    // Instructor contact lookup
     const getInstructorContacts = (instructorName) => {
         const name = String(instructorName || '').toLowerCase();
         if (name.includes('rithvin')) {
@@ -83,8 +93,8 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
             };
         }
         return {
-            role: 'Subsystem Instructor & Lead Engineer',
-            email: 'software.asterix@psgitech.ac.in',
+            role: `${trackName} Instructor & Subsystem Engineer`,
+            email: isSoftwareTrack ? 'software.asterix@psgitech.ac.in' : 'powertrain.asterix@psgitech.ac.in',
             phone: '+91 94420 00000',
             whatsapp: 'https://wa.me/919442000000'
         };
@@ -92,25 +102,39 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
 
     const contactInfo = getInstructorContacts(session.instructor);
 
-    // Mock notes & resources attached to session
-    const notes = [
-        {
-            title: `${session.title} - Official Lecture Notes & Slides`,
-            type: 'PDF / Slides',
-            size: '2.4 MB',
-            link: '/workshop/software-perception-syllabus.pdf'
-        },
-        {
-            title: `Session Code Examples & Jupyter Notebooks`,
-            type: 'GitHub Repository',
-            size: 'Code Repo',
-            link: 'https://github.com/Team-Asterix264016/'
-        }
-    ];
+    // Track-Specific Notes & Resources
+    const notes = isSoftwareTrack
+        ? [
+              {
+                  title: `Software: ${session.title} - Lecture Slides & System Specs`,
+                  type: 'PDF / Slides',
+                  size: '2.8 MB',
+                  link: '/workshop/software-perception-syllabus.pdf'
+              },
+              {
+                  title: `ROS 2 Humble & OpenCV Jupyter Code Repository`,
+                  type: 'GitHub Repo',
+                  size: 'Python / C++',
+                  link: 'https://github.com/Team-Asterix264016/'
+              }
+          ]
+        : [
+              {
+                  title: `Powertrain: ${session.title} - LTspice Schematics & BMS Specs`,
+                  type: 'PDF Schematics',
+                  size: '3.4 MB',
+                  link: '/ASTERIX_Powertrain_Workshop_Syllabus.pdf'
+              },
+              {
+                  title: `ESP32 CAN-Bus Motor Controller Firmware Code`,
+                  type: 'GitHub Repo',
+                  size: 'Arduino / C++',
+                  link: 'https://github.com/Team-Asterix264016/'
+              }
+          ];
 
-    // Quiz for session
     const hasQuiz = session.type !== 'holiday' && session.type !== 'catchup';
-    const quizTitle = `${session.title} - Session Quiz`;
+    const quizTitle = `${session.title} - Knowledge Quiz`;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
@@ -124,7 +148,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                     ✕
                 </button>
 
-                {/* Session Header */}
+                {/* Header */}
                 <div className="space-y-2 border-b-4 border-slate-900 pb-4">
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-xs font-black text-amber-300 uppercase">
@@ -146,13 +170,27 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                     </div>
                 </div>
 
+                {/* Lock Alert for single track student attempting to access other track */}
+                {student && !isEnrolledInTrack && (
+                    <div className="mt-4 border-3 border-amber-600 bg-amber-50 p-4 text-amber-950 shadow-brutal-2">
+                        <div className="flex items-center gap-2 font-mono text-xs font-black uppercase text-amber-900">
+                            <span>🔒 TRACK RESTRICTED MATERIAL</span>
+                        </div>
+                        <p className="mt-1 text-xs font-bold leading-relaxed">
+                            Your account (<strong>{student.name}</strong>) is enrolled in the{' '}
+                            <strong className="uppercase text-amber-900">{student.package}</strong> track.
+                            Only participants who paid for the <strong>Dual-Track Combo</strong> can download notes and access both Software and Powertrain materials!
+                        </p>
+                    </div>
+                )}
+
                 {/* Body Content Sections */}
                 <div className="mt-5 space-y-6">
-                    {/* 1. Who is taking the class & Contact Details */}
+                    {/* 1. Instructor & Contact Info */}
                     <div className="border-3 border-slate-900 bg-sky-50/70 p-4 shadow-brutal-2">
-                        <div className="flex items-center gap-2 font-mono text-xs font-black tracking-widest text-sky-800 uppercase">
-                            <span>👤 INSTRUCTOR &amp; CONTACT DETAILS</span>
-                        </div>
+                        <span className="font-mono text-xs font-black tracking-widest text-sky-800 uppercase">
+                            👤 INSTRUCTOR &amp; CONTACT DETAILS
+                        </span>
                         <div className="mt-2 space-y-1">
                             <h4 className="text-base font-black text-slate-900">
                                 {session.instructor && session.instructor !== '-'
@@ -185,7 +223,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                             </span>
                             {student && (
                                 <span className="font-mono text-xs font-bold text-slate-600">
-                                    Candidate: {student.name} ({student.rollNo})
+                                    {student.name} ({student.rollNo})
                                 </span>
                             )}
                         </div>
@@ -193,11 +231,11 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                         <div className="mt-3">
                             {!student ? (
                                 <div className="flex items-center justify-between border-2 border-amber-500 bg-amber-50 p-3 font-mono text-xs font-bold text-amber-900">
-                                    <span>🔒 Please login to check your attendance status for this class.</span>
+                                    <span>🔒 Login with Mobile/Email to view your live attendance.</span>
                                 </div>
                             ) : loadingAttendance ? (
                                 <div className="font-mono text-xs font-bold text-slate-600">
-                                    Checking attendance logs...
+                                    Checking attendance records...
                                 </div>
                             ) : attendanceStatus === 'present' ? (
                                 <div className="flex items-center gap-3 border-2 border-emerald-600 bg-emerald-50 p-3 text-emerald-900">
@@ -207,7 +245,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                                             Status: PRESENT
                                         </div>
                                         <div className="font-mono text-xs font-bold text-emerald-800">
-                                            Attendance verified &amp; recorded
+                                            Verified attendance record
                                             {checkInTime ? ` on ${new Date(checkInTime).toLocaleString('en-IN')}` : ''}
                                         </div>
                                     </div>
@@ -228,11 +266,19 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                         </div>
                     </div>
 
-                    {/* 3. Notes Shared & Resources */}
+                    {/* 3. Track-Specific Notes & Resources */}
                     <div className="border-3 border-slate-900 bg-amber-50/70 p-4 shadow-brutal-2">
-                        <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
-                            📚 SHARED NOTES &amp; CLASS MATERIALS
-                        </span>
+                        <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
+                                📚 SHARED NOTES ({isSoftwareTrack ? 'SOFTWARE TRACK' : 'POWERTRAIN TRACK'})
+                            </span>
+                            {isCombo && (
+                                <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900">
+                                    ✦ COMBO FULL ACCESS
+                                </span>
+                            )}
+                        </div>
+
                         <div className="mt-3 space-y-2">
                             {notes.map((note, idx) => (
                                 <div
@@ -247,15 +293,21 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                                             Format: {note.type} · {note.size}
                                         </span>
                                     </div>
-                                    <a
-                                        href={note.link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="press shadow-brutal-2 inline-flex items-center gap-1 border border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 no-underline hover:bg-amber-400"
-                                    >
-                                        <span>Download Notes</span>
-                                        <span>📥</span>
-                                    </a>
+                                    {isEnrolledInTrack ? (
+                                        <a
+                                            href={note.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="press shadow-brutal-2 inline-flex items-center gap-1 border border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 no-underline hover:bg-amber-400"
+                                        >
+                                            <span>Download Notes</span>
+                                            <span>📥</span>
+                                        </a>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-1 border border-slate-400 bg-slate-200 px-3 py-1 font-mono text-xs font-black text-slate-600 uppercase">
+                                            <span>🔒 Locked (Combo Only)</span>
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -273,19 +325,25 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                                         {quizTitle}
                                     </h5>
                                     <p className="text-xs font-bold text-slate-600">
-                                        Test your understanding of the concepts covered in this masterclass.
+                                        Test your understanding of the concepts covered in this class.
                                     </p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        onClose();
-                                        if (onTakeQuiz) onTakeQuiz(session);
-                                    }}
-                                    className="press shadow-brutal-4-brand shrink-0 border-2 border-slate-900 bg-purple-600 px-4 py-2 font-mono text-xs font-black uppercase text-white hover:bg-purple-700"
-                                >
-                                    <span>✍️ Take Quiz Now</span>
-                                </button>
+                                {isEnrolledInTrack ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            onClose();
+                                            if (onTakeQuiz) onTakeQuiz(session);
+                                        }}
+                                        className="press shadow-brutal-4-brand shrink-0 border-2 border-slate-900 bg-purple-600 px-4 py-2 font-mono text-xs font-black uppercase text-white hover:bg-purple-700"
+                                    >
+                                        <span>✍️ Take Quiz Now</span>
+                                    </button>
+                                ) : (
+                                    <span className="shrink-0 border-2 border-slate-400 bg-slate-200 px-4 py-2 font-mono text-xs font-black uppercase text-slate-600">
+                                        🔒 Quiz Locked
+                                    </span>
+                                )}
                             </div>
                         </div>
                     )}

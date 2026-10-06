@@ -942,6 +942,11 @@ export default function WorkshopPage({ onBack }) {
                             {TRACK_ORDER.map((id) => {
                                 const t = WORKSHOP_TRACKS[id];
                                 const active = id === activeTrack;
+                                const isEnrolled =
+                                    !student ||
+                                    student.package === 'combo' ||
+                                    student.package === id ||
+                                    (Array.isArray(student.tracksEnrolled) && student.tracksEnrolled.includes(id));
 
                                 return (
                                     <button
@@ -966,15 +971,17 @@ export default function WorkshopPage({ onBack }) {
                                             >
                                                 <span>{active ? '● Active Subsystem' : '○ View Subsystem'}</span>
                                             </span>
-                                            <span
-                                                className={`font-mono text-xs font-black ${
-                                                    active
-                                                        ? 'text-amber-300'
-                                                        : 'text-slate-500 group-hover:text-slate-900'
-                                                }`}
-                                            >
-                                                {active ? '✓' : '↘'}
-                                            </span>
+                                            {student && (
+                                                <span
+                                                    className={`border border-slate-900 px-2 py-0.5 font-mono text-[9px] font-black uppercase ${
+                                                        isEnrolled
+                                                            ? 'bg-emerald-400 text-slate-950'
+                                                            : 'bg-amber-300 text-slate-950'
+                                                    }`}
+                                                >
+                                                    {isEnrolled ? '✓ Unlocked' : '🔒 Combo Required'}
+                                                </span>
+                                            )}
                                         </div>
                                         <span className="mt-1.5 block text-sm leading-tight font-black uppercase sm:mt-2 sm:text-2xl lg:text-3xl">
                                             {t.name}
@@ -996,12 +1003,37 @@ export default function WorkshopPage({ onBack }) {
                             })}
                         </div>
 
-                        <TrackDetail
-                            key={track.id}
-                            track={track}
-                            student={student}
-                            onPreviewSyllabus={(url, name) => setPreviewSyllabus({ url, name })}
-                        />
+                        {student && student.package !== 'combo' && student.package !== activeTrack ? (
+                            <div className="shadow-brutal-6 mt-8 border-4 border-slate-900 bg-slate-900 p-8 text-center text-white">
+                                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-3 border-amber-300 bg-amber-300 text-3xl font-black text-slate-900">
+                                    🔒
+                                </div>
+                                <h3 className="mt-4 text-2xl font-black uppercase tracking-tight text-amber-300 sm:text-3xl">
+                                    {track.name} Notes &amp; Deck Locked
+                                </h3>
+                                <p className="mx-auto mt-2 max-w-xl text-sm font-bold text-slate-300 sm:text-base">
+                                    Your account (<strong>{student.name}</strong>) is enrolled in the{' '}
+                                    <span className="text-amber-300 uppercase">{student.package}</span> track.
+                                    Only candidates who paid for the <strong>Dual-Track Combo</strong> can access both Software and Powertrain notes and sessions!
+                                </p>
+                                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => selectTrack(student.package === 'software' ? 'software' : 'powertrain')}
+                                        className="press shadow-brutal-4 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
+                                    >
+                                        ← Switch to My Registered Track ({student.package?.toUpperCase()})
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <TrackDetail
+                                key={track.id}
+                                track={track}
+                                student={student}
+                                onPreviewSyllabus={(url, name) => setPreviewSyllabus({ url, name })}
+                            />
+                        )}
 
                         {/* Participant Locker Quick Card */}
                         <div className="shadow-brutal-6 mt-8 border-4 border-slate-900 bg-amber-300 p-5 sm:p-6">
