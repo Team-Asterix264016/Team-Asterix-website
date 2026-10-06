@@ -11,7 +11,9 @@
     "server": "node server/src/index.js",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"index.html\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" \"index.html\""
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -35,6 +37,8 @@
     "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^10.0.5",
     "oxlint": "^1.75.0",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "vite": "^8.2.0"
   }
 }

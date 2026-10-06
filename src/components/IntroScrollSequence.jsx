@@ -39,13 +39,13 @@ gsap.registerPlugin(ScrollTrigger);
  */
 
 const FRAME_COUNT = 80;
-const SCRUB_END = 0.48;       // turntable finishes its turn here
-const SHRINK_START = 0.52;    // box starts shrinking from full-screen to compact card
-const SHRINK_END = 0.74;      // box is fully compact card size
-const LOGO_START = 0.74;      // logo starts appearing right as box reaches compact size
-const LOGO_END = 0.94;        // logo fully resolved inside compact box
-const HANDOFF_START = 0.52;   // footage dissolves into live 3D scene concurrently with shrink
-const HANDOFF_END = 0.75;     // 3D scene handoff finishes
+const SCRUB_END = 0.48; // turntable finishes its turn here
+const SHRINK_START = 0.52; // box starts shrinking from full-screen to compact card
+const SHRINK_END = 0.74; // box is fully compact card size
+const LOGO_START = 0.74; // logo starts appearing right as box reaches compact size
+const LOGO_END = 0.94; // logo fully resolved inside compact box
+const HANDOFF_START = 0.52; // footage dissolves into live 3D scene concurrently with shrink
+const HANDOFF_END = 0.75; // 3D scene handoff finishes
 
 const TEAM_STAGES = [
     {
@@ -53,22 +53,22 @@ const TEAM_STAGES = [
         tag: 'WHO WE ARE',
         tagColor: 'bg-yellow-400 text-slate-950',
         title: 'PASSION DRIVEN',
-        desc: 'Collegiate engineers designing and building high-performance off-road racecars from scratch.',
+        desc: 'Collegiate engineers designing and building high-performance off-road racecars from scratch.'
     },
     {
         step: '02',
         tag: 'WHAT WE DO',
         tagColor: 'bg-sky-400 text-slate-950',
         title: 'BUILT BY HAND',
-        desc: '100% in-house CAD design, chassis fabrication, precision machining, and custom powertrain tuning.',
+        desc: '100% in-house CAD design, chassis fabrication, precision machining, and custom powertrain tuning.'
     },
     {
         step: '03',
         tag: 'OUR MISSION',
         tagColor: 'bg-emerald-400 text-slate-950',
         title: 'ENGINEERING EXCELLENCE',
-        desc: 'Engineering next-generation autonomous mobility. Built with grit, tested in dirt, and engineered to conquer.',
-    },
+        desc: 'Engineering next-generation autonomous mobility. Built with grit, tested in dirt, and engineered to conquer.'
+    }
 ];
 
 // Enough of the sequence to start without stalling; the rest streams in behind.
@@ -288,9 +288,7 @@ export default function IntroScrollSequence() {
 
         const start = async () => {
             // Load the opening frames first so the sequence is usable quickly.
-            await Promise.all(
-                Array.from({ length: FRAMES_BEFORE_START }, (_, i) => loadFrame(i))
-            );
+            await Promise.all(Array.from({ length: FRAMES_BEFORE_START }, (_, i) => loadFrame(i)));
             if (cancelled) return;
 
             resize();
@@ -404,7 +402,7 @@ export default function IntroScrollSequence() {
                                 y: -12,
                                 duration: 0.22,
                                 ease: 'power2.in',
-                                overwrite: 'auto',
+                                overwrite: 'auto'
                             });
                         }
                         if (nextEl) {
@@ -473,36 +471,37 @@ export default function IntroScrollSequence() {
                             borderStyle: 'solid',
                             borderColor: '#0f172a',
                             boxShadow: `${shrinkP * 6}px ${shrinkP * 6}px 0px #0f172a`,
-                            borderRadius: `${shrinkP * 12}px`,
+                            borderRadius: `${shrinkP * 12}px`
                         });
                     }
 
                     // Canvas fades out during shrink, turning box into solid dark card
-                    const canvasVeil = 1 - gsap.utils.clamp(0, 1, (p - SHRINK_START) / (SHRINK_END - SHRINK_START));
+                    const canvasVeil =
+                        1 - gsap.utils.clamp(0, 1, (p - SHRINK_START) / (SHRINK_END - SHRINK_START));
                     gsap.set(canvasRef.current, { opacity: canvasVeil });
 
                     // Scrim inside card darkens to solid slate-950
-                    const scrimP = gsap.utils.clamp(0, 1, (p - SHRINK_START) / ((SHRINK_END - SHRINK_START) * 0.7));
+                    const scrimP = gsap.utils.clamp(
+                        0,
+                        1,
+                        (p - SHRINK_START) / ((SHRINK_END - SHRINK_START) * 0.7)
+                    );
                     gsap.set(scrimRef.current, { opacity: scrimP });
 
                     // --- 4. Logo & Details Reveal INSIDE Small Box (0.68 -> 0.84) ---
-                    const logoRaw = gsap.utils.clamp(
-                        0,
-                        1,
-                        (p - LOGO_START) / (LOGO_END - LOGO_START)
-                    );
+                    const logoRaw = gsap.utils.clamp(0, 1, (p - LOGO_START) / (LOGO_END - LOGO_START));
                     const easedLogo = gsap.parseEase('power2.out')(logoRaw);
 
                     gsap.set(logoRef.current, {
                         opacity: easedLogo,
-                        scale: 0.88 + easedLogo * 0.12,
+                        scale: 0.88 + easedLogo * 0.12
                     });
                     gsap.set(subtitleRef.current, {
                         opacity: gsap.utils.clamp(0, 1, (logoRaw - 0.2) / 0.8),
-                        y: (1 - easedLogo) * 8,
+                        y: (1 - easedLogo) * 8
                     });
                     gsap.set(keepScrollingRef.current, {
-                        opacity: gsap.utils.clamp(0, 1, (logoRaw - 0.4) / 0.6),
+                        opacity: gsap.utils.clamp(0, 1, (logoRaw - 0.4) / 0.6)
                     });
 
                     // --- 5. Pin state ---
@@ -526,7 +525,7 @@ export default function IntroScrollSequence() {
                 // onUpdate stops firing once scrolled clear of the range, so
                 // the pin state is settled explicitly at both edges.
                 onLeave: () => setPinned(false),
-                onEnterBack: () => setPinned(true),
+                onEnterBack: () => setPinned(true)
             });
 
             setPinned(true);
@@ -581,7 +580,7 @@ export default function IntroScrollSequence() {
                         borderStyle: 'solid',
                         borderColor: '#0f172a',
                         boxShadow: '6px 6px 0px #0f172a',
-                        borderRadius: '12px',
+                        borderRadius: '12px'
                     });
                 }
 
@@ -627,7 +626,7 @@ export default function IntroScrollSequence() {
             // frame canvas itself, so fading that canvas out at the end reveals
             // the live 3D scene sitting behind this section instead of a flat
             // slate panel, which is what made the handoff read as a hard cut.
-            className="relative w-full h-[200vh] select-none"
+            className="relative h-[200vh] w-full select-none"
             aria-label="Team Asterix buggy walkaround"
         >
             {/* Fixed rather than sticky. The app root and body both set
@@ -639,16 +638,16 @@ export default function IntroScrollSequence() {
                 the scrub is done so it scrolls off with the section. */}
             <div
                 ref={stageRef}
-                className="fixed inset-x-0 top-0 h-screen w-full overflow-hidden pointer-events-none"
+                className="pointer-events-none fixed inset-x-0 top-0 h-screen w-full overflow-hidden"
             >
                 <div
                     ref={boxRef}
-                    className="absolute left-0 top-0 overflow-hidden bg-slate-950 flex flex-col items-center justify-center will-change-[width,height,transform,border-radius,box-shadow]"
+                    className="absolute top-0 left-0 flex flex-col items-center justify-center overflow-hidden bg-slate-950 will-change-[width,height,transform,border-radius,box-shadow]"
                     style={{ width: '100vw', height: '100vh' }}
                 >
                     <canvas
                         ref={canvasRef}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 block max-w-none max-h-none"
+                        className="absolute top-1/2 left-1/2 block max-h-none max-w-none -translate-x-1/2 -translate-y-1/2"
                         style={{ width: '100vw', height: '100vh' }}
                         aria-hidden="true"
                     />
@@ -656,30 +655,30 @@ export default function IntroScrollSequence() {
                     {/* Darkens the footage as the mark takes over. */}
                     <div
                         ref={scrimRef}
-                        className="absolute inset-0 bg-slate-950 opacity-0 pointer-events-none"
+                        className="pointer-events-none absolute inset-0 bg-slate-950 opacity-0"
                         aria-hidden="true"
                     />
 
                     {/* Emerging team mark inside compact card */}
                     <div
                         ref={contentRef}
-                        className="absolute inset-0 flex flex-col items-center justify-center p-4 sm:p-5 pointer-events-none will-change-transform select-none"
+                        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center p-4 will-change-transform select-none sm:p-5"
                     >
                         <img
                             ref={logoRef}
                             src={teamLogo}
                             alt="Team Asterix"
-                            className="w-40 sm:w-48 md:w-52 h-auto max-h-14 sm:max-h-16 object-contain opacity-0 [filter:brightness(0)_invert(1)_drop-shadow(0_0_20px_rgba(56,189,248,0.7))]"
+                            className="h-auto max-h-14 w-40 object-contain opacity-0 [filter:brightness(0)_invert(1)_drop-shadow(0_0_20px_rgba(56,189,248,0.7))] sm:max-h-16 sm:w-48 md:w-52"
                         />
                         <p
                             ref={subtitleRef}
-                            className="opacity-0 mt-2 text-center text-xs sm:text-sm font-black uppercase tracking-wider text-white leading-none"
+                            className="mt-2 text-center text-xs leading-none font-black tracking-wider text-white uppercase opacity-0 sm:text-sm"
                         >
                             ASTERIX AUTONOMOUS MOBILITY
                         </p>
                         <div
                             ref={keepScrollingRef}
-                            className="opacity-0 mt-2.5 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-sky-400"
+                            className="mt-2.5 flex items-center gap-1.5 font-mono text-[9px] font-bold tracking-[0.25em] text-sky-400 uppercase opacity-0 sm:text-[10px]"
                         >
                             <span>KEEP SCROLLING</span>
                             <span className="inline-block animate-bounce">↓</span>
@@ -690,37 +689,39 @@ export default function IntroScrollSequence() {
                 {/* Left-Side Ambient Dark Backdrop to blend smoothly */}
                 <div
                     ref={hudScrimRef}
-                    className="absolute inset-0 pointer-events-none z-10"
+                    className="pointer-events-none absolute inset-0 z-10"
                     aria-hidden="true"
                 >
-                    <div className="absolute inset-y-0 left-0 w-full sm:w-4/5 md:w-3/5 bg-gradient-to-b sm:bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-transparent" />
+                    <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent sm:w-4/5 sm:bg-gradient-to-r md:w-3/5" />
                 </div>
 
                 {/* Left-Side Friendly Colourful Team Story Card */}
                 <div
                     ref={hudRef}
-                    className="absolute inset-x-0 top-[45%] -translate-y-1/2 sm:translate-y-0 sm:inset-y-0 sm:left-0 sm:right-auto flex items-center justify-center sm:justify-start px-4 sm:p-10 md:p-14 lg:p-16 z-20 pointer-events-none w-full max-w-[320px] sm:max-w-[400px] md:max-w-[440px] mx-auto sm:mx-0 select-none"
+                    className="pointer-events-none absolute inset-x-0 top-[45%] z-20 mx-auto flex w-full max-w-[320px] -translate-y-1/2 items-center justify-center px-4 select-none sm:inset-y-0 sm:right-auto sm:left-0 sm:mx-0 sm:max-w-[400px] sm:translate-y-0 sm:justify-start sm:p-10 md:max-w-[440px] md:p-14 lg:p-16"
                 >
-                    <div className="w-full bg-white/95 text-slate-900 border-2 sm:border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] sm:shadow-[8px_8px_0px_#0f172a] rounded-xl sm:rounded-2xl p-4.5 sm:p-7 md:p-8 backdrop-blur-md relative overflow-hidden">
+                    <div className="shadow-brutal-5 sm:shadow-brutal-8 relative w-full overflow-hidden rounded-xl border-2 border-slate-900 bg-white/95 p-4.5 text-slate-900 backdrop-blur-md sm:rounded-2xl sm:border-3 sm:p-7 md:p-8">
                         {/* Dynamic Stages Stack using CSS Grid overlapping (prevents overlap with footer) */}
-                        <div className="grid grid-cols-1 grid-rows-1 relative">
+                        <div className="relative grid grid-cols-1 grid-rows-1">
                             {/* Stage 0 */}
                             <div
                                 ref={stage0Ref}
                                 className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity]"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[0].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                <div className="mb-3.5 flex items-center justify-between gap-2">
+                                    <span
+                                        className={`${TEAM_STAGES[0].tagColor} shadow-brutal-2 rounded-md border-2 border-slate-900 px-3 py-1 text-[10px] font-black tracking-wider uppercase sm:text-xs`}
+                                    >
                                         {TEAM_STAGES[0].tag}
                                     </span>
-                                    <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">
+                                    <span className="font-mono text-xs font-bold text-slate-500 sm:text-sm">
                                         01 / 03
                                     </span>
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-900 tracking-tight leading-tight mb-2 sm:mb-2.5">
+                                <h3 className="mb-2 text-xl leading-tight font-black tracking-tight text-slate-900 uppercase sm:mb-2.5 sm:text-2xl">
                                     {TEAM_STAGES[0].title}
                                 </h3>
-                                <p className="text-xs sm:text-sm md:text-[15px] text-slate-700 font-medium leading-relaxed">
+                                <p className="text-xs leading-relaxed font-medium text-slate-700 sm:text-sm md:text-[15px]">
                                     {TEAM_STAGES[0].desc}
                                 </p>
                             </div>
@@ -728,20 +729,22 @@ export default function IntroScrollSequence() {
                             {/* Stage 1 */}
                             <div
                                 ref={stage1Ref}
-                                className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity] opacity-0"
+                                className="col-start-1 row-start-1 flex flex-col justify-start opacity-0 will-change-[transform,opacity]"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[1].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                <div className="mb-3.5 flex items-center justify-between gap-2">
+                                    <span
+                                        className={`${TEAM_STAGES[1].tagColor} shadow-brutal-2 rounded-md border-2 border-slate-900 px-3 py-1 text-[10px] font-black tracking-wider uppercase sm:text-xs`}
+                                    >
                                         {TEAM_STAGES[1].tag}
                                     </span>
-                                    <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">
+                                    <span className="font-mono text-xs font-bold text-slate-500 sm:text-sm">
                                         02 / 03
                                     </span>
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-900 tracking-tight leading-tight mb-2 sm:mb-2.5">
+                                <h3 className="mb-2 text-xl leading-tight font-black tracking-tight text-slate-900 uppercase sm:mb-2.5 sm:text-2xl">
                                     {TEAM_STAGES[1].title}
                                 </h3>
-                                <p className="text-xs sm:text-sm md:text-[15px] text-slate-700 font-medium leading-relaxed">
+                                <p className="text-xs leading-relaxed font-medium text-slate-700 sm:text-sm md:text-[15px]">
                                     {TEAM_STAGES[1].desc}
                                 </p>
                             </div>
@@ -749,42 +752,44 @@ export default function IntroScrollSequence() {
                             {/* Stage 2 */}
                             <div
                                 ref={stage2Ref}
-                                className="col-start-1 row-start-1 flex flex-col justify-start will-change-[transform,opacity] opacity-0"
+                                className="col-start-1 row-start-1 flex flex-col justify-start opacity-0 will-change-[transform,opacity]"
                             >
-                                <div className="flex items-center justify-between gap-2 mb-3.5">
-                                    <span className={`${TEAM_STAGES[2].tagColor} border-2 border-slate-900 px-3 py-1 font-black text-[10px] sm:text-xs uppercase tracking-wider rounded-md shadow-[2px_2px_0px_#0f172a]`}>
+                                <div className="mb-3.5 flex items-center justify-between gap-2">
+                                    <span
+                                        className={`${TEAM_STAGES[2].tagColor} shadow-brutal-2 rounded-md border-2 border-slate-900 px-3 py-1 text-[10px] font-black tracking-wider uppercase sm:text-xs`}
+                                    >
                                         {TEAM_STAGES[2].tag}
                                     </span>
-                                    <span className="font-mono font-bold text-slate-500 text-xs sm:text-sm">
+                                    <span className="font-mono text-xs font-bold text-slate-500 sm:text-sm">
                                         03 / 03
                                     </span>
                                 </div>
-                                <h3 className="text-xl sm:text-2xl font-black uppercase text-slate-900 tracking-tight leading-tight mb-2 sm:mb-2.5">
+                                <h3 className="mb-2 text-xl leading-tight font-black tracking-tight text-slate-900 uppercase sm:mb-2.5 sm:text-2xl">
                                     {TEAM_STAGES[2].title}
                                 </h3>
-                                <p className="text-xs sm:text-sm md:text-[15px] text-slate-700 font-medium leading-relaxed">
+                                <p className="text-xs leading-relaxed font-medium text-slate-700 sm:text-sm md:text-[15px]">
                                     {TEAM_STAGES[2].desc}
                                 </p>
                             </div>
                         </div>
 
                         {/* Step Indicator Progress Dots */}
-                        <div className="mt-4 sm:mt-7 pt-3 sm:pt-4 border-t border-slate-900/10 flex items-center justify-between">
-                            <span className="text-[10px] sm:text-xs font-mono font-bold text-slate-500 uppercase tracking-wider">
+                        <div className="mt-4 flex items-center justify-between border-t border-slate-900/10 pt-3 sm:mt-7 sm:pt-4">
+                            <span className="font-mono text-[10px] font-bold tracking-wider text-slate-500 uppercase sm:text-xs">
                                 SCROLL TO ADVANCE
                             </span>
                             <div className="flex items-center gap-2">
                                 <div
                                     ref={dot0Ref}
-                                    className="h-2 rounded-full border border-slate-900 bg-slate-900 transition-all duration-300 w-6"
+                                    className="h-2 w-6 rounded-full border border-slate-900 bg-slate-900 transition-all duration-300"
                                 />
                                 <div
                                     ref={dot1Ref}
-                                    className="h-2 rounded-full border border-slate-900 bg-slate-200 transition-all duration-300 w-2"
+                                    className="h-2 w-2 rounded-full border border-slate-900 bg-slate-200 transition-all duration-300"
                                 />
                                 <div
                                     ref={dot2Ref}
-                                    className="h-2 rounded-full border border-slate-900 bg-slate-200 transition-all duration-300 w-2"
+                                    className="h-2 w-2 rounded-full border border-slate-900 bg-slate-200 transition-all duration-300"
                                 />
                             </div>
                         </div>
@@ -795,16 +800,16 @@ export default function IntroScrollSequence() {
                     enough of the sequence has decoded to scrub smoothly. */}
                 {!ready && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-slate-900">
-                        <span className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-sky-400">
+                        <span className="font-mono text-[10px] font-black tracking-[0.3em] text-sky-400 uppercase">
                             Loading walkaround
                         </span>
-                        <div className="w-56 h-2.5 border-2 border-sky-400/70 overflow-hidden">
+                        <div className="h-2.5 w-56 overflow-hidden border-2 border-sky-400/70">
                             <div
                                 className="h-full bg-sky-400 transition-[width] duration-200 ease-linear"
                                 style={{ width: `${loadPercent}%` }}
                             />
                         </div>
-                        <span className="text-[10px] font-mono font-bold text-slate-400 tabular-nums">
+                        <span className="font-mono text-[10px] font-bold text-slate-400 tabular-nums">
                             {loadPercent}%
                         </span>
                     </div>

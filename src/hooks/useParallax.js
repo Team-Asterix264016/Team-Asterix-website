@@ -7,8 +7,7 @@ gsap.registerPlugin(ScrollTrigger);
 const PARALLAX_SELECTOR = '[data-parallax]';
 
 const prefersReducedMotion = () =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * useParallax
@@ -116,7 +115,7 @@ export default function useParallax(lenis, dependency) {
                         {
                             y: fromY,
                             x: fromX,
-                            rotate: fromRotate,
+                            rotate: fromRotate
                         },
                         {
                             y: toY,
@@ -128,8 +127,8 @@ export default function useParallax(lenis, dependency) {
                                 start: 'top bottom',
                                 end: 'bottom top',
                                 scrub: 0.6,
-                                invalidateOnRefresh: true,
-                            },
+                                invalidateOnRefresh: true
+                            }
                         }
                     );
 

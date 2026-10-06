@@ -43,10 +43,9 @@ export default function ImageField({
     onChange,
     onUpload,
     folder = '/asterix',
-    frames = 'member',
-    placeholder = 'Paste an image URL, or upload a file'
+    frames = 'member'
 }) {
-    const framePresets = Array.isArray(frames) ? frames : (FRAME_PRESETS[frames] || FRAME_PRESETS.member);
+    const framePresets = Array.isArray(frames) ? frames : FRAME_PRESETS[frames] || FRAME_PRESETS.member;
     const resolved = apiUrl(value);
     const [isUploading, setIsUploading] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
@@ -58,7 +57,9 @@ export default function ImageField({
     const failed = Boolean(resolved) && failedUrl === resolved;
     const stageRef = useRef(null);
 
-    const patch = (fields) => onChange?.(fields);
+    /* Stable so hooks below can depend on it honestly rather than
+       suppressing the dependency warning. */
+    const patch = useCallback((fields) => onChange?.(fields), [onChange]);
 
     const handleFileChange = async (e) => {
         if (!e.target.files?.[0] || !onUpload) return;
@@ -72,15 +73,18 @@ export default function ImageField({
         }
     };
 
-    const pointToPosition = useCallback((clientX, clientY) => {
-        const node = stageRef.current;
-        if (!node) return;
-        const rect = node.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
-        const x = ((clientX - rect.left) / rect.width) * 100;
-        const y = ((clientY - rect.top) / rect.height) * 100;
-        patch({ position: formatPosition(x, y) });
-    }, [onChange]); // eslint-disable-line react-hooks/exhaustive-deps
+    const pointToPosition = useCallback(
+        (clientX, clientY) => {
+            const node = stageRef.current;
+            if (!node) return;
+            const rect = node.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+            const x = ((clientX - rect.left) / rect.width) * 100;
+            const y = ((clientY - rect.top) / rect.height) * 100;
+            patch({ position: formatPosition(x, y) });
+        },
+        [patch]
+    );
 
     /* Dragging is tracked on the window rather than on the image so the focal
        point keeps following a pointer that leaves the preview mid-drag, which is
@@ -108,49 +112,87 @@ export default function ImageField({
 
     const nudge = (dx, dy) => patch({ position: formatPosition(focal.x + dx, focal.y + dy) });
 
-    const miniBtn = 'press press-flat px-2 py-1 border-2 border-slate-900 font-mono text-[10px] font-black uppercase cursor-pointer';
+    const miniBtn =
+        'press press-flat px-2 py-1 border-2 border-slate-900 font-mono text-[10px] font-black uppercase cursor-pointer';
 
     return (
-        <div className="bg-white border-2 border-slate-900 p-2.5 space-y-2">
-
+        <div className="space-y-2 border-2 border-slate-900 bg-white p-2.5">
             {/* Resting row: photo preview, label, and action controls */}
             <div className="flex items-center gap-3">
-                <div className="w-14 h-14 shrink-0 border-2 border-slate-900 bg-slate-100 overflow-hidden relative">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden border-2 border-slate-900 bg-slate-100">
                     {isUploading ? (
-                        <div className="absolute inset-0 bg-slate-900/85 flex flex-col items-center justify-center text-white z-10 p-0.5">
-                            <svg className="animate-spin h-4 w-4 text-sky-400 mb-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900/85 p-0.5 text-white">
+                            <svg
+                                className="mb-0.5 h-4 w-4 animate-spin text-sky-400"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                             </svg>
-                            <span className="font-mono text-[7px] font-black text-sky-300 uppercase leading-none">Saving...</span>
+                            <span className="font-mono text-[7px] leading-none font-black text-sky-300 uppercase">
+                                Saving...
+                            </span>
                         </div>
                     ) : hasImage ? (
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={resolved}
                             alt=""
                             style={style}
                             onError={() => setFailedUrl(resolved)}
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                         />
                     ) : (
-                        <span className="w-full h-full flex items-center justify-center text-center font-mono text-[8px] font-black uppercase leading-tight text-slate-400">
+                        <span className="flex h-full w-full items-center justify-center text-center font-mono text-[8px] leading-tight font-black text-slate-600 uppercase">
                             {failed ? 'Bad link' : 'No photo'}
                         </span>
                     )}
                 </div>
 
-                <div className="flex-1 min-w-0 space-y-1.5">
-                    <span className="block text-[11px] font-mono font-black uppercase tracking-wider text-slate-800 truncate">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                    <span className="block truncate font-mono text-[11px] font-black tracking-wider text-slate-800 uppercase">
                         {label}
                     </span>
 
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <label className={`${miniBtn} ${isUploading ? 'opacity-50 pointer-events-none' : ''} bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1`}>
+                        <label
+                            className={`${miniBtn} ${isUploading ? 'pointer-events-none opacity-50' : ''} flex items-center gap-1 bg-slate-900 text-white hover:bg-slate-800`}
+                        >
                             {isUploading ? (
                                 <>
-                                    <svg className="animate-spin h-3 w-3 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <svg
+                                        className="h-3 w-3 animate-spin text-sky-400"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                        ></circle>
+                                        <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                        ></path>
                                     </svg>
                                     <span>Saving...</span>
                                 </>
@@ -171,7 +213,7 @@ export default function ImageField({
                                 type="button"
                                 onClick={() => setShowCrop((v) => !v)}
                                 aria-expanded={showCrop}
-                                className={`${miniBtn} ${showCrop ? 'bg-sky-500 text-white' : 'bg-white hover:bg-slate-100 text-slate-900'}`}
+                                className={`${miniBtn} ${showCrop ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900 hover:bg-slate-100'}`}
                             >
                                 {showCrop ? 'Done ▲' : 'Adjust crop ▼'}
                             </button>
@@ -181,7 +223,7 @@ export default function ImageField({
                             <button
                                 type="button"
                                 onClick={() => patch({ url: '' })}
-                                className={`${miniBtn} bg-rose-50 hover:bg-rose-100 text-rose-700`}
+                                className={`${miniBtn} bg-rose-50 text-rose-700 hover:bg-rose-100`}
                             >
                                 Remove
                             </button>
@@ -191,8 +233,7 @@ export default function ImageField({
             </div>
 
             {hasImage && showCrop && (
-                <div className="space-y-2 pt-2 border-t-2 border-slate-200">
-
+                <div className="space-y-2 border-t-2 border-slate-200 pt-2">
                     {/* The whole picture, uncropped, with the focal point marked. */}
                     <div
                         ref={stageRef}
@@ -201,23 +242,25 @@ export default function ImageField({
                             setIsDragging(true);
                             pointToPosition(e.clientX, e.clientY);
                         }}
-                        className="relative w-full max-h-44 bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#f8fafc_0%_50%)] bg-[length:12px_12px] border-2 border-slate-900 overflow-hidden cursor-crosshair touch-none select-none"
+                        className="relative max-h-44 w-full cursor-crosshair touch-none overflow-hidden border-2 border-slate-900 bg-[repeating-conic-gradient(#e2e8f0_0%_25%,#f8fafc_0%_50%)] bg-[length:12px_12px] select-none"
                     >
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={resolved}
                             alt="Uploaded original"
                             draggable={false}
                             onError={() => setFailedUrl(resolved)}
-                            className="block w-full max-h-44 object-contain pointer-events-none"
+                            className="pointer-events-none block max-h-44 w-full object-contain"
                         />
                         <span
                             aria-hidden="true"
-                            className="absolute w-5 h-5 -ml-2.5 -mt-2.5 rounded-full border-2 border-white bg-sky-500/70 shadow-[0_0_0_2px_#0f172a] pointer-events-none"
+                            className="pointer-events-none absolute -mt-2.5 -ml-2.5 h-5 w-5 rounded-full border-2 border-white bg-sky-500/70 shadow-[0_0_0_2px_#0f172a]"
                             style={{ left: `${focal.x}%`, top: `${focal.y}%` }}
                         />
                     </div>
 
-                    <p className="font-mono text-[9px] font-bold text-slate-500 leading-relaxed">
+                    <p className="font-mono text-[9px] leading-relaxed font-bold text-slate-500">
                         Drag to choose what stays in shot when a frame has to crop.
                     </p>
 
@@ -225,7 +268,7 @@ export default function ImageField({
                         <button
                             type="button"
                             onClick={() => patch({ fit: 'cover' })}
-                            className={`${miniBtn} ${normalizeFit(fit) === 'cover' ? 'bg-sky-500 text-white' : 'bg-white text-slate-900'}`}
+                            className={`${miniBtn} ${normalizeFit(fit) === 'cover' ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900'}`}
                         >
                             Fill
                         </button>
@@ -233,11 +276,11 @@ export default function ImageField({
                             type="button"
                             onClick={() => patch({ fit: 'contain' })}
                             title="Never crops. The whole picture is shown and the frame is letterboxed."
-                            className={`${miniBtn} ${normalizeFit(fit) === 'contain' ? 'bg-sky-500 text-white' : 'bg-white text-slate-900'}`}
+                            className={`${miniBtn} ${normalizeFit(fit) === 'contain' ? 'bg-sky-500 text-slate-950' : 'bg-white text-slate-900'}`}
                         >
                             Fit whole
                         </button>
-                        <span className="w-px h-5 bg-slate-300 mx-0.5" aria-hidden="true" />
+                        <span className="mx-0.5 h-5 w-px bg-slate-300" aria-hidden="true" />
                         {PRESET_POSITIONS.map((p) => (
                             <button
                                 key={p.value}
@@ -252,13 +295,18 @@ export default function ImageField({
                                 {p.label}
                             </button>
                         ))}
-                        {[['←', -4, 0], ['→', 4, 0], ['↑', 0, -4], ['↓', 0, 4]].map(([sym, dx, dy]) => (
+                        {[
+                            ['←', -4, 0],
+                            ['→', 4, 0],
+                            ['↑', 0, -4],
+                            ['↓', 0, 4]
+                        ].map(([sym, dx, dy]) => (
                             <button
                                 key={sym}
                                 type="button"
                                 onClick={() => nudge(dx, dy)}
                                 aria-label={`Nudge focal point ${sym}`}
-                                className="press press-flat w-6 h-6 bg-white hover:bg-slate-100 border-2 border-slate-900 font-mono text-[10px] font-black cursor-pointer"
+                                className="press press-flat h-6 w-6 cursor-pointer border-2 border-slate-900 bg-white font-mono text-[10px] font-black hover:bg-slate-100"
                             >
                                 {sym}
                             </button>
@@ -270,18 +318,20 @@ export default function ImageField({
                         {framePresets.map((frame) => (
                             <div key={frame.id}>
                                 <div
-                                    className="border-2 border-slate-900 bg-slate-950 overflow-hidden"
+                                    className="overflow-hidden border-2 border-slate-900 bg-slate-950"
                                     style={{ height: PREVIEW_H, aspectRatio: frame.ratio }}
                                 >
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={resolved}
                                         alt={`${frame.label} preview`}
                                         draggable={false}
-                                        className="w-full h-full"
+                                        className="h-full w-full"
                                         style={style}
                                     />
                                 </div>
-                                <span className="block mt-0.5 font-mono text-[8px] font-black uppercase text-slate-500">
+                                <span className="mt-0.5 block font-mono text-[8px] font-black text-slate-500 uppercase">
                                     {frame.label}
                                 </span>
                             </div>

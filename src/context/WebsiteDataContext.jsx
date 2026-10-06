@@ -1,8 +1,12 @@
-import { useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { WebsiteDataContext } from './WebsiteContext';
 import { subsystems as initialSubsystems } from '../data/subsystemsData';
 import { apiUrl } from '../lib/api';
-import { SOFTWARE_PERCEPTION_DATA, POWERTRAIN_CHALLENGE_DATA, POWERTRAIN_TEST_DATA, MECHANICAL_MYSTERY_DATA } from '../data/recruitmentProblemStatements';
+import {
+    SOFTWARE_PERCEPTION_DATA,
+    POWERTRAIN_CHALLENGE_DATA,
+    MECHANICAL_MYSTERY_DATA
+} from '../data/recruitmentProblemStatements';
 import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
 
 import imgPaddock from '../assets/gallery/01_team_paddock.jpg';
@@ -53,119 +57,119 @@ It was the reason a training program turned into a family of engineers who learn
 
 // Initial default hero data
 const initialHeroData = {
-    teamTitle: "TEAM",
-    teamName: "ASTERIX",
-    tagline: "Pioneering Next-Gen Autonomous Mobility & Off-Road Robotics.",
+    teamTitle: 'TEAM',
+    teamName: 'ASTERIX',
+    tagline: 'Pioneering Next-Gen Autonomous Mobility & Off-Road Robotics.',
     badges: [
-        { label: "AUTONOMOUS MOBILITY LAB", class: "rotate-[-3deg] bg-amber-300 text-slate-900" },
-        { label: "ADVANCED R&D DIVISION", class: "bg-white text-slate-900" },
-        { label: "★ PSG iTECH ENGINEERING", class: "rotate-[3deg] bg-sky-400 text-white" }
+        { label: 'AUTONOMOUS MOBILITY LAB', class: 'rotate-[-3deg] bg-amber-300 text-slate-900' },
+        { label: 'ADVANCED R&D DIVISION', class: 'bg-white text-slate-900' },
+        { label: '★ PSG iTECH ENGINEERING', class: 'rotate-[3deg] bg-sky-400 text-slate-950' }
     ],
-    ctaText: "EXPLORE THE SQUAD →",
-    ctaLink: "#squad",
-    joinFormUrl: "https://forms.gle/6hHG6aXqrunnfj7V6"
+    ctaText: 'EXPLORE THE SQUAD →',
+    ctaLink: '#squad',
+    joinFormUrl: 'https://forms.gle/6hHG6aXqrunnfj7V6'
 };
 
 // Initial default gallery items
 const initialGalleryItems = [
     {
-        id: "gal-1",
-        title: "Paddock Dawn Inspection",
-        category: "FIELD TESTING • SCRUTINEERING",
-        year: "2026",
+        id: 'gal-1',
+        title: 'Paddock Dawn Inspection',
+        category: 'FIELD TESTING • SCRUTINEERING',
+        year: '2026',
         src: imgPaddock,
-        desc: "Complete pre-test technical inspection and telemetry calibration under paddock sunrise."
+        desc: 'Complete pre-test technical inspection and telemetry calibration under paddock sunrise.'
     },
     {
-        id: "gal-2",
-        title: "Spaceframe Chassis TIG Welding",
-        category: "WORKSHOP • CHASSIS FAB",
-        year: "2025",
+        id: 'gal-2',
+        title: 'Spaceframe Chassis TIG Welding',
+        category: 'WORKSHOP • CHASSIS FAB',
+        year: '2025',
         src: imgWelding,
-        desc: "Precision TIG welding of AISI 4130 chromoly roll cage joints with zero dimensional distortion."
+        desc: 'Precision TIG welding of AISI 4130 chromoly roll cage joints with zero dimensional distortion.'
     },
     {
-        id: "gal-3",
-        title: "LiDAR & Neural Vision Tuning",
-        category: "AI LAB • PERCEPTION",
-        year: "2026",
+        id: 'gal-3',
+        title: 'LiDAR & Neural Vision Tuning',
+        category: 'AI LAB • PERCEPTION',
+        year: '2026',
         src: imgLidar,
-        desc: "Real-time point-cloud registration and stereo camera depth calibration on the test bench."
+        desc: 'Real-time point-cloud registration and stereo camera depth calibration on the test bench.'
     },
     {
-        id: "gal-4",
-        title: "High-Speed Dirt Proving Grounds",
-        category: "DYNAMIC TESTING • TERRAIN",
-        year: "2026",
+        id: 'gal-4',
+        title: 'High-Speed Dirt Proving Grounds',
+        category: 'DYNAMIC TESTING • TERRAIN',
+        year: '2026',
         src: imgTrack,
-        desc: "Full-throttle endurance run across punishing washboard ruts and loose red dirt trails."
+        desc: 'Full-throttle endurance run across punishing washboard ruts and loose red dirt trails.'
     },
     {
-        id: "gal-5",
-        title: "Suspension & Brake Tuning",
-        category: "PIT BAY • QUICK SERVICE",
-        year: "2026",
+        id: 'gal-5',
+        title: 'Suspension & Brake Tuning',
+        category: 'PIT BAY • QUICK SERVICE',
+        year: '2026',
         src: imgMechanics,
-        desc: "Trackside damper valving adjustments and hydraulic line bleeding between endurance testing runs."
+        desc: 'Trackside damper valving adjustments and hydraulic line bleeding between endurance testing runs.'
     },
     {
-        id: "gal-6",
-        title: "Platform Milestone & Victory",
-        category: "PROVING GROUNDS • MILESTONE",
-        year: "2026",
+        id: 'gal-6',
+        title: 'Platform Milestone & Victory',
+        category: 'PROVING GROUNDS • MILESTONE',
+        year: '2026',
         src: imgCelebration,
-        desc: "Team Asterix celebrating major technical milestones and successful autonomous field trials."
+        desc: 'Team Asterix celebrating major technical milestones and successful autonomous field trials.'
     }
 ];
 
 // Initial default updates
 const initialUpdates = [
     {
-        id: "upd-1",
-        label: "Paddock Lineup & Shakedown",
-        tag: "FEB 2026 • PIT LANE",
+        id: 'upd-1',
+        label: 'Paddock Lineup & Shakedown',
+        tag: 'FEB 2026 • PIT LANE',
         image: imgPaddock,
-        link: "#"
+        link: '#'
     },
     {
-        id: "upd-2",
-        label: "Spaceframe TIG Welding",
-        tag: "NOV 2025 • CHASSIS BAY",
+        id: 'upd-2',
+        label: 'Spaceframe TIG Welding',
+        tag: 'NOV 2025 • CHASSIS BAY',
         image: imgWelding,
-        link: "#"
+        link: '#'
     },
     {
-        id: "upd-3",
-        label: "LiDAR & Neural Perception",
-        tag: "JAN 2026 • AI LAB",
+        id: 'upd-3',
+        label: 'LiDAR & Neural Perception',
+        tag: 'JAN 2026 • AI LAB',
         image: imgLidar,
-        link: "#"
+        link: '#'
     },
     {
-        id: "upd-4",
-        label: "High-Speed Dirt Testing",
-        tag: "JAN 2026 • PROVING GROUNDS",
+        id: 'upd-4',
+        label: 'High-Speed Dirt Testing',
+        tag: 'JAN 2026 • PROVING GROUNDS',
         image: imgTrack,
-        link: "#"
+        link: '#'
     },
     {
-        id: "upd-5",
-        label: "Autonomous Field Milestone",
-        tag: "FEB 2026 • PROVING GROUNDS",
+        id: 'upd-5',
+        label: 'Autonomous Field Milestone',
+        tag: 'FEB 2026 • PROVING GROUNDS',
         image: imgCelebration,
-        link: "#"
+        link: '#'
     }
 ];
 
 // Initial default contact info
 const initialContactInfo = {
-    email: "asterix.psgitech@gmail.com",
-    phone: "+91 86089 44644",
-    address: "PSG iTech, Neelambur, Coimbatore, Tamil Nadu",
-    category: "Autonomous All-Terrain Vehicle Development",
-    instagramUrl: "https://www.instagram.com/asterix_itech/",
-    linkedinUrl: "https://www.linkedin.com/company/teamasterix/",
-    githubUrl: "https://github.com/Team-Asterix264016/"
+    email: 'asterix.psgitech@gmail.com',
+    phone: '+91 86089 44644',
+    address: 'PSG iTech, Neelambur, Coimbatore, Tamil Nadu',
+    category: 'Autonomous All-Terrain Vehicle Development',
+    instagramUrl: 'https://www.instagram.com/asterix_itech/',
+    linkedinUrl: 'https://www.linkedin.com/company/teamasterix/',
+    githubUrl: 'https://github.com/Team-Asterix264016/'
 };
 
 /* Roster of admin accounts, for display in the Team Accounts tab only.
@@ -175,28 +179,28 @@ const initialContactInfo = {
    credential. */
 const initialAccounts = [
     {
-        id: "acc-1",
-        username: "admin",
-        name: "Ratheeswar",
-        phone: "+91 86089 44644",
-        role: "System Administrator & Software Lead",
-        accessLevel: "SuperAdmin"
+        id: 'acc-1',
+        username: 'admin',
+        name: 'Ratheeswar',
+        phone: '+91 86089 44644',
+        role: 'System Administrator & Software Lead',
+        accessLevel: 'SuperAdmin'
     },
     {
-        id: "acc-2",
-        username: "powertrain_lead",
-        name: "Joel Anto Edwin",
-        phone: "+91 72079 60077",
-        role: "Powertrain Subsystem Lead",
-        accessLevel: "Lead"
+        id: 'acc-2',
+        username: 'powertrain_lead',
+        name: 'Joel Anto Edwin',
+        phone: '+91 72079 60077',
+        role: 'Powertrain Subsystem Lead',
+        accessLevel: 'Lead'
     },
     {
-        id: "acc-3",
-        username: "chassis_lead",
-        name: "Soorya Ramprakash",
-        phone: "+91 89394 52244",
-        role: "Chassis & Mechanical Lead",
-        accessLevel: "Lead"
+        id: 'acc-3',
+        username: 'chassis_lead',
+        name: 'Soorya Ramprakash',
+        phone: '+91 89394 52244',
+        role: 'Chassis & Mechanical Lead',
+        accessLevel: 'Lead'
     }
 ];
 
@@ -227,13 +231,15 @@ const RECRUITMENT_TRACKS = [
             {
                 id: 'ps-cv-01',
                 title: 'Problem Statement 01: Vision-Based Object Detection',
-                summary: 'Design and implement a practical 2D multi-class object detection system for our autonomous vehicle using a ZED 2i camera and NVIDIA Jetson Orin NX across Phase 1 (due 8th night 11:59 PM) and Phase 2 (due 15th night 11:59 PM).',
+                summary:
+                    'Design and implement a practical 2D multi-class object detection system for our autonomous vehicle using a ZED 2i camera and NVIDIA Jetson Orin NX across Phase 1 (due 8th night 11:59 PM) and Phase 2 (due 15th night 11:59 PM).',
                 body: 'Phase 01: Research, Architecture & Proposal (Deadline: 8 September 2026, 11:59 PM IST)\nPhase 02: Implementation & Evaluation (Deadline: 15 September 2026, 11:59 PM IST)\nHardware: NVIDIA Jetson Orin NX + ZED 2i Camera\n9 Classes: Cone, Traffic barrier, Cow, Pedestrian, Bicyclist, Red traffic light, Green traffic light, Orange/amber traffic light, Two-wheeler.'
             },
             {
                 id: 'ps-fusion-02',
                 title: 'Problem Statement 02: Sensor Fusion & Track Reconstruction',
-                summary: 'Reconstruct a clean 2D cone map from noisy, backward-mounted (180° inverted) perception data and vehicle telemetry, handling ghost cone hallucinations across Phase 1 (offline pipeline due 8th night 11:59 PM) and Phase 2 (online streaming pipeline due 15th night 11:59 PM).',
+                summary:
+                    'Reconstruct a clean 2D cone map from noisy, backward-mounted (180° inverted) perception data and vehicle telemetry, handling ghost cone hallucinations across Phase 1 (offline pipeline due 8th night 11:59 PM) and Phase 2 (online streaming pipeline due 15th night 11:59 PM).',
                 body: 'Phase 01: Offline Map Reconstruction & Noise Filtering (Deadline: 8 September 2026, 11:59 PM IST)\nPhase 02: Online Streaming & Uncertainty (Deadline: 15 September 2026, 11:59 PM IST)\nTarget: Asterix Autonomous Buggy Platform + 180° backward-facing perception sensor.'
             }
         ]
@@ -262,8 +268,12 @@ const RECRUITMENT_TRACKS = [
         problemStatements: MECHANICAL_MYSTERY_DATA.challenges.map((c) => ({
             id: c.id,
             title: c.title,
-            summary: c.tagline || (Array.isArray(c.parts) ? c.parts.map(p => p.partLabel).join(' • ') : 'Teams of 2.'),
-            body: `${c.title}\n${c.tagline || ''}\n\n` + (Array.isArray(c.parts) ? c.parts.map(p => `${p.partLabel}: ${p.target}`).join('\n\n') : '')
+            summary:
+                c.tagline ||
+                (Array.isArray(c.parts) ? c.parts.map((p) => p.partLabel).join(' • ') : 'Teams of 2.'),
+            body:
+                `${c.title}\n${c.tagline || ''}\n\n` +
+                (Array.isArray(c.parts) ? c.parts.map((p) => `${p.partLabel}: ${p.target}`).join('\n\n') : '')
         }))
     }
 ];
@@ -280,27 +290,46 @@ const makeRecruitmentTrack = (canonical) => ({
 
 const initialRecruitment = {
     headline: 'CREW RECRUITMENT',
-    intro: "Team Asterix recruits subsystem by subsystem, and each one selects on its own terms. Pick your subsystem below for its problem statement, its deadlines and its form.",
+    intro: 'Team Asterix recruits subsystem by subsystem, and each one selects on its own terms. Pick your subsystem below for its problem statement, its deadlines and its form.',
     notice: '',
-    applyUrl: '',                                 // shared fallback Google Form
+    applyUrl: '', // shared fallback Google Form
     applyLabel: 'Apply on the Google Form',
     freshers: {
         enabled: true,
         badge: 'FRESHERS RECRUITMENT 2026',
         title: 'Build the next Team Asterix machine',
-        description: 'Applications are open for enthusiastic freshers who want to learn, build and compete with Team Asterix.',
+        description:
+            'Applications are open for enthusiastic freshers who want to learn, build and compete with Team Asterix.',
         ctaLabel: 'Explore freshers recruitment',
         applyUrl: '',
         posterUrl: '',
         posterFit: 'cover',
         posterPosition: '50% 50%',
         timeline: [
-            { id: 'freshers-timeline-1', label: 'Applications open', detail: 'Submit your details and tell us where you want to contribute.', date: '' },
-            { id: 'freshers-timeline-2', label: 'Shortlist and induction', detail: 'Selected freshers meet the subsystem leads and begin onboarding.', date: '' }
+            {
+                id: 'freshers-timeline-1',
+                label: 'Applications open',
+                detail: 'Submit your details and tell us where you want to contribute.',
+                date: ''
+            },
+            {
+                id: 'freshers-timeline-2',
+                label: 'Shortlist and induction',
+                detail: 'Selected freshers meet the subsystem leads and begin onboarding.',
+                date: ''
+            }
         ],
         details: [
-            { id: 'freshers-detail-1', title: 'Who can apply?', body: 'Freshers and students who are ready to contribute to an engineering subsystem can apply.' },
-            { id: 'freshers-detail-2', title: 'What happens next?', body: 'Choose a subsystem, review its brief and follow the application instructions on the recruitment portal.' }
+            {
+                id: 'freshers-detail-1',
+                title: 'Who can apply?',
+                body: 'Freshers and students who are ready to contribute to an engineering subsystem can apply.'
+            },
+            {
+                id: 'freshers-detail-2',
+                title: 'What happens next?',
+                body: 'Choose a subsystem, review its brief and follow the application instructions on the recruitment portal.'
+            }
         ]
     },
     tracks: RECRUITMENT_TRACKS.map(makeRecruitmentTrack)
@@ -325,9 +354,10 @@ const normalizeRecruitmentTrack = (track, canonical) => {
         });
     }
 
-    const userStatements = Array.isArray(track?.problemStatements) && track.problemStatements.length > 0
-        ? track.problemStatements
-        : canonicalStatements;
+    const userStatements =
+        Array.isArray(track?.problemStatements) && track.problemStatements.length > 0
+            ? track.problemStatements
+            : canonicalStatements;
 
     return {
         ...makeRecruitmentTrack(canonical),
@@ -351,15 +381,18 @@ const normalizeRecruitment = (rec) => {
     const source = rec && typeof rec === 'object' ? rec : {};
     const incoming = Array.isArray(source.tracks) ? source.tracks : [];
     const tracks = RECRUITMENT_TRACKS.map((canonical) =>
-        normalizeRecruitmentTrack(incoming.find((t) => t?.id === canonical.id), canonical)
+        normalizeRecruitmentTrack(
+            incoming.find((t) => t?.id === canonical.id),
+            canonical
+        )
     );
 
     if (!Array.isArray(source.tracks) && Array.isArray(source.problemStatements)) {
         for (const ps of source.problemStatements) {
             const tag = String(ps?.subsystem || '').toLowerCase();
-            const target = tracks.find(
-                (t) => tag && (t.id.includes(tag) || t.name.toLowerCase().includes(tag))
-            ) || tracks[0];
+            const target =
+                tracks.find((t) => tag && (t.id.includes(tag) || t.name.toLowerCase().includes(tag))) ||
+                tracks[0];
             const rest = { ...ps };
             delete rest.subsystem;
             target.problemStatements = [...target.problemStatements, rest];
@@ -377,18 +410,18 @@ const normalizeRecruitment = (rec) => {
             ...(source.freshers && typeof source.freshers === 'object' ? source.freshers : {}),
             details: Array.isArray(source.freshers?.details)
                 ? source.freshers.details.map((detail, index) => ({
-                    id: detail?.id || `freshers-detail-${index + 1}`,
-                    title: detail?.title || '',
-                    body: detail?.body || ''
-                }))
+                      id: detail?.id || `freshers-detail-${index + 1}`,
+                      title: detail?.title || '',
+                      body: detail?.body || ''
+                  }))
                 : initialRecruitment.freshers.details,
             timeline: Array.isArray(source.freshers?.timeline)
                 ? source.freshers.timeline.map((item, index) => ({
-                    id: item?.id || `freshers-timeline-${index + 1}`,
-                    label: item?.label || '',
-                    detail: item?.detail || '',
-                    date: item?.date || ''
-                }))
+                      id: item?.id || `freshers-timeline-${index + 1}`,
+                      label: item?.label || '',
+                      detail: item?.detail || '',
+                      date: item?.date || ''
+                  }))
                 : initialRecruitment.freshers.timeline
         },
         tracks
@@ -406,10 +439,7 @@ const STALE_WORKSHOP_DATES = [
     '29 Sep – 6 Nov 2026',
     '29 Sep – 29 Oct 2026'
 ];
-const STALE_WORKSHOP_START_LABELS = [
-    'First session 1 Oct 2026',
-    'First session Wed 7 Oct 2026'
-];
+const STALE_WORKSHOP_START_LABELS = ['First session 1 Oct 2026', 'First session Wed 7 Oct 2026'];
 const STALE_WORKSHOP_REMOVED_IDS = ['sch-pt-b3', 'sch-pt-b4'];
 const STALE_WORKSHOP_ITEM_DATES = [
     '1 Oct & 3 Oct',
@@ -440,23 +470,34 @@ const normalizeWorkshop = (ws) => {
         let reconciledSchedule = canonical.schedule;
         if (Array.isArray(incoming.schedule) && incoming.schedule.length > 0) {
             const validIncoming = incoming.schedule.filter(
-                s => !STALE_WORKSHOP_REMOVED_IDS.includes(s?.id) && s?.label !== 'Bonus III' && s?.label !== 'Bonus IV'
+                (s) =>
+                    !STALE_WORKSHOP_REMOVED_IDS.includes(s?.id) &&
+                    s?.label !== 'Bonus III' &&
+                    s?.label !== 'Bonus IV'
             );
             const hasWeek0 = validIncoming.some(
-                s => s?.id === `sch-${key === 'software' ? 'sw' : 'pt'}-0` || s?.label?.trim().toLowerCase() === 'week 0'
+                (s) =>
+                    s?.id === `sch-${key === 'software' ? 'sw' : 'pt'}-0` ||
+                    s?.label?.trim().toLowerCase() === 'week 0'
             );
             if (hasWeek0) {
                 reconciledSchedule = validIncoming.map((item, idx) => {
                     const isStale = STALE_WORKSHOP_ITEM_DATES.includes(item?.date?.trim());
-                    const canMatch = canonical.schedule.find(c => c.id === item?.id || c.label === item?.label);
+                    const canMatch = canonical.schedule.find(
+                        (c) => c.id === item?.id || c.label === item?.label
+                    );
                     return {
                         id: item?.id || canMatch?.id || `sch-${key}-${idx}`,
                         label: item?.label || canMatch?.label || `Week ${idx}`,
                         days: item?.days || canMatch?.days || '',
-                        date: (isStale && canMatch) ? canMatch.date : (item?.date || canMatch?.date || ''),
+                        date: isStale && canMatch ? canMatch.date : item?.date || canMatch?.date || '',
                         title: item?.title || canMatch?.title || '',
-                        venue: item?.venue !== undefined ? item.venue : (canMatch?.venue || 'To be announced'),
-                        reportingInstructions: item?.reportingInstructions !== undefined ? item.reportingInstructions : (canMatch?.reportingInstructions || 'Arrive 10 minutes prior to session timing.')
+                        venue: item?.venue !== undefined ? item.venue : canMatch?.venue || 'To be announced',
+                        reportingInstructions:
+                            item?.reportingInstructions !== undefined
+                                ? item.reportingInstructions
+                                : canMatch?.reportingInstructions ||
+                                  'Arrive 10 minutes prior to session timing.'
                     };
                 });
             } else {
@@ -472,13 +513,22 @@ const normalizeWorkshop = (ws) => {
             name: incoming.name || canonical.name,
             syllabus: incoming.syllabus || canonical.syllabus,
             timing: incoming.timing || canonical.timing,
-            dates: (incoming.dates && !STALE_WORKSHOP_DATES.includes(incoming.dates.trim())) ? incoming.dates : canonical.dates,
+            dates:
+                incoming.dates && !STALE_WORKSHOP_DATES.includes(incoming.dates.trim())
+                    ? incoming.dates
+                    : canonical.dates,
             days: incoming.days || canonical.days,
-            startLabel: (incoming.startLabel && !STALE_WORKSHOP_START_LABELS.includes(incoming.startLabel.trim())) ? incoming.startLabel : canonical.startLabel,
+            startLabel:
+                incoming.startLabel && !STALE_WORKSHOP_START_LABELS.includes(incoming.startLabel.trim())
+                    ? incoming.startLabel
+                    : canonical.startLabel,
             format: incoming.format || canonical.format,
             audience: incoming.audience || canonical.audience,
-            venue: incoming.venue !== undefined ? incoming.venue : (canonical.venue || ''),
-            reportingInstructions: incoming.reportingInstructions !== undefined ? incoming.reportingInstructions : (canonical.reportingInstructions || ''),
+            venue: incoming.venue !== undefined ? incoming.venue : canonical.venue || '',
+            reportingInstructions:
+                incoming.reportingInstructions !== undefined
+                    ? incoming.reportingInstructions
+                    : canonical.reportingInstructions || '',
             bonus: canonical.bonus,
             ongoingWeek: incoming.ongoingWeek || canonical.ongoingWeek || 'Week 0',
             startDate: canonical.startDate,
@@ -495,54 +545,63 @@ const normalizeSubsystems = (subs) => {
     if (!subs || !Array.isArray(subs) || subs.length === 0) {
         return initialSubsystems;
     }
-    const filtered = subs.filter(s => s.id !== 'drive-by-wire' && s.id !== 'brake-by-wire');
+    const filtered = subs.filter((s) => s.id !== 'drive-by-wire' && s.id !== 'brake-by-wire');
 
-    if (!filtered.some(s => s.id === 'mechanical')) {
-        const defaultMechanical = initialSubsystems.find(s => s.id === 'mechanical');
+    if (!filtered.some((s) => s.id === 'mechanical')) {
+        const defaultMechanical = initialSubsystems.find((s) => s.id === 'mechanical');
         if (defaultMechanical) filtered.splice(2, 0, defaultMechanical);
     }
 
     const requiredIds = ['software-perception', 'powertrain', 'mechanical', 'leads'];
-    const result = requiredIds.map(id => {
-        const defaultSys = initialSubsystems.find(s => s.id === id);
-        const existing = filtered.find(s => s.id === id);
-        if (existing) {
-            // If existing powertrain carries legacy combustion defaults, migrate to current spec defaults
-            if (id === 'powertrain' && (
-                existing.specifications?.[0]?.value?.includes('Vanguard') ||
-                existing.tagline?.includes('Continuous Variable')
-            )) {
+    const result = requiredIds
+        .map((id) => {
+            const defaultSys = initialSubsystems.find((s) => s.id === id);
+            const existing = filtered.find((s) => s.id === id);
+            if (existing) {
+                // If existing powertrain carries legacy combustion defaults, migrate to current spec defaults
+                if (
+                    id === 'powertrain' &&
+                    (existing.specifications?.[0]?.value?.includes('Vanguard') ||
+                        existing.tagline?.includes('Continuous Variable'))
+                ) {
+                    return {
+                        ...existing,
+                        tagline: defaultSys?.tagline,
+                        badge: defaultSys?.badge,
+                        stat: defaultSys?.stat,
+                        shortDesc: defaultSys?.shortDesc,
+                        fullDesc: defaultSys?.fullDesc,
+                        specifications: defaultSys?.specifications,
+                        highlights: defaultSys?.highlights,
+                        teamMembers: (existing.teamMembers || []).map((m) => ({
+                            ...m,
+                            status: m.status || 'Active Member',
+                            phone: m.phone || ''
+                        }))
+                    };
+                }
+                const teamMembers = (existing.teamMembers || []).map((m) => ({
+                    ...m,
+                    status: m.status || 'Active Member',
+                    phone: m.phone || ''
+                }));
                 return {
+                    ...defaultSys,
                     ...existing,
-                    tagline: defaultSys?.tagline,
-                    badge: defaultSys?.badge,
-                    stat: defaultSys?.stat,
-                    shortDesc: defaultSys?.shortDesc,
-                    fullDesc: defaultSys?.fullDesc,
-                    specifications: defaultSys?.specifications,
-                    highlights: defaultSys?.highlights,
-                    teamMembers: (existing.teamMembers || []).map(m => ({
-                        ...m,
-                        status: m.status || 'Active Member',
-                        phone: m.phone || ''
-                    }))
+                    specifications:
+                        existing.specifications && existing.specifications.length > 0
+                            ? existing.specifications
+                            : defaultSys?.specifications || [],
+                    highlights:
+                        existing.highlights && existing.highlights.length > 0
+                            ? existing.highlights
+                            : defaultSys?.highlights || [],
+                    teamMembers
                 };
             }
-            const teamMembers = (existing.teamMembers || []).map(m => ({
-                ...m,
-                status: m.status || 'Active Member',
-                phone: m.phone || ''
-            }));
-            return {
-                ...defaultSys,
-                ...existing,
-                specifications: (existing.specifications && existing.specifications.length > 0) ? existing.specifications : (defaultSys?.specifications || []),
-                highlights: (existing.highlights && existing.highlights.length > 0) ? existing.highlights : (defaultSys?.highlights || []),
-                teamMembers
-            };
-        }
-        return defaultSys;
-    }).filter(Boolean);
+            return defaultSys;
+        })
+        .filter(Boolean);
 
     return result.length === 4 ? result : initialSubsystems;
 };
@@ -582,7 +641,7 @@ export function WebsiteDataProvider({ children }) {
                 };
             }
         } catch (e) {
-            console.error("Failed to load website data from localStorage:", e);
+            console.error('Failed to load website data from localStorage:', e);
         }
         return {
             hero: initialHeroData,
@@ -611,7 +670,7 @@ export function WebsiteDataProvider({ children }) {
             if (res.ok) {
                 const data = await res.json();
                 if (data && (data.hero || data.subsystems?.length > 0)) {
-                    setSiteData(prev => {
+                    setSiteData((prev) => {
                         /* An edit of ours is still on its way to the server, so
                            nothing the server says right now can be newer than what
                            is on screen. Checked before the timestamps because the
@@ -639,9 +698,12 @@ export function WebsiteDataProvider({ children }) {
                             ...prev,
                             hero: data.hero || prev.hero,
                             story: data.story || prev.story,
-                            subsystems: (data.subsystems && data.subsystems.length > 0) ? normalizeSubsystems(data.subsystems) : prev.subsystems,
-                            gallery: (data.gallery && data.gallery.length > 0) ? data.gallery : prev.gallery,
-                            updates: (data.updates && data.updates.length > 0) ? data.updates : prev.updates,
+                            subsystems:
+                                data.subsystems && data.subsystems.length > 0
+                                    ? normalizeSubsystems(data.subsystems)
+                                    : prev.subsystems,
+                            gallery: data.gallery && data.gallery.length > 0 ? data.gallery : prev.gallery,
+                            updates: data.updates && data.updates.length > 0 ? data.updates : prev.updates,
                             contact: data.contact || prev.contact,
                             sponsorship: data.sponsorship || prev.sponsorship || initialSponsorshipData,
                             recruitment: normalizeRecruitment(data.recruitment || prev.recruitment),
@@ -650,7 +712,9 @@ export function WebsiteDataProvider({ children }) {
                         };
                         try {
                             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
-                        } catch { /* ignore */ }
+                        } catch {
+                            /* ignore */
+                        }
                         lastServerStamp.current = merged.lastModified;
                         return merged;
                     });
@@ -661,7 +725,7 @@ export function WebsiteDataProvider({ children }) {
             }
             return false;
         } catch (err) {
-            console.warn("Backend database API notice:", err.message);
+            console.warn('Backend database API notice:', err.message);
             return false;
         } finally {
             if (!isSilent) setIsLoading(false);
@@ -726,7 +790,7 @@ export function WebsiteDataProvider({ children }) {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify(payload)
                 });
@@ -757,7 +821,9 @@ export function WebsiteDataProvider({ children }) {
            closed or the browser restarts, and the console otherwise gives no
            sign of it. */
         setSyncState('error');
-        setSyncError('Not signed in, so nothing was saved to the server. Log out and back in, then press Sync Cloud.');
+        setSyncError(
+            'Not signed in, so nothing was saved to the server. Log out and back in, then press Sync Cloud.'
+        );
         return false;
     }, []);
 
@@ -771,7 +837,7 @@ export function WebsiteDataProvider({ children }) {
         try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(siteData));
         } catch (e) {
-            console.error("Failed to save website data to localStorage:", e);
+            console.error('Failed to save website data to localStorage:', e);
         }
 
         /* Guarded on the token alone, which is the thing `syncToServer`
@@ -802,7 +868,7 @@ export function WebsiteDataProvider({ children }) {
                        the stale server one. `syncError` tells the admin. */
                     lastServerStamp.current = newStamp;
                     if (newStamp !== siteData.lastModified) {
-                        setSiteData(prev => ({ ...prev, lastModified: newStamp }));
+                        setSiteData((prev) => ({ ...prev, lastModified: newStamp }));
                     }
                     hasPendingEdit.current = false;
                 }
@@ -812,46 +878,46 @@ export function WebsiteDataProvider({ children }) {
         return () => clearTimeout(timer);
     }, [siteData, syncToServer]);
 
-
     // Update helpers
-    const updateHero = (newHero) => {
-        setSiteData(prev => ({
+    /* Stable identity so the memoised context value does not churn. */
+    const forceLiveRefresh = useCallback(() => fetchFromDatabase(false), [fetchFromDatabase]);
+
+    const updateHero = useCallback((newHero) => {
+        setSiteData((prev) => ({
             ...prev,
             hero: { ...prev.hero, ...newHero },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateStory = (newStory) => {
-        setSiteData(prev => ({
+    const updateStory = useCallback((newStory) => {
+        setSiteData((prev) => ({
             ...prev,
             story: newStory,
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateContact = (newContact) => {
-        setSiteData(prev => ({
+    const updateContact = useCallback((newContact) => {
+        setSiteData((prev) => ({
             ...prev,
             contact: { ...prev.contact, ...newContact },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateSubsystem = (subsystemId, updatedFields) => {
-        setSiteData(prev => ({
+    const updateSubsystem = useCallback((subsystemId, updatedFields) => {
+        setSiteData((prev) => ({
             ...prev,
-            subsystems: prev.subsystems.map(s => 
-                s.id === subsystemId ? { ...s, ...updatedFields } : s
-            ),
+            subsystems: prev.subsystems.map((s) => (s.id === subsystemId ? { ...s, ...updatedFields } : s)),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addTeamMember = (subsystemId, newMember) => {
-        setSiteData(prev => ({
+    const addTeamMember = useCallback((subsystemId, newMember) => {
+        setSiteData((prev) => ({
             ...prev,
-            subsystems: prev.subsystems.map(s => {
+            subsystems: prev.subsystems.map((s) => {
                 if (s.id === subsystemId) {
                     return {
                         ...s,
@@ -862,12 +928,12 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateTeamMember = (subsystemId, memberIndex, updatedMember) => {
-        setSiteData(prev => ({
+    const updateTeamMember = useCallback((subsystemId, memberIndex, updatedMember) => {
+        setSiteData((prev) => ({
             ...prev,
-            subsystems: prev.subsystems.map(s => {
+            subsystems: prev.subsystems.map((s) => {
                 if (s.id === subsystemId) {
                     const members = [...(s.teamMembers || [])];
                     members[memberIndex] = { ...members[memberIndex], ...updatedMember };
@@ -877,12 +943,12 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteTeamMember = (subsystemId, memberIndex) => {
-        setSiteData(prev => ({
+    const deleteTeamMember = useCallback((subsystemId, memberIndex) => {
+        setSiteData((prev) => ({
             ...prev,
-            subsystems: prev.subsystems.map(s => {
+            subsystems: prev.subsystems.map((s) => {
                 if (s.id === subsystemId) {
                     const members = (s.teamMembers || []).filter((_, idx) => idx !== memberIndex);
                     return { ...s, teamMembers: members };
@@ -891,12 +957,12 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const moveTeamMember = (subsystemId, fromIndex, toIndex) => {
-        setSiteData(prev => ({
+    const moveTeamMember = useCallback((subsystemId, fromIndex, toIndex) => {
+        setSiteData((prev) => ({
             ...prev,
-            subsystems: prev.subsystems.map(s => {
+            subsystems: prev.subsystems.map((s) => {
                 if (s.id === subsystemId) {
                     const members = [...(s.teamMembers || [])];
                     if (toIndex < 0 || toIndex >= members.length) return s;
@@ -908,109 +974,109 @@ export function WebsiteDataProvider({ children }) {
             }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addGalleryItem = (newItem) => {
-        setSiteData(prev => ({
+    const addGalleryItem = useCallback((newItem) => {
+        setSiteData((prev) => ({
             ...prev,
             gallery: [newItem, ...prev.gallery],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateGalleryItem = (id, updatedFields) => {
-        setSiteData(prev => ({
+    const updateGalleryItem = useCallback((id, updatedFields) => {
+        setSiteData((prev) => ({
             ...prev,
-            gallery: prev.gallery.map(item => item.id === id ? { ...item, ...updatedFields } : item),
+            gallery: prev.gallery.map((item) => (item.id === id ? { ...item, ...updatedFields } : item)),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteGalleryItem = (id) => {
-        setSiteData(prev => ({
+    const deleteGalleryItem = useCallback((id) => {
+        setSiteData((prev) => ({
             ...prev,
-            gallery: prev.gallery.filter(item => item.id !== id),
+            gallery: prev.gallery.filter((item) => item.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addUpdate = (newUpdate) => {
-        setSiteData(prev => ({
+    const addUpdate = useCallback((newUpdate) => {
+        setSiteData((prev) => ({
             ...prev,
             updates: [newUpdate, ...prev.updates],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateUpdate = (id, updatedFields) => {
-        setSiteData(prev => ({
+    const updateUpdate = useCallback((id, updatedFields) => {
+        setSiteData((prev) => ({
             ...prev,
-            updates: prev.updates.map(item => item.id === id ? { ...item, ...updatedFields } : item),
+            updates: prev.updates.map((item) => (item.id === id ? { ...item, ...updatedFields } : item)),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteUpdate = (id) => {
-        setSiteData(prev => ({
+    const deleteUpdate = useCallback((id) => {
+        setSiteData((prev) => ({
             ...prev,
-            updates: prev.updates.filter(item => item.id !== id),
+            updates: prev.updates.filter((item) => item.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const addAccount = (account) => {
-        setSiteData(prev => ({
+    const addAccount = useCallback((account) => {
+        setSiteData((prev) => ({
             ...prev,
             accounts: [...prev.accounts, account],
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateAccount = (id, fields) => {
-        setSiteData(prev => ({
+    const updateAccount = useCallback((id, fields) => {
+        setSiteData((prev) => ({
             ...prev,
-            accounts: prev.accounts.map(acc => acc.id === id ? { ...acc, ...fields } : acc),
+            accounts: prev.accounts.map((acc) => (acc.id === id ? { ...acc, ...fields } : acc)),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const deleteAccount = (id) => {
-        setSiteData(prev => ({
+    const deleteAccount = useCallback((id) => {
+        setSiteData((prev) => ({
             ...prev,
-            accounts: prev.accounts.filter(acc => acc.id !== id),
+            accounts: prev.accounts.filter((acc) => acc.id !== id),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateSponsorship = (fields) => {
-        setSiteData(prev => ({
+    const updateSponsorship = useCallback((fields) => {
+        setSiteData((prev) => ({
             ...prev,
             sponsorship: { ...(prev.sponsorship || initialSponsorshipData), ...fields },
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
     /* One setter for the whole recruitment blob. The admin editor manages the
        timeline and problem-statement arrays wholesale (add / edit / reorder /
        remove) and hands the finished field back through here, so there is a
        single path the debounced sync watches. */
-    const updateRecruitment = (fields) => {
-        setSiteData(prev => ({
+    const updateRecruitment = useCallback((fields) => {
+        setSiteData((prev) => ({
             ...prev,
             recruitment: normalizeRecruitment({ ...(prev.recruitment || initialRecruitment), ...fields }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const updateWorkshop = (fields) => {
-        setSiteData(prev => ({
+    const updateWorkshop = useCallback((fields) => {
+        setSiteData((prev) => ({
             ...prev,
             workshop: normalizeWorkshop({ ...(prev.workshop || initialWorkshopData), ...fields }),
             lastModified: new Date().toISOString()
         }));
-    };
+    }, []);
 
-    const resetToDefaults = () => {
+    const resetToDefaults = useCallback(() => {
         const defaults = {
             hero: initialHeroData,
             story: initialStoryText,
@@ -1027,26 +1093,32 @@ export function WebsiteDataProvider({ children }) {
         setSiteData(defaults);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaults));
         syncToServer(defaults);
-    };
+    }, [syncToServer]);
 
-    const loadFromBackup = (data) => {
-        const updated = {
-            ...data,
-            lastModified: new Date().toISOString()
-        };
-        setSiteData(updated);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-        syncToServer(updated);
-    };
+    const loadFromBackup = useCallback(
+        (data) => {
+            const updated = {
+                ...data,
+                lastModified: new Date().toISOString()
+            };
+            setSiteData(updated);
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+            syncToServer(updated);
+        },
+        [syncToServer]
+    );
 
-    return (
-        <WebsiteDataContext.Provider value={{
+    /* Memoised: an inline object literal here handed every consumer a new
+       reference on every provider render, so the whole tree re-rendered on
+       any state change. Handlers above are useCallback-stable. */
+    const contextValue = useMemo(
+        () => ({
             siteData,
             isServerConnected,
             isLoading,
             lastRefreshedAt,
             isLiveRefreshing,
-            forceLiveRefresh: () => fetchFromDatabase(false),
+            forceLiveRefresh,
             fetchFromDatabase,
             syncToServer,
             updateHero,
@@ -1075,10 +1147,44 @@ export function WebsiteDataProvider({ children }) {
             loadFromBackup,
             AUTH_SESSION_KEY,
             AUTH_TOKEN_KEY
-        }}>
-            {children}
-        </WebsiteDataContext.Provider>
+        }),
+        [
+            siteData,
+            isServerConnected,
+            isLoading,
+            lastRefreshedAt,
+            isLiveRefreshing,
+            forceLiveRefresh,
+            fetchFromDatabase,
+            syncToServer,
+            updateHero,
+            updateStory,
+            updateContact,
+            updateSubsystem,
+            addTeamMember,
+            updateTeamMember,
+            deleteTeamMember,
+            moveTeamMember,
+            addGalleryItem,
+            updateGalleryItem,
+            deleteGalleryItem,
+            addUpdate,
+            updateUpdate,
+            deleteUpdate,
+            addAccount,
+            updateAccount,
+            deleteAccount,
+            updateSponsorship,
+            updateRecruitment,
+            updateWorkshop,
+            syncState,
+            syncError,
+            resetToDefaults,
+            loadFromBackup
+        ]
     );
+
+    return <WebsiteDataContext.Provider value={contextValue}>{children}</WebsiteDataContext.Provider>;
 }
 
 const fallbackWebsiteData = {
@@ -1137,4 +1243,3 @@ export function useWebsiteData() {
     }
     return ctx;
 }
-

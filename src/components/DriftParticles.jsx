@@ -11,14 +11,14 @@ import { useEffect, useRef } from 'react';
  */
 
 const PARTICLE_COLORS = [
-    'rgba(56, 189, 248, ALPHA)',  // sky-400
-    'rgba(2, 132, 199, ALPHA)',   // sky-600
+    'rgba(56, 189, 248, ALPHA)', // sky-400
+    'rgba(2, 132, 199, ALPHA)', // sky-600
     'rgba(148, 163, 184, ALPHA)', // slate-400
-    'rgba(251, 191, 36, ALPHA)',  // amber-400, sparingly
+    'rgba(251, 191, 36, ALPHA)' // amber-400, sparingly
 ];
 
 // Amber is an accent, not a peer: bias selection heavily toward the blues.
-const COLOR_WEIGHTS = [0.40, 0.28, 0.26, 0.06];
+const COLOR_WEIGHTS = [0.4, 0.28, 0.26, 0.06];
 
 const pickColor = () => {
     let r = Math.random();
@@ -46,7 +46,7 @@ const makeParticle = (w, h, seedAnywhere) => {
         swayRate: 0.3 + Math.random() * 0.5,
         swayWidth: 6 + depth * 14,
         alpha: 0.12 + depth * 0.38,
-        color: pickColor(),
+        color: pickColor()
     };
 };
 
@@ -102,7 +102,7 @@ export default function DriftParticles() {
 
         const handleScroll = () => {
             const y = window.scrollY || 0;
-            scrollVelocity += (y - lastScrollY);
+            scrollVelocity += y - lastScrollY;
             lastScrollY = y;
         };
 
@@ -218,7 +218,7 @@ export default function DriftParticles() {
     return (
         <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full pointer-events-none select-none"
+            className="pointer-events-none absolute inset-0 h-full w-full select-none"
             aria-hidden="true"
         />
     );

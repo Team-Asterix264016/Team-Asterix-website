@@ -57,20 +57,17 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
     const badgeText = state.isPaused
         ? 'PAUSED · REOPENS MON'
         : state.isClosed
-        ? 'REGISTRATION CLOSED'
-        : 'CLOSES TUE 11:59 PM';
+          ? 'REGISTRATION CLOSED'
+          : 'CLOSES TUE 11:59 PM';
 
     return (
         <aside
-            className={`fixed bottom-22 right-3.5 z-40 w-[calc(100vw-1.75rem)] max-w-[290px] rounded-2xl border-2 sm:border-3 border-slate-900 bg-amber-300 p-3 sm:p-3.5 text-slate-900 shadow-[6px_6px_0px_#0f172a] sm:bottom-6 sm:right-6 sm:w-72 select-none pointer-events-auto transition-all duration-500 ease-out ${
-                isFooterVisible ? 'translate-y-36 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+            className={`shadow-brutal-6 pointer-events-auto fixed right-3.5 bottom-22 z-40 w-[calc(100vw-1.75rem)] max-w-[290px] rounded-2xl border-2 border-slate-900 bg-amber-300 p-3 text-slate-900 transition-all duration-500 ease-out select-none sm:right-6 sm:bottom-6 sm:w-72 sm:border-3 sm:p-3.5 ${
+                isFooterVisible ? 'pointer-events-none translate-y-36 opacity-0' : 'translate-y-0 opacity-100'
             }`}
             aria-labelledby="workshop-popup-title"
         >
-            <div
-                onClick={onOpenWorkshop}
-                className="cursor-pointer group relative"
-            >
+            <div onClick={onOpenWorkshop} className="group relative cursor-pointer">
                 {/* Floating Close Button */}
                 <button
                     type="button"
@@ -79,41 +76,43 @@ export default function WorkshopPopup({ onOpenWorkshop }) {
                         setIsVisible(false);
                     }}
                     aria-label="Close workshop announcement"
-                    className="absolute -top-1.5 -right-1.5 z-10 w-6 h-6 rounded-full border-2 border-slate-900 bg-white flex items-center justify-center font-mono text-[11px] font-black text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-rose-100 hover:text-rose-600 transition-colors cursor-pointer"
+                    className="shadow-brutal-2 absolute -top-1.5 -right-1.5 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-2 border-slate-900 bg-white font-mono text-[11px] font-black text-slate-900 transition-colors hover:bg-rose-100 hover:text-rose-600"
                 >
                     ✕
                 </button>
 
                 <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    <span className="inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black uppercase tracking-wider text-amber-300 shadow-[1px_1px_0px_#0f172a]">
+                    <span className="shadow-brutal-1 inline-block rounded-md border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[9.5px] font-black tracking-wider text-amber-300 uppercase">
                         ✦ WORKSHOPS 2026
                     </span>
-                    <span className={`inline-block rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
-                        state.isPaused ? 'border-amber-700 bg-amber-100 text-amber-950 font-black' : 'border-rose-700 bg-rose-50 text-rose-700'
-                    }`}>
+                    <span
+                        className={`inline-block rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
+                            state.isPaused
+                                ? 'border-amber-700 bg-amber-100 font-black text-amber-950'
+                                : 'border-rose-700 bg-rose-50 text-rose-700'
+                        }`}
+                    >
                         {badgeText}
                     </span>
                 </div>
 
                 <h2
                     id="workshop-popup-title"
-                    className="text-sm sm:text-base font-black uppercase leading-snug text-slate-900 pr-5 group-hover:text-sky-950 transition-colors"
+                    className="pr-5 text-sm leading-snug font-black text-slate-900 uppercase transition-colors group-hover:text-sky-950 sm:text-base"
                 >
                     Engineering Workshops
                 </h2>
 
-                <p className="mt-1 text-[11px] font-bold leading-tight text-slate-800">
+                <p className="mt-1 text-[11px] leading-tight font-bold text-slate-800">
                     Software & Perception · Electronics & Powertrain
                 </p>
 
-                <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-900/20">
-                    <span className="font-mono text-[10px] font-bold text-slate-700">
-                        Starts 29 Sep
-                    </span>
+                <div className="mt-2.5 flex items-center justify-between border-t border-slate-900/20 pt-2">
+                    <span className="font-mono text-[10px] font-bold text-slate-700">Starts 29 Sep</span>
                     <button
                         type="button"
                         onClick={onOpenWorkshop}
-                        className="press rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-900 shadow-[2px_2px_0px_#0284c7] hover:bg-sky-100 cursor-pointer flex items-center gap-1"
+                        className="press shadow-brutal-2-brand flex cursor-pointer items-center gap-1 rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-sky-100"
                     >
                         <span>View Details</span>
                         <span aria-hidden="true">↗</span>

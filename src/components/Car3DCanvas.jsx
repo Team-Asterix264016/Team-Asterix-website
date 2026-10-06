@@ -38,8 +38,7 @@ export default function Car3DCanvas() {
             const aspect = camera.aspect;
             if (aspect < BASE_ASPECT) {
                 const halfBase = Math.tan((BASE_FOV * Math.PI) / 360);
-                const widened =
-                    (2 * Math.atan(halfBase * (BASE_ASPECT / aspect)) * 180) / Math.PI;
+                const widened = (2 * Math.atan(halfBase * (BASE_ASPECT / aspect)) * 180) / Math.PI;
                 camera.fov = Math.min(MAX_FOV, widened);
             } else {
                 camera.fov = BASE_FOV;
@@ -117,31 +116,31 @@ export default function Car3DCanvas() {
             metalness: 0.35,
             clearcoat: 0.9,
             clearcoatRoughness: 0.06,
-            reflectivity: 0.95,
+            reflectivity: 0.95
         });
 
         const brushedSteelMaterial = new THREE.MeshStandardMaterial({
             color: 0xd1d5db,
             roughness: 0.26,
-            metalness: 0.88,
+            metalness: 0.88
         });
 
         const chromeMaterial = new THREE.MeshStandardMaterial({
             color: 0xffffff,
             roughness: 0.03,
-            metalness: 1.0,
+            metalness: 1.0
         });
 
         const foxBronzeMaterial = new THREE.MeshStandardMaterial({
             color: 0x6e4a2c,
             roughness: 0.22,
-            metalness: 0.9,
+            metalness: 0.9
         });
 
         const foxBlueMaterial = new THREE.MeshStandardMaterial({
             color: 0x0284c7,
             roughness: 0.18,
-            metalness: 0.92,
+            metalness: 0.92
         });
 
         const whiteRimMaterial = new THREE.MeshPhysicalMaterial({
@@ -149,38 +148,38 @@ export default function Car3DCanvas() {
             roughness: 0.16,
             metalness: 0.15,
             clearcoat: 0.8,
-            clearcoatRoughness: 0.08,
+            clearcoatRoughness: 0.08
         });
 
         const rubberTireMaterial = new THREE.MeshStandardMaterial({
             color: 0x14181c,
             roughness: 0.88,
-            metalness: 0.04,
+            metalness: 0.04
         });
 
         const whiteCompositeMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xf8fafc,
             roughness: 0.32,
             metalness: 0.05,
-            clearcoat: 0.45,
+            clearcoat: 0.45
         });
 
         const rubberTrimMaterial = new THREE.MeshStandardMaterial({
             color: 0x18181b,
             roughness: 0.75,
-            metalness: 0.05,
+            metalness: 0.05
         });
 
         const darkHardwareMaterial = new THREE.MeshStandardMaterial({
             color: 0x24272c,
             roughness: 0.45,
-            metalness: 0.75,
+            metalness: 0.75
         });
 
         const brakeRotorMaterial = new THREE.MeshStandardMaterial({
             color: 0xd4d4d8,
             roughness: 0.18,
-            metalness: 0.95,
+            metalness: 0.95
         });
 
         // --- 3D VEHICLE ASSEMBLY (REAL GLB CAD MODEL) ---
@@ -206,7 +205,7 @@ export default function Car3DCanvas() {
 
                 // CAD assembly dimensions scaling
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const targetScale = maxDim > 0 ? (2.8 / maxDim) : 1;
+                const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
 
                 const glbWrapper = new THREE.Group();
                 glbWrapper.add(model);
@@ -246,7 +245,7 @@ export default function Car3DCanvas() {
             const mesh = new THREE.Mesh(geom, mat);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
-            
+
             const midpoint = new THREE.Vector3().addVectors(vStart, vEnd).multiplyScalar(0.5);
             mesh.position.copy(midpoint);
             mesh.quaternion.setFromUnitVectors(
@@ -268,7 +267,7 @@ export default function Car3DCanvas() {
 
         // Top Square Loop
         const loopH = 0.22;
-        const loopW = 0.20;
+        const loopW = 0.2;
         addTube([-loopW, hoopTopY, -0.25], [-loopW, hoopTopY + loopH, -0.25], 0.022);
         addTube([loopW, hoopTopY, -0.25], [loopW, hoopTopY + loopH, -0.25], 0.022);
         addTube([-loopW, hoopTopY + loopH, -0.25], [loopW, hoopTopY + loopH, -0.25], 0.022);
@@ -276,7 +275,7 @@ export default function Car3DCanvas() {
         // Front Windshield Upper Bar
         const frontTopY = 1.26;
         const frontTopZ = 0.45;
-        const frontTopW = 0.40;
+        const frontTopW = 0.4;
         addTube([-frontTopW, frontTopY, frontTopZ], [frontTopW, frontTopY, frontTopZ], 0.032);
 
         // Roof Bars
@@ -344,10 +343,7 @@ export default function Car3DCanvas() {
         steerCol.rotation.x = 0.6;
         proceduralModel.add(steerCol);
 
-        const steerWheel = new THREE.Mesh(
-            new THREE.TorusGeometry(0.13, 0.016, 10, 24),
-            darkHardwareMaterial
-        );
+        const steerWheel = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.016, 10, 24), darkHardwareMaterial);
         steerWheel.position.set(0, 0.74, 0.44);
         steerWheel.rotation.x = -0.6;
         proceduralModel.add(steerWheel);
@@ -373,7 +369,14 @@ export default function Car3DCanvas() {
         panelShape.lineTo(-pW, rad);
         panelShape.quadraticCurveTo(-pW, 0, -pW + rad, 0);
 
-        const extrudeSettings = { depth: 0.018, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.008, bevelThickness: 0.008 };
+        const extrudeSettings = {
+            depth: 0.018,
+            bevelEnabled: true,
+            bevelSegments: 3,
+            steps: 1,
+            bevelSize: 0.008,
+            bevelThickness: 0.008
+        };
         const firewallGeom = new THREE.ExtrudeGeometry(panelShape, extrudeSettings);
         firewallGeom.center();
         const firewallMesh = new THREE.Mesh(firewallGeom, whiteCompositeMaterial);
@@ -397,18 +400,12 @@ export default function Car3DCanvas() {
         proceduralModel.add(seatGroup);
 
         // Battery Box & Floor Pan
-        const batteryBox = new THREE.Mesh(
-            new THREE.BoxGeometry(0.48, 0.12, 0.42),
-            darkHardwareMaterial
-        );
+        const batteryBox = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.42), darkHardwareMaterial);
         batteryBox.position.set(0, 0.14, 0.12);
         batteryBox.castShadow = true;
         proceduralModel.add(batteryBox);
 
-        const floorPan = new THREE.Mesh(
-            new THREE.BoxGeometry(0.96, 0.015, 1.35),
-            brushedSteelMaterial
-        );
+        const floorPan = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.015, 1.35), brushedSteelMaterial);
         floorPan.position.set(0, 0.05, 0.25);
         floorPan.receiveShadow = true;
         proceduralModel.add(floorPan);
@@ -424,12 +421,12 @@ export default function Car3DCanvas() {
         addTube([0.45, 0.06, 1.35], frontHubRight, 0.022, brushedSteelMaterial);
         addTube([0.45, 0.06, 0.95], frontHubRight, 0.022, brushedSteelMaterial);
 
-        const upperHubLeft = [-0.90, 0.28, 1.15];
-        const upperHubRight = [0.90, 0.28, 1.15];
-        addTube([-0.42, 0.32, 1.25], upperHubLeft, 0.020, brushedSteelMaterial);
-        addTube([-0.42, 0.32, 0.95], upperHubLeft, 0.020, brushedSteelMaterial);
-        addTube([0.42, 0.32, 1.25], upperHubRight, 0.020, brushedSteelMaterial);
-        addTube([0.42, 0.32, 0.95], upperHubRight, 0.020, brushedSteelMaterial);
+        const upperHubLeft = [-0.9, 0.28, 1.15];
+        const upperHubRight = [0.9, 0.28, 1.15];
+        addTube([-0.42, 0.32, 1.25], upperHubLeft, 0.02, brushedSteelMaterial);
+        addTube([-0.42, 0.32, 0.95], upperHubLeft, 0.02, brushedSteelMaterial);
+        addTube([0.42, 0.32, 1.25], upperHubRight, 0.02, brushedSteelMaterial);
+        addTube([0.42, 0.32, 0.95], upperHubRight, 0.02, brushedSteelMaterial);
 
         const createFoxAirShock = (isLeft = true) => {
             const shockGroup = new THREE.Group();
@@ -504,12 +501,7 @@ export default function Car3DCanvas() {
             const tireWidth = isFront ? 0.28 : 0.34;
             const rimRadius = tireRadius * 0.58;
 
-            const tireGeom = new THREE.CylinderGeometry(
-                tireRadius,
-                tireRadius,
-                tireWidth,
-                32
-            );
+            const tireGeom = new THREE.CylinderGeometry(tireRadius, tireRadius, tireWidth, 32);
             const tireMesh = new THREE.Mesh(tireGeom, rubberTireMaterial);
             tireMesh.rotation.z = Math.PI / 2;
             tireMesh.castShadow = true;
@@ -545,32 +537,19 @@ export default function Car3DCanvas() {
             }
             wheelUnit.add(treadGroup);
 
-            const rimGeom = new THREE.CylinderGeometry(
-                rimRadius,
-                rimRadius * 0.86,
-                tireWidth + 0.02,
-                24
-            );
+            const rimGeom = new THREE.CylinderGeometry(rimRadius, rimRadius * 0.86, tireWidth + 0.02, 24);
             const rimMesh = new THREE.Mesh(rimGeom, whiteRimMaterial);
             rimMesh.rotation.z = Math.PI / 2;
             rimMesh.castShadow = true;
             wheelUnit.add(rimMesh);
 
-            const rotorGeom = new THREE.CylinderGeometry(
-                rimRadius * 0.72,
-                rimRadius * 0.72,
-                0.015,
-                24
-            );
+            const rotorGeom = new THREE.CylinderGeometry(rimRadius * 0.72, rimRadius * 0.72, 0.015, 24);
             const brakeRotor = new THREE.Mesh(rotorGeom, brakeRotorMaterial);
             brakeRotor.position.set(-0.06, 0, 0);
             brakeRotor.rotation.z = Math.PI / 2;
             wheelUnit.add(brakeRotor);
 
-            const caliper = new THREE.Mesh(
-                new THREE.BoxGeometry(0.04, 0.07, 0.1),
-                skyBluePowderCoat
-            );
+            const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.07, 0.1), skyBluePowderCoat);
             caliper.position.set(-0.06, rimRadius * 0.5, 0.02);
             wheelUnit.add(caliper);
 
@@ -601,7 +580,7 @@ export default function Car3DCanvas() {
             { pos: [-0.94, 0.08, 1.15], isFront: true, isLeft: true },
             { pos: [0.94, 0.08, 1.15], isFront: true, isLeft: false },
             { pos: [-1.02, 0.12, -0.95], isFront: false, isLeft: true },
-            { pos: [1.02, 0.12, -0.95], isFront: false, isLeft: false },
+            { pos: [1.02, 0.12, -0.95], isFront: false, isLeft: false }
         ];
 
         wheelPositions.forEach(({ pos, isFront, isLeft }) => {
@@ -641,7 +620,7 @@ export default function Car3DCanvas() {
                 map: shadowTex,
                 transparent: true,
                 opacity: 0.7,
-                depthWrite: false,
+                depthWrite: false
             })
         );
         shadowPlane.rotation.x = -Math.PI / 2;
@@ -740,14 +719,86 @@ export default function Car3DCanvas() {
                 // Portrait drops the vehicle toward the lower half of the
                 // screen. Landscape can sit it beside the copy; a phone cannot,
                 // and centred it sat straight on top of the hero wordmark.
-                { at: 0.00, x: heroX, y: sc(0.02, -2.60), z: 0.28, rotY: -0.48, rotX: 0.12, rotZ: -0.02, scale: sc(1.48, 0.88) },
-                { at: 0.12, x: heroX - 0.25, y: sc(0.02, -2.30), z: 0.22, rotY: -0.26, rotX: 0.12, rotZ: -0.02, scale: sc(1.44, 0.90) },
-                { at: 0.32, x: px(0.85), y: sc(0.02, -0.80), z: -0.10, rotY: 0.85, rotX: 0.10, rotZ: 0.03, scale: sc(1.36, 0.95) },
-                { at: 0.45, x: px(1.50), y: sc(0.06, -0.06), z: 0.15, rotY: Math.PI * 0.5, rotX: 0.08, rotZ: -0.03, scale: sc(1.38, 0.96) },
-                { at: 0.58, x: px(1.35), y: sc(0.06, -0.06), z: 0.15, rotY: 1.95, rotX: 0.08, rotZ: -0.03, scale: sc(1.38, 0.96) },
-                { at: 0.70, x: px(0.75), y: sc(-0.06, -0.04), z: 0.10, rotY: 3.05, rotX: 0.16, rotZ: 0.02, scale: sc(1.32, 0.95) },
-                { at: 0.82, x: px(1.15), y: sc(-0.06, -0.04), z: 0.10, rotY: 4.20, rotX: 0.16, rotZ: 0.02, scale: sc(1.32, 0.95) },
-                { at: 1.00, x: px(0.00), y: sc(0.05, 0.00), z: 0.25, rotY: 5.80, rotX: 0.12, rotZ: 0.00, scale: sc(1.42, 1.00) },
+                {
+                    at: 0.0,
+                    x: heroX,
+                    y: sc(0.02, -2.6),
+                    z: 0.28,
+                    rotY: -0.48,
+                    rotX: 0.12,
+                    rotZ: -0.02,
+                    scale: sc(1.48, 0.88)
+                },
+                {
+                    at: 0.12,
+                    x: heroX - 0.25,
+                    y: sc(0.02, -2.3),
+                    z: 0.22,
+                    rotY: -0.26,
+                    rotX: 0.12,
+                    rotZ: -0.02,
+                    scale: sc(1.44, 0.9)
+                },
+                {
+                    at: 0.32,
+                    x: px(0.85),
+                    y: sc(0.02, -0.8),
+                    z: -0.1,
+                    rotY: 0.85,
+                    rotX: 0.1,
+                    rotZ: 0.03,
+                    scale: sc(1.36, 0.95)
+                },
+                {
+                    at: 0.45,
+                    x: px(1.5),
+                    y: sc(0.06, -0.06),
+                    z: 0.15,
+                    rotY: Math.PI * 0.5,
+                    rotX: 0.08,
+                    rotZ: -0.03,
+                    scale: sc(1.38, 0.96)
+                },
+                {
+                    at: 0.58,
+                    x: px(1.35),
+                    y: sc(0.06, -0.06),
+                    z: 0.15,
+                    rotY: 1.95,
+                    rotX: 0.08,
+                    rotZ: -0.03,
+                    scale: sc(1.38, 0.96)
+                },
+                {
+                    at: 0.7,
+                    x: px(0.75),
+                    y: sc(-0.06, -0.04),
+                    z: 0.1,
+                    rotY: 3.05,
+                    rotX: 0.16,
+                    rotZ: 0.02,
+                    scale: sc(1.32, 0.95)
+                },
+                {
+                    at: 0.82,
+                    x: px(1.15),
+                    y: sc(-0.06, -0.04),
+                    z: 0.1,
+                    rotY: 4.2,
+                    rotX: 0.16,
+                    rotZ: 0.02,
+                    scale: sc(1.32, 0.95)
+                },
+                {
+                    at: 1.0,
+                    x: px(0.0),
+                    y: sc(0.05, 0.0),
+                    z: 0.25,
+                    rotY: 5.8,
+                    rotX: 0.12,
+                    rotZ: 0.0,
+                    scale: sc(1.42, 1.0)
+                }
             ];
         };
 
@@ -760,8 +811,8 @@ export default function Car3DCanvas() {
         // pulling back off the vehicle rather than the vehicle shrinking.
         const matchPose = (isMobileNow) =>
             isMobileNow
-                ? { x: 0, y: -0.20, z: 0.30, rotY: -0.48, rotX: 0.04, rotZ: -0.02, scale: 2.10 }
-                : { x: 0, y: -0.34, z: 0.30, rotY: -0.48, rotX: 0.04, rotZ: -0.02, scale: 0.96 };
+                ? { x: 0, y: -0.2, z: 0.3, rotY: -0.48, rotX: 0.04, rotZ: -0.02, scale: 2.1 }
+                : { x: 0, y: -0.34, z: 0.3, rotY: -0.48, rotX: 0.04, rotZ: -0.02, scale: 0.96 };
 
         // Smoothstep between keyframes so the track has no velocity
         // discontinuity where two segments meet.
@@ -804,7 +855,7 @@ export default function Car3DCanvas() {
         const damp = (dt, tau) => 1 - Math.exp(-dt / tau);
 
         const renderFrame = (dt, elapsedTime, animated) => {
-            const mouseK = damp(dt, 0.20);
+            const mouseK = damp(dt, 0.2);
             mouseX += (targetMouseX - mouseX) * mouseK;
             mouseY += (targetMouseY - mouseY) * mouseK;
 
@@ -847,7 +898,7 @@ export default function Car3DCanvas() {
 
             carRoot.scale.setScalar(currentPose.scale);
             carRoot.position.x = currentPose.x + mouseX * 0.18 * mouseGain;
-            carRoot.position.y = currentPose.y + floatY + mouseY * 0.10 * mouseGain;
+            carRoot.position.y = currentPose.y + floatY + mouseY * 0.1 * mouseGain;
             carRoot.position.z = currentPose.z;
 
             // Orientation comes from the scroll track and the idle float only.
@@ -885,7 +936,7 @@ export default function Car3DCanvas() {
             // The camera tracks the vehicle's staged position only. Aiming it
             // at the cursor-drifted position meant the frame itself swayed
             // under the pointer on top of the vehicle already drifting.
-            camera.lookAt(currentPose.x * 0.10, currentPose.y * 0.10, 0);
+            camera.lookAt(currentPose.x * 0.1, currentPose.y * 0.1, 0);
 
             renderer.render(scene, camera);
         };
@@ -998,9 +1049,9 @@ export default function Car3DCanvas() {
     }, []);
 
     return (
-        <div 
-            ref={containerRef} 
-            className="w-full h-full fixed inset-0 pointer-events-none"
+        <div
+            ref={containerRef}
+            className="pointer-events-none fixed inset-0 h-full w-full"
             style={{ zIndex: 1 }}
         />
     );

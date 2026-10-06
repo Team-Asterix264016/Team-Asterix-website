@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* =========================================================
    MOTION TOKENS
@@ -22,20 +22,92 @@
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  /* =======================================================
+     SURFACE COLOURS
+     The brutalist language is two colours: an ink used for every outline and
+     offset shadow, and a brand blue. They were previously written three ways
+     -- hex literals in this file, `slate-900`/`sky-600` utility classes, and
+     459 arbitrary `shadow-[Npx_Npx_0px_#0f172a]` strings -- so changing either
+     one meant editing well over a thousand call sites.
+  ======================================================= */
+  --color-ink: #0f172a;
+  --color-brand: #0284c7;
+  /* Text-safe on white: #0284c7 is only 4.09:1, this is 5.93:1. */
+  --color-brand-deep: #0369a1;
+  --color-brand-deeper: #075985;
+  --color-brand-bright: #0ea5e9;
+  --color-brand-light: #38bdf8;
+  --color-go: #16a34a;
+  --color-go-bright: #10b981;
+
+  /* =======================================================
+     BRUTALIST OFFSET SHADOWS
+     Named by their pixel offset so the mapping from the old arbitrary values
+     is exact and reviewable. `-brand` / `-light` / `-go` / `-white` suffixes
+     select the shadow colour; unsuffixed is ink.
+  ======================================================= */
+  --shadow-brutal-1: 1px 1px 0 var(--color-ink);
+  --shadow-brutal-2: 2px 2px 0 var(--color-ink);
+  --shadow-brutal-3: 3px 3px 0 var(--color-ink);
+  --shadow-brutal-4: 4px 4px 0 var(--color-ink);
+  --shadow-brutal-5: 5px 5px 0 var(--color-ink);
+  --shadow-brutal-6: 6px 6px 0 var(--color-ink);
+  --shadow-brutal-8: 8px 8px 0 var(--color-ink);
+  --shadow-brutal-10: 10px 10px 0 var(--color-ink);
+  --shadow-brutal-14: 14px 14px 0 var(--color-ink);
+
+  --shadow-brutal-2-brand: 2px 2px 0 var(--color-brand);
+  --shadow-brutal-3-brand: 3px 3px 0 var(--color-brand);
+  --shadow-brutal-4-brand: 4px 4px 0 var(--color-brand);
+  --shadow-brutal-5-brand: 5px 5px 0 var(--color-brand);
+  --shadow-brutal-6-brand: 6px 6px 0 var(--color-brand);
+  --shadow-brutal-7-brand: 7px 7px 0 var(--color-brand);
+  --shadow-brutal-8-brand: 8px 8px 0 var(--color-brand);
+  --shadow-brutal-10-brand: 10px 10px 0 var(--color-brand);
+  --shadow-brutal-12-brand: 12px 12px 0 var(--color-brand);
+  --shadow-brutal-14-brand: 14px 14px 0 var(--color-brand);
+
+  --shadow-brutal-2-bright: 2px 2px 0 var(--color-brand-bright);
+  --shadow-brutal-6-bright: 6px 6px 0 var(--color-brand-bright);
+  --shadow-brutal-2-light: 2px 2px 0 var(--color-brand-light);
+  --shadow-brutal-3-light: 3px 3px 0 var(--color-brand-light);
+  --shadow-brutal-8-light: 8px 8px 0 var(--color-brand-light);
+  --shadow-brutal-10-light: 10px 10px 0 var(--color-brand-light);
+  --shadow-brutal-4-go: 4px 4px 0 var(--color-go);
+  --shadow-brutal-6-go: 6px 6px 0 var(--color-go);
+  --shadow-brutal-10-go: 10px 10px 0 var(--color-go);
+  --shadow-brutal-3-go-bright: 3px 3px 0 var(--color-go-bright);
+  --shadow-brutal-1-white: 1px 1px 0 #ffffff;
+  --shadow-brutal-2-white: 2px 2px 0 #ffffff;
+  --shadow-brutal-3-white: 3px 3px 0 #ffffff;
 }
 
 @layer base {
   body {
     background-color: #ffffff;
-    color: #0f172a;
+    color: var(--color-ink);
     font-family: var(--font-sans);
     overflow-x: hidden;
   }
 
+  /* Headings get even line lengths; prose avoids single-word last lines.
+     Cheaper and more consistent than sprinkling `text-balance` per component. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
   /* Was `selection-background-color` / `selection-color`, which are not CSS
-     properties and did nothing. */
+     properties and did nothing. Fill is sky-700 rather than sky-600 so the
+     white selection text clears 4.5:1 (sky-600 gave only 4.09:1). */
   ::selection {
-    background-color: #0284c7;
+    background-color: var(--color-brand-deep);
     color: #ffffff;
   }
 }
@@ -97,12 +169,12 @@
 
 /* Cyberbites Stroke Text Typography */
 .text-stroke-black {
-  -webkit-text-stroke: 2px #0f172a;
+  -webkit-text-stroke: 2px var(--color-ink);
   color: transparent;
 }
 
 .text-stroke-sky {
-  -webkit-text-stroke: 2px #0284c7;
+  -webkit-text-stroke: 2px var(--color-brand);
   color: transparent;
 }
 
@@ -113,11 +185,11 @@
 
 @media (min-width: 768px) {
   .text-stroke-black {
-    -webkit-text-stroke: 3px #0f172a;
+    -webkit-text-stroke: 3px var(--color-ink);
   }
 
   .text-stroke-sky {
-    -webkit-text-stroke: 3px #0284c7;
+    -webkit-text-stroke: 3px var(--color-brand);
   }
 
   .text-stroke-white {
@@ -128,61 +200,67 @@
 /* Cyberbites Chunky Brutalist Card and Button Utilities */
 .cyber-card {
   background: #ffffff;
-  border: 3px solid #0f172a;
-  box-shadow: 6px 6px 0px #0f172a;
-  transition: transform var(--dur-base) var(--ease-brutal),
+  border: 3px solid var(--color-ink);
+  box-shadow: 6px 6px 0px var(--color-ink);
+  transition:
+    transform var(--dur-base) var(--ease-brutal),
     box-shadow var(--dur-base) var(--ease-brutal);
 }
 
 .cyber-card:hover {
   transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0px #0284c7;
+  box-shadow: 9px 9px 0px var(--color-brand);
 }
 
 .cyber-card-sky {
   background: #f0f9ff;
-  border: 3px solid #0284c7;
-  box-shadow: 6px 6px 0px #0284c7;
-  transition: transform var(--dur-base) var(--ease-brutal),
+  border: 3px solid var(--color-brand);
+  box-shadow: 6px 6px 0px var(--color-brand);
+  transition:
+    transform var(--dur-base) var(--ease-brutal),
     box-shadow var(--dur-base) var(--ease-brutal);
 }
 
 .cyber-card-sky:hover {
   transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0px #0f172a;
+  box-shadow: 9px 9px 0px var(--color-ink);
 }
 
+/* Fill is sky-700, not sky-600: white on var(--color-brand) is 4.09:1 and fails AA for
+   the 16px bold label this button carries. var(--color-brand-deep) gives 5.93:1. */
 .cyber-button {
-  background: #0284c7;
+  background: var(--color-brand-deep);
   color: #ffffff;
-  border: 2px solid #0f172a;
-  box-shadow: 4px 4px 0px #0f172a;
+  border: 2px solid var(--color-ink);
+  box-shadow: 4px 4px 0px var(--color-ink);
   font-weight: 800;
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal);
 }
 
 .cyber-button:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px #0f172a;
-  background: #0369a1;
+  box-shadow: 6px 6px 0px var(--color-ink);
+  background: var(--color-brand-deeper);
 }
 
 .cyber-button-white {
   background: #ffffff;
-  color: #0f172a;
-  border: 2px solid #0f172a;
-  box-shadow: 4px 4px 0px #0f172a;
+  color: var(--color-ink);
+  border: 2px solid var(--color-ink);
+  box-shadow: 4px 4px 0px var(--color-ink);
   font-weight: 800;
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal);
 }
 
 .cyber-button-white:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px #0284c7;
+  box-shadow: 6px 6px 0px var(--color-brand);
   background: #f8fafc;
 }
 
@@ -194,7 +272,8 @@
    arbitrary Tailwind shadow and translate utilities the buttons carry.
 ========================================================= */
 .press {
-  transition: transform var(--dur-fast) var(--ease-brutal),
+  transition:
+    transform var(--dur-fast) var(--ease-brutal),
     box-shadow var(--dur-fast) var(--ease-brutal),
     background-color var(--dur-fast) var(--ease-brutal),
     color var(--dur-fast) var(--ease-brutal);
@@ -202,11 +281,11 @@
 
 .press:active {
   transform: translate(2px, 2px) !important;
-  box-shadow: 1px 1px 0px #0f172a !important;
+  box-shadow: 1px 1px 0px var(--color-ink) !important;
 }
 
 .press-sky:active {
-  box-shadow: 1px 1px 0px #0284c7 !important;
+  box-shadow: 1px 1px 0px var(--color-brand) !important;
 }
 
 /* Flat surfaces with no offset shadow just sink slightly. */
@@ -219,24 +298,24 @@
    `.press` would clobber that transform and snap them to the top edge. */
 .press-y:active {
   transform: translate(2px, calc(-50% + 2px)) !important;
-  box-shadow: 1px 1px 0px #0f172a !important;
+  box-shadow: 1px 1px 0px var(--color-ink) !important;
 }
 
 /* Same, for controls centred on both axes. */
 .press-xy:active {
   transform: translate(calc(-50% + 2px), calc(-50% + 2px)) !important;
-  box-shadow: 1px 1px 0px #0f172a !important;
+  box-shadow: 1px 1px 0px var(--color-ink) !important;
 }
 
 .cyber-button:active,
 .cyber-button-white:active {
   transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0px #0f172a;
+  box-shadow: 1px 1px 0px var(--color-ink);
 }
 
 /* Consistent keyboard focus ring across every interactive element. */
-:where(a, button, [role="button"], input, textarea, select, [tabindex]):focus-visible {
-  outline: 3px solid #0284c7;
+:where(a, button, [role='button'], input, textarea, select, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-brand);
   outline-offset: 2px;
 }
 
@@ -383,20 +462,18 @@
 
 ::-webkit-scrollbar-track {
   background: #f8fafc;
-  border-left: 2px solid #0f172a;
+  border-left: 2px solid var(--color-ink);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border: 2px solid #0f172a;
+  background: var(--color-brand-light);
+  border: 2px solid var(--color-ink);
   border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: var(--color-brand);
 }
-
-
 
 /* =========================================================
    REDUCED MOTION
@@ -405,7 +482,6 @@
    interface still confirms input.
 ========================================================= */
 @media (prefers-reduced-motion: reduce) {
-
   .animate-marquee-left,
   .animate-marquee-right,
   .animate-spin-slow,
@@ -443,7 +519,8 @@
   opacity: 0;
   visibility: hidden;
   border-top: 2px solid #1e293b;
-  transition: max-height var(--dur-base) var(--ease-brutal),
+  transition:
+    max-height var(--dur-base) var(--ease-brutal),
     opacity var(--dur-fast) var(--ease-brutal),
     visibility 0s linear var(--dur-base);
 }
@@ -452,7 +529,8 @@
   max-height: 6rem;
   opacity: 1;
   visibility: visible;
-  transition: max-height var(--dur-base) var(--ease-brutal),
+  transition:
+    max-height var(--dur-base) var(--ease-brutal),
     opacity var(--dur-base) var(--ease-brutal),
     visibility 0s;
 }
@@ -504,20 +582,20 @@
 
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-left: 2px solid #0f172a;
+  border-left: 2px solid var(--color-ink);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #38bdf8;
-  border: 2px solid #0f172a;
+  background: var(--color-brand-light);
+  border: 2px solid var(--color-ink);
   box-shadow: inset 1px 1px 0px #ffffff;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+  background: var(--color-brand);
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #38bdf8 #f1f5f9;
+  scrollbar-color: var(--color-brand-light) #f1f5f9;
 }

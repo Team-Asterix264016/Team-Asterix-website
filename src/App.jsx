@@ -1,31 +1,31 @@
-import { useState, useEffect, lazy, Suspense } from "react";
-import Lenis from "lenis";
-import useScrollAssembly from "./hooks/useScrollAssembly";
-import useParallax from "./hooks/useParallax";
-import CyberNavbar from "./components/CyberNavbar";
-import IntroScrollSequence from "./components/IntroScrollSequence";
-import CyberHero from "./components/CyberHero";
-import MarqueeTicker from "./components/MarqueeTicker";
-import TheSquad from "./components/TheSquad";
-import TeamGallery from "./components/TeamGallery";
-import TeamUpdates from "./components/TeamUpdates";
-import OurStoryCurvedWave from "./components/OurStoryCurvedWave";
-import CyberNewsletterCTA from "./components/CyberNewsletterCTA";
-import CyberFooter from "./components/CyberFooter";
-import SubsystemDetail from "./components/SubsystemDetail";
-import FloatingBackground from "./components/FloatingBackground";
-import WorkshopPopup from "./components/WorkshopPopup";
-import { WebsiteDataProvider } from "./context/WebsiteDataContext";
+import { useState, useEffect, lazy, Suspense } from 'react';
+import Lenis from 'lenis';
+import useScrollAssembly from './hooks/useScrollAssembly';
+import useParallax from './hooks/useParallax';
+import CyberNavbar from './components/CyberNavbar';
+import IntroScrollSequence from './components/IntroScrollSequence';
+import CyberHero from './components/CyberHero';
+import MarqueeTicker from './components/MarqueeTicker';
+import TheSquad from './components/TheSquad';
+import TeamGallery from './components/TeamGallery';
+import TeamUpdates from './components/TeamUpdates';
+import OurStoryCurvedWave from './components/OurStoryCurvedWave';
+import CyberNewsletterCTA from './components/CyberNewsletterCTA';
+import CyberFooter from './components/CyberFooter';
+import SubsystemDetail from './components/SubsystemDetail';
+import FloatingBackground from './components/FloatingBackground';
+import WorkshopPopup from './components/WorkshopPopup';
+import { WebsiteDataProvider } from './context/WebsiteDataContext';
 
-const BajaModelPage = lazy(() => import("./components/BajaModelPage"));
-const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
-const SponsorPage = lazy(() => import("./components/SponsorPage"));
-const WorkshopPage = lazy(() => import("./components/WorkshopPage"));
-const WorkshopAttendanceProjector = lazy(() => import("./components/admin/WorkshopAttendanceProjector"));
-const WorkshopAttendanceCheckin = lazy(() => import("./components/WorkshopAttendanceCheckin"));
-const WorkshopProjectSubmissionPage = lazy(() => import("./components/WorkshopProjectSubmissionPage"));
-const QuizRunner = lazy(() => import("./components/quiz/QuizRunner"));
-const CommunityPage = lazy(() => import("./components/CommunityPage"));
+const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+const SponsorPage = lazy(() => import('./components/SponsorPage'));
+const WorkshopPage = lazy(() => import('./components/WorkshopPage'));
+const WorkshopAttendanceProjector = lazy(() => import('./components/admin/WorkshopAttendanceProjector'));
+const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttendanceCheckin'));
+const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
+const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
+const CommunityPage = lazy(() => import('./components/CommunityPage'));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -34,9 +34,17 @@ function MainApp() {
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
     const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash === '#community');
-    const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(() => window.location.hash === '#workshop-project-submit');
-    const [isAttendancePage, setIsAttendancePage] = useState(() => window.location.hash.startsWith('#attendance') && !window.location.hash.startsWith('#attendance-projector'));
-    const [isProjectorPage, setIsProjectorPage] = useState(() => window.location.hash.startsWith('#attendance-projector'));
+    const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
+        () => window.location.hash === '#workshop-project-submit'
+    );
+    const [isAttendancePage, setIsAttendancePage] = useState(
+        () =>
+            window.location.hash.startsWith('#attendance') &&
+            !window.location.hash.startsWith('#attendance-projector')
+    );
+    const [isProjectorPage, setIsProjectorPage] = useState(() =>
+        window.location.hash.startsWith('#attendance-projector')
+    );
     const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
     const [lenisInstance, setLenisInstance] = useState(null);
 
@@ -51,7 +59,11 @@ function MainApp() {
         const handleHashChange = () => {
             const hash = window.location.hash;
             // Clear retired recruitment, freshers and submission hashes to prevent broken landing
-            if (['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(hash) || hash.startsWith('#submit') || hash.startsWith('#recruitment-submit')) {
+            if (
+                ['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(hash) ||
+                hash.startsWith('#submit') ||
+                hash.startsWith('#recruitment-submit')
+            ) {
                 window.history.replaceState(null, '', window.location.pathname);
                 scrollToTop();
                 return;
@@ -69,7 +81,11 @@ function MainApp() {
         };
 
         const initialHash = window.location.hash;
-        if (['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(initialHash) || initialHash.startsWith('#submit') || initialHash.startsWith('#recruitment-submit')) {
+        if (
+            ['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(initialHash) ||
+            initialHash.startsWith('#submit') ||
+            initialHash.startsWith('#recruitment-submit')
+        ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
 
@@ -79,7 +95,18 @@ function MainApp() {
 
     useEffect(() => {
         scrollToTop();
-    }, [isSponsorPage, isWorkshopPage, isCommunityPage, isWorkshopProjectPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
+    }, [
+        isSponsorPage,
+        isWorkshopPage,
+        isCommunityPage,
+        isWorkshopProjectPage,
+        isAttendancePage,
+        isProjectorPage,
+        isQuizPage,
+        selectedSubsystem,
+        isModelPage,
+        isAdminOpen
+    ]);
 
     useEffect(() => {
         // Readers who ask for reduced motion get the browser's native scroll.
@@ -95,7 +122,7 @@ function MainApp() {
             gestureOrientation: 'vertical',
             smoothWheel: true,
             wheelMultiplier: 0.9,
-            touchMultiplier: 1.5,
+            touchMultiplier: 1.5
         });
 
         // eslint-disable-next-line react/set-state-in-effect
@@ -184,16 +211,21 @@ function MainApp() {
     const handleBackToHome = () => {
         closeAll();
         const hash = window.location.hash;
-        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#community', '#workshop-project-submit', '#model'].includes(hash)) {
+        if (
+            hash.startsWith('#admin') ||
+            ['#sponsor', '#workshop', '#community', '#workshop-project-submit', '#model'].includes(hash)
+        ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
         scrollToTop();
     };
 
     const pageFallback = (
-        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center font-mono text-sky-400 gap-3">
-            <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-black tracking-widest uppercase text-slate-300">LOADING ASTERIX PORTAL...</span>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-900 font-mono text-sky-400">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-400 border-t-transparent"></div>
+            <span className="text-xs font-black tracking-widest text-slate-300 uppercase">
+                LOADING ASTERIX PORTAL...
+            </span>
         </div>
     );
 
@@ -254,14 +286,15 @@ function MainApp() {
         );
     }
 
-    const isDetailPage = Boolean(
-        selectedSubsystem || isSponsorPage || isModelPage
-    );
+    const isDetailPage = Boolean(selectedSubsystem || isSponsorPage || isModelPage);
 
-    const currentPage =
-        isSponsorPage ? 'sponsor' :
-        isModelPage ? 'model' :
-        selectedSubsystem ? 'subsystem' : 'home';
+    const currentPage = isSponsorPage
+        ? 'sponsor'
+        : isModelPage
+          ? 'model'
+          : selectedSubsystem
+            ? 'subsystem'
+            : 'home';
 
     // Dedicated Full-Screen Sponsorship & Pitch Deck Portal
     if (isSponsorPage) {
@@ -273,8 +306,7 @@ function MainApp() {
     }
 
     return (
-        <div className="relative min-h-screen bg-white text-slate-900 selection:bg-sky-500 selection:text-white overflow-x-clip font-sans">
-            
+        <div className="relative min-h-screen overflow-x-clip bg-white font-sans text-slate-900 selection:bg-sky-500 selection:text-white">
             {/* Photorealistic 3D Floating Baja Buggy Canvas & Swimming Goldfish */}
             <FloatingBackground />
 
@@ -284,7 +316,7 @@ function MainApp() {
             {/* Main Content Layer */}
             <div className="relative z-10">
                 {/* Cyberbites Chunky Brutalist Navigation */}
-                <CyberNavbar 
+                <CyberNavbar
                     onSelectSubsystem={handleSelectSubsystem}
                     isDetailPage={isDetailPage}
                     currentPage={currentPage}
@@ -304,8 +336,8 @@ function MainApp() {
                     </Suspense>
                 ) : selectedSubsystem ? (
                     /* Dedicated Subsystem Detail Page (Shows all team members, CAD methodology, specs) */
-                    <main className="relative z-10 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)] border-b-4 border-slate-900">
-                        <SubsystemDetail 
+                    <main className="relative z-10 border-b-4 border-slate-900 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
+                        <SubsystemDetail
                             subsystemId={selectedSubsystem}
                             onBack={handleBackToHome}
                             onSelectSubsystem={handleSelectSubsystem}
@@ -313,7 +345,7 @@ function MainApp() {
                     </main>
                 ) : (
                     /* Main Landing Page Curtain */
-                    <main className="relative z-10 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)] border-b-4 border-slate-900">
+                    <main className="relative z-10 border-b-4 border-slate-900 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
                         {/* 115-Frame Pre-Rendered Cinema Intro Scroll Sequence */}
                         <IntroScrollSequence />
 
@@ -339,18 +371,21 @@ function MainApp() {
                         <CyberNewsletterCTA onOpenSponsor={handleOpenSponsor} />
 
                         {/* Sentinel element to detect when main page finishes scrolling and footer is reached */}
-                        <div id="footer-sentinel" className="h-2 w-full pointer-events-none opacity-0" aria-hidden="true" />
+                        <div
+                            id="footer-sentinel"
+                            className="pointer-events-none h-2 w-full opacity-0"
+                            aria-hidden="true"
+                        />
                     </main>
                 )}
 
                 {/* 4-Column Cyberbites Brutalist Footer */}
-                <CyberFooter 
+                <CyberFooter
                     onOpenAdmin={handleOpenAdmin}
                     onOpenSponsor={handleOpenSponsor}
                     onOpenWorkshop={handleOpenWorkshop}
                 />
             </div>
-
         </div>
     );
 }

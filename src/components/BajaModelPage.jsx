@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ModelViewer from './ModelViewer';
 
-export default function BajaModelPage({ onBack }) {
+export default function BajaModelPage() {
     useEffect(() => {
         window.scrollTo(0, 0);
         if (window.lenis) {
@@ -29,13 +29,11 @@ export default function BajaModelPage({ onBack }) {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col justify-between selection:bg-sky-500 selection:text-white select-none pt-16 sm:pt-20">
+        <div className="flex min-h-screen flex-col justify-between bg-slate-100 pt-16 text-slate-900 select-none selection:bg-sky-500 selection:text-white sm:pt-20">
             {/* Main Interactive Stage */}
-            <main className="relative flex-1 w-full min-h-[calc(100vh-140px)] flex flex-col items-center justify-center p-2 sm:p-6 overflow-hidden">
-
+            <main className="relative flex min-h-[calc(100vh-140px)] w-full flex-1 flex-col items-center justify-center overflow-hidden p-2 sm:p-6">
                 {/* 3D ModelViewer Canvas */}
-                <div className="relative w-full max-w-6xl h-[65vh] sm:h-[72vh] bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] overflow-hidden">
-
+                <div className="shadow-brutal-10 relative h-[65vh] w-full max-w-6xl overflow-hidden border-4 border-slate-900 bg-white sm:h-[72vh]">
                     <ModelViewer
                         url="/assembly_file_for_abaja.glb"
                         width="100%"
@@ -63,24 +61,30 @@ export default function BajaModelPage({ onBack }) {
                     <div className="absolute bottom-4 left-4 z-20 flex flex-wrap items-center gap-2">
                         {/* Auto-Rotation Toggle */}
                         <button
-                            onClick={() => setAutoRotate(prev => !prev)}
-                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-[11px] uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer ${autoRotate ? 'bg-sky-500 text-white' : 'bg-white text-slate-900 hover:bg-sky-100'
-                                }`}
+                            onClick={() => setAutoRotate((prev) => !prev)}
+                            className={`press shadow-brutal-2 cursor-pointer border-2 border-slate-900 px-3 py-1.5 font-mono text-[11px] font-black uppercase ${
+                                autoRotate
+                                    ? 'bg-sky-500 text-slate-950'
+                                    : 'bg-white text-slate-900 hover:bg-sky-100'
+                            }`}
                         >
                             <span>Auto-Rotate: {autoRotate ? 'ON' : 'OFF'}</span>
                         </button>
 
                         {/* Environment Preset Picker */}
-                        <div className="hidden sm:flex items-center gap-1 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] p-1">
-                            <span className="text-[10px] font-mono font-black text-slate-500 px-1.5 uppercase">LIGHTING:</span>
-                            {presets.map(p => (
+                        <div className="shadow-brutal-2 hidden items-center gap-1 border-2 border-slate-900 bg-white p-1 sm:flex">
+                            <span className="px-1.5 font-mono text-[10px] font-black text-slate-500 uppercase">
+                                LIGHTING:
+                            </span>
+                            {presets.map((p) => (
                                 <button
                                     key={p.id}
                                     onClick={() => setEnvironmentPreset(p.id)}
-                                    className={`press press-flat px-2 py-1 text-[10px] font-mono font-bold uppercase cursor-pointer ${environmentPreset === p.id
+                                    className={`press press-flat cursor-pointer px-2 py-1 font-mono text-[10px] font-bold uppercase ${
+                                        environmentPreset === p.id
                                             ? 'bg-slate-900 text-white'
                                             : 'text-slate-700 hover:bg-sky-100'
-                                        }`}
+                                    }`}
                                 >
                                     {p.label}
                                 </button>
@@ -89,43 +93,47 @@ export default function BajaModelPage({ onBack }) {
                     </div>
 
                     {/* Top Left Interaction Helper */}
-                    <div className="absolute top-4 left-4 z-20 hidden sm:block bg-white/90 backdrop-blur-sm border-2 border-slate-900 p-2.5 shadow-[3px_3px_0px_#0f172a]">
-                        <span className="text-[10px] font-mono font-black text-sky-600 block mb-1 uppercase">
+                    <div className="shadow-brutal-3 absolute top-4 left-4 z-20 hidden border-2 border-slate-900 bg-white/90 p-2.5 backdrop-blur-sm sm:block">
+                        <span className="mb-1 block font-mono text-[10px] font-black text-sky-700 uppercase">
                             // CONTROLS
                         </span>
-                        <div className="text-[11px] font-mono font-bold text-slate-700 space-y-0.5">
-                            <div>• <span className="text-slate-950 font-black">DRAG</span>: Rotate 360°</div>
-                            <div>• <span className="text-slate-950 font-black">SCROLL / PINCH</span>: Zoom in / out</div>
-                            <div>• <span className="text-slate-950 font-black">MOVE</span>: Parallax tilt</div>
+                        <div className="space-y-0.5 font-mono text-[11px] font-bold text-slate-700">
+                            <div>
+                                • <span className="font-black text-slate-950">DRAG</span>: Rotate 360°
+                            </div>
+                            <div>
+                                • <span className="font-black text-slate-950">SCROLL / PINCH</span>: Zoom in /
+                                out
+                            </div>
+                            <div>
+                                • <span className="font-black text-slate-950">MOVE</span>: Parallax tilt
+                            </div>
                         </div>
                     </div>
-
                 </div>
 
                 {/* Subsystem Specifications Drawer / Card */}
-                <div className="w-full max-w-6xl mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div className="mt-6 grid w-full max-w-6xl grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                     {carSpecs.map((spec, i) => (
                         <div
                             key={i}
-                            className="p-3 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex flex-col justify-between"
+                            className="shadow-brutal-3 flex flex-col justify-between border-2 border-slate-900 bg-white p-3"
                         >
-                            <span className="text-[9px] font-mono font-black text-sky-600 uppercase tracking-wider block">
+                            <span className="block font-mono text-[9px] font-black tracking-wider text-sky-700 uppercase">
                                 {spec.label}
                             </span>
-                            <span className="text-xs font-bold text-slate-800 mt-1 leading-snug">
+                            <span className="mt-1 text-xs leading-snug font-bold text-slate-800">
                                 {spec.val}
                             </span>
                         </div>
                     ))}
                 </div>
-
             </main>
 
             {/* Bottom Footer Attribution */}
-            <footer className="bg-white border-t-3 border-slate-900 py-3 px-4 sm:px-8 text-center text-xs font-mono font-bold text-slate-600">
+            <footer className="border-t-3 border-slate-900 bg-white px-4 py-3 text-center font-mono text-xs font-bold text-slate-600 sm:px-8">
                 TEAM ASTERIX • AUTONOMOUS VEHICLE VIRTUAL PROTOTYPE
             </footer>
-
         </div>
     );
 }

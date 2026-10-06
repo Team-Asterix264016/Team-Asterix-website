@@ -9,8 +9,8 @@ import Icon from './Icon';
 export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem }) {
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
-    const currentSystem = subsystems.find(s => s.id === subsystemId) || subsystems[0];
-    const currentIndex = subsystems.findIndex(s => s.id === currentSystem.id);
+    const currentSystem = subsystems.find((s) => s.id === subsystemId) || subsystems[0];
+    const currentIndex = subsystems.findIndex((s) => s.id === currentSystem.id);
     const nextSystem = subsystems[(currentIndex + 1) % subsystems.length];
     const prevSystem = subsystems[(currentIndex - 1 + subsystems.length) % subsystems.length];
 
@@ -58,13 +58,14 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
         }
     }, [subsystemId]);
 
-
     useEffect(() => {
         if (!portrait) return undefined;
         const prevOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         window.lenis?.stop();
-        const onKey = (e) => { if (e.key === 'Escape') setPortrait(null); };
+        const onKey = (e) => {
+            if (e.key === 'Escape') setPortrait(null);
+        };
         window.addEventListener('keydown', onKey);
         return () => {
             document.body.style.overflow = prevOverflow;
@@ -74,14 +75,13 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
     }, [portrait]);
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 pt-28 pb-20 px-4 sm:px-8 relative z-30 selection:bg-sky-500 selection:text-white">
-            <div className="max-w-6xl mx-auto">
-
+        <div className="relative z-30 min-h-screen bg-white px-4 pt-28 pb-20 text-slate-900 selection:bg-sky-500 selection:text-white sm:px-8">
+            <div className="mx-auto max-w-6xl">
                 {/* Top Navigation & Back Button */}
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
                     <button
                         onClick={onBack}
-                        className="press press-flat cyber-button-white px-6 py-3 text-xs tracking-wider uppercase flex items-center gap-2 cursor-pointer"
+                        className="press press-flat cyber-button-white flex cursor-pointer items-center gap-2 px-6 py-3 text-xs tracking-wider uppercase"
                     >
                         <span>← Back to Overview</span>
                     </button>
@@ -89,16 +89,16 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => selectSubsystem(prevSystem.id)}
-                            className="press px-4 py-2 border-2 border-slate-900 bg-white font-bold text-xs shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 transition-colors cursor-pointer"
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-4 py-2 text-xs font-bold transition-colors hover:bg-sky-100"
                         >
                             ← Prev Spec
                         </button>
-                        <span className="font-mono font-black text-xs px-3 py-1 bg-slate-900 text-white">
+                        <span className="bg-slate-900 px-3 py-1 font-mono text-xs font-black text-white">
                             0{currentIndex + 1} / 0{subsystems.length}
                         </span>
                         <button
                             onClick={() => selectSubsystem(nextSystem.id)}
-                            className="press px-4 py-2 border-2 border-slate-900 bg-white font-bold text-xs shadow-[2px_2px_0px_#0f172a] hover:bg-sky-100 transition-colors cursor-pointer"
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-4 py-2 text-xs font-bold transition-colors hover:bg-sky-100"
                         >
                             Next Spec →
                         </button>
@@ -106,55 +106,60 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                 </div>
 
                 {/* Main Subsystem Hero Card */}
-                <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] p-6 sm:p-12 mb-12 relative overflow-hidden">
+                <div className="shadow-brutal-10 relative mb-12 overflow-hidden border-4 border-slate-900 bg-white p-6 sm:p-12">
                     {/* Top Accent Color Strip */}
-                    <div className={`h-4 -mx-6 sm:-mx-12 -mt-6 sm:-mt-12 mb-8 ${currentSystem.color} border-b-4 border-slate-900`} />
+                    <div
+                        className={`-mx-6 -mt-6 mb-8 h-4 sm:-mx-12 sm:-mt-12 ${currentSystem.color} border-b-4 border-slate-900`}
+                    />
 
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+                    <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-start">
                         <div>
-                            <div className="flex items-center gap-3 mb-3">
-                                <span className="px-3 py-1 bg-slate-900 text-white font-mono font-black text-xs uppercase tracking-widest">
+                            <div className="mb-3 flex items-center gap-3">
+                                <span className="bg-slate-900 px-3 py-1 font-mono text-xs font-black tracking-widest text-white uppercase">
                                     {currentSystem.badge}
                                 </span>
-                                <span className="px-3 py-1 bg-sky-100 border border-slate-900 text-slate-900 font-mono font-black text-xs uppercase">
+                                <span className="border border-slate-900 bg-sky-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase">
                                     {currentSystem.stat}
                                 </span>
                             </div>
 
-                            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 uppercase tracking-tight leading-none">
+                            <h1 className="text-4xl leading-none font-black tracking-tight text-slate-900 uppercase sm:text-6xl md:text-7xl">
                                 {currentSystem.name}
                             </h1>
-                            <p className="text-lg sm:text-xl font-bold text-sky-600 mt-2">
+                            <p className="mt-2 text-lg font-bold text-sky-700 sm:text-xl">
                                 {currentSystem.tagline}
                             </p>
                         </div>
 
-                        <div className="hidden lg:flex items-center justify-center w-24 h-24 bg-sky-50 border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] font-mono font-black text-3xl text-slate-900">
+                        <div className="shadow-brutal-4 hidden h-24 w-24 items-center justify-center border-3 border-slate-900 bg-sky-50 font-mono text-3xl font-black text-slate-900 lg:flex">
                             0{currentIndex + 1}
                         </div>
                     </div>
 
-                    <p className="text-base sm:text-lg text-slate-700 font-bold leading-relaxed max-w-4xl">
+                    <p className="max-w-4xl text-base leading-relaxed font-bold text-slate-700 sm:text-lg">
                         {currentSystem.fullDesc}
                     </p>
                 </div>
 
                 {/* Subsystem Specifications & Highlights (Full Width Clean Layout) */}
-                <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] p-6 sm:p-10 mb-16">
-                    <div className="flex items-center justify-between mb-8 border-b-3 border-slate-900 pb-4">
-                        <h3 className="text-2xl sm:text-3xl font-black uppercase text-slate-900 tracking-tight">
+                <div className="shadow-brutal-10 mb-16 border-4 border-slate-900 bg-white p-6 sm:p-10">
+                    <div className="mb-8 flex items-center justify-between border-b-3 border-slate-900 pb-4">
+                        <h3 className="text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl">
                             TECHNICAL SPECIFICATIONS
                         </h3>
                     </div>
 
                     {/* Specifications Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono mb-8">
+                    <div className="mb-8 grid grid-cols-1 gap-4 font-mono sm:grid-cols-2 lg:grid-cols-4">
                         {(currentSystem.specifications || []).map((spec, idx) => (
-                            <div key={idx} className="p-4 bg-sky-50 border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a]">
-                                <span className="text-[11px] font-bold text-slate-600 uppercase block mb-1.5 font-mono">
+                            <div
+                                key={idx}
+                                className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50 p-4"
+                            >
+                                <span className="mb-1.5 block font-mono text-[11px] font-bold text-slate-600 uppercase">
                                     {spec.label}
                                 </span>
-                                <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight font-mono">
+                                <span className="block font-mono text-base leading-tight font-black text-slate-900 sm:text-lg">
                                     {spec.value}
                                 </span>
                             </div>
@@ -162,15 +167,20 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                     </div>
 
                     {/* Key Engineering Highlights */}
-                    <div className="pt-6 border-t-2 border-slate-200 mb-8">
-                        <h4 className="text-sm font-black uppercase text-slate-900 mb-4 tracking-wider">
+                    <div className="mb-8 border-t-2 border-slate-200 pt-6">
+                        <h4 className="mb-4 text-sm font-black tracking-wider text-slate-900 uppercase">
                             KEY ENGINEERING HIGHLIGHTS:
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                             {(currentSystem.highlights || []).map((highlight, idx) => (
-                                <div key={idx} className="flex items-start gap-2.5 p-3.5 bg-slate-50 border-2 border-slate-900">
-                                    <span className="text-sky-600 font-black text-base leading-none">✦</span>
-                                    <span className="text-xs sm:text-sm font-bold text-slate-800 leading-relaxed">{highlight}</span>
+                                <div
+                                    key={idx}
+                                    className="flex items-start gap-2.5 border-2 border-slate-900 bg-slate-50 p-3.5"
+                                >
+                                    <span className="text-base leading-none font-black text-sky-700">✦</span>
+                                    <span className="text-xs leading-relaxed font-bold text-slate-800 sm:text-sm">
+                                        {highlight}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -180,13 +190,13 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                         has set an address for it -- this used to be a fixed
                         contact@teamasterix.org button that reached nobody. */}
                     {currentSystem.contactEmail && (
-                        <div className="pt-6 border-t-3 border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-sky-50/70 p-6 border-2 border-slate-900">
-                            <p className="text-sm sm:text-base font-black text-slate-900 uppercase">
+                        <div className="flex flex-col justify-between gap-4 border-2 border-t-3 border-slate-900 bg-sky-50/70 p-6 pt-6 sm:flex-row sm:items-center">
+                            <p className="text-sm font-black text-slate-900 uppercase sm:text-base">
                                 Have a question about {currentSystem.name}?
                             </p>
                             <a
                                 href={`mailto:${currentSystem.contactEmail}`}
-                                className="press press-flat cyber-button px-6 py-3 text-xs tracking-wider uppercase whitespace-nowrap inline-block self-start sm:self-auto cursor-pointer"
+                                className="press press-flat cyber-button inline-block cursor-pointer self-start px-6 py-3 text-xs tracking-wider whitespace-nowrap uppercase sm:self-auto"
                             >
                                 {currentSystem.contactEmail} →
                             </a>
@@ -195,23 +205,23 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                 </div>
 
                 {/* Subsystem Team Members Section */}
-                <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] p-6 sm:p-12 mb-16">
-                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10 border-b-3 border-slate-900 pb-4">
+                <div className="shadow-brutal-10 mb-16 border-4 border-slate-900 bg-white p-6 sm:p-12">
+                    <div className="mb-10 flex flex-col justify-between gap-4 border-b-3 border-slate-900 pb-4 sm:flex-row sm:items-end">
                         <div>
-                            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 uppercase tracking-tight">
+                            <h2 className="text-3xl font-black tracking-tight text-slate-900 uppercase sm:text-5xl">
                                 Members
                             </h2>
                         </div>
-                        <span className="px-3 py-1 bg-sky-100 border-2 border-slate-900 font-mono font-black text-xs self-start sm:self-auto">
+                        <span className="self-start border-2 border-slate-900 bg-sky-100 px-3 py-1 font-mono text-xs font-black sm:self-auto">
                             {(currentSystem.teamMembers || []).length} ENGINEERS ASSIGNED
                         </span>
                     </div>
 
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         {(currentSystem.teamMembers || []).map((member, idx) => (
                             <div
                                 key={idx}
-                                className="cyber-card p-5 flex flex-col justify-between bg-white group hover:translate-y-[-2px] transition-all"
+                                className="cyber-card group flex flex-col justify-between bg-white p-5 transition-all hover:translate-y-[-2px]"
                             >
                                 <div>
                                     {/* Member Photo Frame.
@@ -224,19 +234,25 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                                     <button
                                         type="button"
                                         onClick={() => member.photo && setPortrait(member)}
-                                        aria-label={member.photo ? `View the full portrait of ${member.name}` : undefined}
+                                        aria-label={
+                                            member.photo
+                                                ? `View the full portrait of ${member.name}`
+                                                : undefined
+                                        }
                                         disabled={!member.photo}
-                                        className="w-full aspect-[3/4] sm:aspect-[4/5] overflow-hidden border-2 border-slate-900 bg-slate-100 relative mb-4 shadow-[3px_3px_0px_#0f172a] block p-0 disabled:cursor-default cursor-zoom-in"
+                                        className="shadow-brutal-3 relative mb-4 block aspect-[3/4] w-full cursor-zoom-in overflow-hidden border-2 border-slate-900 bg-slate-100 p-0 disabled:cursor-default sm:aspect-[4/5]"
                                     >
                                         {(() => {
                                             const photoUrl = apiUrl(member.photo);
                                             if (!photoUrl) {
                                                 return (
-                                                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-sky-50 flex flex-col items-center justify-center p-4 text-center">
-                                                        <div className="w-16 h-16 rounded-full bg-slate-900 text-white font-mono font-black text-xl flex items-center justify-center border-2 border-sky-400 shadow-[3px_3px_0px_#0284c7] mb-2">
-                                                            {member.initials || member.name?.slice(0, 2).toUpperCase() || 'TM'}
+                                                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-sky-50 p-4 text-center">
+                                                        <div className="shadow-brutal-3-brand mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-sky-400 bg-slate-900 font-mono text-xl font-black text-white">
+                                                            {member.initials ||
+                                                                member.name?.slice(0, 2).toUpperCase() ||
+                                                                'TM'}
                                                         </div>
-                                                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                                                        <span className="font-mono text-[10px] font-bold tracking-wider text-slate-600 uppercase">
                                                             [ PHOTO PENDING ]
                                                         </span>
                                                     </div>
@@ -245,27 +261,35 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                                             return (
                                                 <>
                                                     <img
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         src={photoUrl}
                                                         alt={member.name}
                                                         style={memberFramingStyle(member)}
-                                                        className="w-full h-full group-hover:scale-105 transition-transform duration-300"
+                                                        className="h-full w-full transition-transform duration-300 group-hover:scale-105"
                                                         onError={(e) => {
                                                             e.currentTarget.style.display = 'none';
                                                             if (e.currentTarget.nextElementSibling) {
-                                                                e.currentTarget.nextElementSibling.classList.remove('hidden');
-                                                                e.currentTarget.nextElementSibling.classList.add('flex');
+                                                                e.currentTarget.nextElementSibling.classList.remove(
+                                                                    'hidden'
+                                                                );
+                                                                e.currentTarget.nextElementSibling.classList.add(
+                                                                    'flex'
+                                                                );
                                                             }
                                                         }}
                                                     />
-                                                    <div className="w-full h-full bg-gradient-to-br from-slate-100 to-sky-50 hidden flex-col items-center justify-center p-4 text-center">
-                                                        <div className="w-16 h-16 rounded-full bg-slate-900 text-white font-mono font-black text-xl flex items-center justify-center border-2 border-sky-400 shadow-[3px_3px_0px_#0284c7] mb-2">
-                                                            {member.initials || member.name?.slice(0, 2).toUpperCase() || 'TM'}
+                                                    <div className="hidden h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-sky-50 p-4 text-center">
+                                                        <div className="shadow-brutal-3-brand mb-2 flex h-16 w-16 items-center justify-center rounded-full border-2 border-sky-400 bg-slate-900 font-mono text-xl font-black text-white">
+                                                            {member.initials ||
+                                                                member.name?.slice(0, 2).toUpperCase() ||
+                                                                'TM'}
                                                         </div>
-                                                        <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                                                        <span className="font-mono text-[10px] font-bold tracking-wider text-slate-600 uppercase">
                                                             [ PHOTO PENDING ]
                                                         </span>
                                                     </div>
-                                                    <span className="absolute bottom-2 left-2 px-2 py-0.5 bg-slate-900/85 text-white font-mono font-black text-[9px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <span className="absolute bottom-2 left-2 bg-slate-900/85 px-2 py-0.5 font-mono text-[9px] font-black tracking-wider text-white uppercase opacity-0 transition-opacity group-hover:opacity-100">
                                                         ⤢ View full photo
                                                     </span>
                                                 </>
@@ -273,35 +297,38 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                                         })()}
 
                                         {/* Corner Role Badge */}
-                                        <span className="absolute top-2.5 right-2.5 px-2.5 py-0.5 bg-white/95 backdrop-blur-xs border-2 border-slate-900 font-mono font-black text-[10px] uppercase shadow-[2px_2px_0px_#0f172a]">
+                                        <span className="shadow-brutal-2 absolute top-2.5 right-2.5 border-2 border-slate-900 bg-white/95 px-2.5 py-0.5 font-mono text-[10px] font-black uppercase backdrop-blur-xs">
                                             {member.badge || 'ENGINEER'}
                                         </span>
                                     </button>
 
-                                    <h4 className="text-lg sm:text-xl font-black text-slate-900 uppercase mb-0.5">
+                                    <h4 className="mb-0.5 text-lg font-black text-slate-900 uppercase sm:text-xl">
                                         {member.name}
                                     </h4>
-                                    <p className="text-xs font-mono font-bold text-sky-600 mb-2.5">
+                                    <p className="mb-2.5 font-mono text-xs font-bold text-sky-700">
                                         {member.role}
                                     </p>
-                                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                                    <p className="text-xs leading-relaxed font-medium text-slate-600">
                                         {member.bio}
                                     </p>
 
                                     {member.phone && (
-                                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
                                             <a
                                                 href={`tel:${member.phone.replace(/[^0-9+]/g, '')}`}
-                                                className="press press-flat inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-slate-700 hover:text-sky-600 cursor-pointer truncate"
+                                                className="press press-flat inline-flex cursor-pointer items-center gap-1.5 truncate font-mono text-[11px] font-bold text-slate-700 hover:text-sky-700"
                                             >
-                                                <Icon name="phone" className="w-3 h-3 text-sky-600 shrink-0" />
+                                                <Icon
+                                                    name="phone"
+                                                    className="h-3 w-3 shrink-0 text-sky-700"
+                                                />
                                                 <span className="truncate">{member.phone}</span>
                                             </a>
                                             <a
                                                 href={`https://wa.me/${member.phone.replace(/[^0-9]/g, '')}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="press press-flat text-[10px] font-mono font-black text-emerald-600 hover:text-emerald-700 shrink-0"
+                                                className="press press-flat shrink-0 font-mono text-[10px] font-black text-emerald-600 hover:text-emerald-700"
                                                 title="WhatsApp Direct"
                                             >
                                                 WA ↗
@@ -310,14 +337,14 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                                     )}
                                 </div>
 
-                                <div className="mt-5 pt-3 border-t border-slate-200 text-[10px] font-mono font-bold uppercase flex items-center justify-between">
-                                    <span className="text-slate-400">TEAM ASTERIX</span>
+                                <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-3 font-mono text-[10px] font-bold uppercase">
+                                    <span className="text-slate-500">TEAM ASTERIX</span>
                                     {member.status === 'Alumni' ? (
-                                        <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-400 font-black flex items-center gap-1 shadow-[1px_1px_0px_#0f172a]">
+                                        <span className="shadow-brutal-1 flex items-center gap-1 border border-amber-400 bg-amber-100 px-2 py-0.5 font-black text-amber-900">
                                             ★ ALUMNI
                                         </span>
                                     ) : (
-                                        <span className="px-2 py-0.5 bg-sky-100 text-sky-700 border border-sky-400 font-black flex items-center gap-1 shadow-[1px_1px_0px_#0f172a]">
+                                        <span className="shadow-brutal-1 flex items-center gap-1 border border-sky-400 bg-sky-100 px-2 py-0.5 font-black text-sky-700">
                                             ● ACTIVE MEMBER
                                         </span>
                                     )}
@@ -327,7 +354,7 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                                     type="button"
                                     disabled={badgeBusy === idx}
                                     onClick={() => saveBadge(member, idx)}
-                                    className="press press-flat mt-2 w-full px-2 py-1.5 bg-slate-900 hover:bg-sky-600 disabled:bg-slate-400 text-white font-mono font-black text-[10px] uppercase tracking-wider border-2 border-slate-900 cursor-pointer disabled:cursor-wait"
+                                    className="press press-flat mt-2 w-full cursor-pointer border-2 border-slate-900 bg-slate-900 px-2 py-1.5 font-mono text-[10px] font-black tracking-wider text-white uppercase hover:bg-sky-600 disabled:cursor-wait disabled:bg-slate-400"
                                 >
                                     {badgeBusy === idx ? 'Drawing…' : '🎖 Download badge'}
                                 </button>
@@ -336,71 +363,83 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
                     </div>
 
                     {badgeError && (
-                        <p role="alert" className="mt-6 p-3 bg-rose-100 border-2 border-rose-500 font-mono text-xs font-bold text-rose-800">
+                        <p
+                            role="alert"
+                            className="mt-6 border-2 border-rose-500 bg-rose-100 p-3 font-mono text-xs font-bold text-rose-800"
+                        >
                             {badgeError}
                         </p>
                     )}
                 </div>
 
                 {/* Bottom Subsystem Switcher Footer */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-slate-900 text-white border-4 border-slate-900 shadow-[8px_8px_0px_#0284c7]">
+                <div className="shadow-brutal-8-brand flex flex-col items-center justify-between gap-4 border-4 border-slate-900 bg-slate-900 p-6 text-white sm:flex-row">
                     <div className="flex items-center gap-3">
-                        <Icon name="bolt" className="w-6 h-6 text-sky-400" />
+                        <Icon name="bolt" className="h-6 w-6 text-sky-400" />
                         <div>
-                            <span className="text-[10px] font-mono text-sky-400 uppercase block">Next System in Line:</span>
+                            <span className="block font-mono text-[10px] text-sky-400 uppercase">
+                                Next System in Line:
+                            </span>
                             <span className="text-base font-black uppercase">{nextSystem.name}</span>
                         </div>
                     </div>
 
                     <button
                         onClick={() => selectSubsystem(nextSystem.id)}
-                        className="press press-flat cyber-button px-8 py-3.5 text-xs font-black uppercase cursor-pointer"
+                        className="press press-flat cyber-button cursor-pointer px-8 py-3.5 text-xs font-black uppercase"
                     >
                         EXPLORE {nextSystem.name} →
                     </button>
                 </div>
-
             </div>
 
             {/* Full, uncropped portrait */}
-            {portrait && typeof document !== 'undefined' && createPortal(
-                <div
-                    className="fixed inset-0 z-[9999] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 anim-fade"
-                    onClick={() => setPortrait(null)}
-                    data-lenis-prevent
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={`Portrait of ${portrait.name}`}
-                >
+            {portrait &&
+                typeof document !== 'undefined' &&
+                createPortal(
                     <div
-                        className="anim-pop-center relative w-full max-w-md bg-white border-4 border-slate-900 shadow-[12px_12px_0px_#0284c7] flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
+                        className="anim-fade fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-sm sm:p-8"
+                        onClick={() => setPortrait(null)}
+                        data-lenis-prevent
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={`Portrait of ${portrait.name}`}
                     >
-                        <div className="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between gap-3 font-mono text-[11px] font-black uppercase">
-                            <span className="truncate">{portrait.name}</span>
-                            <button
-                                onClick={() => setPortrait(null)}
-                                className="press press-flat w-7 h-7 shrink-0 bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center border-2 border-white cursor-pointer font-sans text-sm font-bold"
-                                aria-label="Close portrait"
-                            >
-                                <span aria-hidden="true">✕</span>
-                            </button>
+                        <div
+                            className="anim-pop-center shadow-brutal-12-brand relative flex w-full max-w-md flex-col border-4 border-slate-900 bg-white"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between gap-3 bg-slate-900 px-4 py-2.5 font-mono text-[11px] font-black text-white uppercase">
+                                <span className="truncate">{portrait.name}</span>
+                                <button
+                                    onClick={() => setPortrait(null)}
+                                    className="press press-flat flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center border-2 border-white bg-rose-500 font-sans text-sm font-bold text-white hover:bg-rose-600"
+                                    aria-label="Close portrait"
+                                >
+                                    <span aria-hidden="true">✕</span>
+                                </button>
+                            </div>
+                            <div className="flex max-h-[70vh] items-center justify-center overflow-hidden bg-slate-950">
+                                <img
+                                    loading="lazy"
+                                    decoding="async"
+                                    src={apiUrl(portrait.photo)}
+                                    alt={portrait.name}
+                                    className="max-h-[70vh] max-w-full object-contain"
+                                />
+                            </div>
+                            <div className="border-t-3 border-slate-900 p-4">
+                                <p className="font-mono text-xs font-black text-sky-700 uppercase">
+                                    {portrait.role}
+                                </p>
+                                <p className="mt-1 text-xs leading-relaxed font-medium text-slate-600">
+                                    {portrait.bio}
+                                </p>
+                            </div>
                         </div>
-                        <div className="bg-slate-950 flex items-center justify-center max-h-[70vh] overflow-hidden">
-                            <img
-                                src={apiUrl(portrait.photo)}
-                                alt={portrait.name}
-                                className="max-w-full max-h-[70vh] object-contain"
-                            />
-                        </div>
-                        <div className="p-4 border-t-3 border-slate-900">
-                            <p className="font-mono text-xs font-black text-sky-600 uppercase">{portrait.role}</p>
-                            <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1">{portrait.bio}</p>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 }

@@ -164,7 +164,11 @@ export async function renderBadge(member, subsystem) {
        silently falls back to the system stack -- which is exactly the bug the
        site's own font tokens exist to avoid. */
     if (document.fonts?.ready) {
-        try { await document.fonts.ready; } catch { /* older browser; the stack still resolves */ }
+        try {
+            await document.fonts.ready;
+        } catch {
+            /* older browser; the stack still resolves */
+        }
     }
 
     const photo = await loadImage(apiUrl(member?.photo));
@@ -304,26 +308,28 @@ export async function renderBadge(member, subsystem) {
            "SecurityError" in the console. */
         try {
             canvas.toBlob(
-                (blob) => (blob
-                    ? resolve(blob)
-                    : reject(new Error('The badge image could not be encoded.'))),
+                (blob) => (blob ? resolve(blob) : reject(new Error('The badge image could not be encoded.'))),
                 'image/png'
             );
         } catch {
-            reject(new Error(
-                'The badge could not be saved because the photo is served without cross-origin permission. '
-                + 'Re-upload it through the admin so it lands on the CDN.'
-            ));
+            reject(
+                new Error(
+                    'The badge could not be saved because the photo is served without cross-origin permission. ' +
+                        'Re-upload it through the admin so it lands on the CDN.'
+                )
+            );
         }
     });
 }
 
 /** File-safe name, e.g. `asterix-badge-ratheeswar.png`. */
 const fileNameFor = (member) =>
-    `asterix-badge-${String(member?.name || 'crew')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '') || 'crew'}.png`;
+    `asterix-badge-${
+        String(member?.name || 'crew')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '') || 'crew'
+    }.png`;
 
 /** Renders the badge and saves it to the visitor's downloads. */
 export async function downloadBadge(member, subsystem) {

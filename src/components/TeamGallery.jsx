@@ -41,12 +41,12 @@ export default function TeamGallery() {
         return siteData.gallery.map((g, idx) => ({
             id: g.id || idx,
             title: g.title,
-            category: g.category || "PADDOCK & TRACK",
-            location: g.location || "Asterix Mobility Proving Grounds",
-            date: g.year || "2026",
+            category: g.category || 'PADDOCK & TRACK',
+            location: g.location || 'Asterix Mobility Proving Grounds',
+            date: g.year || '2026',
             image: apiUrl(g.src),
-            badge: g.category || "GALLERY",
-            description: g.desc || "",
+            badge: g.category || 'GALLERY',
+            description: g.desc || '',
             // Crop chosen in the admin against a preview of this exact tile.
             fit: g.fit,
             position: g.position
@@ -55,11 +55,7 @@ export default function TeamGallery() {
 
     // Multiplied list to provide a continuous, fluid drifting wall across columns
     const driftItems = useMemo(() => {
-        return [
-            ...galleryItems,
-            ...galleryItems,
-            ...galleryItems
-        ];
+        return [...galleryItems, ...galleryItems, ...galleryItems];
     }, [galleryItems]);
 
     // Keyboard navigation for lightbox modal
@@ -77,26 +73,28 @@ export default function TeamGallery() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [lightboxIndex]);
+    }, [lightboxIndex, galleryItems.length]);
 
     const activeItem = lightboxIndex !== null ? galleryItems[lightboxIndex] : null;
 
     const pad = (n) => String(n).padStart(2, '0');
 
     const handleTileClick = (item) => {
-        const foundIdx = galleryItems.findIndex(g => g.id === item.id);
+        const foundIdx = galleryItems.findIndex((g) => g.id === item.id);
         setLightboxIndex(foundIdx !== -1 ? foundIdx : 0);
     };
 
     const [viewMode, setViewMode] = useState('wall'); // 'wall' | 'grid'
 
     return (
-        <section id="gallery" className="py-16 sm:py-28 px-4 sm:px-8 bg-white border-t-4 border-slate-900 relative overflow-hidden z-10 select-none">
-
+        <section
+            id="gallery"
+            className="relative z-10 overflow-hidden border-t-4 border-slate-900 bg-white px-4 py-16 select-none sm:px-8 sm:py-28"
+        >
             {/* Background Parallax Watermark (Option A: Slow layer) */}
             <div
                 data-parallax="slow"
-                className="absolute right-4 sm:right-10 top-10 text-[7rem] sm:text-[12rem] md:text-[14rem] font-black text-slate-900/[0.025] select-none pointer-events-none font-mono leading-none z-0 will-change-transform"
+                className="pointer-events-none absolute top-10 right-4 z-0 font-mono text-[7rem] leading-none font-black text-slate-900/[0.025] will-change-transform select-none sm:right-10 sm:text-[12rem] md:text-[14rem]"
                 aria-hidden="true"
             >
                 // 03 ARCHIVE
@@ -106,47 +104,50 @@ export default function TeamGallery() {
             <div
                 data-parallax="sticker"
                 data-parallax-rotate="-7"
-                className="hidden lg:flex absolute left-6 sm:left-12 top-14 z-20 bg-emerald-300 text-slate-950 border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] rounded-lg px-3 py-1.5 font-mono font-black text-[11px] uppercase tracking-wider pointer-events-none will-change-transform"
+                className="shadow-brutal-5 pointer-events-none absolute top-14 left-6 z-20 hidden rounded-lg border-3 border-slate-900 bg-emerald-300 px-3 py-1.5 font-mono text-[11px] font-black tracking-wider text-slate-950 uppercase will-change-transform sm:left-12 lg:flex"
             >
                 <span>● PADDOCK ARCHIVE</span>
             </div>
 
-            <div className="max-w-7xl mx-auto relative z-10">
-
+            <div className="relative z-10 mx-auto max-w-7xl">
                 {/* Section Header */}
-                <div data-assemble="header" className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                <div
+                    data-assemble="header"
+                    className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end"
+                >
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
-                            <h2 className="text-6xl sm:text-7xl md:text-8xl font-black text-slate-900 leading-none uppercase">
+                            <h2 className="text-6xl leading-none font-black text-slate-900 uppercase sm:text-7xl md:text-8xl">
                                 OUR
                             </h2>
-                            <h2 
-                                data-parallax="fast" 
+                            <h2
+                                data-parallax="fast"
                                 data-parallax-speed="0.18"
-                                className="text-6xl sm:text-7xl md:text-8xl font-black text-stroke-black text-transparent leading-none uppercase will-change-transform"
+                                className="text-stroke-black text-6xl leading-none font-black text-transparent uppercase will-change-transform sm:text-7xl md:text-8xl"
                             >
                                 GALLERY
                             </h2>
-                            <span 
+                            <span
                                 data-parallax="sticker"
                                 data-parallax-rotate="4"
-                                className="px-3 py-1 bg-amber-300 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] font-mono text-xs font-black text-slate-900 uppercase will-change-transform"
+                                className="shadow-brutal-2 border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase will-change-transform"
                             >
                                 ★ {galleryItems.length} ARCHIVE PHOTOS
                             </span>
                         </div>
-                        <p className="text-sm sm:text-base font-bold text-slate-600 mt-3 max-w-xl">
-                            Moments from our workshop fabrication, autonomous sensor calibration, proving trials, and race day celebrations. Click any photo to inspect.
+                        <p className="mt-3 max-w-xl text-sm font-bold text-slate-600 sm:text-base">
+                            Moments from our workshop fabrication, autonomous sensor calibration, proving
+                            trials, and race day celebrations. Click any photo to inspect.
                         </p>
                     </div>
 
                     {/* View Mode Switcher */}
-                    <div className="flex items-center gap-2 bg-slate-100 p-1.5 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
+                    <div className="shadow-brutal-3 flex items-center gap-2 border-2 border-slate-900 bg-slate-100 p-1.5">
                         <button
                             onClick={() => setViewMode('wall')}
-                            className={`press px-4 py-2 font-mono text-xs font-black uppercase cursor-pointer border border-slate-900 transition-all ${
+                            className={`press cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
                                 viewMode === 'wall'
-                                    ? 'bg-sky-500 text-white shadow-[2px_2px_0px_#0f172a]'
+                                    ? 'shadow-brutal-2 bg-sky-500 text-slate-950'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
                             }`}
                         >
@@ -154,9 +155,9 @@ export default function TeamGallery() {
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`press px-4 py-2 font-mono text-xs font-black uppercase cursor-pointer border border-slate-900 transition-all ${
+                            className={`press cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
                                 viewMode === 'grid'
-                                    ? 'bg-sky-500 text-white shadow-[2px_2px_0px_#0f172a]'
+                                    ? 'shadow-brutal-2 bg-sky-500 text-slate-950'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
                             }`}
                         >
@@ -167,7 +168,10 @@ export default function TeamGallery() {
 
                 {/* 3D DriftWall or High-Density Grid Gallery Stage */}
                 {viewMode === 'wall' ? (
-                    <div data-assemble="card" className="relative w-full h-[540px] sm:h-[620px] md:h-[680px] bg-sky-50/40 border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] overflow-hidden">
+                    <div
+                        data-assemble="card"
+                        className="shadow-brutal-10 relative h-[540px] w-full overflow-hidden border-4 border-slate-900 bg-sky-50/40 sm:h-[620px] md:h-[680px]"
+                    >
                         {/* The 3D DriftWall */}
                         <DriftWall
                             items={driftItems}
@@ -189,37 +193,40 @@ export default function TeamGallery() {
                             dim={0.92}
                             overlayColor="transparent"
                             onItemClick={handleTileClick}
-                            className="w-full h-full"
+                            className="h-full w-full"
                         />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {galleryItems.map((item, idx) => (
                             <div
                                 key={item.id || idx}
                                 onClick={() => setLightboxIndex(idx)}
-                                className="press group relative bg-white border-3 border-slate-900 shadow-[5px_5px_0px_#0f172a] hover:shadow-[8px_8px_0px_#0284c7] hover:translate-x-[-2px] hover:translate-y-[-2px] overflow-hidden cursor-pointer flex flex-col justify-between"
+                                className="press group shadow-brutal-5 hover:shadow-brutal-8-brand relative flex cursor-pointer flex-col justify-between overflow-hidden border-3 border-slate-900 bg-white hover:translate-x-[-2px] hover:translate-y-[-2px]"
                             >
                                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
                                     <img
+                                        loading="lazy"
+                                        decoding="async"
                                         src={apiUrl(item.image)}
                                         alt={item.title}
                                         style={framingStyle(item.fit, item.position)}
-                                        className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                                        className="h-full w-full transition-transform duration-500 group-hover:scale-105"
                                         onError={(e) => {
                                             e.currentTarget.onerror = null;
-                                            e.currentTarget.src = 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&q=80';
+                                            e.currentTarget.src =
+                                                'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&q=80';
                                         }}
                                     />
-                                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-900/90 text-white font-mono text-[9px] font-black uppercase border border-white/20">
+                                    <span className="absolute top-2 left-2 border border-white/20 bg-slate-900/90 px-2 py-0.5 font-mono text-[9px] font-black text-white uppercase">
                                         {item.badge}
                                     </span>
                                 </div>
-                                <div className="p-3 bg-white border-t-2 border-slate-900 flex flex-col justify-between flex-1">
-                                    <h3 className="font-black text-sm uppercase text-slate-900 group-hover:text-sky-600 transition-colors line-clamp-1">
+                                <div className="flex flex-1 flex-col justify-between border-t-2 border-slate-900 bg-white p-3">
+                                    <h3 className="line-clamp-1 text-sm font-black text-slate-900 uppercase transition-colors group-hover:text-sky-700">
                                         {item.title}
                                     </h3>
-                                    <span className="text-[10px] font-mono font-bold text-slate-500 block mt-1">
+                                    <span className="mt-1 block font-mono text-[10px] font-bold text-slate-500">
                                         {item.location} • {item.date}
                                     </span>
                                 </div>
@@ -227,114 +234,127 @@ export default function TeamGallery() {
                         ))}
                     </div>
                 )}
-
             </div>
 
             {/* Lightbox Modal (Detailed High-Res Photo View with Keyboard & Click Navigation) */}
-            {activeItem && typeof document !== 'undefined' && createPortal(
-                <div
-                    className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4 sm:p-8 anim-fade"
-                    onClick={() => setLightboxIndex(null)}
-                    data-lenis-prevent
-                >
+            {activeItem &&
+                typeof document !== 'undefined' &&
+                createPortal(
                     <div
-                        className="anim-pop-center relative max-w-5xl w-full bg-white border-4 border-slate-900 shadow-[12px_12px_0px_#0284c7] overflow-hidden flex flex-col"
-                        onClick={(e) => e.stopPropagation()}
+                        className="anim-fade fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm sm:p-8"
+                        onClick={() => setLightboxIndex(null)}
+                        data-lenis-prevent
                     >
-                        {/* Modal Header Bar */}
-                        <div className="bg-slate-900 text-white px-5 py-3 flex items-center justify-between border-b-3 border-slate-900 font-mono text-xs font-black">
-                            <div className="flex items-center gap-3">
-                                <span className="status-dot w-2.5 h-2.5 rounded-full bg-sky-400 text-sky-400" />
-                                <span className="uppercase tracking-wider">TEAM ASTERIX ARCHIVE • {pad(lightboxIndex + 1)} OF {pad(galleryItems.length)}</span>
-                            </div>
-
-                            <button
-                                onClick={() => setLightboxIndex(null)}
-                                className="press press-flat w-8 h-8 bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center border-2 border-white cursor-pointer font-sans text-base font-bold"
-                                aria-label="Close Lightbox"
-                            >
-                                <span aria-hidden="true">✕</span>
-                            </button>
-                        </div>
-
-                        {/* Image Viewer Frame */}
-                        <div className="relative aspect-[16/10] sm:aspect-[16/9] max-h-[60vh] w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-                            <img
-                                src={apiUrl(activeItem.image)}
-                                alt={activeItem.title}
-                                className="max-w-full max-h-full object-contain select-none"
-                                onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=1000&q=80';
-                                }}
-                            />
-
-                            {/* Prev Navigation Button */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLightboxIndex(prev => (prev > 0 ? prev - 1 : galleryItems.length - 1));
-                                }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-white text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex items-center justify-center text-xl font-black cursor-pointer"
-                                aria-label="Previous Photo"
-                            >
-                                <span aria-hidden="true">←</span>
-                            </button>
-
-                            {/* Next Navigation Button */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLightboxIndex(prev => (prev < galleryItems.length - 1 ? prev + 1 : 0));
-                                }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 press-y w-12 h-12 bg-white/90 hover:bg-sky-500 hover:text-white text-slate-900 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] flex items-center justify-center text-xl font-black cursor-pointer"
-                                aria-label="Next Photo"
-                            >
-                                <span aria-hidden="true">→</span>
-                            </button>
-                        </div>
-
-                        {/* Modal Footer Description */}
-                        <div className="p-6 sm:p-8 bg-white border-t-3 border-slate-900">
-                            <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="px-2.5 py-0.5 bg-slate-900 text-white font-mono font-black text-xs uppercase">
-                                        {activeItem.badge}
-                                    </span>
-                                    <span className="px-2.5 py-0.5 bg-sky-100 border border-slate-900 font-mono font-black text-xs text-sky-700 uppercase">
-                                        {activeItem.category}
+                        <div
+                            className="anim-pop-center shadow-brutal-12-brand relative flex w-full max-w-5xl flex-col overflow-hidden border-4 border-slate-900 bg-white"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header Bar */}
+                            <div className="flex items-center justify-between border-b-3 border-slate-900 bg-slate-900 px-5 py-3 font-mono text-xs font-black text-white">
+                                <div className="flex items-center gap-3">
+                                    <span className="status-dot h-2.5 w-2.5 rounded-full bg-sky-400 text-sky-400" />
+                                    <span className="tracking-wider uppercase">
+                                        TEAM ASTERIX ARCHIVE • {pad(lightboxIndex + 1)} OF{' '}
+                                        {pad(galleryItems.length)}
                                     </span>
                                 </div>
 
-                                <div className="text-xs font-mono font-bold text-slate-500">
-                                    <span className="inline-flex items-center gap-1"><Icon name="pin" className="w-3 h-3" />{activeItem.location}</span> • <span>{activeItem.date}</span>
-                                </div>
-                            </div>
-
-                            <h3 className="text-2xl sm:text-3xl font-black uppercase text-slate-900 mb-2">
-                                {activeItem.title}
-                            </h3>
-
-                            <p className="text-sm sm:text-base text-slate-700 font-bold leading-relaxed">
-                                {activeItem.description}
-                            </p>
-
-                            <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-xs font-mono text-slate-500">
-                                <span>USE ARROW KEYS (← / →) TO NAVIGATE • [ESC] TO CLOSE</span>
                                 <button
                                     onClick={() => setLightboxIndex(null)}
-                                    className="press press-flat text-slate-900 font-black hover:text-sky-600 cursor-pointer"
+                                    className="press press-flat flex h-8 w-8 cursor-pointer items-center justify-center border-2 border-white bg-rose-500 font-sans text-base font-bold text-white hover:bg-rose-600"
+                                    aria-label="Close Lightbox"
                                 >
-                                    CLOSE VIEWER ✕
+                                    <span aria-hidden="true">✕</span>
                                 </button>
                             </div>
+
+                            {/* Image Viewer Frame */}
+                            <div className="relative flex aspect-[16/10] max-h-[60vh] w-full items-center justify-center overflow-hidden bg-slate-950 sm:aspect-[16/9]">
+                                <img
+                                    loading="lazy"
+                                    decoding="async"
+                                    src={apiUrl(activeItem.image)}
+                                    alt={activeItem.title}
+                                    className="max-h-full max-w-full object-contain select-none"
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src =
+                                            'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=1000&q=80';
+                                    }}
+                                />
+
+                                {/* Prev Navigation Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLightboxIndex((prev) =>
+                                            prev > 0 ? prev - 1 : galleryItems.length - 1
+                                        );
+                                    }}
+                                    className="press-y shadow-brutal-3 absolute top-1/2 left-4 flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center border-2 border-slate-900 bg-white/90 text-xl font-black text-slate-900 hover:bg-sky-500 hover:text-slate-950"
+                                    aria-label="Previous Photo"
+                                >
+                                    <span aria-hidden="true">←</span>
+                                </button>
+
+                                {/* Next Navigation Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLightboxIndex((prev) =>
+                                            prev < galleryItems.length - 1 ? prev + 1 : 0
+                                        );
+                                    }}
+                                    className="press-y shadow-brutal-3 absolute top-1/2 right-4 flex h-12 w-12 -translate-y-1/2 cursor-pointer items-center justify-center border-2 border-slate-900 bg-white/90 text-xl font-black text-slate-900 hover:bg-sky-500 hover:text-slate-950"
+                                    aria-label="Next Photo"
+                                >
+                                    <span aria-hidden="true">→</span>
+                                </button>
+                            </div>
+
+                            {/* Modal Footer Description */}
+                            <div className="border-t-3 border-slate-900 bg-white p-6 sm:p-8">
+                                <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-slate-900 px-2.5 py-0.5 font-mono text-xs font-black text-white uppercase">
+                                            {activeItem.badge}
+                                        </span>
+                                        <span className="border border-slate-900 bg-sky-100 px-2.5 py-0.5 font-mono text-xs font-black text-sky-700 uppercase">
+                                            {activeItem.category}
+                                        </span>
+                                    </div>
+
+                                    <div className="font-mono text-xs font-bold text-slate-500">
+                                        <span className="inline-flex items-center gap-1">
+                                            <Icon name="pin" className="h-3 w-3" />
+                                            {activeItem.location}
+                                        </span>{' '}
+                                        • <span>{activeItem.date}</span>
+                                    </div>
+                                </div>
+
+                                <h3 className="mb-2 text-2xl font-black text-slate-900 uppercase sm:text-3xl">
+                                    {activeItem.title}
+                                </h3>
+
+                                <p className="text-sm leading-relaxed font-bold text-slate-700 sm:text-base">
+                                    {activeItem.description}
+                                </p>
+
+                                <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3 font-mono text-xs text-slate-500">
+                                    <span>USE ARROW KEYS (← / →) TO NAVIGATE • [ESC] TO CLOSE</span>
+                                    <button
+                                        onClick={() => setLightboxIndex(null)}
+                                        className="press press-flat cursor-pointer font-black text-slate-900 hover:text-sky-700"
+                                    >
+                                        CLOSE VIEWER ✕
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-
-                    </div>
-                </div>,
-                document.body
-            )}
-
+                    </div>,
+                    document.body
+                )}
         </section>
     );
 }
