@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopResource from '../models/WorkshopResource.js';
@@ -495,16 +496,34 @@ router.get('/export', authenticateToken, async (req, res) => {
     }
 });
 
+const DEFAULT_WORKSHOP_PASSWORD = 'asterix';
+
+function verifyCandidatePassword(candidate, inputPassword) {
+    const pwd = String(inputPassword || '').trim();
+    if (!pwd) return { isCorrect: false, isDefault: false, empty: true };
+    if (!candidate.passwordHash) {
+        const isCorrect = pwd.toLowerCase() === DEFAULT_WORKSHOP_PASSWORD.toLowerCase();
+        return { isCorrect, isDefault: true };
+    }
+    const isCorrect = bcrypt.compareSync(pwd, candidate.passwordHash);
+    return { isCorrect, isDefault: false };
+}
+
 /**
  * POST /api/workshop/attendance/profile
- * Public endpoint: Candidate inputs email ID, phone, or roll number to view individual profile,
- * complete session attendance history, and workshop notes/slides/resources.
+ * Public endpoint: Candidate inputs email ID, phone, or roll number + password to view individual profile.
  */
 router.post('/profile', async (req, res) => {
     try {
         const queryRaw = String(req.body.identifier || req.body.email || req.body.phone || req.body.rollNo || '').trim();
+        const inputPassword = String(req.body.password || '').trim();
+
         if (!queryRaw) {
             return res.status(400).json({ error: 'Please enter your Email ID, Phone Number, or Roll Number.' });
+        }
+
+        if (!inputPassword) {
+            return res.status(400).json({ error: 'Please enter your profile password. Initial default password is "asterix".' });
         }
 
         const queryLower = queryRaw.toLowerCase();
@@ -531,6 +550,15 @@ router.post('/profile', async (req, res) => {
             }
             return res.status(404).json({
                 error: `No candidate registration found matching "${queryRaw}". Please verify your email ID or phone number.`
+            });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, inputPassword);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                error: candidate.passwordHash
+                    ? 'Incorrect password. Please enter the custom password you created for your profile.'
+                    : 'Incorrect password. The initial default password for all participants is "asterix".'
             });
         }
 
@@ -623,6 +651,7 @@ router.post('/profile', async (req, res) => {
 
         return res.json({
             ok: true,
+            isDefaultPassword: pwdCheck.isDefault,
             candidate: {
                 registrationId: candidate.registrationId || candidate._id,
                 name: candidate.name,
@@ -655,6 +684,67 @@ router.post('/profile', async (req, res) => {
     } catch (err) {
         console.error('Error fetching participant profile:', err);
         return res.status(500).json({ error: 'Failed to load participant profile. Please try again.' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/profile/change-password
+ * Public endpoint: Candidate updates their password using their current password or initial default "asterix".
+ */
+router.post('/profile/change-password', async (req, res) => {
+    try {
+        const { identifier, currentPassword, newPassword } = req.body || {};
+        const queryRaw = String(identifier || '').trim();
+        const curPwd = String(currentPassword || '').trim();
+        const newPwd = String(newPassword || '').trim();
+
+        if (!queryRaw) {
+            return res.status(400).json({ ok: false, error: 'Candidate identifier is required.' });
+        }
+        if (!curPwd) {
+            return res.status(400).json({ ok: false, error: 'Current password is required.' });
+        }
+        if (!newPwd) {
+            return res.status(400).json({ ok: false, error: 'Please enter a new password.' });
+        }
+        if (newPwd.length < 4) {
+            return res.status(400).json({ ok: false, error: 'New password must be at least 4 characters long.' });
+        }
+
+        const queryLower = queryRaw.toLowerCase();
+        const digits = queryRaw.replace(/\D/g, '');
+        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
+        if (phoneDigits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({ $or: searchConditions, status: 'paid' })
+            .sort({ paidAt: -1, createdAt: -1 });
+
+        if (!candidate) {
+            return res.status(404).json({ ok: false, error: 'Candidate registration profile not found.' });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, curPwd);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                ok: false,
+                error: candidate.passwordHash
+                    ? 'Current password is incorrect.'
+                    : 'Current password is incorrect. Initial default password is "asterix".'
+            });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        candidate.passwordHash = bcrypt.hashSync(newPwd, salt);
+        await candidate.save();
+
+        return res.json({ ok: true, message: 'Password updated successfully! You can now log in using your new password.' });
+    } catch (err) {
+        console.error('Change password error:', err);
+        return res.status(500).json({ ok: false, error: 'Internal server error while updating password.' });
     }
 });
 

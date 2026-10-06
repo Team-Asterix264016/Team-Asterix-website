@@ -159,6 +159,15 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const communityAuth = useCommunityAuth();
     const currentMember = communityAuth?.currentMember;
     const [identifier, setIdentifier] = useState('');
+    const [password, setPassword] = useState(() => {
+        try {
+            const saved = sessionStorage.getItem('asterix_profile_auth');
+            return saved ? JSON.parse(saved).password || '' : '';
+        } catch {
+            return '';
+        }
+    });
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [profile, setProfile] = useState(null);
@@ -171,10 +180,25 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     // Today's date in IST (YYYY-MM-DD), read once per visit, for picking the next session.
     const [todayIst] = useState(() => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10));
 
-    const fetchProfile = useCallback(async (queryVal) => {
-        const target = queryVal || identifier;
+    // Password change modal states
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+    const [pwdCurrent, setPwdCurrent] = useState('');
+    const [pwdNew, setPwdNew] = useState('');
+    const [pwdConfirm, setPwdConfirm] = useState('');
+    const [pwdError, setPwdError] = useState('');
+    const [pwdSuccess, setPwdSuccess] = useState('');
+    const [pwdLoading, setPwdLoading] = useState(false);
+
+    const fetchProfile = useCallback(async (queryVal, pwdVal) => {
+        const target = queryVal !== undefined ? queryVal : identifier;
+        const pwd = pwdVal !== undefined ? pwdVal : password;
+
         if (!target.trim()) {
             setError('Please enter your Email ID, Phone Number, or Roll Number.');
+            return;
+        }
+        if (!pwd.trim()) {
+            setError('Please enter your password. (Initial default password is "asterix")');
             return;
         }
 
@@ -185,12 +209,20 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             const res = await fetch(apiUrl('/api/workshop/attendance/profile'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier: target.trim() })
+                body: JSON.stringify({ identifier: target.trim(), password: pwd.trim() })
             });
 
             const data = await res.json();
             if (res.ok && data.ok) {
                 setProfile(data);
+                try {
+                    sessionStorage.setItem(
+                        'asterix_profile_auth',
+                        JSON.stringify({ identifier: target.trim(), password: pwd.trim() })
+                    );
+                } catch (e) {
+                    console.error('Failed to store profile auth session:', e);
+                }
             } else {
                 setError(data.error || 'No participant registration found for this query.');
                 setProfile(null);
@@ -203,28 +235,120 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         } finally {
             setLoading(false);
         }
-    }, [identifier]);
+    }, [identifier, password]);
 
     useEffect(() => {
+        let savedId = '';
+        let savedPwd = '';
+        try {
+            const saved = sessionStorage.getItem('asterix_profile_auth');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                savedId = parsed.identifier || '';
+                savedPwd = parsed.password || '';
+            }
+        } catch (e) {
+            console.error('Failed to parse saved profile auth session:', e);
+        }
+
         const params = new URLSearchParams(window.location.search);
         const queryParam =
             params.get('query') ||
             params.get('id') ||
             params.get('email') ||
             params.get('phone') ||
+            savedId ||
             currentMember?.rollNo ||
             currentMember?.email ||
             currentMember?.phone;
 
         if (queryParam) {
             setIdentifier(queryParam);
-            fetchProfile(queryParam);
+            if (savedPwd) {
+                setPassword(savedPwd);
+                fetchProfile(queryParam, savedPwd);
+            }
         }
     }, [fetchProfile, currentMember]);
 
     const handleSearch = (e) => {
         e.preventDefault();
         fetchProfile();
+    };
+
+    const handleLogoutCandidate = () => {
+        setProfile(null);
+        setPassword('');
+        try {
+            sessionStorage.removeItem('asterix_profile_auth');
+        } catch (e) {
+            console.error('Failed to clear profile auth session:', e);
+        }
+    };
+
+    const handleChangePasswordSubmit = async (e) => {
+        e.preventDefault();
+        if (!pwdCurrent.trim()) {
+            setPwdError('Please enter your current password.');
+            return;
+        }
+        if (!pwdNew.trim()) {
+            setPwdError('Please enter your new password.');
+            return;
+        }
+        if (pwdNew.trim().length < 4) {
+            setPwdError('New password must be at least 4 characters long.');
+            return;
+        }
+        if (pwdNew.trim() !== pwdConfirm.trim()) {
+            setPwdError('New password and confirm password do not match.');
+            return;
+        }
+
+        setPwdLoading(true);
+        setPwdError('');
+        setPwdSuccess('');
+
+        try {
+            const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
+            const res = await fetch(apiUrl('/api/workshop/attendance/profile/change-password'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    identifier: candidateTarget,
+                    currentPassword: pwdCurrent.trim(),
+                    newPassword: pwdNew.trim()
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                setPwdSuccess(data.message || 'Password updated successfully!');
+                setPassword(pwdNew.trim());
+                setProfile((prev) => (prev ? { ...prev, isDefaultPassword: false } : prev));
+                try {
+                    sessionStorage.setItem(
+                        'asterix_profile_auth',
+                        JSON.stringify({ identifier: candidateTarget, password: pwdNew.trim() })
+                    );
+                } catch (e) {
+                    console.error('Failed to update profile auth session:', e);
+                }
+                setTimeout(() => {
+                    setIsChangePasswordOpen(false);
+                    setPwdSuccess('');
+                    setPwdCurrent('');
+                    setPwdNew('');
+                    setPwdConfirm('');
+                }, 1500);
+            } else {
+                setPwdError(data.error || 'Failed to update password. Check your current password.');
+            }
+        } catch {
+            setPwdError('Could not connect to server. Please try again.');
+        } finally {
+            setPwdLoading(false);
+        }
     };
 
     const handleSubsystemNavigate = (subsystemId) => {
@@ -303,21 +427,52 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             </p>
                         </div>
 
-                        <form onSubmit={handleSearch} className="mt-8 flex flex-col gap-3 sm:flex-row">
-                            <input
-                                type="text"
-                                value={identifier}
-                                onChange={(e) => setIdentifier(e.target.value)}
-                                placeholder="College Email ID / Phone No / Roll No (e.g. 26M125)"
-                                className="min-h-14 w-full border-3 border-slate-900 bg-slate-50 px-4 py-3.5 font-mono text-base font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none focus:ring-3 focus:ring-amber-400"
-                                autoFocus
-                            />
+                        <form onSubmit={handleSearch} className="mt-8 space-y-4">
+                            <div>
+                                <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                    1. College Email / Phone / Roll No
+                                </label>
+                                <input
+                                    type="text"
+                                    value={identifier}
+                                    onChange={(e) => setIdentifier(e.target.value)}
+                                    placeholder="College Email ID / Phone No / Roll No (e.g. 26M125)"
+                                    className="min-h-12 w-full border-3 border-slate-900 bg-slate-50 px-4 py-3 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none focus:ring-3 focus:ring-amber-400"
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                    2. Profile Password
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Enter password (Initial default: asterix)"
+                                        className="min-h-12 w-full border-3 border-slate-900 bg-slate-50 px-4 py-3 pr-20 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none focus:ring-3 focus:ring-amber-400"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="press absolute right-2 top-1/2 -translate-y-1/2 border border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-900 hover:bg-slate-100"
+                                    >
+                                        {showPassword ? 'Hide 👁️' : 'Show 👁️'}
+                                    </button>
+                                </div>
+                                <p className="mt-1 font-mono text-[11px] font-bold text-slate-600">
+                                    💡 Initial default password for all participants is <strong className="rounded bg-amber-200 px-1.5 py-0.5 font-mono font-black text-slate-950">asterix</strong>.
+                                </p>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="press shadow-brutal-4-brand min-h-14 shrink-0 border-3 border-slate-900 bg-amber-300 px-8 py-3.5 font-mono text-sm font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-60"
+                                className="press shadow-brutal-4-brand min-h-14 w-full border-3 border-slate-900 bg-amber-300 px-8 py-3.5 font-mono text-sm font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-60"
                             >
-                                {loading ? 'Searching Profile…' : 'Open Profile 🔓'}
+                                {loading ? 'Unlocking Profile…' : 'Unlock Profile 🔓'}
                             </button>
                         </form>
 
@@ -398,6 +553,35 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                     {/* Profile Dashboard */}
                     {profile && profile.candidate && (
                         <div className="space-y-8">
+                            {/* Default Password Security Notice Banner */}
+                            {profile.isDefaultPassword && (
+                                <div className="shadow-brutal-6 border-4 border-slate-900 bg-amber-300 p-5 text-slate-950">
+                                    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                                        <div>
+                                            <span className="inline-block border-2 border-slate-900 bg-slate-950 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                SECURITY ACTION REQUIRED 🔑
+                                            </span>
+                                            <h3 className="mt-1.5 text-xl font-black uppercase text-slate-950 sm:text-2xl">
+                                                You are currently using the default password (&quot;asterix&quot;)
+                                            </h3>
+                                            <p className="mt-1 font-mono text-xs font-bold text-slate-900">
+                                                Please set your custom password now to secure your personal workshop profile &amp; attendance records.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPwdCurrent(password || 'asterix');
+                                                setIsChangePasswordOpen(true);
+                                            }}
+                                            className="press shadow-brutal-3 shrink-0 border-3 border-slate-900 bg-slate-950 px-5 py-3 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
+                                        >
+                                            Set Custom Password Now 🔒
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Verified Candidate Profile Card */}
                             <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
                                 <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
@@ -434,6 +618,23 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-900 px-4 py-2.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                                         >
                                             Download Receipt PNG ↓
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setPwdCurrent(password || 'asterix');
+                                                setIsChangePasswordOpen(true);
+                                            }}
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
+                                        >
+                                            🔑 Password
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleLogoutCandidate}
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-100 px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-rose-100 hover:text-rose-800"
+                                        >
+                                            🔒 Log Out
                                         </button>
                                     </div>
                                 </div>
@@ -1060,6 +1261,109 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                         notes={selectedSession ? notesBySession.get(selectedSession.id) || [] : []}
                         onClose={() => setSelectedSession(null)}
                     />
+
+                    {/* Change Password Modal */}
+                    {isChangePasswordOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+                            <div className="shadow-brutal-8 relative w-full max-w-md border-4 border-slate-900 bg-white p-6 sm:p-8">
+                                <div className="flex items-center justify-between border-b-3 border-slate-900 pb-3">
+                                    <div>
+                                        <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
+                                            Account Security
+                                        </span>
+                                        <h3 className="text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                                            Change Profile Password 🔑
+                                        </h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsChangePasswordOpen(false);
+                                            setPwdError('');
+                                            setPwdSuccess('');
+                                        }}
+                                        className="press border-2 border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-xs font-black text-slate-900 hover:bg-rose-200"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleChangePasswordSubmit} className="mt-5 space-y-4">
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Current Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={pwdCurrent}
+                                            onChange={(e) => setPwdCurrent(e.target.value)}
+                                            placeholder="Current password (Default: asterix)"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            New Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={pwdNew}
+                                            onChange={(e) => setPwdNew(e.target.value)}
+                                            placeholder="Enter your new password"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Confirm New Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={pwdConfirm}
+                                            onChange={(e) => setPwdConfirm(e.target.value)}
+                                            placeholder="Confirm your new password"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                    </div>
+
+                                    {pwdError && (
+                                        <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black uppercase text-rose-800">
+                                            ⚠️ {pwdError}
+                                        </div>
+                                    )}
+
+                                    {pwdSuccess && (
+                                        <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black uppercase text-emerald-800">
+                                            ✓ {pwdSuccess}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsChangePasswordOpen(false);
+                                                setPwdError('');
+                                                setPwdSuccess('');
+                                            }}
+                                            className="press border-2 border-slate-900 bg-slate-100 px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={pwdLoading}
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-60"
+                                        >
+                                            {pwdLoading ? 'Saving…' : 'Save New Password 🔒'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
                 </main>
             )}
         </div>

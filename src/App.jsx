@@ -8,6 +8,8 @@ import CyberHero from './components/CyberHero';
 import MarqueeTicker from './components/MarqueeTicker';
 import TheSquad from './components/TheSquad';
 import CyberNewsletterCTA from './components/CyberNewsletterCTA';
+import TeamGallery from './components/TeamGallery';
+import OurStoryCurvedWave from './components/OurStoryCurvedWave';
 import CyberFooter from './components/CyberFooter';
 import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
@@ -401,6 +403,12 @@ function MainApp() {
 
                         {/* "THE SQUAD" - Integrated with React Bits <CardSwap /> Component */}
                         <TheSquad onSelectSubsystem={handleSelectSubsystem} />
+
+                        {/* "OUR GALLERY" - Interactive 3D DriftWall Photo Archive */}
+                        <TeamGallery />
+
+                        {/* "OUR STORY" - Animated Sinusoidal Wave SVG Curved Text */}
+                        <OurStoryCurvedWave onOpenSponsor={handleOpenSponsor} />
 
                         {/* "JOIN THE ALLIANCE" - Brutalist Sponsor / Newsletter Form */}
                         <CyberNewsletterCTA onOpenSponsor={handleOpenSponsor} />

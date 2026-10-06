@@ -5,6 +5,8 @@ import { useCommunityAuth } from '../context/CommunityAuthContext';
 export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
     const communityAuth = useCommunityAuth();
     const [identifier, setIdentifier] = useState('');
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -13,8 +15,13 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const trimmed = identifier.trim();
+        const pwd = password.trim();
         if (!trimmed) {
             setError('Please enter your Mobile Number or Email ID.');
+            return;
+        }
+        if (!pwd) {
+            setError('Please enter your password. (Initial default password is "asterix")');
             return;
         }
 
@@ -25,7 +32,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
             const res = await fetch(apiUrl('/api/workshop/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier: trimmed })
+                body: JSON.stringify({ identifier: trimmed, password: pwd })
             });
 
             const data = await res.json();
@@ -76,7 +83,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                         Workshop Student Login
                     </h3>
                     <p className="text-xs font-bold text-slate-600">
-                        Enter the Mobile Number or Email ID used during payment to generate your access token (JWT).
+                        Enter your Mobile Number or Email ID + Profile Password to generate your access token (JWT).
                     </p>
                 </div>
 
@@ -101,6 +108,32 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                             required
                             autoFocus
                         />
+                    </div>
+
+                    <div>
+                        <label className="block font-mono text-xs font-black uppercase text-slate-900">
+                            Password *
+                        </label>
+                        <div className="relative mt-1">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Enter password (Initial default: asterix)"
+                                className="w-full border-2 border-slate-900 bg-slate-50 p-3 pr-16 font-mono text-sm font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="press absolute right-2 top-1/2 -translate-y-1/2 border border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black uppercase text-slate-900 hover:bg-slate-100"
+                            >
+                                {showPassword ? 'Hide 👁️' : 'Show 👁️'}
+                            </button>
+                        </div>
+                        <p className="mt-1 font-mono text-[10px] text-slate-500">
+                            💡 Initial default password is <strong className="font-black text-slate-900">asterix</strong> unless you have changed it.
+                        </p>
                     </div>
 
                     <button

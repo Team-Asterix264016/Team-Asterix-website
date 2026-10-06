@@ -34,7 +34,8 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
     // from abandoned checkouts. Sparse so the many pending rows without one
     // do not collide on the unique index.
     receiptNo: { type: String, unique: true, sparse: true },
-    paidAt: { type: Date, default: null }
+    paidAt: { type: Date, default: null },
+    passwordHash: { type: String, default: '', trim: true }
 }, {
     timestamps: true
 });

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
@@ -1218,6 +1219,29 @@ router.post('/login', async (req, res) => {
             return res.status(403).json({
                 error: `Your registration status is "${registration.status}". Workshop access is restricted to confirmed paid candidates only.`,
                 status: registration.status
+            });
+        }
+
+        const inputPassword = String(req.body.password || '').trim();
+        if (!inputPassword) {
+            return res.status(400).json({ error: 'Password is required. (Initial default password is "asterix")' });
+        }
+
+        let isPwdCorrect = false;
+        let isDefaultPwd = false;
+        if (!registration.passwordHash) {
+            isPwdCorrect = inputPassword.toLowerCase() === 'asterix';
+            isDefaultPwd = true;
+        } else {
+            isPwdCorrect = bcrypt.compareSync(inputPassword, registration.passwordHash);
+            isDefaultPwd = false;
+        }
+
+        if (!isPwdCorrect) {
+            return res.status(401).json({
+                error: registration.passwordHash
+                    ? 'Incorrect password. Please enter your profile password.'
+                    : 'Incorrect password. Initial default password for all participants is "asterix".'
             });
         }
 
