@@ -38,59 +38,6 @@ const SUBSYSTEMS_PORTAL_DATA = [
     }
 ];
 
-const ACHIEVEMENTS_DATA = [
-    {
-        id: 'ach-1',
-        title: 'ROS 2 Autonomous Navigation & SLAM Pipeline',
-        category: 'SOFTWARE & AUTONOMY',
-        subsystem: 'Software & Perception',
-        date: 'Jan 2026',
-        desc: 'Designed and deployed a full 2D/3D Cartographer SLAM and TEB Local Planner pipeline on the vehicle onboard computer, maintaining <5cm trajectory accuracy on off-road terrain.',
-        badge: 'VERIFIED OPERATIONAL',
-        tech: ['ROS 2 Humble', 'C++', 'TEB Local Planner', 'Cartographer', 'TF2']
-    },
-    {
-        id: 'ach-2',
-        title: 'LiDAR & Neural Vision Fusion for Cone Tracking',
-        category: 'PERCEPTION & AI',
-        subsystem: 'Software & Perception',
-        date: 'Feb 2026',
-        desc: 'Integrated 3D LiDAR point-cloud clustering with YOLOv8 camera detection for 360° obstacle boundary estimation at 45 FPS on NVIDIA Jetson Orin Nano.',
-        badge: 'VERIFIED OPERATIONAL',
-        tech: ['PyTorch', 'CUDA', 'OpenCV', 'LiDAR PointCloud2', 'TensorRT']
-    },
-    {
-        id: 'ach-3',
-        title: 'High-Voltage Battery Pack & Active BMS System',
-        category: 'POWERTRAIN & ENERGY',
-        subsystem: 'Powertrain & BMS',
-        date: 'Dec 2025',
-        desc: 'Engineered a custom 72V LiFePO4 battery pack with active cell balancing, CAN-bus thermal monitoring, and LTspice simulated motor drive dynamics.',
-        badge: 'VERIFIED OPERATIONAL',
-        tech: ['LTspice', 'Active BMS', 'CAN 2.0B', 'Thermal FEA']
-    },
-    {
-        id: 'ach-4',
-        title: 'Hardware-In-The-Loop (HIL) Drive-By-Wire Testbench',
-        category: 'EMBEDDED & CONTROLS',
-        subsystem: 'Embedded Comms',
-        date: 'Jan 2026',
-        desc: 'Built a benchtop HIL simulator connecting ESP32 FreeRTOS microcontrollers with electronic throttle, brake actuators, and steering encoders.',
-        badge: 'VERIFIED OPERATIONAL',
-        tech: ['ESP32', 'FreeRTOS', 'CAN Bus', 'PWM Motor Drivers']
-    },
-    {
-        id: 'ach-5',
-        title: '3D Chromoly Spaceframe & Suspension Digital Twin',
-        category: 'MECHANICAL & DYNAMICS',
-        subsystem: 'Mechanical & Chassis',
-        date: 'Nov 2025',
-        desc: 'Modeled and optimized the vehicle AISI 4130 spaceframe cage in SolidWorks with ANSYS structural impact testing and dynamic Gazebo track simulation.',
-        badge: 'VERIFIED OPERATIONAL',
-        tech: ['SolidWorks', 'ANSYS FEA', 'Gazebo Sim', 'Rviz2']
-    }
-];
-
 const RESOURCE_TYPE_BADGES = {
     pdf: '📄 PDF',
     slides: '📊 Slides',
@@ -524,9 +471,9 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
                             </div>
 
-                            {/* 5 Main Navigation Tabs */}
+                            {/* 4 Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">
-                                <div className="grid grid-cols-2 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase sm:grid-cols-3 md:grid-cols-5">
+                                <div className="grid grid-cols-2 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase md:grid-cols-4">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('attendance')}
@@ -559,17 +506,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         }`}
                                     >
                                         📚 Notes ({profile.resources?.length || 0})
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('achievements')}
-                                        className={`px-3 py-3 text-center transition-all ${
-                                            activeTab === 'achievements'
-                                                ? 'bg-amber-400 text-slate-950 shadow-brutal-2'
-                                                : 'text-slate-300 hover:text-white'
-                                        }`}
-                                    >
-                                        🏎️ Projects ({ACHIEVEMENTS_DATA.length})
                                     </button>
                                     <button
                                         type="button"
@@ -1129,72 +1065,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </div>
                                     </>
                                     )}
-                                </div>
-                            )}
-
-                            {/* TAB 3: Autonomous Domain Achievements */}
-                            {activeTab === 'achievements' && (
-                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                    <div className="flex flex-col justify-between gap-3 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
-                                        <div>
-                                            <span className="font-mono text-xs font-black tracking-widest text-emerald-700 uppercase">
-                                                Permanent Autonomous Domain Achievements &amp; Projects
-                                            </span>
-                                            <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
-                                                Autonomous Engineering Achievements
-                                            </h3>
-                                            <p className="mt-1 font-mono text-xs font-bold text-slate-600">
-                                                Permanent record of R&amp;D projects completed in ROS 2, LTspice Powertrain simulations, OpenCV Perception pipelines, and drive-by-wire hardware.
-                                            </p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => window.location.assign('#workshop-project-submit')}
-                                            className="press shadow-brutal-3 flex shrink-0 items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-4 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-emerald-300"
-                                        >
-                                            <span>📤 Upload / Submit Project</span>
-                                            <span>→</span>
-                                        </button>
-                                    </div>
-
-                                    <div className="mt-6 space-y-4">
-                                        {ACHIEVEMENTS_DATA.map((ach) => (
-                                            <div
-                                                key={ach.id}
-                                                className="shadow-brutal-4 border-3 border-slate-900 bg-slate-50 p-5 transition-all hover:bg-white"
-                                            >
-                                                <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-200 pb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="border border-slate-900 bg-emerald-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
-                                                            {ach.badge}
-                                                        </span>
-                                                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
-                                                            {ach.category}
-                                                        </span>
-                                                    </div>
-                                                    <span className="font-mono text-xs font-black text-sky-800">
-                                                        Completed: {ach.date}
-                                                    </span>
-                                                </div>
-
-                                                <h4 className="mt-3 text-xl font-black uppercase text-slate-900">
-                                                    {ach.title}
-                                                </h4>
-                                                <p className="mt-1 text-xs font-bold text-slate-700 leading-relaxed">
-                                                    {ach.desc}
-                                                </p>
-
-                                                <div className="mt-4 flex flex-wrap gap-1.5 border-t-2 border-slate-200 pt-3 font-mono text-[10px]">
-                                                    <span className="font-black text-slate-500 uppercase">TECH STACK:</span>
-                                                    {ach.tech.map((t, i) => (
-                                                        <span key={i} className="border border-slate-900 bg-sky-100 px-2 py-0.5 font-bold text-slate-900 uppercase">
-                                                            {t}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
                                 </div>
                             )}
 
