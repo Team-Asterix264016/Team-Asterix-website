@@ -30,6 +30,23 @@ export const upload = multer({
     fileFilter
 });
 
+/* Workshop notes come in many formats (Markdown, notebooks, source files, Office docs, archives).
+   Matched on extension; HTML, SVG and scripts that a browser would execute are left out. */
+export const NOTE_FILE_EXTENSIONS = [
+    '.pdf', '.md', '.markdown', '.txt', '.ipynb', '.py', '.c', '.cpp', '.h', '.hpp', '.ino', '.m', '.java',
+    '.json', '.csv', '.yaml', '.yml', '.zip', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+    '.png', '.jpg', '.jpeg', '.webp', '.gif'
+];
+
+export const noteUpload = multer({
+    storage,
+    limits: { fileSize: 25 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        if (NOTE_FILE_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase())) return cb(null, true);
+        cb(new Error(`Unsupported note file type. Allowed: ${NOTE_FILE_EXTENSIONS.join(' ')}`));
+    }
+});
+
 /**
  * Fallback helper to persist a buffer to local disk when ImageKit is not configured.
  */

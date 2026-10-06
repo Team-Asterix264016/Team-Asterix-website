@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { upload, saveBufferToLocal } from '../middleware/upload.js';
+import { upload, noteUpload, saveBufferToLocal } from '../middleware/upload.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { uploadToImageKit, isImageKitConfigured, getImageKitAuthParams } from '../lib/imagekit.js';
 
@@ -88,5 +88,36 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
         res.status(500).json({ error: 'Failed to process image upload', details: err.message });
     }
 });
+
+// POST /api/upload/note-file (Protected - workshop note attachments of any supported note format)
+router.post(
+    '/note-file',
+    authenticateToken,
+    (req, res, next) =>
+        noteUpload.single('file')(req, res, (err) => {
+            if (!err) return next();
+            const tooBig = err.code === 'LIMIT_FILE_SIZE';
+            return res.status(tooBig ? 413 : 400).json({ error: tooBig ? 'File is larger than 25 MB.' : err.message });
+        }),
+    async (req, res) => {
+        if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+        if (!isImageKitConfigured()) {
+            return res.status(503).json({ error: 'File storage (ImageKit) is not configured on the server.' });
+        }
+        try {
+            const result = await uploadToImageKit({
+                fileBuffer: req.file.buffer,
+                fileName: req.file.originalname.replace(/[^a-zA-Z0-9._-]+/g, '_'),
+                folder: '/asterix/workshop/notes',
+                tags: ['asterix', 'workshop-notes'],
+                useUniqueFileName: true
+            });
+            return res.status(201).json({ success: true, url: result.url, filename: result.name });
+        } catch (err) {
+            console.error('Note file upload failed:', err.message);
+            return res.status(502).json({ error: 'Upload to file storage failed. Please try again.' });
+        }
+    }
+);
 
 export default router;

@@ -1955,7 +1955,7 @@ export default function AdminDashboard({ onExit }) {
                     )}
 
                     {activeTab === 'workshop-notes' && (
-                        <WorkshopNotesAdmin showStatus={showStatus} onFileUpload={handleImageUpload} />
+                        <WorkshopNotesAdmin showStatus={showStatus} />
                     )}
 
                     {activeTab === 'workshop-project-submissions' && (

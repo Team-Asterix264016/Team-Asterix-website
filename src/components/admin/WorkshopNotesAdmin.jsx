@@ -12,10 +12,43 @@ const TRACKS = [
     { id: 'powertrain', label: 'Powertrain' },
     { id: 'common', label: 'Both tracks' }
 ];
-// Suggestions only: the type field is free text, so any custom type can be typed in.
-const LINK_TYPE_SUGGESTIONS = ['pdf', 'slides', 'colab', 'code', 'drive', 'video', 'link', 'doc', 'dataset'];
+const LINK_TYPES = [
+    { value: 'pdf', label: 'PDF' },
+    { value: 'slides', label: 'Slides' },
+    { value: 'notebook', label: 'Notebook (Colab / Jupyter)' },
+    { value: 'github', label: 'GitHub repo' },
+    { value: 'code', label: 'Code file' },
+    { value: 'markdown', label: 'Markdown' },
+    { value: 'doc', label: 'Document' },
+    { value: 'dataset', label: 'Dataset' },
+    { value: 'video', label: 'Video' },
+    { value: 'drive', label: 'Drive folder' },
+    { value: 'link', label: 'Web link' }
+];
+const KNOWN_TYPES = new Set(LINK_TYPES.map((t) => t.value));
+// Mirrors NOTE_FILE_EXTENSIONS in server/src/middleware/upload.js.
+const NOTE_FILE_ACCEPT =
+    '.pdf,.md,.markdown,.txt,.ipynb,.py,.c,.cpp,.h,.hpp,.ino,.m,.java,.json,.csv,.yaml,.yml,.zip,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.gif';
 
-const emptyLink = () => ({ label: '', url: '', type: 'pdf' });
+// Best guess from a URL or file name, so pasting a link or uploading a file fills the type in.
+function detectLinkType(urlOrName) {
+    const value = String(urlOrName || '').toLowerCase();
+    const path = value.split(/[?#]/)[0];
+    if (/github\.com|gitlab\.com/.test(value)) return 'github';
+    if (/colab\.research\.google\.com/.test(value) || path.endsWith('.ipynb')) return 'notebook';
+    if (/\.(md|markdown)$/.test(path)) return 'markdown';
+    if (path.endsWith('.pdf')) return 'pdf';
+    if (/docs\.google\.com\/presentation/.test(value) || /\.(pptx?|key)$/.test(path)) return 'slides';
+    if (/docs\.google\.com\/document/.test(value) || /\.(docx?|txt)$/.test(path)) return 'doc';
+    if (/docs\.google\.com\/spreadsheets/.test(value) || /\.(csv|xlsx?|json|ya?ml)$/.test(path)) return 'dataset';
+    if (/\.(py|c|cpp|h|hpp|ino|m|java|zip)$/.test(path)) return 'code';
+    if (/youtube\.com|youtu\.be|vimeo\.com/.test(value)) return 'video';
+    if (/drive\.google\.com/.test(value)) return 'drive';
+    return null;
+}
+
+// typeTouched stops auto-detection from overriding a type the admin picked; the API ignores it.
+const emptyLink = () => ({ label: '', url: '', type: 'link', typeTouched: false });
 const emptyNote = () => ({
     track: 'software',
     module: '',
@@ -43,7 +76,7 @@ async function request(path, options = {}) {
     return data;
 }
 
-export default function WorkshopNotesAdmin({ showStatus, onFileUpload }) {
+export default function WorkshopNotesAdmin({ showStatus }) {
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -85,7 +118,9 @@ export default function WorkshopNotesAdmin({ showStatus, onFileUpload }) {
             sessionNumber: note.sessionNumber ?? 1,
             title: note.title,
             description: note.description || '',
-            resources: note.resources?.length ? note.resources.map(({ label, url, type }) => ({ label, url, type })) : [emptyLink()]
+            resources: note.resources?.length
+                ? note.resources.map(({ label, url, type }) => ({ label, url, type, typeTouched: true }))
+                : [emptyLink()]
         });
         setEditingId(note._id);
     };
@@ -95,13 +130,33 @@ export default function WorkshopNotesAdmin({ showStatus, onFileUpload }) {
         setDraft((prev) => ({ ...prev, resources: prev.resources.map((l, i) => (i === index ? { ...l, ...patch } : l)) }));
     const removeLink = (index) => setDraft((prev) => ({ ...prev, resources: prev.resources.filter((_, i) => i !== index) }));
 
+    // Sets the URL and, unless the admin chose a type themselves, the type detected from it.
+    const setLinkUrl = (index, url, nameHint = url) =>
+        setDraft((prev) => ({
+            ...prev,
+            resources: prev.resources.map((l, i) => {
+                if (i !== index) return l;
+                const detected = l.typeTouched ? null : detectLinkType(nameHint);
+                return { ...l, url, ...(detected ? { type: detected } : {}) };
+            })
+        }));
+
     const handleUpload = async (e, index) => {
-        if (!onFileUpload || !e.target.files?.length) return;
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        if (!file) return;
         setUploadingIndex(index);
         try {
-            await onFileUpload(e, (url) => patchLink(index, { url }), '/asterix/workshop/notes');
-        } catch {
-            // onFileUpload already reports the failure to the admin.
+            const body = new FormData();
+            body.append('file', file);
+            const response = await fetch(apiUrl('/api/upload/note-file'), { method: 'POST', headers: adminHeaders(), body });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || `Upload failed (${response.status}).`);
+            setLinkUrl(index, data.url, file.name);
+            if (!draft.resources[index]?.label) patchLink(index, { label: file.name.replace(/\.[^.]+$/, '') });
+            showStatus?.(`Uploaded ${file.name}.`);
+        } catch (err) {
+            showStatus?.(`⚠️ ${err.message}`);
         } finally {
             setUploadingIndex(null);
         }
@@ -217,11 +272,6 @@ export default function WorkshopNotesAdmin({ showStatus, onFileUpload }) {
 
                     <div className="space-y-3">
                         <span className={LABEL_CLASS}>Links &amp; files</span>
-                        <datalist id="workshop-note-link-types">
-                            {LINK_TYPE_SUGGESTIONS.map((t) => (
-                                <option key={t} value={t} />
-                            ))}
-                        </datalist>
                         {draft.resources.map((link, index) => (
                             <div key={index} className="grid grid-cols-1 gap-2 border-2 border-slate-200 bg-slate-50 p-3 sm:grid-cols-12">
                                 <input
@@ -231,31 +281,50 @@ export default function WorkshopNotesAdmin({ showStatus, onFileUpload }) {
                                     onChange={(e) => patchLink(index, { label: e.target.value })}
                                 />
                                 <input
-                                    className={`${FIELD_CLASS} sm:col-span-5`}
-                                    placeholder="https://… or upload a file"
+                                    className={`${FIELD_CLASS} sm:col-span-4`}
+                                    placeholder="https://… (GitHub, Colab, Drive…) or upload a file"
                                     value={link.url}
-                                    onChange={(e) => patchLink(index, { url: e.target.value })}
+                                    onChange={(e) => setLinkUrl(index, e.target.value)}
                                 />
-                                <input
-                                    className={`${FIELD_CLASS} sm:col-span-2`}
-                                    list="workshop-note-link-types"
-                                    placeholder="Type"
-                                    value={link.type}
-                                    onChange={(e) => patchLink(index, { type: e.target.value })}
-                                />
-                                <div className="flex gap-2 sm:col-span-2">
-                                    {onFileUpload && (
-                                        <label className="press flex flex-1 cursor-pointer items-center justify-center border-2 border-slate-900 bg-white px-2 font-mono text-[10px] font-black uppercase hover:bg-amber-200">
-                                            {uploadingIndex === index ? '…' : 'Upload'}
-                                            <input
-                                                type="file"
-                                                accept="application/pdf,image/*"
-                                                className="hidden"
-                                                disabled={uploadingIndex !== null}
-                                                onChange={(e) => handleUpload(e, index)}
-                                            />
-                                        </label>
+                                <div className="flex flex-col gap-1 sm:col-span-3">
+                                    <select
+                                        className={FIELD_CLASS}
+                                        aria-label="Link type"
+                                        value={KNOWN_TYPES.has(link.type) ? link.type : 'custom'}
+                                        onChange={(e) =>
+                                            patchLink(index, {
+                                                type: e.target.value === 'custom' ? '' : e.target.value,
+                                                typeTouched: true
+                                            })
+                                        }
+                                    >
+                                        {LINK_TYPES.map((t) => (
+                                            <option key={t.value} value={t.value}>
+                                                {t.label}
+                                            </option>
+                                        ))}
+                                        <option value="custom">Custom…</option>
+                                    </select>
+                                    {!KNOWN_TYPES.has(link.type) && (
+                                        <input
+                                            className={FIELD_CLASS}
+                                            placeholder="Custom type, e.g. lab manual"
+                                            value={link.type}
+                                            onChange={(e) => patchLink(index, { type: e.target.value, typeTouched: true })}
+                                        />
                                     )}
+                                </div>
+                                <div className="flex gap-2 sm:col-span-2">
+                                    <label className="press flex flex-1 cursor-pointer items-center justify-center border-2 border-slate-900 bg-white px-2 font-mono text-[10px] font-black uppercase hover:bg-amber-200">
+                                        {uploadingIndex === index ? '…' : 'Upload'}
+                                        <input
+                                            type="file"
+                                            accept={NOTE_FILE_ACCEPT}
+                                            className="hidden"
+                                            disabled={uploadingIndex !== null}
+                                            onChange={(e) => handleUpload(e, index)}
+                                        />
+                                    </label>
                                     <button
                                         type="button"
                                         onClick={() => removeLink(index)}
