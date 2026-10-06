@@ -326,76 +326,269 @@ export default function ParticipantProfilePage({ onBack }) {
                                 <div className="flex flex-col justify-between gap-3 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
                                     <div>
                                         <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                            Attendance Log &amp; Certificate Eligibility
+                                            Graphical Attendance Visualizer &amp; Certificate Eligibility
                                         </span>
-                                        <h3 className="mt-1 text-2xl font-black uppercase text-slate-900">
-                                            Track Attendance Timeline
+                                        <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
+                                            Attendance Dashboard &amp; Analytics
                                         </h3>
                                     </div>
-                                    <div className="border-2 border-slate-900 bg-amber-100 px-4 py-2 font-mono text-xs font-black">
-                                        {profile.attendanceSummary.certificateMessage}
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (window.confirm('Clear all attendance activity from the database?')) {
+                                                    try {
+                                                        const res = await fetch(apiUrl('/api/workshop/attendance/clear-all'), {
+                                                            method: 'POST'
+                                                        });
+                                                        const d = await res.json();
+                                                        alert(d.message || 'Attendance activity cleared.');
+                                                        fetchProfile();
+                                                    } catch {
+                                                        alert('Failed to clear DB attendance records.');
+                                                    }
+                                                }
+                                            }}
+                                            className="press shadow-brutal-2 border-2 border-slate-900 bg-rose-500 px-3 py-1.5 font-mono text-xs font-black uppercase text-white hover:bg-rose-600"
+                                        >
+                                            🧹 Clear DB Attendance Activity
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div className="mt-6 space-y-4">
-                                    {profile.sessionTimeline.map((item) => {
-                                        const isPresent = item.status === 'PRESENT';
-                                        const isAbsent = item.status === 'ABSENT';
+                                {/* Graphical Stats Deck */}
+                                <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                                    {/* 1. Circular SVG Arc Gauge Chart */}
+                                    <div className="shadow-brutal-4 border-3 border-slate-900 bg-slate-900 p-5 text-white flex flex-col items-center justify-center text-center">
+                                        <span className="font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
+                                            ATTENDANCE RATE GAUGE
+                                        </span>
+                                        
+                                        <div className="relative mt-3 flex items-center justify-center">
+                                            <svg className="h-32 w-32 -rotate-90 transform" viewBox="0 0 120 120">
+                                                {/* Background Circle */}
+                                                <circle
+                                                    cx="60"
+                                                    cy="60"
+                                                    r="48"
+                                                    stroke="#1e293b"
+                                                    strokeWidth="12"
+                                                    fill="transparent"
+                                                />
+                                                {/* Progress Arc */}
+                                                <circle
+                                                    cx="60"
+                                                    cy="60"
+                                                    r="48"
+                                                    stroke={
+                                                        profile.attendanceSummary.attendancePercentage >= 75
+                                                            ? '#10b981'
+                                                            : profile.attendanceSummary.attendancePercentage >= 50
+                                                            ? '#f59e0b'
+                                                            : '#f43f5e'
+                                                    }
+                                                    strokeWidth="12"
+                                                    strokeDasharray="301.59"
+                                                    strokeDashoffset={
+                                                        301.59 - (301.59 * (profile.attendanceSummary.attendancePercentage || 0)) / 100
+                                                    }
+                                                    strokeLinecap="round"
+                                                    fill="transparent"
+                                                    className="transition-all duration-1000 ease-out"
+                                                />
+                                            </svg>
+                                            <div className="absolute flex flex-col items-center justify-center">
+                                                <span className="font-mono text-2xl font-black text-amber-300">
+                                                    {profile.attendanceSummary.attendancePercentage}%
+                                                </span>
+                                                <span className="font-mono text-[9px] font-bold text-slate-400 uppercase">
+                                                    {profile.attendanceSummary.totalPresent}/{profile.attendanceSummary.totalConducted || 1} Attended
+                                                </span>
+                                            </div>
+                                        </div>
 
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                className={`border-3 border-slate-900 p-4 shadow-brutal-4 transition-all ${
-                                                    isPresent
-                                                        ? 'bg-emerald-50/80'
-                                                        : isAbsent
-                                                        ? 'bg-rose-50/80'
-                                                        : 'bg-slate-50'
-                                                }`}
-                                            >
-                                                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                                                    <div className="space-y-1">
-                                                        <div className="flex flex-wrap items-center gap-2">
-                                                            <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
-                                                                {item.label}
-                                                            </span>
-                                                            <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase">
-                                                                {item.days} ({item.date})
-                                                            </span>
-                                                            {isPresent ? (
-                                                                <span className="border border-slate-900 bg-emerald-400 px-2.5 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
-                                                                    ✓ PRESENT
-                                                                </span>
-                                                            ) : isAbsent ? (
-                                                                <span className="border border-slate-900 bg-rose-500 px-2.5 py-0.5 font-mono text-[10px] font-black text-white uppercase">
-                                                                    ✕ ABSENT
-                                                                </span>
-                                                            ) : (
-                                                                <span className="border border-slate-900 bg-sky-200 px-2.5 py-0.5 font-mono text-[10px] font-black text-slate-800 uppercase">
-                                                                    ⏳ UPCOMING
-                                                                </span>
-                                                            )}
-                                                        </div>
+                                        <div className="mt-3">
+                                            <span className={`inline-block border border-slate-900 px-3 py-1 font-mono text-xs font-black uppercase ${
+                                                profile.attendanceSummary.isEligibleForCertificate
+                                                    ? 'bg-emerald-400 text-slate-950'
+                                                    : 'bg-amber-300 text-slate-950'
+                                            }`}>
+                                                {profile.attendanceSummary.isEligibleForCertificate
+                                                    ? '✓ Certificate Qualified'
+                                                    : '⚠️ Certificate Threshold Pending'}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                                                        <h4 className="text-base font-black uppercase text-slate-900 sm:text-lg">
+                                    {/* 2. Certificate Threshold Progress Bar */}
+                                    <div className="shadow-brutal-4 border-3 border-slate-900 bg-amber-50/80 p-5 flex flex-col justify-between">
+                                        <div>
+                                            <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
+                                                CERTIFICATE QUALIFICATION METER (75% TARGET)
+                                            </span>
+                                            <h4 className="mt-1 text-lg font-black uppercase text-slate-900">
+                                                {profile.attendanceSummary.isEligibleForCertificate
+                                                    ? 'Target Reached (≥ 75%)'
+                                                    : `${Math.max(0, 75 - profile.attendanceSummary.attendancePercentage)}% Required for Certificate`}
+                                            </h4>
+                                            <p className="mt-1 text-xs font-bold text-slate-700">
+                                                Team Asterix certificates are awarded to candidates maintaining 75% or higher session attendance.
+                                            </p>
+                                        </div>
+
+                                        {/* Graphical Bar */}
+                                        <div className="mt-4">
+                                            <div className="flex justify-between font-mono text-[10px] font-black text-slate-700 mb-1">
+                                                <span>0%</span>
+                                                <span className="text-amber-900">🎯 75% Target</span>
+                                                <span>100%</span>
+                                            </div>
+                                            <div className="relative h-6 w-full border-2 border-slate-900 bg-white p-0.5 shadow-brutal-2">
+                                                {/* 75% Target Marker Pin */}
+                                                <div
+                                                    className="absolute top-0 bottom-0 z-10 w-1 bg-amber-600"
+                                                    style={{ left: '75%' }}
+                                                    title="75% Target Threshold"
+                                                />
+                                                {/* Progress Fill */}
+                                                <div
+                                                    className={`h-full transition-all duration-700 ${
+                                                        profile.attendanceSummary.attendancePercentage >= 75
+                                                            ? 'bg-emerald-500'
+                                                            : 'bg-amber-400'
+                                                    }`}
+                                                    style={{ width: `${Math.min(100, profile.attendanceSummary.attendancePercentage || 0)}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 3. Session Statistics Summary */}
+                                    <div className="shadow-brutal-4 border-3 border-slate-900 bg-sky-50/80 p-5 flex flex-col justify-between">
+                                        <span className="font-mono text-xs font-black tracking-widest text-sky-900 uppercase">
+                                            SUBSYSTEM SESSION METRICS
+                                        </span>
+
+                                        <div className="mt-3 grid grid-cols-2 gap-2">
+                                            <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
+                                                <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Total Sessions</span>
+                                                <strong className="block text-xl font-black text-slate-900">{profile.sessionTimeline?.length || 0}</strong>
+                                            </div>
+                                            <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
+                                                <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Conducted</span>
+                                                <strong className="block text-xl font-black text-sky-900">{profile.attendanceSummary.totalConducted || 0}</strong>
+                                            </div>
+                                            <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
+                                                <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Verified Present</span>
+                                                <strong className="block text-xl font-black text-emerald-700">{profile.attendanceSummary.totalPresent || 0}</strong>
+                                            </div>
+                                            <div className="border-2 border-slate-900 bg-white p-2.5 text-center shadow-brutal-2">
+                                                <span className="font-mono text-[10px] font-black text-slate-500 uppercase">Upcoming</span>
+                                                <strong className="block text-xl font-black text-amber-700">
+                                                    {(profile.sessionTimeline?.length || 0) - (profile.attendanceSummary.totalConducted || 0)}
+                                                </strong>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-3 border-t-2 border-slate-300 pt-2 font-mono text-[11px] font-bold text-slate-600">
+                                            Candidate Track: <strong className="uppercase text-slate-900">{profile.candidate.package}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Graphical Session Matrix / Timeline Grid */}
+                                <div className="mt-8 border-t-4 border-slate-900 pt-6">
+                                    <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                                        <div>
+                                            <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
+                                                Visual Session Grid &amp; QR Scan Logs
+                                            </span>
+                                            <h4 className="mt-0.5 text-xl font-black uppercase text-slate-900">
+                                                Session Heatmap &amp; Timeline Nodes ({profile.sessionTimeline.length} Sessions)
+                                            </h4>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 font-mono text-[11px] font-black uppercase">
+                                            <span className="flex items-center gap-1.5 border border-slate-900 bg-emerald-100 px-2 py-1 text-emerald-950">
+                                                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                                                <span>Present</span>
+                                            </span>
+                                            <span className="flex items-center gap-1.5 border border-slate-900 bg-sky-100 px-2 py-1 text-sky-950">
+                                                <span className="h-2.5 w-2.5 rounded-full bg-sky-500"></span>
+                                                <span>Upcoming / Scan Lab QR</span>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Matrix Grid */}
+                                    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {profile.sessionTimeline.map((item) => {
+                                            const isPresent = item.status === 'PRESENT';
+                                            const isAbsent = item.status === 'ABSENT';
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`border-3 border-slate-900 p-4 shadow-brutal-4 transition-all ${
+                                                        isPresent
+                                                            ? 'bg-emerald-50/90 border-emerald-900'
+                                                            : isAbsent
+                                                            ? 'bg-rose-50/90 border-rose-900'
+                                                            : 'bg-sky-50/60'
+                                                    }`}
+                                                >
+                                                    {/* Node Header */}
+                                                    <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900/20 pb-2">
+                                                        <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                            {item.label}
+                                                        </span>
+                                                        <span className="font-mono text-[11px] font-black text-slate-700">
+                                                            {item.date} ({item.days})
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Title & Instructor */}
+                                                    <div className="mt-3 space-y-1">
+                                                        <h5 className="text-sm font-black uppercase text-slate-900 line-clamp-2">
                                                             {item.title}
-                                                        </h4>
-                                                        <p className="font-mono text-xs font-bold text-slate-600">
-                                                            👤 Handled by: <strong>{item.instructor}</strong> • 📍 {item.venue}
+                                                        </h5>
+                                                        <p className="font-mono text-[11px] font-bold text-slate-600">
+                                                            👤 Handled by: <strong>{item.instructor}</strong>
+                                                        </p>
+                                                        <p className="font-mono text-[10px] font-bold text-slate-500">
+                                                            📍 {item.venue}
                                                         </p>
                                                     </div>
 
-                                                    {isPresent && item.checkedInAt && (
-                                                        <div className="shrink-0 text-right font-mono text-xs font-bold text-emerald-800">
-                                                            <span>Checked in:</span>
-                                                            <br />
-                                                            <strong>{new Date(item.checkedInAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</strong>
-                                                        </div>
-                                                    )}
+                                                    {/* Graphical Status Card */}
+                                                    <div className="mt-4 pt-2 border-t-2 border-slate-900/20">
+                                                        {isPresent ? (
+                                                            <div className="flex items-center justify-between border-2 border-emerald-700 bg-emerald-400 p-2 text-slate-950">
+                                                                <div className="flex items-center gap-1.5 font-mono text-xs font-black uppercase">
+                                                                    <span>✅ VERIFIED PRESENT</span>
+                                                                </div>
+                                                                {item.checkedInAt && (
+                                                                    <span className="font-mono text-[10px] font-bold">
+                                                                        {new Date(item.checkedInAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        ) : isAbsent ? (
+                                                            <div className="flex items-center justify-between border-2 border-rose-700 bg-rose-500 p-2 text-white font-mono text-xs font-black uppercase">
+                                                                <span>❌ MISSED SESSION</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-between border-2 border-slate-900 bg-white p-2 font-mono text-xs font-bold text-slate-700">
+                                                                <span className="flex items-center gap-1 text-sky-800">
+                                                                    <span>🕒 UPCOMING</span>
+                                                                </span>
+                                                                <span className="text-[10px] font-black text-slate-900">Scan QR in Lab</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         )}

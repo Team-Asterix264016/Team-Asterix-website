@@ -564,13 +564,7 @@ router.post('/profile', async (req, res) => {
                         totalConducted += 1;
                     }
                 } else if (!isHoliday) {
-                    // Check if session date has passed (e.g., date before current workshop timeline)
-                    // If session already happened before today or is past core session
-                    const isPast = ['sch-sw-0', 'sch-sw-1', 'sch-pt-1'].includes(sessionItem.id);
-                    if (isPast) {
-                        status = 'ABSENT';
-                        totalConducted += 1;
-                    }
+                    status = 'UPCOMING';
                 }
 
                 sessionTimeline.push({
@@ -688,6 +682,28 @@ router.post('/resources', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error('Error creating resource:', err);
         return res.status(500).json({ error: 'Failed to create workshop resource' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/clear-all
+ * Endpoint to clear all present/absent activity from database
+ */
+router.post('/clear-all', async (req, res) => {
+    try {
+        const { isMongoConnected } = await import('../db/mongodb.js');
+        if (!isMongoConnected()) {
+            return res.json({ success: true, message: 'Database offline or disconnected. No records stored.' });
+        }
+        const result = await WorkshopAttendance.deleteMany({});
+        console.log(`[ATTENDANCE CLEARED] Deleted ${result.deletedCount} attendance record(s).`);
+        return res.json({
+            success: true,
+            message: `Cleared all ${result.deletedCount} attendance activity records from database.`
+        });
+    } catch (err) {
+        console.error('Error clearing attendance activity:', err);
+        return res.status(500).json({ error: 'Failed to clear attendance activity' });
     }
 });
 

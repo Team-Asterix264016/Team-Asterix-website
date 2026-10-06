@@ -29,9 +29,9 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
             try {
                 const token = localStorage.getItem('workshop_jwt');
                 const res = await fetch(
-                    `${apiUrl}/api/workshop/student-status?rollNo=${encodeURIComponent(
+                    apiUrl(`/api/workshop/student-status?rollNo=${encodeURIComponent(
                         student.rollNo || ''
-                    )}&email=${encodeURIComponent(student.email || '')}`,
+                    )}&email=${encodeURIComponent(student.email || '')}`),
                     {
                         headers: token ? { Authorization: `Bearer ${token}` } : {}
                     }

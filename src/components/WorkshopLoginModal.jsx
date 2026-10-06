@@ -20,7 +20,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
         setError('');
 
         try {
-            const res = await fetch(`${apiUrl}/api/workshop/login`, {
+            const res = await fetch(apiUrl('/api/workshop/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ identifier: trimmed })
