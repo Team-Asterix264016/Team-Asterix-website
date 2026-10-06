@@ -120,22 +120,6 @@ export function CommunityAuthProvider({ children }) {
     const [isMessagingDrawerOpen, setIsMessagingDrawerOpen] = useState(false);
     const [activeChatMember, setActiveChatMember] = useState(null);
 
-    // Auto-sync workshop login into community profile on startup
-    useEffect(() => {
-        if (!currentMember) {
-            try {
-                const wsStudent = localStorage.getItem('workshop_student');
-                if (wsStudent) {
-                    const parsed = JSON.parse(wsStudent);
-                    const idVal = parsed.rollNo || parsed.email || parsed.phone;
-                    if (idVal) {
-                        loginWithRollOrPhone(idVal);
-                    }
-                }
-            } catch {}
-        }
-    }, []);
-
     useEffect(() => {
         if (currentMember) {
             try {
@@ -264,6 +248,22 @@ export function CommunityAuthProvider({ children }) {
         setIsProfileModalOpen(true);
         return { success: true, member: finalMember };
     };
+
+    // Auto-sync workshop login into community profile on startup
+    useEffect(() => {
+        if (!currentMember) {
+            try {
+                const wsStudent = localStorage.getItem('workshop_student');
+                if (wsStudent) {
+                    const parsed = JSON.parse(wsStudent);
+                    const idVal = parsed.rollNo || parsed.email || parsed.phone;
+                    if (idVal) {
+                        loginWithRollOrPhone(idVal);
+                    }
+                }
+            } catch {}
+        }
+    }, []);
 
     const logout = () => {
         setCurrentMember(null);
