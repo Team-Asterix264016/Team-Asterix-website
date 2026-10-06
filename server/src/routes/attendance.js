@@ -679,6 +679,10 @@ function parseResourceBody(body) {
         links.push({ label, url, type: String(link?.type || 'link').trim().toLowerCase() || 'link' });
     }
 
+    // Accepts an array or one-per-line text, so the admin form can send a plain textarea.
+    const rawTakeaways = Array.isArray(body.takeaways) ? body.takeaways : String(body.takeaways || '').split('\n');
+    const takeaways = rawTakeaways.map((t) => String(t).trim()).filter(Boolean).slice(0, 20);
+
     const sessionNumber = Number(body.sessionNumber);
     return {
         doc: {
@@ -688,6 +692,7 @@ function parseResourceBody(body) {
             sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : 1,
             title,
             description: String(body.description || '').trim(),
+            takeaways,
             resources: links
         }
     };

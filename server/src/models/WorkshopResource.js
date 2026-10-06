@@ -36,6 +36,11 @@ const workshopResourceSchema = new mongoose.Schema(
             trim: true,
             maxlength: 2000
         },
+        // Shown as bullet points in the participant's session popup.
+        takeaways: {
+            type: [{ type: String, trim: true, maxlength: 300 }],
+            default: []
+        },
         resources: [
             {
                 label: { type: String, required: true, trim: true, maxlength: 120 },

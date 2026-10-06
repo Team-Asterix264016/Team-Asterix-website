@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '../../lib/api';
 import { safeHref } from '../../lib/safeHref';
-import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { AUTH_TOKEN_KEY, useWebsiteData } from '../../context/WebsiteDataContext';
+import { WORKSHOP_TRACKS } from '../../../server/src/config/workshopPackages.js';
 
 const FIELD_CLASS =
     'w-full min-h-10 border-2 border-slate-300 bg-white px-2.5 py-2 text-sm font-bold text-slate-900 focus:border-sky-600 focus:outline-none';
@@ -49,12 +50,15 @@ function detectLinkType(urlOrName) {
 
 // typeTouched stops auto-detection from overriding a type the admin picked; the API ignores it.
 const emptyLink = () => ({ label: '', url: '', type: 'link', typeTouched: false });
+// takeaways is edited as one-per-line text; the API splits it into a list.
 const emptyNote = () => ({
     track: 'software',
+    sessionId: '',
     module: '',
     sessionNumber: 1,
     title: '',
     description: '',
+    takeaways: '',
     resources: [emptyLink()]
 });
 
@@ -106,6 +110,21 @@ export default function WorkshopNotesAdmin({ showStatus }) {
     const knownModules = useMemo(() => [...new Set(notes.map((n) => n.module).filter(Boolean))], [notes]);
     const visibleNotes = trackFilter === 'all' ? notes : notes.filter((n) => n.track === trackFilter);
 
+    // Same source the participant timetable uses: the admin-edited schedule over the config defaults.
+    const { siteData } = useWebsiteData();
+    const sessionsById = useMemo(() => {
+        const map = new Map();
+        ['software', 'powertrain'].forEach((trackId) => {
+            const track = { ...WORKSHOP_TRACKS[trackId], ...siteData?.workshop?.tracks?.[trackId] };
+            (track.schedule || [])
+                .filter((s) => s.type !== 'holiday')
+                .forEach((s) => map.set(s.id, { ...s, trackId, option: `${s.date} · ${s.label} · ${s.title}` }));
+        });
+        return map;
+    }, [siteData]);
+    const sessionOptions = (track) =>
+        [...sessionsById.values()].filter((s) => track === 'common' || s.trackId === track);
+
     const openCreate = () => {
         setDraft(emptyNote());
         setEditingId('new');
@@ -114,10 +133,12 @@ export default function WorkshopNotesAdmin({ showStatus }) {
     const openEdit = (note) => {
         setDraft({
             track: note.track,
+            sessionId: note.sessionId || '',
             module: note.module || '',
             sessionNumber: note.sessionNumber ?? 1,
             title: note.title,
             description: note.description || '',
+            takeaways: (note.takeaways || []).join('\n'),
             resources: note.resources?.length
                 ? note.resources.map(({ label, url, type }) => ({ label, url, type, typeTouched: true }))
                 : [emptyLink()]
@@ -221,7 +242,15 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <label>
                             <span className={LABEL_CLASS}>Track</span>
-                            <select className={FIELD_CLASS} value={draft.track} onChange={(e) => patchDraft({ track: e.target.value })}>
+                            <select
+                                className={FIELD_CLASS}
+                                value={draft.track}
+                                onChange={(e) => {
+                                    const track = e.target.value;
+                                    const keepSession = sessionOptions(track).some((s) => s.id === draft.sessionId);
+                                    patchDraft({ track, ...(keepSession ? {} : { sessionId: '' }) });
+                                }}
+                            >
                                 {TRACKS.map((t) => (
                                     <option key={t.id} value={t.id}>
                                         {t.label}
@@ -256,6 +285,19 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                     </div>
 
                     <label className="block">
+                        <span className={LABEL_CLASS}>Session (participants see this note when they open the class in Timetable)</span>
+                        <select className={FIELD_CLASS} value={draft.sessionId} onChange={(e) => patchDraft({ sessionId: e.target.value })}>
+                            <option value="">Not tied to a session (Notes tab only)</option>
+                            {sessionOptions(draft.track).map((s) => (
+                                <option key={s.id} value={s.id}>
+                                    {draft.track === 'common' ? `${s.trackId === 'software' ? 'Software' : 'Powertrain'} · ` : ''}
+                                    {s.option}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
+                    <label className="block">
                         <span className={LABEL_CLASS}>Title</span>
                         <input required className={FIELD_CLASS} value={draft.title} onChange={(e) => patchDraft({ title: e.target.value })} />
                     </label>
@@ -267,6 +309,17 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                             className={FIELD_CLASS}
                             value={draft.description}
                             onChange={(e) => patchDraft({ description: e.target.value })}
+                        />
+                    </label>
+
+                    <label className="block">
+                        <span className={LABEL_CLASS}>Key takeaways (optional, one per line)</span>
+                        <textarea
+                            rows={4}
+                            className={FIELD_CLASS}
+                            value={draft.takeaways}
+                            onChange={(e) => patchDraft({ takeaways: e.target.value })}
+                            placeholder={'e.g. Sense → Plan → Act loop\nWhy loop timing matters'}
                         />
                     </label>
 
@@ -401,6 +454,11 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                                 {note.module && <span className="border border-slate-900 bg-amber-200 px-2 py-0.5">{note.module}</span>}
                                 <span className="text-slate-500">Order {note.sessionNumber ?? 1}</span>
                             </div>
+                            {note.sessionId && (
+                                <p className="mt-2 font-mono text-[10px] font-black text-sky-800 uppercase">
+                                    🗓 {sessionsById.get(note.sessionId)?.option || `Session ${note.sessionId} (no longer in schedule)`}
+                                </p>
+                            )}
                             <h4 className="mt-2 text-base font-black uppercase">{note.title}</h4>
                             {note.description && <p className="mt-1 text-xs font-bold text-slate-600">{note.description}</p>}
                             <ul className="mt-3 space-y-1 font-mono text-[11px] font-bold">
