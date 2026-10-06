@@ -145,216 +145,246 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
     const quizTitle = `${session.title} - Knowledge Quiz`;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-            <div className="shadow-brutal-6 relative max-h-[90vh] w-full max-w-2xl overflow-y-auto border-4 border-slate-900 bg-white p-6">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm sm:p-6"
+            onClick={onClose}
+        >
+            <div
+                className="anim-pop-center shadow-brutal-8 relative flex max-h-[92vh] w-full max-w-4xl flex-col border-4 border-slate-900 bg-white p-5 sm:p-7"
+                onClick={(e) => e.stopPropagation()}
+            >
                 {/* Close Button */}
                 <button
                     type="button"
                     onClick={onClose}
-                    className="press absolute top-4 right-4 flex h-8 w-8 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-sm font-black text-slate-900 hover:bg-amber-400"
+                    className="press absolute top-4 right-4 flex h-9 w-9 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-base font-black text-slate-900 hover:bg-amber-400"
+                    aria-label="Close modal"
                 >
                     ✕
                 </button>
 
-                {/* Header */}
-                <div className="space-y-2 border-b-4 border-slate-900 pb-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-xs font-black text-amber-300 uppercase">
-                            {session.label}
-                        </span>
-                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-xs font-black text-slate-900 uppercase">
-                            {session.days} ({session.date})
-                        </span>
-                        <span className="border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-xs font-black text-sky-900 uppercase">
-                            {trackName}
-                        </span>
-                    </div>
-                    <h3 className="text-xl font-black uppercase text-slate-900 sm:text-2xl">
-                        {session.title}
-                    </h3>
-                    <div className="flex flex-wrap gap-4 font-mono text-xs font-bold text-slate-700">
-                        <span>📍 Venue: <strong>{session.venue || 'Autonomous Systems Lab'}</strong></span>
-                        <span>⏰ Time: <strong>5:10 PM – 6:50 PM</strong></span>
-                    </div>
-                </div>
-
-                {/* Lock Alert for single track student attempting to access other track */}
-                {student && !isEnrolledInTrack && (
-                    <div className="mt-4 border-3 border-amber-600 bg-amber-50 p-4 text-amber-950 shadow-brutal-2">
-                        <div className="flex items-center gap-2 font-mono text-xs font-black uppercase text-amber-900">
-                            <span>🔒 TRACK RESTRICTED MATERIAL</span>
+                {/* Scrollable Container */}
+                <div className="overflow-y-auto pr-1">
+                    {/* Header */}
+                    <div className="space-y-3 border-b-4 border-slate-900 pb-5">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="border border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-xs font-black text-amber-300 uppercase">
+                                {session.label}
+                            </span>
+                            <span className="border border-slate-900 bg-amber-300 px-2.5 py-0.5 font-mono text-xs font-black text-slate-900 uppercase">
+                                {session.days} ({session.date})
+                            </span>
+                            <span className="border border-slate-900 bg-sky-100 px-2.5 py-0.5 font-mono text-xs font-black text-sky-900 uppercase">
+                                {trackName}
+                            </span>
+                            {session.project && (
+                                <span className="border border-slate-900 bg-emerald-100 px-2.5 py-0.5 font-mono text-xs font-black text-emerald-900 uppercase">
+                                    🚀 {session.project}
+                                </span>
+                            )}
                         </div>
-                        <p className="mt-1 text-xs font-bold leading-relaxed">
-                            Your account (<strong>{student.name}</strong>) is enrolled in the{' '}
-                            <strong className="uppercase text-amber-900">{student.package}</strong> track.
-                            Only participants who paid for the <strong>Dual-Track Combo</strong> can download notes and access both Software and Powertrain materials!
-                        </p>
-                    </div>
-                )}
+                        <h3 className="text-2xl font-black uppercase text-slate-900 sm:text-3xl">
+                            {session.title}
+                        </h3>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 pt-1 font-mono text-xs font-bold text-slate-700 sm:text-sm">
+                            {session.instructor && session.instructor !== '-' && (
+                                <span>👤 Handled by: <strong className="text-sky-800 font-black">{session.instructor}</strong></span>
+                            )}
+                            <span>📍 Venue: <strong>{session.venue || 'Autonomous Systems Lab'}</strong></span>
+                            <span>⏰ Time: <strong>5:10 PM – 6:50 PM</strong></span>
+                        </div>
 
-                {/* Body Content Sections */}
-                <div className="mt-5 space-y-6">
-                    {/* 1. Instructor & Contact Info */}
-                    <div className="border-3 border-slate-900 bg-sky-50/70 p-4 shadow-brutal-2">
-                        <span className="font-mono text-xs font-black tracking-widest text-sky-800 uppercase">
-                            👤 INSTRUCTOR &amp; CONTACT DETAILS
-                        </span>
-                        <div className="mt-2 space-y-1">
-                            <h4 className="text-base font-black text-slate-900">
-                                {session.instructor && session.instructor !== '-'
-                                    ? session.instructor
-                                    : 'Team Asterix Lead Instructors'}
-                            </h4>
-                            <p className="text-xs font-bold text-sky-900">{contactInfo.role}</p>
-                            <div className="mt-3 flex flex-wrap gap-3 font-mono text-xs font-bold">
-                                <a
-                                    href={`mailto:${contactInfo.email}`}
-                                    className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
-                                >
-                                    <span>✉️ {contactInfo.email}</span>
-                                </a>
-                                <a
-                                    href={`tel:${contactInfo.phone}`}
-                                    className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
-                                >
-                                    <span>📞 {contactInfo.phone}</span>
-                                </a>
+                        {session.reportingInstructions && (
+                            <div className="border-2 border-slate-900 bg-slate-100 p-2.5 font-mono text-xs font-bold text-slate-800">
+                                ℹ️ {session.reportingInstructions}
                             </div>
-                        </div>
+                        )}
                     </div>
 
-                    {/* 2. Attendance Status */}
-                    <div className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-2">
-                        <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs font-black tracking-widest text-slate-700 uppercase">
-                                📊 STUDENT ATTENDANCE STATUS
-                            </span>
-                            {student && (
-                                <span className="font-mono text-xs font-bold text-slate-600">
-                                    {student.name} ({student.rollNo})
+                    {/* Lock Alert for single track student attempting to access other track */}
+                    {student && !isEnrolledInTrack && (
+                        <div className="mt-5 border-3 border-amber-600 bg-amber-50 p-4 text-amber-950 shadow-brutal-2">
+                            <div className="flex items-center gap-2 font-mono text-xs font-black uppercase text-amber-900">
+                                <span>🔒 TRACK RESTRICTED MATERIAL</span>
+                            </div>
+                            <p className="mt-1 text-xs font-bold leading-relaxed">
+                                Your account (<strong>{student.name}</strong>) is enrolled in the{' '}
+                                <strong className="uppercase text-amber-900">{student.package}</strong> track.
+                                Only participants who paid for the <strong>Dual-Track Combo</strong> can download notes and access both Software and Powertrain materials!
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Body Content Sections Grid */}
+                    <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+                        {/* Left Column */}
+                        <div className="space-y-5">
+                            {/* 1. Instructor & Contact Info */}
+                            <div className="border-3 border-slate-900 bg-sky-50/70 p-4 shadow-brutal-2">
+                                <span className="font-mono text-xs font-black tracking-widest text-sky-800 uppercase">
+                                    👤 INSTRUCTOR &amp; CONTACT DETAILS
                                 </span>
-                            )}
-                        </div>
-
-                        <div className="mt-3">
-                            {!student ? (
-                                <div className="flex items-center justify-between border-2 border-amber-500 bg-amber-50 p-3 font-mono text-xs font-bold text-amber-900">
-                                    <span>🔒 Login with Mobile/Email to view your live attendance.</span>
-                                </div>
-                            ) : loadingAttendance ? (
-                                <div className="font-mono text-xs font-bold text-slate-600">
-                                    Checking attendance records...
-                                </div>
-                            ) : attendanceStatus === 'present' ? (
-                                <div className="flex items-center gap-3 border-2 border-emerald-600 bg-emerald-50 p-3 text-emerald-900">
-                                    <span className="text-xl">✅</span>
-                                    <div>
-                                        <div className="font-mono text-sm font-black uppercase">
-                                            Status: PRESENT
-                                        </div>
-                                        <div className="font-mono text-xs font-bold text-emerald-800">
-                                            Verified attendance record
-                                            {checkInTime ? ` on ${new Date(checkInTime).toLocaleString('en-IN')}` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-3 border-2 border-rose-600 bg-rose-50 p-3 text-rose-900">
-                                    <span className="text-xl">❌</span>
-                                    <div>
-                                        <div className="font-mono text-sm font-black uppercase">
-                                            Status: ABSENT / NOT CHECKED IN
-                                        </div>
-                                        <div className="font-mono text-xs font-bold text-rose-800">
-                                            No attendance scan recorded yet for this session.
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* 3. Track-Specific Notes & Resources */}
-                    <div className="border-3 border-slate-900 bg-amber-50/70 p-4 shadow-brutal-2">
-                        <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
-                                📚 SHARED NOTES ({isSoftwareTrack ? 'SOFTWARE TRACK' : 'POWERTRAIN TRACK'})
-                            </span>
-                            {isCombo && (
-                                <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900">
-                                    ✦ COMBO FULL ACCESS
-                                </span>
-                            )}
-                        </div>
-
-                        <div className="mt-3 space-y-2">
-                            {notes.map((note, idx) => (
-                                <div
-                                    key={idx}
-                                    className="flex flex-col justify-between gap-2 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center"
-                                >
-                                    <div>
-                                        <h5 className="font-mono text-xs font-black text-slate-900">
-                                            {note.title}
-                                        </h5>
-                                        <span className="font-mono text-[10px] font-bold text-slate-500">
-                                            Format: {note.type} · {note.size}
-                                        </span>
-                                    </div>
-                                    {isEnrolledInTrack ? (
+                                <div className="mt-2 space-y-1">
+                                    <h4 className="text-base font-black text-slate-900">
+                                        {session.instructor && session.instructor !== '-'
+                                            ? session.instructor
+                                            : 'Team Asterix Lead Instructors'}
+                                    </h4>
+                                    <p className="text-xs font-bold text-sky-900">{contactInfo.role}</p>
+                                    <div className="mt-3 flex flex-wrap gap-2.5 font-mono text-xs font-bold">
                                         <a
-                                            href={note.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="press shadow-brutal-2 inline-flex items-center gap-1 border border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 no-underline hover:bg-amber-400"
+                                            href={`mailto:${contactInfo.email}`}
+                                            className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
                                         >
-                                            <span>Download Notes</span>
-                                            <span>📥</span>
+                                            <span>✉️ {contactInfo.email}</span>
                                         </a>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1 border border-slate-400 bg-slate-200 px-3 py-1 font-mono text-xs font-black text-slate-600 uppercase">
-                                            <span>🔒 Locked (Combo Only)</span>
+                                        <a
+                                            href={`tel:${contactInfo.phone}`}
+                                            className="press flex items-center gap-1 border border-slate-900 bg-white px-2.5 py-1 text-slate-900 no-underline hover:bg-amber-300"
+                                        >
+                                            <span>📞 {contactInfo.phone}</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 2. Attendance Status */}
+                            <div className="border-3 border-slate-900 bg-slate-50 p-4 shadow-brutal-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-xs font-black tracking-widest text-slate-700 uppercase">
+                                        📊 STUDENT ATTENDANCE STATUS
+                                    </span>
+                                    {student && (
+                                        <span className="font-mono text-xs font-bold text-slate-600">
+                                            {student.name} ({student.rollNo})
                                         </span>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
 
-                    {/* 4. Session Quiz */}
-                    {hasQuiz && (
-                        <div className="border-3 border-slate-900 bg-purple-50 p-4 shadow-brutal-2">
-                            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                                <div>
-                                    <span className="font-mono text-xs font-black tracking-widest text-purple-900 uppercase">
-                                        ⚡ SESSION KNOWLEDGE QUIZ
-                                    </span>
-                                    <h5 className="text-base font-black text-slate-900">
-                                        {quizTitle}
-                                    </h5>
-                                    <p className="text-xs font-bold text-slate-600">
-                                        Test your understanding of the concepts covered in this class.
-                                    </p>
+                                <div className="mt-3">
+                                    {!student ? (
+                                        <div className="flex items-center justify-between border-2 border-amber-500 bg-amber-50 p-3 font-mono text-xs font-bold text-amber-900">
+                                            <span>🔒 Login with Mobile/Email to view your live attendance.</span>
+                                        </div>
+                                    ) : loadingAttendance ? (
+                                        <div className="font-mono text-xs font-bold text-slate-600">
+                                            Checking attendance records...
+                                        </div>
+                                    ) : attendanceStatus === 'present' ? (
+                                        <div className="flex items-center gap-3 border-2 border-emerald-600 bg-emerald-50 p-3 text-emerald-900">
+                                            <span className="text-xl">✅</span>
+                                            <div>
+                                                <div className="font-mono text-sm font-black uppercase">
+                                                    Status: PRESENT
+                                                </div>
+                                                <div className="font-mono text-xs font-bold text-emerald-800">
+                                                    Verified attendance record
+                                                    {checkInTime ? ` on ${new Date(checkInTime).toLocaleString('en-IN')}` : ''}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3 border-2 border-rose-600 bg-rose-50 p-3 text-rose-900">
+                                            <span className="text-xl">❌</span>
+                                            <div>
+                                                <div className="font-mono text-sm font-black uppercase">
+                                                    Status: ABSENT / NOT CHECKED IN
+                                                </div>
+                                                <div className="font-mono text-xs font-bold text-rose-800">
+                                                    No attendance scan recorded yet for this session.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                {isEnrolledInTrack ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            onClose();
-                                            if (onTakeQuiz) onTakeQuiz(session);
-                                        }}
-                                        className="press shadow-brutal-4-brand shrink-0 border-2 border-slate-900 bg-purple-600 px-4 py-2 font-mono text-xs font-black uppercase text-white hover:bg-purple-700"
-                                    >
-                                        <span>✍️ Take Quiz Now</span>
-                                    </button>
-                                ) : (
-                                    <span className="shrink-0 border-2 border-slate-400 bg-slate-200 px-4 py-2 font-mono text-xs font-black uppercase text-slate-600">
-                                        🔒 Quiz Locked
-                                    </span>
-                                )}
                             </div>
                         </div>
-                    )}
+
+                        {/* Right Column */}
+                        <div className="space-y-5">
+                            {/* 3. Track-Specific Notes & Resources */}
+                            <div className="border-3 border-slate-900 bg-amber-50/70 p-4 shadow-brutal-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
+                                        📚 SHARED NOTES ({isSoftwareTrack ? 'SOFTWARE TRACK' : 'POWERTRAIN TRACK'})
+                                    </span>
+                                    {isCombo && (
+                                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900">
+                                            ✦ COMBO FULL ACCESS
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                    {notes.map((note, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="flex flex-col justify-between gap-2 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center"
+                                        >
+                                            <div>
+                                                <h5 className="font-mono text-xs font-black text-slate-900">
+                                                    {note.title}
+                                                </h5>
+                                                <span className="font-mono text-[10px] font-bold text-slate-500">
+                                                    Format: {note.type} · {note.size}
+                                                </span>
+                                            </div>
+                                            {isEnrolledInTrack ? (
+                                                <a
+                                                    href={note.link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="press shadow-brutal-2 inline-flex shrink-0 items-center gap-1 border border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 no-underline hover:bg-amber-400"
+                                                >
+                                                    <span>Download Notes</span>
+                                                    <span>📥</span>
+                                                </a>
+                                            ) : (
+                                                <span className="inline-flex shrink-0 items-center gap-1 border border-slate-400 bg-slate-200 px-3 py-1 font-mono text-xs font-black text-slate-600 uppercase">
+                                                    <span>🔒 Locked (Combo Only)</span>
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 4. Session Quiz */}
+                            {hasQuiz && (
+                                <div className="border-3 border-slate-900 bg-purple-50 p-4 shadow-brutal-2">
+                                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                                        <div>
+                                            <span className="font-mono text-xs font-black tracking-widest text-purple-900 uppercase">
+                                                ⚡ SESSION KNOWLEDGE QUIZ
+                                            </span>
+                                            <h5 className="text-base font-black text-slate-900">
+                                                {quizTitle}
+                                            </h5>
+                                            <p className="text-xs font-bold text-slate-600">
+                                                Test your understanding of the concepts covered in this class.
+                                            </p>
+                                        </div>
+                                        {isEnrolledInTrack ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    onClose();
+                                                    if (onTakeQuiz) onTakeQuiz(session);
+                                                }}
+                                                className="press shadow-brutal-4-brand shrink-0 border-2 border-slate-900 bg-purple-600 px-4 py-2 font-mono text-xs font-black uppercase text-white hover:bg-purple-700"
+                                            >
+                                                <span>✍️ Take Quiz Now</span>
+                                            </button>
+                                        ) : (
+                                            <span className="shrink-0 border-2 border-slate-400 bg-slate-200 px-4 py-2 font-mono text-xs font-black uppercase text-slate-600">
+                                                🔒 Quiz Locked
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

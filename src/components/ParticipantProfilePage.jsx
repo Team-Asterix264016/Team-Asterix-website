@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiUrl } from '../lib/api';
 
 function receiptRows(record) {
@@ -171,7 +171,6 @@ export default function ParticipantProfilePage({ onBack }) {
     };
 
     return (
-    return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-900 selection:bg-amber-300">
             {/* Header */}
             <header className="sticky top-0 z-50 border-b-4 border-slate-900 bg-white/95 px-4 py-3.5 shadow-[0_4px_0px_#0f172a] backdrop-blur-md sm:px-8">
@@ -198,7 +197,6 @@ export default function ParticipantProfilePage({ onBack }) {
             </header>
 
             {!profile ? (
-                /* Unauthenticated / Search View: Vertically & Horizontally Centered Landing */
                 <main className="flex min-h-[calc(100vh-73px)] flex-col items-center justify-center p-4 sm:p-8">
                     <div className="shadow-brutal-8 my-auto w-full max-w-3xl border-4 border-slate-900 bg-white p-6 text-slate-900 sm:p-10">
                         <div className="text-center">
@@ -258,7 +256,6 @@ export default function ParticipantProfilePage({ onBack }) {
                     </div>
                 </main>
             ) : (
-                /* Authenticated Profile View */
                 <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
                     {/* Header Bar to Switch Candidate */}
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b-4 border-white/20 pb-4 text-white">
@@ -690,7 +687,8 @@ export default function ParticipantProfilePage({ onBack }) {
                         )}
                     </div>
                 )}
-            </main>
+                </main>
+            )}
         </div>
     );
 }

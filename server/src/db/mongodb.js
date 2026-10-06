@@ -428,8 +428,8 @@ Building autonomous vehicle technology is a mission for Team Asterix—turning a
                 brochureUrl: '',
                 deckUrl: '',
                 contactPerson: 'Ratheeswar & Team Leads',
-                contactEmail: 'asterix.psgitech@gmail.com',
-                contactPhone: '+91 98765 43210'
+                contactEmail: 'software.asterix@psgitech.ac.in',
+                contactPhone: '+91 86089 44644'
             };
 
 
