@@ -594,20 +594,158 @@ router.post('/profile', async (req, res) => {
             track: { $in: [...tracksEnrolled, 'common'] }
         }).sort({ sessionNumber: 1 }).lean();
 
-        // Built-in resources per track
+        // Built-in comprehensive resources per track
+        const TRACK_DEFAULT_RESOURCES = {
+            software: [
+                {
+                    id: 'res-sw-syllabus',
+                    track: 'software',
+                    module: 'Syllabus & Guides',
+                    title: 'Software & Perception Official Syllabus & Lab Guide',
+                    description: 'Complete 5-week course outline covering System Design, OpenCV, Machine Learning, ROS 2, and Agentic AI capstone projects.',
+                    resources: [
+                        { label: 'Download PDF Syllabus', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-sw-sysdesign',
+                    track: 'software',
+                    module: 'System Design',
+                    title: 'System Design I & II: Subsystem Decomposition & Loop Timing Notes',
+                    description: 'ATV sensor-processor-actuator breakdown, Sense-Plan-Act control loop timing analysis, interface contracts & Mini-Projects 1 & 2 slides.',
+                    resources: [
+                        { label: 'Download System Design Slides (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' },
+                        { label: 'System Design Diagramming Template', url: 'https://excalidraw.com', type: 'link' }
+                    ]
+                },
+                {
+                    id: 'res-sw-cv',
+                    track: 'software',
+                    module: 'Computer Vision',
+                    title: 'Computer Vision: Image Processing, HSV Thresholding & Contours',
+                    description: 'NumPy pixel matrices, Gaussian blur filtering, HSV color space thresholding for cone detection, and OpenCV contour tracking.',
+                    resources: [
+                        { label: 'OpenCV Colab Notebook', url: 'https://colab.research.google.com', type: 'colab' },
+                        { label: 'Asterix Vision Starter Repo (GitHub)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'OpenCV Function Cheat Sheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-sw-ml',
+                    track: 'software',
+                    module: 'Machine Learning',
+                    title: 'Machine Learning: Vehicle Telemetry Data Analytics & Regression',
+                    description: 'Jupyter notebooks and CSV dataset parsing for telemetry logs. Pandas data cleaning, K-Means clustering, and Linear Regression speed estimation.',
+                    resources: [
+                        { label: 'Vehicle Telemetry ML Notebook', url: 'https://colab.research.google.com', type: 'colab' },
+                        { label: 'Sample BAJA Telemetry CSV (12k logs)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'Scikit-Learn Cheat Sheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-sw-ros',
+                    track: 'software',
+                    module: 'ROS 2 & Agentic AI',
+                    title: 'ROS 2 & Agentic AI: Nodes, Topics & LLM Vehicle Control Loop',
+                    description: 'ROS 2 node creation, publisher-subscriber communication CLI, and building LLM-powered decision agents with autonomous safety guardrails.',
+                    resources: [
+                        { label: 'Asterix ROS 2 Starter Kit (GitHub)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'ROS 2 CLI & Architecture Cheatsheet (PDF)', url: '/workshop/software-perception-syllabus.pdf', type: 'pdf' },
+                        { label: 'Agentic AI Reasoning Notebook', url: 'https://colab.research.google.com', type: 'colab' }
+                    ]
+                }
+            ],
+            powertrain: [
+                {
+                    id: 'res-pt-syllabus',
+                    track: 'powertrain',
+                    module: 'Syllabus & Guides',
+                    title: 'Electronics & Powertrain Official Syllabus & Lab Manual',
+                    description: 'Complete 21-hour lab guide covering Network Analysis, Electronic Devices, Microcontrollers, Analog Circuits, Motors, and PCB layout.',
+                    resources: [
+                        { label: 'Download PDF Syllabus', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-pt-circuits',
+                    track: 'powertrain',
+                    module: 'Circuit Analysis',
+                    title: 'Network Analysis: Ohm\'s Law, KVL/KCL & RC Circuits Notes',
+                    description: 'Fundamental electrical engineering principles, voltage divider equations, RC time constants, and LTspice simulation setup files.',
+                    resources: [
+                        { label: 'Circuit Analysis Lecture Slides (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' },
+                        { label: 'LTspice RC Filter Schematic (.asc)', url: 'https://github.com/Team-Asterix264016', type: 'code' }
+                    ]
+                },
+                {
+                    id: 'res-pt-transistors',
+                    track: 'powertrain',
+                    module: 'Circuit Analysis',
+                    title: 'Electronic Devices: BJT & MOSFET Switching Circuits Notes',
+                    description: 'Transistor saturation modes, gate drive design, flyback protection diodes, and PSpice/LTspice transistor switch simulation.',
+                    resources: [
+                        { label: 'LTspice MOSFET Switch Simulation', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'Transistor Switching Guide (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-pt-esp32',
+                    track: 'powertrain',
+                    module: 'ESP32 & Microcontrollers',
+                    title: 'Microcontrollers: ESP32 Firmware & Buggy Start-Up Notes',
+                    description: 'ESP32 GPIO pinout guide, Arduino IDE setup, PWM signal generation, safety kill-switch logic, and Tinkercad interactive circuit simulation.',
+                    resources: [
+                        { label: 'ESP32 Buggy Start-Up Firmware (.ino)', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'Tinkercad ESP32 Interactive Simulator', url: 'https://www.tinkercad.com', type: 'link' },
+                        { label: 'ESP32 Pinout Cheat Sheet (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-pt-analog',
+                    track: 'powertrain',
+                    module: 'Analog Circuits & Power',
+                    title: 'Analog Circuits: Buck-Boost Converters, Op-Amps & Active Filters Notes',
+                    description: 'DC-DC buck-boost converters, operational amplifiers for sensor signal conditioning, active low-pass filters, and MATLAB scripts.',
+                    resources: [
+                        { label: 'Op-Amp & Power Regulator Slides (PDF)', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' },
+                        { label: 'MATLAB Active Filter Simulation Script', url: 'https://github.com/Team-Asterix264016', type: 'code' }
+                    ]
+                },
+                {
+                    id: 'res-pt-motors',
+                    track: 'powertrain',
+                    module: 'Electric Motors',
+                    title: 'Electric Machines & Motors: DC, BLDC, Stepper & Servo Control Notes',
+                    description: 'Operating principles of electric motors, H-bridge motor drivers, PWM torque control, and MATLAB Simulink motor performance models.',
+                    resources: [
+                        { label: 'MATLAB Simulink Motor Model File', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'Motor Driver & PWM Selection Manual', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
+                    ]
+                },
+                {
+                    id: 'res-pt-pcb',
+                    track: 'powertrain',
+                    module: 'PCB Design',
+                    title: 'PCB Design: KiCad Schematic Capture & PCB Layout Walkthrough',
+                    description: 'Step-by-step PCB layout guide, component footprint selection, trace width calculator, Design Rule Checks (DRC), and vehicle PCB tour.',
+                    resources: [
+                        { label: 'KiCad PCB Project & Component Libraries', url: 'https://github.com/Team-Asterix264016', type: 'code' },
+                        { label: 'PCB Design Rules & Trace Width Guide', url: '/workshop/powertrain-syllabus.pdf', type: 'pdf' }
+                    ]
+                }
+            ]
+        };
+
         const defaultResources = [];
+        const trackInfo = {};
+
         tracksEnrolled.forEach((tId) => {
             const trk = WORKSHOP_TRACKS[tId];
             if (trk) {
-                defaultResources.push({
-                    id: `default-${tId}-syllabus`,
-                    track: tId,
-                    title: `${trk.name} Official Syllabus & Lab Guide`,
-                    description: trk.overview,
-                    resources: [
-                        { label: 'Download PDF Syllabus', url: trk.syllabus, type: 'pdf' }
-                    ]
-                });
+                trackInfo[tId] = trk;
+            }
+            if (TRACK_DEFAULT_RESOURCES[tId]) {
+                defaultResources.push(...TRACK_DEFAULT_RESOURCES[tId]);
             }
         });
 
@@ -639,6 +777,7 @@ router.post('/profile', async (req, res) => {
                     : `⚠️ ${75 - attendancePercentage}% away from 75% certificate threshold`
             },
             sessionTimeline,
+            trackInfo,
             resources: [...defaultResources, ...dynamicResources]
         });
     } catch (err) {

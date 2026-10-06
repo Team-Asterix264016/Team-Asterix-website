@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiUrl } from '../lib/api';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
-import { downloadAllIcsFile } from '../utils/calendarUtils';
+import { downloadAllIcsFile, getGoogleCalendarUrl } from '../utils/calendarUtils';
+import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
 
 const SUBSYSTEMS_PORTAL_DATA = [
     {
@@ -222,6 +223,10 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const [error, setError] = useState('');
     const [profile, setProfile] = useState(null);
     const [activeTab, setActiveTab] = useState('attendance');
+    const [timetableFilter, setTimetableFilter] = useState('all');
+    const [timetableSearch, setTimetableSearch] = useState('');
+    const [notesModuleFilter, setNotesModuleFilter] = useState('all');
+    const [notesSearch, setNotesSearch] = useState('');
 
     const fetchProfile = useCallback(async (queryVal) => {
         const target = queryVal || identifier;
