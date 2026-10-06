@@ -6,6 +6,56 @@ const CommunityAuthContext = createContext();
 const COMMUNITY_AUTH_KEY = 'asterix_community_session_v2';
 const COMMUNITY_MESSAGES_KEY = 'asterix_community_messages_v1';
 const COMMUNITY_ENDORSEMENTS_KEY = 'asterix_community_endorsements_v1';
+const COMMUNITY_PINS_KEY = 'asterix_community_pins_v1';
+const COMMUNITY_PRAISE_KEY = 'asterix_community_praise_v1';
+
+const DEFAULT_PINS = [
+    {
+        id: 'pin-1',
+        memberId: 'mem-default',
+        rollNo: '24ME042',
+        title: 'ROS2 LiDAR PointCloud Cluster & Filter Node',
+        category: 'code',
+        url: 'https://github.com/Team-Asterix264016/',
+        description: 'Real-time 3D voxel filtering & clustering algorithm processing Ouster LiDAR telemetry at 30 FPS.',
+        date: 'Oct 2026',
+        reactions: { torque: 18, clean: 14, brain: 10 }
+    },
+    {
+        id: 'pin-2',
+        memberId: 'mem-default',
+        rollNo: '24ME042',
+        title: 'Baja SAE Off-Road Gearbox Assembly CAD',
+        category: 'cad',
+        url: 'https://cad.onshape.com/',
+        description: 'Lightweight 7075-T6 aluminum differential casing engineered for 45° incline torque delivery.',
+        date: 'Sep 2026',
+        reactions: { torque: 24, clean: 12, brain: 16 }
+    }
+];
+
+const DEFAULT_PRAISE = [
+    {
+        id: 'praise-1',
+        recipientId: 'mem-default',
+        rollNo: '24ME042',
+        authorName: 'Preethika S.',
+        authorRole: 'Autonomous Perception Lead',
+        authorAvatar: 'P',
+        comment: 'Optimized our CUDA point cloud filter during track testing. Super quick problem solver and great team collaborator!',
+        date: '5 Oct 2026'
+    },
+    {
+        id: 'praise-2',
+        recipientId: 'mem-default',
+        rollNo: '24ME042',
+        authorName: 'Joel R.',
+        authorRole: 'Powertrain Lead',
+        authorAvatar: 'J',
+        comment: 'Helped inspect differential gear backlash during assembly night. Extremely thorough with torque specs!',
+        date: '3 Oct 2026'
+    }
+];
 
 export function CommunityAuthProvider({ children }) {
     const { siteData } = useWebsiteData();
@@ -14,7 +64,16 @@ export function CommunityAuthProvider({ children }) {
     const [currentMember, setCurrentMember] = useState(() => {
         try {
             const saved = localStorage.getItem(COMMUNITY_AUTH_KEY);
-            return saved ? JSON.parse(saved) : null;
+            if (saved) return JSON.parse(saved);
+            // Fallback: check if workshop student session exists
+            const wsStudent = localStorage.getItem('workshop_student');
+            if (wsStudent) {
+                const parsed = JSON.parse(wsStudent);
+                if (parsed.rollNo || parsed.email || parsed.phone) {
+                    return null; // Will trigger sync effect below
+                }
+            }
+            return null;
         } catch {
             return null;
         }
@@ -38,10 +97,44 @@ export function CommunityAuthProvider({ children }) {
         }
     });
 
+    const [showcasePins, setShowcasePins] = useState(() => {
+        try {
+            const saved = localStorage.getItem(COMMUNITY_PINS_KEY);
+            return saved ? JSON.parse(saved) : DEFAULT_PINS;
+        } catch {
+            return DEFAULT_PINS;
+        }
+    });
+
+    const [praiseList, setPraiseList] = useState(() => {
+        try {
+            const saved = localStorage.getItem(COMMUNITY_PRAISE_KEY);
+            return saved ? JSON.parse(saved) : DEFAULT_PRAISE;
+        } catch {
+            return DEFAULT_PRAISE;
+        }
+    });
+
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isMessagingDrawerOpen, setIsMessagingDrawerOpen] = useState(false);
     const [activeChatMember, setActiveChatMember] = useState(null);
+
+    // Auto-sync workshop login into community profile on startup
+    useEffect(() => {
+        if (!currentMember) {
+            try {
+                const wsStudent = localStorage.getItem('workshop_student');
+                if (wsStudent) {
+                    const parsed = JSON.parse(wsStudent);
+                    const idVal = parsed.rollNo || parsed.email || parsed.phone;
+                    if (idVal) {
+                        loginWithRollOrPhone(idVal);
+                    }
+                }
+            } catch {}
+        }
+    }, []);
 
     useEffect(() => {
         if (currentMember) {
@@ -66,6 +159,18 @@ export function CommunityAuthProvider({ children }) {
             localStorage.setItem(COMMUNITY_ENDORSEMENTS_KEY, JSON.stringify(endorsements));
         } catch {}
     }, [endorsements]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(COMMUNITY_PINS_KEY, JSON.stringify(showcasePins));
+        } catch {}
+    }, [showcasePins]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(COMMUNITY_PRAISE_KEY, JSON.stringify(praiseList));
+        } catch {}
+    }, [praiseList]);
 
     // Calculate level and rank based on XP
     const calculateRank = (xp) => {
@@ -102,10 +207,12 @@ export function CommunityAuthProvider({ children }) {
                 packageLabel: matched.packageLabel || 'Standard Workshop Package',
                 isWorkshopVerified: matched.attended || matched.paymentStatus === 'PAID',
                 attendanceStatus: matched.attended ? 'PRESENT & VERIFIED' : 'REGISTERED',
-                xp: 280,
+                xp: 320,
                 joinedDate: '2026',
                 bio: 'Autonomous Mobility & Robotics Engineering student at PSG iTech.',
                 skills: ['ROS2', 'SolidWorks', 'LiDAR', 'C++', 'Python'],
+                mentorshipStatus: 'AVAILABLE', // 'AVAILABLE' | 'LIMITED' | 'NONE'
+                mentorshipTopics: ['ROS2', 'SolidWorks CAD', 'C++'],
                 avatar: matched.name ? matched.name[0].toUpperCase() : 'A'
             };
         } else {
@@ -122,10 +229,12 @@ export function CommunityAuthProvider({ children }) {
                 packageLabel: 'Community Developer',
                 isWorkshopVerified: false,
                 attendanceStatus: 'COMMUNITY MEMBER',
-                xp: 150,
+                xp: 210,
                 joinedDate: '2026',
                 bio: 'Passionate student developer contributing to Team Asterix community.',
                 skills: ['ROS2', 'Python', 'CAD', 'Embedded'],
+                mentorshipStatus: 'AVAILABLE',
+                mentorshipTopics: ['Python', 'CAD'],
                 avatar: identifier[0].toUpperCase()
             };
         }
@@ -134,6 +243,23 @@ export function CommunityAuthProvider({ children }) {
         const finalMember = { ...memberObj, ...rankInfo };
 
         setCurrentMember(finalMember);
+
+        // Sync back to Workshop Student session in localStorage
+        try {
+            localStorage.setItem('workshop_student', JSON.stringify({
+                rollNo: finalMember.rollNo,
+                name: finalMember.name,
+                email: finalMember.email,
+                phone: finalMember.phone,
+                college: finalMember.college,
+                department: finalMember.department,
+                track: finalMember.track
+            }));
+            if (!localStorage.getItem('workshop_jwt')) {
+                localStorage.setItem('workshop_jwt', 'community_synced_token');
+            }
+        } catch {}
+
         setIsLoginModalOpen(false);
         setIsProfileModalOpen(true);
         return { success: true, member: finalMember };
@@ -141,6 +267,11 @@ export function CommunityAuthProvider({ children }) {
 
     const logout = () => {
         setCurrentMember(null);
+        try {
+            localStorage.removeItem(COMMUNITY_AUTH_KEY);
+            localStorage.removeItem('workshop_student');
+            localStorage.removeItem('workshop_jwt');
+        } catch {}
         setIsProfileModalOpen(false);
         setIsMessagingDrawerOpen(false);
     };
@@ -165,7 +296,7 @@ export function CommunityAuthProvider({ children }) {
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
         setMessages(prev => [newMsg, ...prev]);
-        addXP(15); // Reward 15 XP for peer messaging & collaboration
+        addXP(15);
     };
 
     const endorseMember = (memberId, skill) => {
@@ -180,7 +311,68 @@ export function CommunityAuthProvider({ children }) {
                 }
             };
         });
-        addXP(10); // Reward 10 XP for endorsing peers
+        addXP(10);
+    };
+
+    const addShowcasePin = ({ title, category, url, description }) => {
+        if (!title.trim()) return;
+        const newPin = {
+            id: `pin-${Date.now()}`,
+            memberId: currentMember?.id || 'mem-default',
+            rollNo: currentMember?.rollNo || '24ME042',
+            title: title.trim(),
+            category: category || 'code',
+            url: url.trim() || 'https://github.com/Team-Asterix264016/',
+            description: description.trim() || 'Engineering project artifact pinned to community profile.',
+            date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            reactions: { torque: 1, clean: 1, brain: 1 }
+        };
+        setShowcasePins(prev => [newPin, ...prev]);
+        addXP(50); // Award 50 XP for pinning project!
+    };
+
+    const reactToPin = (pinId, reactionType) => {
+        setShowcasePins(prev =>
+            prev.map(pin => {
+                if (pin.id === pinId) {
+                    const currentCount = pin.reactions?.[reactionType] || 0;
+                    return {
+                        ...pin,
+                        reactions: {
+                            ...pin.reactions,
+                            [reactionType]: currentCount + 1
+                        }
+                    };
+                }
+                return pin;
+            })
+        );
+        addXP(5);
+    };
+
+    const updateMentorshipStatus = (status, topics) => {
+        if (!currentMember) return;
+        setCurrentMember(prev => ({
+            ...prev,
+            mentorshipStatus: status,
+            mentorshipTopics: topics || prev.mentorshipTopics || []
+        }));
+    };
+
+    const addCrewPraise = (recipientId, comment) => {
+        if (!comment.trim() || !currentMember) return;
+        const newPraise = {
+            id: `praise-${Date.now()}`,
+            recipientId,
+            rollNo: currentMember.rollNo,
+            authorName: currentMember.name,
+            authorRole: `${currentMember.rank} (LVL ${currentMember.level})`,
+            authorAvatar: currentMember.avatar || 'A',
+            comment: comment.trim(),
+            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+        };
+        setPraiseList(prev => [newPraise, ...prev]);
+        addXP(25); // Award 25 XP for recommending a peer!
     };
 
     return (
@@ -193,6 +385,14 @@ export function CommunityAuthProvider({ children }) {
             sendDirectMessage,
             endorsements,
             endorseMember,
+            showcasePins,
+            addShowcasePin,
+            reactToPin,
+            mentorshipStatus: currentMember?.mentorshipStatus || 'AVAILABLE',
+            mentorshipTopics: currentMember?.mentorshipTopics || ['ROS2', 'SolidWorks', 'Python'],
+            updateMentorshipStatus,
+            praiseList,
+            addCrewPraise,
             isProfileModalOpen,
             setIsProfileModalOpen,
             isLoginModalOpen,
