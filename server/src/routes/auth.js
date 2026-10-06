@@ -147,7 +147,11 @@ router.get('/accounts', authenticateToken, async (req, res) => {
     }
 });
 
+const ACCESS_RANK = { Member: 1, Lead: 2, SuperAdmin: 3 };
+
 // POST /api/auth/accounts (Protected - Admin/Lead)
+// Anyone signed in may add teammates, but never above their own access level, and only a
+// SuperAdmin can hand out admin roles; otherwise any account could mint a SuperAdmin.
 router.post('/accounts', authenticateToken, async (req, res) => {
     try {
         const { username, password, name, phone, role, accessLevel } = req.body;
@@ -156,6 +160,19 @@ router.post('/accounts', authenticateToken, async (req, res) => {
         }
         if (String(password).length < 8) {
             return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+        }
+
+        const requestedLevel = accessLevel || 'Lead';
+        const requestedRole = String(role || 'Team Member').trim();
+        if (!ACCESS_RANK[requestedLevel]) {
+            return res.status(400).json({ error: `accessLevel must be one of: ${Object.keys(ACCESS_RANK).join(', ')}.` });
+        }
+        const isSuperAdmin = req.user.accessLevel === 'SuperAdmin';
+        if (ACCESS_RANK[requestedLevel] > (ACCESS_RANK[req.user.accessLevel] || 0)) {
+            return res.status(403).json({ error: 'You can only create accounts at or below your own access level.' });
+        }
+        if (!isSuperAdmin && /^(super\s*admin|admin)$/i.test(requestedRole)) {
+            return res.status(403).json({ error: 'Only a SuperAdmin can create admin accounts.' });
         }
 
         const cleanUsername = username.trim().toLowerCase();
@@ -170,8 +187,8 @@ router.post('/accounts', authenticateToken, async (req, res) => {
             passwordHash,
             name: name.trim(),
             phone: (phone || '').trim(),
-            role: role || 'Team Member',
-            accessLevel: accessLevel || 'Lead'
+            role: requestedRole,
+            accessLevel: requestedLevel
         });
 
         res.status(201).json({
