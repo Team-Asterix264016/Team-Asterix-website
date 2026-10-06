@@ -3,108 +3,46 @@ import { apiUrl } from '../lib/api';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
 import { downloadAllIcsFile } from '../utils/calendarUtils';
 
-const MENTORS_DATA = [
+const SUBSYSTEMS_PORTAL_DATA = [
     {
-        id: 'adithya',
-        name: 'Dr. K. Adithya',
-        role: 'Faculty Mentor & Head of Autonomous Mobility',
-        dept: 'Mechatronics & AI Engineering',
-        specialization: 'Autonomous Perception, Sensor Fusion & Vehicle Safety Systems',
-        bio: 'Faculty Advisor guiding Team Asterix in building India\'s premier SAE BAJA Autonomous vehicle. Leads research on real-time 3D LiDAR point-cloud clustering and drive-by-wire fail-safes.',
-        labLocation: 'PSG iTECH Autonomous Mobility Lab, Room 304',
-        officeHours: 'Mon - Fri (4:00 PM - 6:30 PM)',
-        phone: '+91 98422 12345',
-        email: 'adithya.mct@psgitech.ac.in',
-        linkedin: 'https://www.linkedin.com/in/dr-k-adithya-psgitech',
-        github: 'https://github.com/adithya-mct',
-        avatarBg: 'bg-amber-300 text-slate-950',
-        badge: 'FACULTY MENTOR',
-        expertise: ['ROS 2', 'LiDAR 3D', 'Drive-by-Wire', 'Safety Systems']
+        id: 'software-perception',
+        name: 'Software & Perception Subsystem',
+        badge: 'AI & AUTONOMY',
+        color: 'bg-sky-400 text-slate-950',
+        tagline: 'ROS 2 Humble/Jazzy Architecture, Cartographer SLAM, YOLOv8 Neural Perception & TEB Path Planning.',
+        details: 'Handles drive-by-wire autonomy algorithms, LiDAR 3D point-cloud clustering, stereo depth perception, and digital twin Gazebo simulation.',
+        officialContact: 'ratheeswar.asterix@gmail.com',
+        phone: '+91 86089 44644'
     },
     {
-        id: 'ratheeswar',
-        name: 'Ratheeswar S',
-        role: 'Team Captain & Autonomous Software Lead',
-        dept: 'CSE / Final Year (2026 Batch)',
-        specialization: 'ROS 2 (Humble/Jazzy), C++, TEB Path Planning, Gazebo Digital Twin',
-        bio: 'Over 3 years of hands-on robotics experience in ROS 2 architecture and autonomous vehicle navigation. Always open to help freshers set up Ubuntu, ROS 2 nodes, and Python perception scripts.',
-        labLocation: 'AI & Robotics Bay 01',
-        officeHours: 'Daily (4:30 PM - 8:30 PM)',
-        phone: '+91 86089 44644',
-        email: 'ratheeswar.asterix@gmail.com',
-        linkedin: 'https://www.linkedin.com/in/ratheeswar-s',
-        github: 'https://github.com/RatheeswarS',
-        avatarBg: 'bg-sky-400 text-slate-950',
-        badge: 'CAPTAIN / AUTONOMY LEAD',
-        expertise: ['ROS 2', 'C++', 'SLAM', 'Path Planning', 'Nav2']
+        id: 'powertrain',
+        name: 'Powertrain & BMS Subsystem',
+        badge: 'EV POWER & ENERGY',
+        color: 'bg-amber-400 text-slate-950',
+        tagline: '72V High-Voltage Battery Enclosure, Active Cell Balancing BMS, Inverter Drive & LTspice Simulations.',
+        details: 'Architects electric drive motors, high-current busbars, thermal management, and power electronics simulation testbenches.',
+        officialContact: 'rithvik.asterix@gmail.com',
+        phone: '+91 94433 87654'
     },
     {
-        id: 'rithvik',
-        name: 'Rithvik M',
-        role: 'Powertrain & Battery Management System (BMS) Lead',
-        dept: 'EEE / Final Year (2026 Batch)',
-        specialization: 'EV Powertrains, LTspice Circuit Design, Active BMS Cell Balancing & Inverters',
-        bio: 'Designed and prototyped Team Asterix custom high-voltage battery enclosure and LTspice simulated motor drive. Passionate about guiding juniors in circuit design and power electronics.',
-        labLocation: 'EV Power Electronics Lab, Bay 02',
-        officeHours: 'Tue - Sat (5:00 PM - 8:30 PM)',
-        phone: '+91 94433 87654',
-        email: 'rithvik.asterix@gmail.com',
-        linkedin: 'https://www.linkedin.com/in/rithvik-m',
-        github: 'https://github.com/rithvik-m',
-        avatarBg: 'bg-amber-400 text-slate-950',
-        badge: 'POWERTRAIN & BMS LEAD',
-        expertise: ['LTspice', 'Active BMS', 'Power Electronics', 'High Voltage']
+        id: 'mechanical',
+        name: 'Mechanical & Dynamics Subsystem',
+        badge: 'CHASSIS & FEA',
+        color: 'bg-emerald-400 text-slate-950',
+        tagline: 'AISI 4130 Chromoly Spaceframe, Double-Wishbone Suspension Kinematics, SolidWorks & ANSYS FEA.',
+        details: 'Engineers structural safety cage, TIG welding fabrication, dynamic damper valving, and high-impact crash worthiness.',
+        officialContact: 'ananya.mech@psgitech.ac.in',
+        phone: '+91 97900 11223'
     },
     {
-        id: 'ananya',
-        name: 'Ananya R',
-        role: 'Chassis & Vehicle Dynamics Specialist',
-        dept: 'Mechanical Engineering / 3rd Year',
-        specialization: 'SolidWorks 3D CAD, ANSYS FEA, Chromoly TIG Welding & Wishbone Kinematics',
-        bio: 'Focuses on lightweight spaceframe structural optimization and dynamic damper valving. Encourages junior mechanical engineers to master FEA stress testing and workshop tools.',
-        labLocation: 'Mechanical Fabrication Shop, Bay 04',
-        officeHours: 'Mon - Thu (4:00 PM - 7:00 PM)',
-        phone: '+91 97900 11223',
-        email: 'ananya.mech@psgitech.ac.in',
-        linkedin: 'https://www.linkedin.com/in/ananya-r-asterix',
-        github: 'https://github.com/ananya-r',
-        avatarBg: 'bg-emerald-400 text-slate-950',
-        badge: 'CHASSIS & FEA HEAD',
-        expertise: ['SolidWorks', 'ANSYS FEA', 'Kinematics', 'TIG Welding']
-    },
-    {
-        id: 'harish',
-        name: 'Harish K',
-        role: 'Perception & Neural Computer Vision Lead',
-        dept: 'AI & Data Science / 3rd Year',
-        specialization: 'PyTorch, YOLOv8 Cone Detection, OpenCV, Stereo Depth & CUDA',
-        bio: 'Trained edge-AI neural networks for real-time track cone classification and obstacle avoidance running on Jetson Orin Nano GPU clusters.',
-        labLocation: 'AI & Robotics Bay 01',
-        officeHours: 'Mon - Fri (4:30 PM - 7:30 PM)',
-        phone: '+91 91234 56789',
-        email: 'harish.ai@psgitech.ac.in',
-        linkedin: 'https://www.linkedin.com/in/harish-k-ai',
-        github: 'https://github.com/harish-k-ai',
-        avatarBg: 'bg-purple-400 text-slate-950',
-        badge: 'PERCEPTION LEAD',
-        expertise: ['PyTorch', 'YOLOv8', 'OpenCV', 'CUDA', 'Jetson Nano']
-    },
-    {
-        id: 'deepa',
-        name: 'Deepa V',
-        role: 'Embedded Systems & CAN Bus Gateway Lead',
-        dept: 'ECE / 3rd Year',
-        specialization: 'ESP32 Microcontrollers, FreeRTOS, ISO 11898 CAN Protocol, Telemetry',
-        bio: 'Engineers drive-by-wire hardware interfaces, sensor data acquisition, and wireless telemetry streams from vehicle to pit wall.',
-        labLocation: 'Embedded Comms Bay 03',
-        officeHours: 'Mon - Fri (4:00 PM - 7:00 PM)',
-        phone: '+91 95511 22334',
-        email: 'deepa.ece@psgitech.ac.in',
-        linkedin: 'https://www.linkedin.com/in/deepa-v-ece',
-        github: 'https://github.com/deepa-v-ece',
-        avatarBg: 'bg-rose-400 text-slate-950',
-        badge: 'EMBEDDED LEAD',
-        expertise: ['ESP32', 'FreeRTOS', 'CAN Bus', 'Telemetry']
+        id: 'leads-admin',
+        name: 'Embedded Comms & Telemetry',
+        badge: 'HARDWARE & GATEWAYS',
+        color: 'bg-purple-400 text-slate-950',
+        tagline: 'ESP32 Microcontrollers, FreeRTOS, ISO 11898 CAN Bus Gateway & Wireless Pit Wall Telemetry.',
+        details: 'Interfaces drive-by-wire actuators, pedal encoders, emergency stop relays, and live telemetry data streaming.',
+        officialContact: 'asterix.psgitech@gmail.com',
+        phone: '+91 86089 44644'
     }
 ];
 
@@ -276,7 +214,7 @@ function downloadReceipt(rows, fileId) {
     }
 }
 
-export default function ParticipantProfilePage({ onBack }) {
+export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const communityAuth = useCommunityAuth();
     const currentMember = communityAuth?.currentMember;
     const [identifier, setIdentifier] = useState('');
@@ -284,7 +222,6 @@ export default function ParticipantProfilePage({ onBack }) {
     const [error, setError] = useState('');
     const [profile, setProfile] = useState(null);
     const [activeTab, setActiveTab] = useState('attendance');
-    const [selectedMentor, setSelectedMentor] = useState(null);
 
     const fetchProfile = useCallback(async (queryVal) => {
         const target = queryVal || identifier;
@@ -340,6 +277,14 @@ export default function ParticipantProfilePage({ onBack }) {
         fetchProfile();
     };
 
+    const handleSubsystemNavigate = (subsystemId) => {
+        if (onSelectSubsystem) {
+            onSelectSubsystem(subsystemId);
+        } else {
+            window.location.hash = `#subsystem`;
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-900 selection:bg-amber-300">
             {/* Top Navigation Bar */}
@@ -353,7 +298,7 @@ export default function ParticipantProfilePage({ onBack }) {
                             <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                                 Team Asterix Permanent Portal
                             </span>
-                            <strong className="block text-xs font-black uppercase sm:text-sm">Member &amp; Mentor Hub 🔓</strong>
+                            <strong className="block text-xs font-black uppercase sm:text-sm">Member &amp; Subsystems Hub 🔓</strong>
                         </div>
                     </div>
                     <button
@@ -425,77 +370,57 @@ export default function ParticipantProfilePage({ onBack }) {
                         </div>
                     </div>
 
-                    {/* Mentors & Senior Team Rapport Hub on Unauthenticated Landing Page */}
+                    {/* Official Subsystems & Team Portal Hub */}
                     <div className="mt-12 space-y-6">
                         <div className="border-b-4 border-white/20 pb-4 text-center">
                             <span className="border-2 border-slate-900 bg-sky-400 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
-                                👥 MENTORSHIP &amp; SENIOR DIRECTORY
+                                🛠️ OFFICIAL SUBSYSTEM DECK DIRECTORY
                             </span>
                             <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
-                                CONNECT WITH SENIOR TEAM MEMBERS &amp; MENTORS
+                                EXPLORE SUBSYSTEMS &amp; OFFICIAL TEAM CONTACTS
                             </h2>
                             <p className="mx-auto mt-2 max-w-2xl font-mono text-xs font-bold text-slate-300">
-                                Freshers and junior joinees can build rapport with subsystem leads, faculty advisors, and experienced team members. Click &quot;Connect &amp; Build Rapport&quot; on any card to reach out directly via WhatsApp, Phone, or Email.
+                                Connect safely with official subsystem leads and explore technical specifications, CAD models, and contact lines directly on the official Subsystem Portal.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                            {MENTORS_DATA.map((mentor) => (
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            {SUBSYSTEMS_PORTAL_DATA.map((sub) => (
                                 <div
-                                    key={mentor.id}
+                                    key={sub.id}
                                     className="shadow-brutal-6 flex flex-col justify-between border-4 border-slate-900 bg-white p-6 transition-all hover:translate-x-[-2px] hover:translate-y-[-2px]"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-3">
-                                            <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${mentor.avatarBg}`}>
-                                                {mentor.badge}
+                                            <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${sub.color}`}>
+                                                {sub.badge}
                                             </span>
-                                            <span className="font-mono text-[10px] font-bold text-slate-500">
-                                                {mentor.dept}
+                                            <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
+                                                OFFICIAL DECK
                                             </span>
                                         </div>
 
-                                        <div className="mt-4 flex items-center gap-3">
-                                            <div className={`flex h-12 w-12 shrink-0 items-center justify-center border-2 border-slate-900 font-mono text-lg font-black ${mentor.avatarBg}`}>
-                                                {mentor.name.split(' ').map(n => n[0]).join('')}
-                                            </div>
-                                            <div>
-                                                <h3 className="text-xl font-black uppercase text-slate-900">{mentor.name}</h3>
-                                                <p className="font-mono text-xs font-bold text-sky-800">{mentor.role}</p>
-                                            </div>
-                                        </div>
-
-                                        <p className="mt-3 text-xs font-bold text-slate-700 leading-relaxed">
-                                            {mentor.bio}
+                                        <h3 className="mt-3 text-2xl font-black uppercase text-slate-900">{sub.name}</h3>
+                                        <p className="mt-1 font-mono text-xs font-bold text-slate-700 leading-relaxed">
+                                            {sub.tagline}
                                         </p>
 
-                                        <div className="mt-4 space-y-1.5 border-t-2 border-slate-200 pt-3 font-mono text-[11px]">
-                                            <div className="text-slate-600">
-                                                🎯 <strong>Specialization:</strong> {mentor.specialization}
-                                            </div>
-                                            <div className="text-slate-600">
-                                                📍 <strong>Lab Location:</strong> {mentor.labLocation}
-                                            </div>
-                                            <div className="text-slate-600">
-                                                🕒 <strong>Lab Hours:</strong> {mentor.officeHours}
-                                            </div>
-                                        </div>
+                                        <p className="mt-3 text-xs text-slate-600 leading-relaxed font-medium">
+                                            {sub.details}
+                                        </p>
 
-                                        <div className="mt-3 flex flex-wrap gap-1.5">
-                                            {mentor.expertise.map((exp, i) => (
-                                                <span key={i} className="border border-slate-900 bg-slate-100 px-2 py-0.5 font-mono text-[9px] font-black text-slate-900 uppercase">
-                                                    #{exp}
-                                                </span>
-                                            ))}
+                                        <div className="mt-4 border-t-2 border-slate-200 pt-3 font-mono text-[11px] space-y-1">
+                                            <div>📧 <strong>Official Email:</strong> {sub.officialContact}</div>
+                                            <div>📞 <strong>Official Contact:</strong> {sub.phone}</div>
                                         </div>
                                     </div>
 
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedMentor(mentor)}
-                                        className="press shadow-brutal-3 mt-6 flex w-full items-center justify-center gap-2 border-2 border-slate-900 bg-amber-300 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
+                                        onClick={() => handleSubsystemNavigate(sub.id)}
+                                        className="press shadow-brutal-3 mt-6 flex w-full items-center justify-center gap-2 border-2 border-slate-900 bg-amber-300 py-3 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
                                     >
-                                        <span>📞 Connect &amp; Build Rapport</span>
+                                        <span>Explore Subsystem Deck &amp; Team Contacts</span>
                                         <span>→</span>
                                     </button>
                                 </div>
@@ -626,14 +551,14 @@ export default function ParticipantProfilePage({ onBack }) {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('mentors')}
+                                        onClick={() => setActiveTab('subsystems')}
                                         className={`px-3 py-3 text-center transition-all ${
-                                            activeTab === 'mentors'
+                                            activeTab === 'subsystems'
                                                 ? 'bg-purple-400 text-slate-950 shadow-brutal-2'
                                                 : 'text-slate-300 hover:text-white'
                                         }`}
                                     >
-                                        👥 Mentors Directory ({MENTORS_DATA.length})
+                                        🛠️ Subsystem Decks ({SUBSYSTEMS_PORTAL_DATA.length})
                                     </button>
                                 </div>
                             </div>
@@ -1012,63 +937,58 @@ export default function ParticipantProfilePage({ onBack }) {
                                 </div>
                             )}
 
-                            {/* TAB 4: Mentors Directory */}
-                            {activeTab === 'mentors' && (
+                            {/* TAB 4: Subsystem Decks & Official Contacts */}
+                            {activeTab === 'subsystems' && (
                                 <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
                                     <div className="border-b-4 border-slate-900 pb-5">
                                         <span className="font-mono text-xs font-black tracking-widest text-purple-700 uppercase">
-                                            Team Asterix Senior Leads &amp; Faculty Mentors
+                                            Official Subsystem Decks &amp; Team Contacts
                                         </span>
                                         <h3 className="mt-1 text-2xl font-black uppercase text-slate-900 sm:text-3xl">
-                                            Mentors &amp; Team Directory
+                                            Subsystem Decks Directory
                                         </h3>
                                         <p className="mt-1 font-mono text-xs font-bold text-slate-600">
-                                            Direct contacts and office hours for seniors and faculty advisors to help freshers and junior joinees build rapport and get guidance.
+                                            Explore official subsystem technical specifications, CAD models, and contact lines safely listed on the official Subsystem Portal.
                                         </p>
                                     </div>
 
-                                    <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                                        {MENTORS_DATA.map((mentor) => (
+                                    <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                        {SUBSYSTEMS_PORTAL_DATA.map((sub) => (
                                             <div
-                                                key={mentor.id}
+                                                key={sub.id}
                                                 className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-slate-50 p-5 transition-all hover:bg-white"
                                             >
                                                 <div>
                                                     <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900 pb-2">
-                                                        <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${mentor.avatarBg}`}>
-                                                            {mentor.badge}
+                                                        <span className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${sub.color}`}>
+                                                            {sub.badge}
                                                         </span>
-                                                        <span className="font-mono text-[10px] font-bold text-slate-500">
-                                                            {mentor.dept}
+                                                        <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
+                                                            OFFICIAL DECK
                                                         </span>
                                                     </div>
 
-                                                    <div className="mt-3 flex items-center gap-3">
-                                                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 font-mono text-base font-black ${mentor.avatarBg}`}>
-                                                            {mentor.name.split(' ').map(n => n[0]).join('')}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="text-lg font-black uppercase text-slate-900">{mentor.name}</h4>
-                                                            <p className="font-mono text-xs font-bold text-sky-800">{mentor.role}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <p className="mt-2 text-xs font-bold text-slate-700 leading-relaxed">
-                                                        {mentor.bio}
+                                                    <h4 className="mt-3 text-xl font-black uppercase text-slate-900">{sub.name}</h4>
+                                                    <p className="mt-1 font-mono text-xs font-bold text-slate-700 leading-relaxed">
+                                                        {sub.tagline}
                                                     </p>
 
-                                                    <div className="mt-3 space-y-1 border-t-2 border-slate-200 pt-2 font-mono text-[10px]">
-                                                        <div className="text-slate-600">📍 <strong>Lab:</strong> {mentor.labLocation}</div>
-                                                        <div className="text-slate-600">🕒 <strong>Hours:</strong> {mentor.officeHours}</div>
+                                                    <p className="mt-2 text-xs text-slate-600 leading-relaxed font-medium">
+                                                        {sub.details}
+                                                    </p>
+
+                                                    <div className="mt-3 border-t-2 border-slate-200 pt-2 font-mono text-[11px] space-y-0.5 text-slate-700">
+                                                        <div>📧 <strong>Official Email:</strong> {sub.officialContact}</div>
+                                                        <div>📞 <strong>Official Contact:</strong> {sub.phone}</div>
                                                     </div>
                                                 </div>
 
                                                 <button
                                                     type="button"
-                                                    onClick={() => setSelectedMentor(mentor)}
-                                                    className="press shadow-brutal-2 mt-4 flex w-full items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
+                                                    onClick={() => handleSubsystemNavigate(sub.id)}
+                                                    className="press shadow-brutal-2 mt-4 flex w-full items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
                                                 >
-                                                    <span>📞 Connect &amp; Build Rapport</span>
+                                                    <span>Explore Subsystem Deck &amp; Team Contacts</span>
                                                     <span>→</span>
                                                 </button>
                                             </div>
@@ -1079,102 +999,6 @@ export default function ParticipantProfilePage({ onBack }) {
                         </div>
                     )}
                 </main>
-            )}
-
-            {/* Interactive Mentor Rapport Modal */}
-            {selectedMentor && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-                    <div className="shadow-brutal-8 w-full max-w-lg border-4 border-slate-900 bg-white p-6 text-slate-900 sm:p-8">
-                        <div className="flex items-start justify-between gap-4 border-b-4 border-slate-900 pb-4">
-                            <div>
-                                <span className={`inline-block border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${selectedMentor.avatarBg}`}>
-                                    {selectedMentor.badge}
-                                </span>
-                                <h3 className="mt-1 text-2xl font-black uppercase text-slate-900">{selectedMentor.name}</h3>
-                                <p className="font-mono text-xs font-bold text-sky-800">{selectedMentor.role}</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedMentor(null)}
-                                className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-xs font-black uppercase hover:bg-rose-500 hover:text-white"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        <div className="mt-4 space-y-3 font-mono text-xs">
-                            <div className="border-2 border-slate-900 bg-amber-50 p-3 shadow-brutal-2">
-                                <span className="block font-black text-amber-950 uppercase">💬 DIRECT RAPPORT MESSAGE</span>
-                                <p className="mt-1 font-sans text-xs font-bold text-slate-700">
-                                    Reach out to {selectedMentor.name.split(' ')[0]} directly to discuss workshop topics, autonomous subsystems, or lab visits.
-                                </p>
-                            </div>
-
-                            <div className="space-y-2 pt-2">
-                                <a
-                                    href={`https://wa.me/${selectedMentor.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi ${selectedMentor.name}, I am a student at PSG iTech interested in Team Asterix autonomous domain.`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-emerald-400 p-3 font-black text-slate-950 uppercase hover:bg-emerald-300"
-                                >
-                                    <span>💬 Chat on WhatsApp ({selectedMentor.phone})</span>
-                                    <span>↗</span>
-                                </a>
-
-                                <a
-                                    href={`mailto:${selectedMentor.email}?subject=Team%20Asterix%20Mentorship%20Contact`}
-                                    className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-sky-400 p-3 font-black text-slate-950 uppercase hover:bg-sky-300"
-                                >
-                                    <span>📧 Send Email ({selectedMentor.email})</span>
-                                    <span>↗</span>
-                                </a>
-
-                                <a
-                                    href={`tel:${selectedMentor.phone.replace(/[^0-9+]/g, '')}`}
-                                    className="press shadow-brutal-2 flex items-center justify-between border-2 border-slate-900 bg-amber-300 p-3 font-black text-slate-950 uppercase hover:bg-amber-400"
-                                >
-                                    <span>📞 Call Phone ({selectedMentor.phone})</span>
-                                    <span>↗</span>
-                                </a>
-
-                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                    <a
-                                        href={selectedMentor.linkedin}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="press shadow-brutal-2 flex items-center justify-center gap-1 border-2 border-slate-900 bg-slate-100 p-2.5 font-black uppercase text-slate-900 hover:bg-sky-100"
-                                    >
-                                        <span>💼 LinkedIn</span>
-                                        <span>↗</span>
-                                    </a>
-                                    <a
-                                        href={selectedMentor.github}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="press shadow-brutal-2 flex items-center justify-center gap-1 border-2 border-slate-900 bg-slate-100 p-2.5 font-black uppercase text-slate-900 hover:bg-slate-900 hover:text-white"
-                                    >
-                                        <span>💻 GitHub</span>
-                                        <span>↗</span>
-                                    </a>
-                                </div>
-                            </div>
-
-                            <div className="border-t-2 border-slate-200 pt-3 text-slate-600">
-                                📍 <strong>Lab Location:</strong> {selectedMentor.labLocation}
-                                <br />
-                                🕒 <strong>Available Hours:</strong> {selectedMentor.officeHours}
-                            </div>
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={() => setSelectedMentor(null)}
-                            className="press shadow-brutal-3 mt-6 w-full border-2 border-slate-900 bg-slate-900 py-2.5 font-mono text-xs font-black uppercase text-amber-300 hover:bg-slate-800"
-                        >
-                            Close Rapport Modal
-                        </button>
-                    </div>
-                </div>
             )}
         </div>
     );

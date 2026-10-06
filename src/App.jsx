@@ -266,7 +266,7 @@ function MainApp() {
     if (isProfilePage) {
         return (
             <Suspense fallback={pageFallback}>
-                <ParticipantProfilePage onBack={handleBackToHome} />
+                <ParticipantProfilePage onBack={handleBackToHome} onSelectSubsystem={handleSelectSubsystem} />
             </Suspense>
         );
     }
