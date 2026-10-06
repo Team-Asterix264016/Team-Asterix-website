@@ -218,13 +218,6 @@ function MainApp() {
         scrollToTop();
     };
 
-    const handleOpenCommunity = () => {
-        closeAll();
-        setIsCommunityPage(true);
-        window.location.hash = '#community';
-        scrollToTop();
-    };
-
     const handleOpenAdmin = () => {
         closeAll();
         setIsAdminOpen(true);
@@ -351,7 +344,6 @@ function MainApp() {
                     currentPage={currentPage}
                     onBackToHome={handleBackToHome}
                     onOpenSponsor={handleOpenSponsor}
-                    onOpenCommunity={handleOpenCommunity}
                     onOpenProfile={handleOpenProfile}
                 />
 
