@@ -10,6 +10,30 @@ import { useEffect, useRef } from 'react';
    Returns a ref to put on the dialog container. Pair it with
    `role="dialog" aria-modal="true"` and an `aria-labelledby` pointing at the
    overlay's own heading. */
+/* `document.body.style.overflow = 'hidden'` does not stop touch scrolling on
+   iOS, and `lenis.stop()` only stops Lenis -- Lenis runs with smoothTouch off,
+   so touch scrolling here is native. The `.modal-open` rule in index.css adds
+   `touch-action: none`, which does stop it; a sheet that scrolls internally
+   opts its own axis back in with `data-modal-scroll`.
+
+   Depth-counted because two overlays can be open at once (a lightbox over a
+   page modal), and the inner one closing used to release the lock for both. */
+let lockDepth = 0;
+
+function lockScroll() {
+    if (lockDepth++ === 0) {
+        document.documentElement.classList.add('modal-open');
+        window.lenis?.stop();
+    }
+}
+
+function unlockScroll() {
+    if (lockDepth > 0 && --lockDepth === 0) {
+        document.documentElement.classList.remove('modal-open');
+        window.lenis?.start();
+    }
+}
+
 export function useModalBehavior(isOpen, onClose) {
     const containerRef = useRef(null);
     /* Held in a ref so a re-render with a new inline `onClose` does not tear
@@ -25,10 +49,7 @@ export function useModalBehavior(isOpen, onClose) {
         if (!isOpen) return undefined;
 
         const previouslyFocused = document.activeElement;
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        /* Lenis keeps driving the page behind the overlay otherwise. */
-        window.lenis?.stop();
+        lockScroll();
 
         const focusables = () => {
             const root = containerRef.current;
@@ -68,8 +89,7 @@ export function useModalBehavior(isOpen, onClose) {
         document.addEventListener('keydown', onKey);
         return () => {
             document.removeEventListener('keydown', onKey);
-            document.body.style.overflow = prevOverflow;
-            window.lenis?.start();
+            unlockScroll();
             /* Send focus back where it came from, so keyboard users are not
                dumped at the top of the document on close. */
             if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();

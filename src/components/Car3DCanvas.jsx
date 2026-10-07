@@ -48,6 +48,13 @@ export default function Car3DCanvas() {
 
         applyFraming();
 
+        /* Phone-class viewport. This canvas is full-screen and sits behind the
+           whole site, so every per-fragment cost here is paid across the entire
+           page on the weakest GPU that will load it. The reductions below are
+           all fill-rate and shader cost -- the car's framing, pose and
+           choreography are untouched, so the intro handoff still lands. */
+        const isNarrowViewport = window.innerWidth < 768;
+
         // Phones pay for every extra device pixel across a full-screen canvas,
         // and this one sits behind the entire site. Cap them lower.
         const pixelRatio = () => {
@@ -57,7 +64,7 @@ export default function Car3DCanvas() {
 
         const renderer = new THREE.WebGLRenderer({
             alpha: true,
-            antialias: true,
+            antialias: !isNarrowViewport,
             powerPreference: 'high-performance'
         });
         renderer.setPixelRatio(pixelRatio());
@@ -65,7 +72,7 @@ export default function Car3DCanvas() {
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1.15;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = isNarrowViewport ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
 
         container.appendChild(renderer.domElement);
 
@@ -87,7 +94,7 @@ export default function Car3DCanvas() {
         keyLight.castShadow = true;
         // A 2048 shadow map is more than this background element needs on a
         // phone, where it is the single largest per-frame cost here.
-        const shadowMapSize = window.innerWidth < 768 ? 1024 : 2048;
+        const shadowMapSize = isNarrowViewport ? 512 : 2048;
         keyLight.shadow.mapSize.width = shadowMapSize;
         keyLight.shadow.mapSize.height = shadowMapSize;
         keyLight.shadow.bias = -0.0001;
@@ -99,25 +106,40 @@ export default function Car3DCanvas() {
         skyBlueLight.position.set(-8, 7, -6);
         scene.add(skyBlueLight);
 
-        // Front-Left Soft Cool Fill Light
-        const fillLight = new THREE.DirectionalLight(0xe0f2fe, 1.8);
-        fillLight.position.set(-6, 3, 6);
-        scene.add(fillLight);
+        // Front-Left Soft Cool Fill Light and the ground bounce. Dropped on phones:
+        // five lights means five loop iterations per fragment of every PBR material,
+        // and the RoomEnvironment map already supplies most of this bounce.
+        if (!isNarrowViewport) {
+            const fillLight = new THREE.DirectionalLight(0xe0f2fe, 1.8);
+            fillLight.position.set(-6, 3, 6);
+            scene.add(fillLight);
 
-        // Ground bounce fill
-        const bounceLight = new THREE.DirectionalLight(0xf1f5f9, 1.0);
-        bounceLight.position.set(0, -5, 0);
-        scene.add(bounceLight);
+            const bounceLight = new THREE.DirectionalLight(0xf1f5f9, 1.0);
+            bounceLight.position.set(0, -5, 0);
+            scene.add(bounceLight);
+        }
 
         // --- PHOTOREALISTIC PBR MATERIALS ---
-        const skyBluePowderCoat = new THREE.MeshPhysicalMaterial({
-            color: 0x0284c7, // Vibrant Sky Blue
-            roughness: 0.15,
-            metalness: 0.35,
-            clearcoat: 0.9,
-            clearcoatRoughness: 0.06,
-            reflectivity: 0.95
-        });
+
+        /* Clearcoat is a second specular lobe and a second normal evaluated per
+           fragment, and the three materials using it cover most of the car's
+           screen area. On a phone they fall back to MeshStandardMaterial without
+           it, with roughness nudged down to stand in for the lost sheen.
+           MeshStandardMaterial already backs nine other materials here, so this
+           is a constructor swap, not new machinery. */
+        const coatedMaterial = (base, coat, mobileRoughness) =>
+            isNarrowViewport
+                ? new THREE.MeshStandardMaterial({
+                      ...base,
+                      roughness: mobileRoughness ?? base.roughness
+                  })
+                : new THREE.MeshPhysicalMaterial({ ...base, ...coat });
+
+        const skyBluePowderCoat = coatedMaterial(
+            { color: 0x0284c7, roughness: 0.15, metalness: 0.35 }, // Vibrant Sky Blue
+            { clearcoat: 0.9, clearcoatRoughness: 0.06, reflectivity: 0.95 },
+            0.13
+        );
 
         const brushedSteelMaterial = new THREE.MeshStandardMaterial({
             color: 0xd1d5db,
@@ -143,13 +165,11 @@ export default function Car3DCanvas() {
             metalness: 0.92
         });
 
-        const whiteRimMaterial = new THREE.MeshPhysicalMaterial({
-            color: 0xffffff,
-            roughness: 0.16,
-            metalness: 0.15,
-            clearcoat: 0.8,
-            clearcoatRoughness: 0.08
-        });
+        const whiteRimMaterial = coatedMaterial(
+            { color: 0xffffff, roughness: 0.16, metalness: 0.15 },
+            { clearcoat: 0.8, clearcoatRoughness: 0.08 },
+            0.14
+        );
 
         const rubberTireMaterial = new THREE.MeshStandardMaterial({
             color: 0x14181c,
@@ -157,12 +177,11 @@ export default function Car3DCanvas() {
             metalness: 0.04
         });
 
-        const whiteCompositeMaterial = new THREE.MeshPhysicalMaterial({
-            color: 0xf8fafc,
-            roughness: 0.32,
-            metalness: 0.05,
-            clearcoat: 0.45
-        });
+        const whiteCompositeMaterial = coatedMaterial(
+            { color: 0xf8fafc, roughness: 0.32, metalness: 0.05 },
+            { clearcoat: 0.45 },
+            0.3
+        );
 
         const rubberTrimMaterial = new THREE.MeshStandardMaterial({
             color: 0x18181b,
@@ -189,50 +208,62 @@ export default function Car3DCanvas() {
         const proceduralModel = new THREE.Group();
         carRoot.add(proceduralModel);
 
-        // Load Real Team Asterix Autonomous Buggy GLB CAD Assembly Model
+        /* Load the real CAD assembly -- on anything but a phone.
+
+           The GLB is 6.1MB, which is more than every other asset on the landing
+           page put together, and it is fetched on first paint because this canvas
+           sits behind the whole site. On a phone the buggy is posed small and off
+           to one side (see buildKeyframes) and spends most of the page behind
+           opaque content, so almost none of that CAD detail survives to the
+           screen. The procedural model below is the loader's own fallback and is
+           already built either way, so phones keep a real 3D buggy and the intro
+           cross-dissolve still has something to hand off to -- they just skip the
+           download. */
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load(
-            '/assembly_file_for_abaja.glb',
-            (gltf) => {
-                const model = gltf.scene;
+        if (!isNarrowViewport) {
+            gltfLoader.load(
+                '/assembly_file_for_abaja.glb',
+                (gltf) => {
+                    const model = gltf.scene;
 
-                // Auto-center and normalize scale for the CAD assembly
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
+                    // Auto-center and normalize scale for the CAD assembly
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
 
-                model.position.sub(center);
+                    model.position.sub(center);
 
-                // CAD assembly dimensions scaling
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
+                    // CAD assembly dimensions scaling
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
 
-                const glbWrapper = new THREE.Group();
-                glbWrapper.add(model);
-                glbWrapper.scale.setScalar(targetScale);
-                glbWrapper.position.y = 0.12;
+                    const glbWrapper = new THREE.Group();
+                    glbWrapper.add(model);
+                    glbWrapper.scale.setScalar(targetScale);
+                    glbWrapper.position.y = 0.12;
 
-                // Enhance materials & shadows for CAD components
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                        if (child.material) {
-                            child.material.envMapIntensity = 1.35;
-                            child.material.needsUpdate = true;
+                    // Enhance materials & shadows for CAD components
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            if (child.material) {
+                                child.material.envMapIntensity = 1.35;
+                                child.material.needsUpdate = true;
+                            }
                         }
-                    }
-                });
+                    });
 
-                // Swap out procedural fallback with real CAD GLB assembly!
-                carRoot.remove(proceduralModel);
-                carRoot.add(glbWrapper);
-            },
-            undefined,
-            (err) => {
-                console.warn('GLB model load notice, keeping procedural fallback:', err);
-            }
-        );
+                    // Swap out procedural fallback with real CAD GLB assembly!
+                    carRoot.remove(proceduralModel);
+                    carRoot.add(glbWrapper);
+                },
+                undefined,
+                (err) => {
+                    console.warn('GLB model load notice, keeping procedural fallback:', err);
+                }
+            );
+        }
 
         const frameGroup = new THREE.Group();
         proceduralModel.add(frameGroup);
@@ -991,10 +1022,23 @@ export default function Car3DCanvas() {
         };
         document.addEventListener('visibilitychange', handleVisibility);
 
-        const handleResize = () => {
+        /* The container is `fixed inset-0`, so on mobile every URL-bar show/hide
+           fires a resize -- and `setSize` reallocates the drawing buffer. Running
+           that on every frame of the browser's own toolbar animation is the most
+           expensive thing this component can do. Debounced, and a no-op when the
+           dimensions have not actually changed, which is the common case when
+           only the toolbar moved. */
+        let resizeTimer = null;
+        let lastWidth = container.clientWidth;
+        let lastHeight = container.clientHeight;
+
+        const applyResize = () => {
             const width = container.clientWidth;
             const height = container.clientHeight;
             if (!width || !height) return;
+            if (width === lastWidth && height === lastHeight) return;
+            lastWidth = width;
+            lastHeight = height;
 
             camera.aspect = width / height;
             applyFraming();
@@ -1008,10 +1052,19 @@ export default function Car3DCanvas() {
             if (reduceMotion.matches) requestStaticRepaint();
         };
 
+        const handleResize = () => {
+            if (resizeTimer !== null) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                resizeTimer = null;
+                applyResize();
+            }, 150);
+        };
+
         window.addEventListener('resize', handleResize);
 
         return () => {
             stopLoop();
+            if (resizeTimer !== null) clearTimeout(resizeTimer);
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('scroll', handleScroll);
             window.removeEventListener('scroll', requestStaticRepaint);

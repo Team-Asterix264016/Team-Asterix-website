@@ -69,7 +69,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                 <button
                     type="button"
                     onClick={onClose}
-                    className="press absolute top-4 right-4 flex h-8 w-8 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-sm font-black text-slate-900 hover:bg-amber-400"
+                    className="press tap-sq absolute top-4 right-4 flex h-8 w-8 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-sm font-black text-slate-900 hover:bg-amber-400"
                 >
                     ✕
                 </button>
@@ -79,11 +79,12 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                     <span className="font-mono text-xs font-black tracking-widest text-sky-600 uppercase">
                         🔒 PAID ATTENDEE PORTAL ACCESS
                     </span>
-                    <h3 className="text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                    <h3 className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
                         Workshop Student Login
                     </h3>
                     <p className="text-xs font-bold text-slate-600">
-                        Enter your Mobile Number or Email ID + Profile Password to generate your access token (JWT).
+                        Enter your Mobile Number or Email ID + Profile Password to generate your access token
+                        (JWT).
                     </p>
                 </div>
 
@@ -96,7 +97,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                     )}
 
                     <div>
-                        <label className="block font-mono text-xs font-black uppercase text-slate-900">
+                        <label className="block font-mono text-xs font-black text-slate-900 uppercase">
                             Mobile Number / Email ID *
                         </label>
                         <input
@@ -104,14 +105,14 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             placeholder="e.g. 9876543210 or rollno@psgitech.ac.in"
-                            className="mt-1 w-full border-2 border-slate-900 bg-slate-50 p-3 font-mono text-sm font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="mt-1 w-full border-2 border-slate-900 bg-slate-50 p-3 font-mono text-sm font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
                             required
                             autoFocus
                         />
                     </div>
 
                     <div>
-                        <label className="block font-mono text-xs font-black uppercase text-slate-900">
+                        <label className="block font-mono text-xs font-black text-slate-900 uppercase">
                             Password *
                         </label>
                         <div className="relative mt-1">
@@ -120,19 +121,21 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Enter password (Initial default: asterix)"
-                                className="w-full border-2 border-slate-900 bg-slate-50 p-3 pr-16 font-mono text-sm font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                className="w-full border-2 border-slate-900 bg-slate-50 p-3 pr-16 font-mono text-sm font-bold text-slate-900 placeholder:font-medium placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="press absolute right-2 top-1/2 -translate-y-1/2 border border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black uppercase text-slate-900 hover:bg-slate-100"
+                                className="press press-y tap-sq absolute top-1/2 right-2 -translate-y-1/2 border border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-slate-100"
                             >
                                 {showPassword ? 'Hide 👁️' : 'Show 👁️'}
                             </button>
                         </div>
                         <p className="mt-1 font-mono text-[10px] text-slate-500">
-                            💡 Initial default password is <strong className="font-black text-slate-900">asterix</strong> unless you have changed it.
+                            💡 Initial default password is{' '}
+                            <strong className="font-black text-slate-900">asterix</strong> unless you have
+                            changed it.
                         </p>
                     </div>
 
@@ -141,7 +144,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                         disabled={loading}
                         className={`press shadow-brutal-4-brand flex w-full items-center justify-center gap-2 border-2 border-slate-900 py-3 font-mono text-sm font-black uppercase transition-all ${
                             loading
-                                ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
+                                ? 'cursor-not-allowed bg-slate-300 text-slate-600'
                                 : 'bg-slate-900 text-amber-300 hover:bg-slate-800'
                         }`}
                     >

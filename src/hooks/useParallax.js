@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useMediaQuery } from './useMediaQuery';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -21,6 +22,15 @@ const prefersReducedMotion = () =>
  * - custom speed via `data-parallax-speed="0.3"`
  */
 export default function useParallax(lenis, dependency) {
+    /* The travel distances are baked into the GSAP tweens when they are built,
+       so this has to be a dependency rather than a one-off read: it used to be
+       `window.innerWidth < 768` evaluated once at mount, which meant a phone
+       rotated into landscape kept the damped mobile distances (and a desktop
+       window narrowed past 768px kept the full-size ones) until something else
+       forced a remount. Re-running the effect rebuilds the tweens at the right
+       scale. */
+    const isMobileViewport = useMediaQuery('(max-width: 767px)');
+
     useEffect(() => {
         // Disabled on reduced motion
         if (prefersReducedMotion()) return;
@@ -38,8 +48,7 @@ export default function useParallax(lenis, dependency) {
             lenis.on('scroll', scrollHandler);
         }
 
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-        const scaleFactor = isMobile ? 0.45 : 1;
+        const scaleFactor = isMobileViewport ? 0.45 : 1;
 
         const timer = setTimeout(() => {
             const sections = document.querySelectorAll('section, footer, .marquee-hold');
@@ -153,5 +162,5 @@ export default function useParallax(lenis, dependency) {
             const allElements = document.querySelectorAll(PARALLAX_SELECTOR);
             gsap.set(allElements, { clearProps: 'y,x,rotate' });
         };
-    }, [lenis, dependency]);
+    }, [lenis, dependency, isMobileViewport]);
 }

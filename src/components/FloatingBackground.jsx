@@ -80,15 +80,15 @@ export default function FloatingBackground() {
             {/* Parallax Floating Sky Blue Ambient Light Blooms */}
             <div
                 ref={orb1Ref}
-                className="pointer-events-none absolute top-[-5%] right-[-5%] h-[48rem] w-[48rem] rounded-full bg-sky-400/12 blur-3xl will-change-transform"
+                className="pointer-events-none absolute top-[-5%] right-[-5%] h-[26rem] w-[26rem] rounded-full bg-sky-400/12 blur-2xl will-change-transform sm:h-[48rem] sm:w-[48rem] sm:blur-3xl"
             />
             <div
                 ref={orb2Ref}
-                className="pointer-events-none absolute top-[40%] left-[-10%] h-[44rem] w-[44rem] rounded-full bg-sky-300/10 blur-3xl will-change-transform"
+                className="pointer-events-none absolute top-[40%] left-[-10%] h-[24rem] w-[24rem] rounded-full bg-sky-300/10 blur-2xl will-change-transform sm:h-[44rem] sm:w-[44rem] sm:blur-3xl"
             />
             <div
                 ref={orb3Ref}
-                className="pointer-events-none absolute top-[75%] right-[5%] h-[50rem] w-[50rem] rounded-full bg-sky-400/12 blur-3xl will-change-transform"
+                className="pointer-events-none absolute top-[75%] right-[5%] h-[27rem] w-[27rem] rounded-full bg-sky-400/12 blur-2xl will-change-transform sm:h-[50rem] sm:w-[50rem] sm:blur-3xl"
             />
 
             {/* Subtle Sky Blue Technical Grid with Parallax */}

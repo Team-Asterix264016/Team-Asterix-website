@@ -81,7 +81,11 @@ export default function DriftParticles() {
             height = rect.height;
             if (width === 0 || height === 0) return;
 
-            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            // Matches Car3DCanvas's mobile cap. This is a full-screen alpha canvas
+            // cleared and recomposited every frame on top of the WebGL canvas and
+            // three blurred orbs; the motes are 1-3px soft dots, so there is no
+            // detail for the extra device pixels to resolve.
+            dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.5 : 2);
             canvas.width = Math.round(width * dpr);
             canvas.height = Math.round(height * dpr);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

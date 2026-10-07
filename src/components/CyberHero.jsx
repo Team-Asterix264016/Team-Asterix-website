@@ -7,12 +7,12 @@ export default function CyberHero({ onOpenModelViewer }) {
     return (
         <section
             id="hero"
-            className="relative flex min-h-screen flex-col justify-between overflow-hidden px-4 pt-24 pb-12 select-none sm:px-8 sm:pt-32 md:px-12 lg:px-16"
+            className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden px-4 pt-24 pb-12 select-none sm:px-8 sm:pt-32 md:px-12 lg:px-16"
         >
             {/* Background Parallax Watermark (Option A: Slow layer) */}
             <div
                 data-parallax="slow"
-                className="pointer-events-none absolute top-1/4 right-4 z-0 font-mono text-[9rem] leading-none font-black text-slate-900/[0.025] will-change-transform select-none sm:right-12 sm:text-[15rem] md:text-[18rem]"
+                className="pointer-events-none absolute top-1/4 right-4 z-0 font-mono text-[6rem] leading-none font-black text-slate-900/[0.025] will-change-transform select-none sm:right-12 sm:text-[15rem] md:text-[18rem]"
                 aria-hidden="true"
             >
                 #01
@@ -54,14 +54,14 @@ export default function CyberHero({ onOpenModelViewer }) {
                 <div className="max-w-2xl text-left lg:max-w-3xl">
                     {/* Giant Stacked Typography with Multi-Speed Separation */}
                     <div data-assemble="left">
-                        <h1 className="text-6xl leading-[0.88] font-black tracking-tighter text-slate-900 uppercase sm:text-8xl md:text-9xl lg:text-[10rem]">
+                        <h1 className="text-[clamp(3rem,16vw,3.75rem)] leading-[0.88] font-black tracking-tighter text-slate-900 uppercase sm:text-8xl md:text-9xl lg:text-[10rem]">
                             {hero.teamTitle || 'TEAM'}
                         </h1>
 
                         <h1
                             data-parallax="fast"
                             data-parallax-speed="0.2"
-                            className="text-stroke-sky mt-1 text-6xl leading-[0.88] font-black tracking-tighter text-transparent uppercase will-change-transform sm:mt-2 sm:text-8xl md:text-9xl lg:text-[10rem]"
+                            className="text-stroke-sky mt-1 text-[clamp(3rem,16vw,3.75rem)] leading-[0.88] font-black tracking-tighter text-transparent uppercase will-change-transform sm:mt-2 sm:text-8xl md:text-9xl lg:text-[10rem]"
                         >
                             {hero.teamName || 'ASTERIX'}
                         </h1>
@@ -89,14 +89,22 @@ export default function CyberHero({ onOpenModelViewer }) {
             {/* Bottom Floating Footer Row with Corner 3D Baja Model Option */}
             <div
                 data-assemble="down"
-                className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 font-mono text-xs font-black text-slate-500 uppercase sm:flex-row sm:items-center"
+                className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 font-mono text-xs font-black text-slate-700 uppercase sm:flex-row sm:items-center"
             >
-                <span>SCROLL TO BE ON OUR SHOES!!</span>
+                {/* The ambient buggy renders behind the hero, and on a phone its pose
+                    puts the roll cage directly under this line -- bare text on a
+                    light chassis was marginal. A chip in the same brutalist language
+                    as the button beside it keeps it readable. From `sm` up the
+                    vehicle sits far to the right of this row, so the label stays
+                    bare on the background as designed. */}
+                <span className="max-sm:shadow-brutal-2 max-sm:rounded-sm max-sm:border-2 max-sm:border-slate-900 max-sm:bg-white/95 max-sm:px-2.5 max-sm:py-1.5 max-sm:text-slate-900">
+                    SCROLL TO BE ON OUR SHOES!!
+                </span>
 
                 {/* Corner 3D Baja Inspector Button */}
                 <button
                     onClick={onOpenModelViewer}
-                    className="press group shadow-brutal-3 hover:shadow-brutal-5 flex cursor-pointer items-center gap-2.5 border-2 border-slate-900 bg-white px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:translate-x-[-1px] hover:translate-y-[-1px] hover:bg-sky-500 hover:text-slate-950"
+                    className="press group shadow-brutal-3 hover:shadow-brutal-5 tap flex cursor-pointer items-center gap-2.5 border-2 border-slate-900 bg-white px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:translate-x-[-1px] hover:translate-y-[-1px] hover:bg-sky-500 hover:text-slate-950"
                 >
                     <span className="h-2.5 w-2.5 animate-pulse rounded-full border border-slate-900 bg-emerald-400" />
                     <span>3D BAJA MODEL</span>

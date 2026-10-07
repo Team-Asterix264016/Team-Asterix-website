@@ -258,7 +258,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadBrochure}
-                            className="press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-sky-500 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-400"
+                            className="tap press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-sky-500 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-400"
                         >
                             <span>Download Brochure</span>
                             <span>↓</span>
@@ -284,7 +284,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadDeck}
-                            className="press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
+                            className="tap press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
                         >
                             <span>Download Tech Deck</span>
                             <span>↓</span>
@@ -310,7 +310,7 @@ PSG iTech Autonomous Mobility Cell
                         </div>
                         <button
                             onClick={handleDownloadLetter}
-                            className="press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-emerald-400 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300"
+                            className="tap press shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-emerald-400 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300"
                         >
                             <span>Download Letter</span>
                             <span>↓</span>
@@ -652,7 +652,7 @@ PSG iTech Autonomous Mobility Cell
                     <span>© 2026 TEAM ASTERIX • OFFICIAL SPONSORSHIP PORTAL</span>
                     <button
                         onClick={onBack}
-                        className="press press-flat cursor-pointer text-sky-400 underline hover:text-white"
+                        className="tap press press-flat cursor-pointer text-sky-400 underline hover:text-white"
                     >
                         ← Return to Main Site
                     </button>

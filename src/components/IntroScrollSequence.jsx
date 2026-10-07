@@ -115,6 +115,9 @@ export default function IntroScrollSequence() {
         if (!ctx) return;
 
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        // Read once, on purpose. Re-reading on resize would mean swapping up to
+        // 80 already-decoded images mid-scrub and re-running the handoff, which is
+        // strictly worse than serving one tier for the life of the section.
         const tier = window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop';
 
         // Take ownership of the 3D scene's opening pose for as long as this
@@ -210,7 +213,12 @@ export default function IntroScrollSequence() {
         };
 
         const resize = () => {
-            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            // The mobile tier's source frames are 560x360. At dpr 2 on a 390x844
+            // phone the backing store is 780x1688 -- a 2.3x upscale of a 560px
+            // source, drawn twice per frame by the cross-fade plus a full-canvas
+            // fillRect. There is nothing in the source for those pixels to
+            // resolve, so the cap buys ~45% of the per-frame fill for free.
+            const dpr = Math.min(window.devicePixelRatio || 1, window.innerWidth < 768 ? 1.5 : 2);
             const w = canvas.clientWidth;
             const h = canvas.clientHeight;
             if (!w || !h) return;

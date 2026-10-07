@@ -83,9 +83,9 @@ function MainApp() {
             setIsWorkshopPage(false);
             setIsProfilePage(
                 hash === '#workshop-profile' ||
-                hash === '#profile' ||
-                hash === '#workshop' ||
-                window.location.pathname.startsWith('/workshop/profile')
+                    hash === '#profile' ||
+                    hash === '#workshop' ||
+                    window.location.pathname.startsWith('/workshop/profile')
             );
             setIsCommunityPage(hash === '#community');
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
@@ -238,7 +238,15 @@ function MainApp() {
         const hash = window.location.hash;
         if (
             hash.startsWith('#admin') ||
-            ['#sponsor', '#workshop', '#workshop-profile', '#profile', '#community', '#workshop-project-submit', '#model'].includes(hash)
+            [
+                '#sponsor',
+                '#workshop',
+                '#workshop-profile',
+                '#profile',
+                '#community',
+                '#workshop-project-submit',
+                '#model'
+            ].includes(hash)
         ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
@@ -246,7 +254,7 @@ function MainApp() {
     };
 
     const pageFallback = (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-slate-900 font-mono text-sky-400">
+        <div className="flex min-h-[100svh] flex-col items-center justify-center gap-3 bg-slate-900 font-mono text-sky-400">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-400 border-t-transparent"></div>
             <span className="text-xs font-black tracking-widest text-slate-300 uppercase">
                 LOADING ASTERIX PORTAL...
@@ -281,15 +289,17 @@ function MainApp() {
 
     if (isCommunityPage) {
         return (
-            <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4 text-center">
+            <div className="flex min-h-[100svh] flex-col items-center justify-center bg-slate-900 px-4 text-center">
                 <div className="shadow-brutal-8 w-full max-w-lg border-4 border-slate-900 bg-white p-8 sm:p-10">
                     <span className="inline-block border-2 border-slate-900 bg-emerald-300 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
                         Community &amp; Horizon 💬
                     </span>
-                    <h1 className="mt-4 text-4xl font-black text-slate-900 uppercase sm:text-5xl">Coming soon</h1>
+                    <h1 className="mt-4 text-4xl font-black text-slate-900 uppercase sm:text-5xl">
+                        Coming soon
+                    </h1>
                     <p className="mt-3 text-sm font-bold text-slate-600">
-                        We're building a space for Team Asterix members and workshop participants to share projects
-                        and connect. Check back soon.
+                        We're building a space for Team Asterix members and workshop participants to share
+                        projects and connect. Check back soon.
                     </p>
                     <button
                         type="button"
@@ -390,8 +400,18 @@ function MainApp() {
                         />
                     </main>
                 ) : (
-                    /* Main Landing Page Curtain */
-                    <main className="relative z-10 border-b-4 border-slate-900 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
+                    /* Main Landing Page Curtain.
+
+                       Deliberately no `bg-white`. This element is z-10 over the
+                       fixed FloatingBackground at z-0, so an opaque fill here
+                       painted over the ambient layer -- the light blooms, the dot
+                       grid, the drifting grit and the 3D buggy -- across the
+                       whole landing page, including the two sections written to
+                       be transparent for it (#intro and #hero). The white comes
+                       from FloatingBackground's own gradient instead, and every
+                       section that should stay solid still carries its own
+                       background (the marquee, gallery, story, CTA and footer). */
+                    <main className="relative z-10 border-b-4 border-slate-900 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
                         {/* 115-Frame Pre-Rendered Cinema Intro Scroll Sequence */}
                         <IntroScrollSequence />
 
