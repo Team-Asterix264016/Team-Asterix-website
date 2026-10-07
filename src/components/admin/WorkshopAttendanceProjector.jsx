@@ -10,9 +10,8 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     const [sessionTopic, setSessionTopic] = useState('');
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    // Dynamic QR & Timer state
+    // Dynamic QR state
     const [qrDataUrl, setQrDataUrl] = useState('');
-    const [countdownSeconds, setCountdownSeconds] = useState(12);
     const [, setScanUrl] = useState('');
     const [error, setError] = useState('');
 
@@ -27,8 +26,8 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     const projectorRef = useRef(null);
     const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
-    // Fetch token & generate QR
-    const fetchRotatingToken = useCallback(async () => {
+    // Fetch static token & generate static QR Code
+    const fetchSessionToken = useCallback(async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) {
@@ -54,9 +53,8 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
-            setCountdownSeconds(12);
 
-            // Generate crisp high-resolution QR Code
+            // Generate crisp high-resolution static QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
                 width: 1000,
                 margin: 2,
@@ -69,12 +67,12 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             setQrDataUrl(url);
             setError('');
         } catch (err) {
-            console.error('Error fetching rotating attendance token:', err);
+            console.error('Error fetching attendance session token:', err);
             setError(err.message);
         }
     }, [track, sessionNumber, sessionDate, sessionTopic]);
 
-    // Poll live attendance numbers every 3 seconds
+    // Poll live attendance numbers every 3 seconds & rotate token every 12s
     const fetchLiveStatus = useCallback(async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
@@ -101,30 +99,17 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         }
     }, [sessionId]);
 
-    // 12-second countdown and rotation timer
     useEffect(() => {
-        fetchRotatingToken();
+        fetchSessionToken();
         fetchLiveStatus();
 
-        // 1-second interval to update countdown number
-        const countdownTimer = setInterval(() => {
-            setCountdownSeconds((prev) => {
-                if (prev <= 1) {
-                    fetchRotatingToken();
-                    return 12;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        // 3-second live status refresh
+        // 3-second live status refresh for check-in counter & ticker
         const pollTimer = setInterval(fetchLiveStatus, 3000);
 
         return () => {
-            clearInterval(countdownTimer);
             clearInterval(pollTimer);
         };
-    }, [fetchRotatingToken, fetchLiveStatus]);
+    }, [fetchSessionToken, fetchLiveStatus]);
 
     // Fullscreen toggle handler
     const toggleFullscreen = () => {
@@ -143,7 +128,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             className="flex h-screen max-h-screen w-screen flex-col justify-center overflow-hidden bg-slate-950 p-3 font-mono text-white select-none sm:p-5 lg:p-6"
         >
             <div className="mx-auto grid h-full max-h-full w-full max-w-[1700px] grid-cols-1 items-center gap-4 overflow-hidden lg:grid-cols-12 lg:gap-8">
-                {/* LEFT: ONLY THE QR CODE (Fitted to 100% screen height) */}
+                {/* LEFT: ONLY THE QR CODE (Fitted to screen height) */}
                 <div className="flex h-full flex-col items-center justify-center overflow-hidden py-1 lg:col-span-7 xl:col-span-8">
                     {/* Dynamic QR Container */}
                     <div className="shadow-brutal-10-light flex max-h-[calc(100vh-80px)] max-w-full shrink-0 flex-col items-center justify-center border-4 border-slate-900 bg-white p-3 sm:p-5 lg:p-6">
@@ -151,30 +136,13 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                             <img
                                 src={qrDataUrl}
                                 alt="Live Attendance QR Code"
-                                className="aspect-square max-h-[54vh] w-auto object-contain transition-opacity duration-200 sm:max-h-[60vh] lg:max-h-[66vh] xl:max-h-[70vh]"
+                                className="aspect-square max-h-[65vh] w-auto object-contain transition-opacity duration-200 sm:max-h-[72vh] lg:max-h-[78vh] xl:max-h-[82vh]"
                             />
                         ) : (
                             <div className="flex h-[260px] w-[260px] items-center justify-center text-sm font-bold text-slate-400 sm:h-[380px] sm:w-[380px]">
                                 Generating QR Code...
                             </div>
                         )}
-
-                        {/* Clean 12-Second Countdown Timer */}
-                        <div className="mt-3 flex shrink-0 items-center gap-2 border border-slate-400 bg-slate-100 px-3.5 py-1 font-mono text-xs font-black text-slate-800 sm:text-sm">
-                            <span>⏱ Code refreshes in:</span>
-                            <span className="w-8 text-center text-base font-black text-rose-600 sm:text-lg">
-                                {countdownSeconds}s
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-2 shrink-0 space-y-0.5 text-center text-xs text-slate-400">
-                        <p className="text-xs font-bold text-slate-200 sm:text-sm">
-                            Scan with your mobile camera to check in
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                            Enter your Roll Number and College Email to record attendance
-                        </p>
                     </div>
 
                     {error && (

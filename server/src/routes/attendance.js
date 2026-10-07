@@ -30,8 +30,7 @@ function signToken(track, sessionId, timeVal) {
 }
 
 /**
- * Validates a rotating attendance token
- * Allows up to 25 seconds from generation/scan time
+ * Validates an attendance token (supports static non-expiring tokens as well as timestamped tokens)
  */
 function verifyToken(token) {
     if (!token || typeof token !== 'string') return null;
@@ -39,37 +38,29 @@ function verifyToken(token) {
     if (parts.length !== 4) return null;
 
     const [track, sessionId, timeValStr, signature] = parts;
+
+    // Support static token format
+    if (timeValStr === 'static' || timeValStr === '0') {
+        const expectedSig = signToken(track, sessionId, 'static');
+        if (signature === expectedSig) {
+            return { track, sessionId, timeVal: 0 };
+        }
+    }
+
     const timeVal = parseInt(timeValStr, 10);
-    if (isNaN(timeVal)) return null;
-
-    const now = Date.now();
-    let isValidTime = false;
-
-    if (timeVal > 1000000000000) {
-        // Full millisecond timestamp: valid for 25 seconds
-        const ageMs = now - timeVal;
-        isValidTime = (ageMs >= -5000 && ageMs <= TOKEN_EXPIRY_MS);
-    } else {
-        // Bucket format: allows current + previous 2 buckets (~25s)
-        const currentBucket = Math.floor(now / ROTATION_INTERVAL_MS);
-        isValidTime = (timeVal === currentBucket || timeVal === currentBucket - 1 || timeVal === currentBucket - 2);
+    if (!isNaN(timeVal)) {
+        const expectedSig = signToken(track, sessionId, timeVal);
+        if (signature === expectedSig) {
+            return { track, sessionId, timeVal };
+        }
     }
 
-    if (!isValidTime) {
-        return null;
-    }
-
-    const expectedSig = signToken(track, sessionId, timeVal);
-    if (signature !== expectedSig) {
-        return null;
-    }
-
-    return { track, sessionId, timeVal };
+    return null;
 }
 
 /**
  * GET /api/workshop/attendance/session-token
- * Admin only: Generates current rotating token for projector display
+ * Admin only: Generates current static token for projector display
  */
 router.get('/session-token', authenticateToken, async (req, res) => {
     try {
@@ -83,9 +74,8 @@ router.get('/session-token', authenticateToken, async (req, res) => {
         }
 
         const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
-        const now = Date.now();
-        const signature = signToken(track, sessionId, now);
-        const token = `${track}.${sessionId}.${now}.${signature}`;
+        const signature = signToken(track, sessionId, 'static');
+        const token = `${track}.${sessionId}.static.${signature}`;
 
         // Construct scan URL for the student
         const hostUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;
@@ -98,9 +88,6 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             sessionNumber,
             sessionDate,
             sessionTopic,
-            expiresInMs: ROTATION_INTERVAL_MS,
-            tokenExpiryMs: TOKEN_EXPIRY_MS,
-            rotationIntervalMs: ROTATION_INTERVAL_MS,
             scanUrl
         });
     } catch (err) {

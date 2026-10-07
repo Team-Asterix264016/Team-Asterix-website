@@ -159,7 +159,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         </span>
                     </div>
                     <p className="mt-1 text-xs font-bold text-slate-500">
-                        Dynamic rotating QR code, live tracking, and verified check-in.
+                        Live tracking and verified check-in.
                     </p>
                 </div>
 
