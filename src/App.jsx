@@ -400,8 +400,18 @@ function MainApp() {
                         />
                     </main>
                 ) : (
-                    /* Main Landing Page Curtain */
-                    <main className="relative z-10 border-b-4 border-slate-900 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
+                    /* Main Landing Page Curtain.
+
+                       Deliberately no `bg-white`. This element is z-10 over the
+                       fixed FloatingBackground at z-0, so an opaque fill here
+                       painted over the ambient layer -- the light blooms, the dot
+                       grid, the drifting grit and the 3D buggy -- across the
+                       whole landing page, including the two sections written to
+                       be transparent for it (#intro and #hero). The white comes
+                       from FloatingBackground's own gradient instead, and every
+                       section that should stay solid still carries its own
+                       background (the marquee, gallery, story, CTA and footer). */
+                    <main className="relative z-10 border-b-4 border-slate-900 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
                         {/* 115-Frame Pre-Rendered Cinema Intro Scroll Sequence */}
                         <IntroScrollSequence />
 

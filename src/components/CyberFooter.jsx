@@ -7,9 +7,16 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
     const { contact } = siteData;
 
     return (
+        /* Was `sticky bottom-0 z-0`: the footer sat pinned to the viewport bottom
+           and <main> slid over it as a curtain. That only works while the
+           covering element is opaque, and <main>'s `bg-white` was also painting
+           over the fixed ambient layer -- the light blooms, dot grid, drifting
+           grit and 3D buggy -- everywhere, including the two sections written to
+           be transparent for it. The two effects cannot both sit behind <main>.
+           The ambient layer won; the footer now flows at the end of the page. */
         <footer
             id="site-footer"
-            className="sticky bottom-0 z-0 w-full border-t-4 border-slate-900 bg-slate-50 px-4 pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] text-slate-900 select-none sm:px-8 sm:pt-12 md:pb-8"
+            className="relative z-10 w-full border-t-4 border-slate-900 bg-slate-50 px-4 pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] text-slate-900 select-none sm:px-8 sm:pt-12 md:pb-8"
         >
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
                 {/* Main Content Grid */}
