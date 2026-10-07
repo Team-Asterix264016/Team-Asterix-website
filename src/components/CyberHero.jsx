@@ -89,9 +89,17 @@ export default function CyberHero({ onOpenModelViewer }) {
             {/* Bottom Floating Footer Row with Corner 3D Baja Model Option */}
             <div
                 data-assemble="down"
-                className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 font-mono text-xs font-black text-slate-500 uppercase sm:flex-row sm:items-center"
+                className="z-10 mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-4 font-mono text-xs font-black text-slate-700 uppercase sm:flex-row sm:items-center"
             >
-                <span>SCROLL TO BE ON OUR SHOES!!</span>
+                {/* The ambient buggy renders behind the hero, and on a phone its pose
+                    puts the roll cage directly under this line -- bare text on a
+                    light chassis was marginal. A chip in the same brutalist language
+                    as the button beside it keeps it readable. From `sm` up the
+                    vehicle sits far to the right of this row, so the label stays
+                    bare on the background as designed. */}
+                <span className="max-sm:shadow-brutal-2 max-sm:rounded-sm max-sm:border-2 max-sm:border-slate-900 max-sm:bg-white/95 max-sm:px-2.5 max-sm:py-1.5 max-sm:text-slate-900">
+                    SCROLL TO BE ON OUR SHOES!!
+                </span>
 
                 {/* Corner 3D Baja Inspector Button */}
                 <button
