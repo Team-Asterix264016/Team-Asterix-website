@@ -441,6 +441,176 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
 });
 
 /**
+ * POST /api/workshop/attendance/barcode-scan
+ * Admin only: Process barcode scan input (Register Number / Roll Number) to mark student attendance
+ */
+router.post('/barcode-scan', authenticateToken, async (req, res) => {
+    try {
+        const { barcode, track: inputTrack, sessionId: inputSessionId, sessionTopic, sessionNumber, sessionDate } = req.body || {};
+
+        if (!barcode || typeof barcode !== 'string' || !barcode.trim()) {
+            return res.status(400).json({ error: 'Barcode or register number is required.' });
+        }
+
+        // Clean raw barcode input (handles scanner carriage returns, spaces, or prefixed URLs)
+        let cleanInput = barcode.trim();
+        // If scanner reads a URL like http://...#rollNo=21EC001 or similar
+        if (cleanInput.includes('rollNo=')) {
+            const match = cleanInput.match(/rollNo=([^&]+)/i);
+            if (match) cleanInput = match[1];
+        } else if (cleanInput.includes(':')) {
+            const parts = cleanInput.split(':');
+            cleanInput = parts[parts.length - 1];
+        }
+
+        const cleanBarcode = cleanInput.trim();
+        const upperBarcode = cleanBarcode.toUpperCase();
+
+        // Target track & session ID resolution
+        const track = (inputTrack || 'software').toLowerCase().trim();
+        const targetSessionId = inputSessionId
+            ? String(inputSessionId).trim()
+            : `${track}-s${String(sessionNumber || 1).padStart(2, '0')}-${sessionDate || new Date().toISOString().slice(0, 10)}`;
+
+        // 1. Search candidate by register number (rollNo), email, phone, or receipt number
+        const searchConditions = [
+            { rollNo: upperBarcode },
+            { rollNo: new RegExp(`^${cleanBarcode}$`, 'i') },
+            { email: cleanBarcode.toLowerCase() },
+            { receiptNo: upperBarcode }
+        ];
+
+        const digits = cleanBarcode.replace(/\D/g, '');
+        if (digits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${digits.slice(-10)}$`) });
+        }
+
+        const registration = await WorkshopRegistration.findOne({ $or: searchConditions });
+
+        if (!registration) {
+            return res.status(404).json({
+                error: `No candidate registration found matching register number / barcode "${cleanBarcode}".`,
+                scannedBarcode: cleanBarcode
+            });
+        }
+
+        // 2. Check payment status
+        if (registration.status !== 'paid') {
+            return res.status(403).json({
+                error: `Candidate "${registration.name}" (${registration.rollNo}) registration status is "${registration.status}". Attendance can only be recorded for confirmed paid candidates.`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    status: registration.status,
+                    department: registration.department,
+                    year: registration.year
+                }
+            });
+        }
+
+        // 3. Verify track eligibility
+        const isTrackEnrolled = (registration.tracksEnrolled || []).includes(track) || registration.package === 'combo';
+        if (!isTrackEnrolled) {
+            const registeredTracks = (registration.tracksEnrolled || []).join(' & ') || registration.package;
+            return res.status(403).json({
+                error: `Candidate "${registration.name}" is enrolled in [${registeredTracks.toUpperCase()}], but current session is for [${track.toUpperCase()}].`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    tracksEnrolled: registration.tracksEnrolled,
+                    package: registration.package
+                }
+            });
+        }
+
+        // 4. Check if already marked present
+        const existing = await WorkshopAttendance.findOne({
+            rollNo: registration.rollNo,
+            sessionId: targetSessionId
+        });
+
+        if (existing) {
+            const checkinTimeFormatted = new Date(existing.checkedInAt).toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+
+            return res.json({
+                success: true,
+                alreadyRecorded: true,
+                message: `Already Checked-In: ${registration.name} (${registration.rollNo}) was marked present at ${checkinTimeFormatted}.`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    email: registration.email,
+                    department: registration.department,
+                    year: registration.year,
+                    package: registration.package,
+                    receiptNo: registration.receiptNo,
+                    checkedInAt: existing.checkedInAt,
+                    verifiedBy: existing.verifiedBy
+                }
+            });
+        }
+
+        // 5. Create new attendance record
+        const sessionParts = targetSessionId.split('-');
+        const sessionNumVal = parseInt(sessionParts[1] ? sessionParts[1].replace('s', '') : '1', 10) || 1;
+        const sessionDateVal = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
+
+        const newAttendance = await WorkshopAttendance.create({
+            registrationId: registration._id,
+            rollNo: registration.rollNo,
+            email: registration.email,
+            name: registration.name,
+            department: registration.department,
+            year: registration.year,
+            package: registration.package,
+            track,
+            sessionId: targetSessionId,
+            sessionNumber: sessionNumVal,
+            sessionDate: sessionDateVal,
+            sessionTopic: sessionTopic || '',
+            deviceId: `barcode_scanner_admin_${req.user?.id || 'superadmin'}_${Date.now()}`,
+            ipAddress: req.ip || '',
+            userAgent: 'Barcode Scanner (Admin Portal)',
+            verifiedBy: 'barcode-scanner',
+            checkedInAt: new Date()
+        });
+
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
+        return res.status(201).json({
+            success: true,
+            alreadyRecorded: false,
+            message: `✓ Attendance MARKED: ${registration.name} (${registration.rollNo})`,
+            candidate: {
+                name: registration.name,
+                rollNo: registration.rollNo,
+                email: registration.email,
+                department: registration.department,
+                year: registration.year,
+                package: registration.package,
+                receiptNo: registration.receiptNo,
+                checkedInAt: newAttendance.checkedInAt,
+                verifiedBy: 'barcode-scanner'
+            }
+        });
+    } catch (err) {
+        if (err.code === 11000) {
+            return res.json({
+                success: true,
+                alreadyRecorded: true,
+                message: 'Attendance was already recorded for this student for this session.'
+            });
+        }
+        console.error('Error scanning barcode for attendance:', err);
+        return res.status(500).json({ error: 'Server error while processing barcode scan.' });
+    }
+});
+
+/**
  * GET /api/workshop/attendance/export
  * Admin only: Export formatted CSV for session attendance
  */

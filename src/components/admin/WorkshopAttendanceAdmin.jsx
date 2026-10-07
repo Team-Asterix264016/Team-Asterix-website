@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 
 export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector }) {
+    const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'barcode'
     const [track, setTrack] = useState('software');
     const [sessionNumber, setSessionNumber] = useState(1);
     const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -192,8 +194,38 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 </div>
             </div>
 
-            {/* Session Settings & Selector Bar */}
-            <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
+            {/* View Mode Selector Tabs */}
+            <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-1">
+                <button
+                    type="button"
+                    onClick={() => setViewMode('roster')}
+                    className={`press cursor-pointer border-2 border-slate-900 px-4 py-2 text-xs font-black uppercase transition-all ${
+                        viewMode === 'roster'
+                            ? 'bg-slate-900 text-white shadow-md'
+                            : 'bg-white text-slate-900 hover:bg-slate-100'
+                    }`}
+                >
+                    📋 Attendance Roster & Overrides
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setViewMode('barcode')}
+                    className={`press cursor-pointer border-2 border-slate-900 px-4 py-2 text-xs font-black uppercase transition-all ${
+                        viewMode === 'barcode'
+                            ? 'bg-sky-500 text-slate-950 shadow-md'
+                            : 'bg-white text-slate-900 hover:bg-slate-100'
+                    }`}
+                >
+                    ⚡ Barcode Scanner Mode (College Register No)
+                </button>
+            </div>
+
+            {viewMode === 'barcode' ? (
+                <BarcodeAttendanceAdmin showStatus={showStatus} />
+            ) : (
+                <>
+                    {/* Session Settings & Selector Bar */}
+                    <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
                 <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
                     // Attendance Session Configuration
                 </span>
@@ -485,6 +517,8 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                     </tbody>
                 </table>
             </div>
+                </>
+            )}
         </div>
     );
 }

@@ -6,6 +6,7 @@ import ImageField from './ImageField';
 import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
+import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
@@ -592,6 +593,7 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
                 { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+                { id: 'barcode-attendance', label: 'Barcode Attendance Scanner ⚡', icon: 'camera' },
                 { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
                 { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
@@ -1958,6 +1960,10 @@ export default function AdminDashboard({ onExit }) {
                                 window.location.hash = `#attendance-projector?track=${preferredTrack || 'software'}`;
                             }}
                         />
+                    )}
+
+                    {activeTab === 'barcode-attendance' && (
+                        <BarcodeAttendanceAdmin showStatus={showStatus} />
                     )}
 
                     {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}

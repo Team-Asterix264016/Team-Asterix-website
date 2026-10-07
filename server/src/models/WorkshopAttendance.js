@@ -84,7 +84,7 @@ const WorkshopAttendanceSchema = new mongoose.Schema({
     },
     verifiedBy: {
         type: String,
-        enum: ['qr-scan', 'manual-admin'],
+        enum: ['qr-scan', 'manual-admin', 'barcode-scanner'],
         default: 'qr-scan'
     }
 }, {
