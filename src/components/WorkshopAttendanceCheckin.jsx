@@ -122,7 +122,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
     const isSoftware = tokenInfo?.track === 'software';
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 p-4 font-mono text-slate-100 select-none sm:p-6">
+        <div className="flex min-h-[100svh] flex-col items-center justify-center bg-slate-900 p-4 font-mono text-slate-100 select-none sm:p-6">
             <div className="shadow-brutal-8-brand relative w-full max-w-md border-4 border-slate-900 bg-white p-6 text-slate-900 sm:p-8">
                 {/* Header Track Tag */}
                 <div className="mb-5 flex items-center justify-between border-b-2 border-slate-900 pb-3">

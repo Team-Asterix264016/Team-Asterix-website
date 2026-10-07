@@ -10,14 +10,12 @@ import {
 import { apiUrl } from '../lib/api';
 import { framingStyle } from '../lib/imageFraming';
 
-const DEFAULT_ITEMS = Array.from({ length: 15 }, (_, i) => {
-    const ids = [1015, 1025, 1039, 1043, 1044, 1050, 1062, 1069, 1074, 1080, 1084, 106, 110, 133, 164];
-    return {
-        image: `https://picsum.photos/id/${ids[i % ids.length]}/600/400`,
-        title: `Tile ${i + 1}`,
-        href: undefined
-    };
-});
+/* Empty, not picsum.photos placeholders. Callers always pass `items`, so the
+   defaults never rendered -- but they were a live third-party request sitting
+   behind the whole gallery if anything ever rendered this bare. An empty wall
+   is safe: columnItems falls back to a single slice per column and columnMeta
+   floors copyHeight at `unit`. */
+const DEFAULT_ITEMS = [];
 
 const cx = (...parts) => parts.filter(Boolean).join(' ');
 

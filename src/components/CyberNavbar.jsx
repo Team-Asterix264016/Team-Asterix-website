@@ -26,26 +26,20 @@ export default function CyberNavbar({
     const [mobileOpen, setMobileOpen] = useState(false);
     const [mobileContactOpen, setMobileContactOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isFooterVisible, setIsFooterVisible] = useState(false);
 
     useEffect(() => {
         let lastScrollY = window.scrollY || document.documentElement.scrollTop;
+        /* Reads only window.scrollY. The previous version also measured
+           body/documentElement scrollHeight and offsetHeight here to decide
+           whether the footer was in view -- four forced layout reads on every
+           scroll event, on a page already running Lenis, ScrollTrigger, a WebGL
+           loop, a particle loop and the DriftWall rAF. That measurement existed
+           only to hide the mobile dock near the footer, which is exactly when a
+           phone still needs it; the footer now reserves space for the dock
+           instead. */
         const handleScroll = () => {
             const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-            const windowHeight = window.innerHeight;
-            const docHeight = Math.max(
-                document.body.scrollHeight,
-                document.documentElement.scrollHeight,
-                document.body.offsetHeight,
-                document.documentElement.offsetHeight
-            );
-
-            const scrolled = currentScrollY > 40;
-            setIsScrolled(scrolled);
-
-            // True only when user scrolls near the bottom of the page where the footer is revealed
-            const atFooter = currentScrollY + windowHeight >= docHeight - 350;
-            setIsFooterVisible(atFooter);
+            setIsScrolled(currentScrollY > 40);
 
             if (Math.abs(currentScrollY - lastScrollY) > 60) {
                 setShopOpen(false);
@@ -65,7 +59,6 @@ export default function CyberNavbar({
             observer = new IntersectionObserver(
                 ([entry]) => {
                     if (entry.isIntersecting) {
-                        setIsFooterVisible(true);
                         setMobileOpen(false);
                     }
                 },
@@ -128,8 +121,6 @@ export default function CyberNavbar({
             onSelectSubsystem(id);
         }
     };
-
-
 
     return (
         <>
@@ -230,8 +221,6 @@ export default function CyberNavbar({
                                             <span>← Home</span>
                                         </DockTextItem>
                                     )}
-
-
 
                                     {/* Contact Us Button */}
                                     <div className="relative">
@@ -419,7 +408,7 @@ export default function CyberNavbar({
             >
                 <button
                     onClick={onBackToHome}
-                    className="flex cursor-pointer items-center gap-1.5 focus:outline-none"
+                    className="tap flex cursor-pointer items-center gap-1.5 focus:outline-none"
                     aria-label="Asterix Racing Home"
                 >
                     <img src={teamLogo} alt="Asterix Racing" className="h-6 w-auto object-contain" />
@@ -436,15 +425,23 @@ export default function CyberNavbar({
                 Slides up into view only AFTER scrolling past first page, and slides away at footer
                 ========================================================================= */}
             <div
-                className={`fixed inset-x-3 bottom-3 z-50 flex flex-col items-center transition-all duration-500 ease-out select-none md:hidden ${
-                    isScrolled && !isFooterVisible
+                className={`fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-50 flex flex-col items-center transition-all duration-500 ease-out select-none md:hidden ${
+                    isScrolled
                         ? 'pointer-events-auto translate-y-0 opacity-100'
                         : 'pointer-events-none translate-y-36 opacity-0'
                 }`}
             >
                 {/* Mobile Slide-Up Cockpit Drawer */}
                 {mobileOpen && (
-                    <div className="shadow-brutal-6 anim-sheet-slide-up pointer-events-auto mb-2 max-h-[75vh] w-full max-w-md overflow-y-auto rounded-2xl border-3 border-slate-900 bg-white p-4">
+                    <div
+                        /* Lenis intercepts the wheel over a fixed overlay unless it is
+                           told not to; data-modal-scroll hands the vertical axis back
+                           on touch. dvh rather than vh so the sheet is measured
+                           against the visible area, not the one behind the URL bar. */
+                        data-lenis-prevent
+                        data-modal-scroll
+                        className="shadow-brutal-6 anim-sheet-slide-up pointer-events-auto mb-2 max-h-[min(70dvh,32rem)] w-full max-w-md overflow-y-auto rounded-2xl border-3 border-slate-900 bg-white p-4"
+                    >
                         <div className="mb-3 flex items-center justify-between border-b-2 border-slate-900 pb-2">
                             <div className="flex items-center gap-2">
                                 <span className="h-2 w-2 animate-ping rounded-full bg-sky-500" />
@@ -454,13 +451,11 @@ export default function CyberNavbar({
                             </div>
                             <button
                                 onClick={() => setMobileOpen(false)}
-                                className="press press-flat cursor-pointer rounded border border-slate-900 bg-slate-100 px-2 py-1 text-xs font-black hover:bg-slate-900 hover:text-white"
+                                className="press press-flat tap-sq cursor-pointer rounded border border-slate-900 bg-slate-100 px-2 py-1 text-xs font-black hover:bg-slate-900 hover:text-white"
                             >
                                 ✕ CLOSE
                             </button>
                         </div>
-
-
 
                         {/* Subsystems List */}
                         <div className="mb-3">
@@ -472,7 +467,7 @@ export default function CyberNavbar({
                                     <button
                                         key={s.id}
                                         onClick={() => handleSubsystemClick(s.id)}
-                                        className="flex cursor-pointer items-center justify-between truncate border border-slate-900 bg-white p-2 text-left text-[11px] font-bold hover:bg-sky-500 hover:text-slate-950"
+                                        className="tap flex cursor-pointer items-center justify-between truncate border border-slate-900 bg-white p-2 text-left text-[11px] font-bold hover:bg-sky-500 hover:text-slate-950"
                                     >
                                         <span className="truncate">{s.name}</span>
                                         <span className="ml-1 text-[10px]">→</span>
@@ -485,7 +480,7 @@ export default function CyberNavbar({
                         <div className="mb-3 rounded border-2 border-slate-900 bg-slate-50 p-2.5">
                             <button
                                 onClick={() => setMobileContactOpen(!mobileContactOpen)}
-                                className="flex w-full cursor-pointer items-center justify-between text-xs font-black text-slate-900 uppercase"
+                                className="tap flex w-full cursor-pointer items-center justify-between text-xs font-black text-slate-900 uppercase"
                             >
                                 <span className="flex items-center gap-1.5">
                                     <span>CONTACT & SOCIALS</span>
@@ -502,7 +497,7 @@ export default function CyberNavbar({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setMobileOpen(false)}
-                                            className="flex items-center justify-between border border-slate-900 bg-white p-2 text-xs font-bold hover:bg-sky-100"
+                                            className="tap flex items-center justify-between border border-slate-900 bg-white p-2 text-xs font-bold hover:bg-sky-100"
                                         >
                                             <div className="flex items-center gap-2">
                                                 {item.icon}
@@ -545,7 +540,7 @@ export default function CyberNavbar({
                                     if (onOpenProfile) onOpenProfile();
                                     else window.location.hash = '#workshop-profile';
                                 }}
-                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-purple-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-purple-400"
+                                className="shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-purple-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-purple-400"
                             >
                                 <span>My Profile & Notes 🔓</span>
                             </button>
@@ -555,7 +550,7 @@ export default function CyberNavbar({
                                     if (onOpenCommunity) onOpenCommunity();
                                     else window.location.hash = '#community';
                                 }}
-                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-emerald-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-emerald-400"
+                                className="shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-emerald-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-emerald-400"
                             >
                                 <span>Community & Horizon</span>
                                 <span>💬</span>
@@ -566,7 +561,7 @@ export default function CyberNavbar({
                                     if (onOpenSponsor) onOpenSponsor();
                                     else window.location.hash = '#sponsor';
                                 }}
-                                className="shadow-brutal-2 flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-sky-500 p-2.5 text-center text-xs font-black text-slate-950 uppercase hover:bg-sky-400"
+                                className="shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-sky-500 p-2.5 text-center text-xs font-black text-slate-950 uppercase hover:bg-sky-400"
                             >
                                 <span>Sponsor Asterix Racing</span>
                                 <span>↗</span>
@@ -578,7 +573,7 @@ export default function CyberNavbar({
                 {/* Main Floating Bottom Cockpit Dock Bar */}
                 <nav
                     aria-label="Mobile Navigation Cockpit"
-                    className="shadow-brutal-4 pointer-events-auto flex w-full max-w-sm items-center justify-between gap-1.5 rounded-2xl border-3 border-slate-900 bg-white/95 px-2.5 py-1.5 backdrop-blur-md"
+                    className="shadow-brutal-4 pointer-events-auto flex w-full max-w-sm items-stretch justify-between gap-2 rounded-2xl border-3 border-slate-900 bg-white/95 p-2 backdrop-blur-md"
                 >
                     {/* Home / Logo Anchor */}
                     <button
@@ -587,32 +582,20 @@ export default function CyberNavbar({
                                 ? onBackToHome
                                 : () => window.scrollTo({ top: 0, behavior: 'smooth' })
                         }
-                        className="press press-flat flex cursor-pointer items-center justify-center rounded-lg bg-slate-900 p-1.5 text-[11px] font-black text-white"
+                        className="press press-flat tap flex flex-1 cursor-pointer items-center justify-center rounded-lg bg-slate-900 px-3 text-[11px] font-black text-white"
                         title={isDetailPage ? 'Back to Home' : 'Scroll to Top'}
                     >
                         {isDetailPage ? '← HOME' : '▲ TOP'}
                     </button>
 
-                    {/* Subsystems Trigger */}
-                    <button
-                        onClick={() => {
-                            setMobileOpen(true);
-                            setMobileContactOpen(false);
-                        }}
-                        className={`press flex items-center gap-1 rounded-lg border-2 border-slate-900 p-1.5 text-xs font-black uppercase ${
-                            shopOpen ? 'bg-sky-200' : 'bg-sky-50'
-                        }`}
-                    >
-                        <span>SPECS</span>
-                        <span className="py-0.2 rounded bg-slate-900 px-1 font-mono text-[9px] text-white">
-                            {subsystems.length}
-                        </span>
-                    </button>
-
-                    {/* Cockpit HUD Menu Toggle */}
+                    {/* Cockpit HUD Menu Toggle. Carries the subsystem count, which used
+                        to live on a second button beside it that opened this same
+                        drawer -- two triggers for one panel, and the one that was
+                        removed styled itself from `shopOpen`, which only the desktop
+                        header ever sets. */}
                     <button
                         onClick={() => setMobileOpen(!mobileOpen)}
-                        className={`press flex items-center gap-1.5 rounded-lg border-2 border-slate-900 px-2.5 py-1.5 text-xs font-black uppercase ${
+                        className={`press tap flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-slate-900 px-3 text-xs font-black uppercase ${
                             mobileOpen ? 'bg-slate-900 text-white' : 'shadow-brutal-2 bg-white text-slate-900'
                         }`}
                         aria-expanded={mobileOpen}
@@ -620,6 +603,13 @@ export default function CyberNavbar({
                     >
                         <span>{mobileOpen ? '✕' : '☰'}</span>
                         <span>MENU</span>
+                        <span
+                            className={`rounded px-1 py-px font-mono text-[9px] ${
+                                mobileOpen ? 'bg-white text-slate-900' : 'bg-slate-900 text-white'
+                            }`}
+                        >
+                            {subsystems.length}
+                        </span>
                     </button>
 
                     {/* Quick CTA Pill: Sponsor */}
@@ -628,7 +618,7 @@ export default function CyberNavbar({
                             if (onOpenSponsor) onOpenSponsor();
                             else window.location.hash = '#sponsor';
                         }}
-                        className="press shadow-brutal-2 flex cursor-pointer items-center gap-0.5 rounded-lg border-2 border-slate-900 bg-sky-500 px-2.5 py-1.5 text-xs font-black text-slate-950 uppercase"
+                        className="press shadow-brutal-2 tap flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg border-2 border-slate-900 bg-sky-500 px-3 text-xs font-black text-slate-950 uppercase"
                     >
                         <span>SPONSOR</span>
                         <span className="text-[10px]">↗</span>

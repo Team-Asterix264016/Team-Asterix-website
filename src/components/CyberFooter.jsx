@@ -9,7 +9,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
     return (
         <footer
             id="site-footer"
-            className="sticky bottom-0 z-0 w-full border-t-4 border-slate-900 bg-slate-50 px-4 pt-8 pb-6 text-slate-900 select-none sm:px-8 sm:pt-12 sm:pb-8"
+            className="sticky bottom-0 z-0 w-full border-t-4 border-slate-900 bg-slate-50 px-4 pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] text-slate-900 select-none sm:px-8 sm:pt-12 md:pb-8"
         >
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
                 {/* Main Content Grid */}
@@ -34,7 +34,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                         <div className="flex flex-wrap items-center gap-1.5 pt-0.5 sm:gap-2">
                             <button
                                 onClick={onOpenAdmin}
-                                className="press shadow-brutal-2-brand flex cursor-pointer items-center gap-1 rounded-lg border-2 border-slate-900 bg-slate-900 px-2.5 py-1 font-mono text-[10px] font-black tracking-wider text-white transition-all hover:bg-slate-800"
+                                className="press shadow-brutal-2-brand tap flex cursor-pointer items-center gap-1 rounded-lg border-2 border-slate-900 bg-slate-900 px-2.5 py-1 font-mono text-[10px] font-black tracking-wider text-white transition-all hover:bg-slate-800"
                                 title="Open Admin Management Interface"
                             >
                                 <span className="text-sky-400">⚡</span>
@@ -68,7 +68,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     href={net.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={`press shadow-brutal-2 rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 text-[10px] font-black text-slate-900 uppercase ${net.color} flex cursor-pointer items-center gap-1 transition-all`}
+                                    className={`press shadow-brutal-2 tap rounded-lg border-2 border-slate-900 bg-white px-2.5 py-1 text-[10px] font-black text-slate-900 uppercase ${net.color} flex cursor-pointer items-center gap-1 transition-all`}
                                 >
                                     <span>{net.emoji}</span>
                                     <span>{net.name}</span>
@@ -119,7 +119,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                     </div>
 
                     {/* Navigation Columns (Col 6-12) */}
-                    <div className="grid grid-cols-2 gap-5 sm:grid-cols-2 md:col-span-6 lg:col-span-7 lg:gap-8">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:col-span-6 lg:col-span-7 lg:gap-8">
                         {/* Section: The Squad */}
                         <div className="flex flex-col gap-2">
                             <span className="mb-0.5 flex items-center gap-1.5 font-mono text-[11px] font-black tracking-wider text-sky-700 uppercase">
@@ -136,7 +136,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     <a
                                         key={item.name}
                                         href={item.href}
-                                        className="hover:shadow-brutal-2 group -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-transparent p-2 text-slate-800 transition-all hover:border-slate-900 hover:bg-sky-50"
+                                        className="hover:shadow-brutal-2 group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-transparent p-2 text-slate-800 transition-all hover:border-slate-900 hover:bg-sky-50"
                                     >
                                         <span>{item.name}</span>
                                         <span className="font-mono text-[11px] text-slate-500 transition-all group-hover:translate-x-0.5 group-hover:text-sky-700">
@@ -160,11 +160,11 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                         if (onOpenWorkshop) onOpenWorkshop();
                                         else window.location.hash = '#workshop';
                                     }}
-                                    className="hover:shadow-brutal-2 group -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-slate-900 bg-amber-50 p-2 text-left font-bold text-slate-900 transition-all hover:bg-amber-200"
+                                    className="hover:shadow-brutal-2 group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-slate-900 bg-amber-50 p-2 text-left font-bold text-slate-900 transition-all hover:bg-amber-200"
                                 >
                                     <span className="flex items-center gap-1.5">
                                         <span>Workshops 2026</span>
-                                        <span className="py-0.2 shadow-brutal-1 rounded border border-slate-900 bg-amber-300 px-1.5 text-[9px] font-black text-slate-900">
+                                        <span className="shadow-brutal-1 rounded border border-slate-900 bg-amber-300 px-1.5 py-px text-[9px] font-black text-slate-900">
                                             ✦
                                         </span>
                                     </span>
@@ -178,11 +178,11 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                         if (onOpenSponsor) onOpenSponsor();
                                         else window.location.hash = '#sponsor';
                                     }}
-                                    className="hover:shadow-brutal-2 group -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-slate-900 bg-sky-50 p-2 text-left font-bold text-slate-900 transition-all hover:bg-sky-200"
+                                    className="hover:shadow-brutal-2 group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-slate-900 bg-sky-50 p-2 text-left font-bold text-slate-900 transition-all hover:bg-sky-200"
                                 >
                                     <span className="flex items-center gap-1.5">
                                         <span>Sponsor Portal</span>
-                                        <span className="py-0.2 shadow-brutal-1 rounded border border-slate-900 bg-sky-200 px-1.5 font-mono text-[9px] font-black text-sky-900">
+                                        <span className="shadow-brutal-1 rounded border border-slate-900 bg-sky-200 px-1.5 py-px font-mono text-[9px] font-black text-sky-900">
                                             ↗
                                         </span>
                                     </span>
@@ -191,11 +191,9 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                     </span>
                                 </button>
 
-
-
                                 <a
                                     href="#hero"
-                                    className="group -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg p-1.5 font-mono text-[10px] font-bold text-slate-500 transition-all hover:bg-slate-200/70 hover:text-slate-950"
+                                    className="group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg p-1.5 font-mono text-[10px] font-bold text-slate-500 transition-all hover:bg-slate-200/70 hover:text-slate-950"
                                 >
                                     <span>Back to Top</span>
                                     <span className="font-mono text-[10px] transition-transform group-hover:-translate-y-0.5">

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import DriftWall from './DriftWall';
 import { useWebsiteData } from '../context/WebsiteDataContext';
+import { useIsNarrow } from '../hooks/useMediaQuery';
 import { apiUrl } from '../lib/api';
 import { framingStyle } from '../lib/imageFraming';
 import Icon from './Icon';
@@ -10,18 +11,9 @@ export default function TeamGallery() {
     const { siteData } = useWebsiteData();
     const [lightboxIndex, setLightboxIndex] = useState(null);
 
-    // Read once per resize rather than once per render, so the wall actually
-    // re-lays-out when the viewport changes instead of keeping whatever
-    // breakpoint happened to be true on first paint.
-    const isNarrow = useSyncExternalStore(
-        (callback) => {
-            const mq = window.matchMedia('(max-width: 639px)');
-            mq.addEventListener('change', callback);
-            return () => mq.removeEventListener('change', callback);
-        },
-        () => window.matchMedia('(max-width: 639px)').matches,
-        () => false
-    );
+    // Re-lays-out on resize rather than keeping whatever breakpoint happened to
+    // be true on first paint.
+    const isNarrow = useIsNarrow();
 
     // Disable scrolling when lightbox modal is open
     useEffect(() => {
@@ -145,7 +137,7 @@ export default function TeamGallery() {
                     <div className="shadow-brutal-3 flex items-center gap-2 border-2 border-slate-900 bg-slate-100 p-1.5">
                         <button
                             onClick={() => setViewMode('wall')}
-                            className={`press cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
+                            className={`press tap cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
                                 viewMode === 'wall'
                                     ? 'shadow-brutal-2 bg-sky-500 text-slate-950'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
@@ -155,7 +147,7 @@ export default function TeamGallery() {
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`press cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
+                            className={`press tap cursor-pointer border border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase transition-all ${
                                 viewMode === 'grid'
                                     ? 'shadow-brutal-2 bg-sky-500 text-slate-950'
                                     : 'bg-white text-slate-900 hover:bg-sky-100'
@@ -170,7 +162,7 @@ export default function TeamGallery() {
                 {viewMode === 'wall' ? (
                     <div
                         data-assemble="card"
-                        className="shadow-brutal-10 relative h-[540px] w-full overflow-hidden border-4 border-slate-900 bg-sky-50/40 sm:h-[620px] md:h-[680px]"
+                        className="shadow-brutal-10 relative h-[420px] w-full overflow-hidden border-4 border-slate-900 bg-sky-50/40 sm:h-[620px] md:h-[680px]"
                     >
                         {/* The 3D DriftWall */}
                         <DriftWall
@@ -269,7 +261,7 @@ export default function TeamGallery() {
                             </div>
 
                             {/* Image Viewer Frame */}
-                            <div className="relative flex aspect-[16/10] max-h-[60vh] w-full items-center justify-center overflow-hidden bg-slate-950 sm:aspect-[16/9]">
+                            <div className="relative flex aspect-[16/10] max-h-[60dvh] w-full items-center justify-center overflow-hidden bg-slate-950 sm:aspect-[16/9]">
                                 <img
                                     loading="lazy"
                                     decoding="async"

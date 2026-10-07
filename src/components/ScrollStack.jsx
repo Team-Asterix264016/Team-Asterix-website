@@ -1,4 +1,5 @@
 import React, { Children, isValidElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePrefersReducedMotion } from '../hooks/useMediaQuery';
 
 /**
  * React Bits Pro - ScrollStack Component
@@ -164,20 +165,11 @@ export default function ScrollStack({
     const onIndexChangeRef = useRef(onIndexChange);
 
     const [activeIndex, setActiveIndex] = useState(0);
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+    const prefersReducedMotion = usePrefersReducedMotion();
 
     useEffect(() => {
         onIndexChangeRef.current = onIndexChange;
     }, [onIndexChange]);
-
-    useEffect(() => {
-        if (typeof window === 'undefined' || !window.matchMedia) return;
-        const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const updateMotion = () => setPrefersReducedMotion(media.matches);
-        updateMotion();
-        media.addEventListener('change', updateMotion);
-        return () => media.removeEventListener('change', updateMotion);
-    }, []);
 
     const config = useMemo(
         () => ({
@@ -349,7 +341,7 @@ export default function ScrollStack({
             {/* Pinned Stage Container */}
             <div
                 ref={stageRef}
-                className="pointer-events-none top-0 left-0 z-20 flex h-screen w-full flex-col items-center justify-center overflow-hidden px-4 sm:px-8"
+                className="pointer-events-none top-0 left-0 z-20 flex h-[100svh] w-full flex-col items-center justify-center overflow-hidden px-4 sm:px-8"
                 style={{ perspective: `${Math.max(200, perspective)}px` }}
             >
                 {/* Optional Header inside the pinned stage */}
@@ -364,8 +356,13 @@ export default function ScrollStack({
                     className="pointer-events-auto relative w-full"
                     style={{
                         maxWidth: `${Math.max(320, cardWidth)}px`,
-                        height: `min(${Math.round(100 * clamp(cardHeight, 0.3, 0.85))}vh, 520px)`,
-                        minHeight: '380px'
+                        // svh, matching the stage: the pin maths is in
+                        // window.innerHeight, so vh would size the card against a
+                        // box taller than the visible area on mobile.
+                        height: `min(${Math.round(100 * clamp(cardHeight, 0.3, 0.85))}svh, 520px)`,
+                        // Was a flat 380px, which on a 320x568 phone exceeded the
+                        // 62svh the stage actually offers and overflowed it.
+                        minHeight: 'min(380px, 62svh)'
                     }}
                 >
                     {cardList.map((card, idx) => (

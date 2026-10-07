@@ -94,11 +94,11 @@ export default function CommunityProfileModal() {
             data-lenis-prevent="true"
             data-lenis-prevent-wheel="true"
         >
-            <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden border-4 border-slate-900 bg-white shadow-[10px_10px_0px_#0f172a]">
+            <div className="flex h-[100dvh] w-full flex-col overflow-hidden border-4 border-slate-900 bg-white shadow-[10px_10px_0px_#0f172a] sm:h-auto sm:max-h-[92dvh] sm:max-w-4xl">
                 {/* Modal Header */}
                 <div className="z-10 flex flex-shrink-0 items-center justify-between border-b-4 border-slate-900 bg-slate-900 p-4 text-white">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-black uppercase text-sky-400">
+                        <span className="font-mono text-xs font-black text-sky-400 uppercase">
                             // PROGRESSIVE COMMUNITY PROFILE
                         </span>
                         <span
@@ -111,21 +111,21 @@ export default function CommunityProfileModal() {
                                 currentMember.mentorshipStatus === 'AVAILABLE'
                                     ? 'bg-emerald-400 text-slate-950'
                                     : currentMember.mentorshipStatus === 'LIMITED'
-                                    ? 'bg-amber-300 text-slate-950'
-                                    : 'bg-slate-400 text-slate-900'
+                                      ? 'bg-amber-300 text-slate-950'
+                                      : 'bg-slate-400 text-slate-900'
                             }`}
                         >
                             {currentMember.mentorshipStatus === 'AVAILABLE'
                                 ? '🟢 OPEN FOR MENTORSHIP'
                                 : currentMember.mentorshipStatus === 'LIMITED'
-                                ? '🟡 LIMITED AVAILABILITY'
-                                : '⚪ NOT MENTORING'}
+                                  ? '🟡 LIMITED AVAILABILITY'
+                                  : '⚪ NOT MENTORING'}
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsMessagingDrawerOpen(true)}
-                            className="press cursor-pointer border border-white bg-sky-400 px-3 py-1 font-mono text-xs font-black uppercase text-slate-900 hover:bg-sky-300"
+                            className="press cursor-pointer border border-white bg-sky-400 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase hover:bg-sky-300"
                         >
                             💬 DMs &amp; Directory
                         </button>
@@ -140,7 +140,8 @@ export default function CommunityProfileModal() {
 
                 {/* Main Scroll Content */}
                 <div
-                    className="custom-scrollbar space-y-6 overflow-y-auto p-6 flex-1 sm:p-8"
+                    data-modal-scroll
+                    className="custom-scrollbar flex-1 space-y-6 overflow-y-auto p-6 sm:p-8"
                     data-lenis-prevent="true"
                     data-lenis-prevent-wheel="true"
                 >
@@ -152,11 +153,11 @@ export default function CommunityProfileModal() {
                             </div>
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-2xl font-black uppercase tracking-tight text-white leading-none">
+                                    <h2 className="text-2xl leading-none font-black tracking-tight text-white uppercase">
                                         {currentMember.name}
                                     </h2>
                                     {currentMember.isWorkshopVerified && (
-                                        <span className="border border-slate-900 bg-emerald-300 px-2 py-0.5 font-mono text-[9px] font-black uppercase text-slate-900">
+                                        <span className="border border-slate-900 bg-emerald-300 px-2 py-0.5 font-mono text-[9px] font-black text-slate-900 uppercase">
                                             ✓ VERIFIED WORKSHOP ALUMNUS
                                         </span>
                                     )}
@@ -178,7 +179,7 @@ export default function CommunityProfileModal() {
                                 <span>CONTRIBUTION XP</span>
                                 <span className="text-sky-600">{currentMember.xp} XP</span>
                             </div>
-                            <div className="h-3 w-full border border-slate-900 bg-slate-200 overflow-hidden">
+                            <div className="h-3 w-full overflow-hidden border border-slate-900 bg-slate-200">
                                 <div
                                     className="h-full bg-sky-500 transition-all duration-500"
                                     style={{ width: `${Math.min(100, (currentMember.xp / 1000) * 100)}%` }}
@@ -240,10 +241,10 @@ export default function CommunityProfileModal() {
                             {/* Evidence Cards Grid */}
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="block font-mono text-[10px] font-black uppercase text-sky-700">
+                                    <span className="block font-mono text-[10px] font-black text-sky-700 uppercase">
                                         WORKSHOP TRACK
                                     </span>
-                                    <span className="mt-1 block text-base font-black uppercase text-slate-900">
+                                    <span className="mt-1 block text-base font-black text-slate-900 uppercase">
                                         {currentMember.track.replace('-', ' ')}
                                     </span>
                                     <span className="mt-1 block font-mono text-[10px] font-bold text-slate-500">
@@ -252,7 +253,7 @@ export default function CommunityProfileModal() {
                                 </div>
 
                                 <div className="border-3 border-slate-900 bg-purple-50 p-4 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="block font-mono text-[10px] font-black uppercase text-purple-700">
+                                    <span className="block font-mono text-[10px] font-black text-purple-700 uppercase">
                                         PINNED ARTIFACTS
                                     </span>
                                     <span className="mt-1 block text-2xl font-black text-slate-900">
@@ -264,7 +265,7 @@ export default function CommunityProfileModal() {
                                 </div>
 
                                 <div className="border-3 border-slate-900 bg-emerald-50 p-4 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="block font-mono text-[10px] font-black uppercase text-emerald-700">
+                                    <span className="block font-mono text-[10px] font-black text-emerald-700 uppercase">
                                         PEER ENDORSEMENTS
                                     </span>
                                     <span className="mt-1 block text-2xl font-black text-slate-900">
@@ -281,13 +282,13 @@ export default function CommunityProfileModal() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">🎓</span>
-                                        <h4 className="text-sm font-black uppercase text-slate-900">
+                                        <h4 className="text-sm font-black text-slate-900 uppercase">
                                             Peer Mentorship &amp; Office Hours Status
                                         </h4>
                                     </div>
                                     <button
                                         onClick={() => setIsEditingMentorship(!isEditingMentorship)}
-                                        className="press cursor-pointer border border-slate-900 bg-amber-300 px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-900 hover:bg-amber-400"
+                                        className="press cursor-pointer border border-slate-900 bg-amber-300 px-2.5 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-amber-400"
                                     >
                                         {isEditingMentorship ? 'Cancel Edit' : '✏️ Update Status'}
                                     </button>
@@ -296,7 +297,7 @@ export default function CommunityProfileModal() {
                                 {isEditingMentorship ? (
                                     <div className="space-y-3 border-2 border-slate-900 bg-white p-4">
                                         <div>
-                                            <label className="block font-mono text-xs font-black uppercase text-slate-900">
+                                            <label className="block font-mono text-xs font-black text-slate-900 uppercase">
                                                 Mentorship Availability:
                                             </label>
                                             <select
@@ -310,7 +311,7 @@ export default function CommunityProfileModal() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block font-mono text-xs font-black uppercase text-slate-900">
+                                            <label className="block font-mono text-xs font-black text-slate-900 uppercase">
                                                 Topics You Can Guide Juniors In (Comma Separated):
                                             </label>
                                             <input
@@ -323,7 +324,7 @@ export default function CommunityProfileModal() {
                                         </div>
                                         <button
                                             onClick={handleSaveMentorship}
-                                            className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-4 py-1.5 font-mono text-xs font-black uppercase text-amber-300 hover:bg-slate-800"
+                                            className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-4 py-1.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                                         >
                                             ✓ Save Status Settings
                                         </button>
@@ -337,15 +338,15 @@ export default function CommunityProfileModal() {
                                                     currentMember.mentorshipStatus === 'AVAILABLE'
                                                         ? 'bg-emerald-300 text-slate-900'
                                                         : currentMember.mentorshipStatus === 'LIMITED'
-                                                        ? 'bg-amber-300 text-slate-900'
-                                                        : 'bg-slate-200 text-slate-700'
+                                                          ? 'bg-amber-300 text-slate-900'
+                                                          : 'bg-slate-200 text-slate-700'
                                                 }`}
                                             >
                                                 {currentMember.mentorshipStatus === 'AVAILABLE'
                                                     ? '🟢 Open to help juniors with technical questions'
                                                     : currentMember.mentorshipStatus === 'LIMITED'
-                                                    ? '🟡 Limited hours for Q&A'
-                                                    : '⚪ Currently focused on core R&D'}
+                                                      ? '🟡 Limited hours for Q&A'
+                                                      : '⚪ Currently focused on core R&D'}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -365,7 +366,7 @@ export default function CommunityProfileModal() {
 
                             {/* Skills & Peer Endorsements Section */}
                             <div className="space-y-3 border-3 border-slate-900 bg-white p-5 shadow-[4px_4px_0px_#0f172a]">
-                                <h4 className="text-sm font-black uppercase text-slate-900">
+                                <h4 className="text-sm font-black text-slate-900 uppercase">
                                     Technical Skills &amp; Peer Endorsements
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
@@ -377,7 +378,7 @@ export default function CommunityProfileModal() {
                                             <span>#{skill}</span>
                                             <button
                                                 onClick={() => endorseMember(currentMember.id, skill)}
-                                                className="press cursor-pointer border border-slate-900 bg-emerald-300 px-1.5 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900 hover:bg-emerald-400"
+                                                className="press cursor-pointer border border-slate-900 bg-emerald-300 px-1.5 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-emerald-400"
                                                 title={`Endorse ${currentMember.name} for ${skill}`}
                                             >
                                                 + Endorse ({memberEndorsements[skill] || 0})
@@ -394,16 +395,17 @@ export default function CommunityProfileModal() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                                 <div>
-                                    <h3 className="text-lg font-black uppercase text-slate-900">
+                                    <h3 className="text-lg font-black text-slate-900 uppercase">
                                         🛠 Garage Proof-of-Work Showcase
                                     </h3>
                                     <p className="font-mono text-xs text-slate-600">
-                                        Pin your CAD renders, ROS2 repositories, circuit diagrams, and telemetry logs.
+                                        Pin your CAD renders, ROS2 repositories, circuit diagrams, and
+                                        telemetry logs.
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setShowPinForm(!showPinForm)}
-                                    className="press cursor-pointer border-2 border-slate-900 bg-purple-400 px-3 py-1.5 font-mono text-xs font-black uppercase text-slate-900 hover:bg-purple-300"
+                                    className="press cursor-pointer border-2 border-slate-900 bg-purple-400 px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-purple-300"
                                 >
                                     {showPinForm ? '✕ Close Form' : '+ Pin Artifact (+50 XP)'}
                                 </button>
@@ -415,12 +417,12 @@ export default function CommunityProfileModal() {
                                     onSubmit={handlePinSubmit}
                                     className="space-y-3 border-3 border-slate-900 bg-purple-50 p-5 shadow-[4px_4px_0px_#0f172a]"
                                 >
-                                    <span className="block font-mono text-xs font-black uppercase text-purple-900">
+                                    <span className="block font-mono text-xs font-black text-purple-900 uppercase">
                                         // NEW ARTIFACT PIN FORM
                                     </span>
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                         <div>
-                                            <label className="block font-mono text-[10px] font-black uppercase text-slate-900">
+                                            <label className="block font-mono text-[10px] font-black text-slate-900 uppercase">
                                                 Project Title *
                                             </label>
                                             <input
@@ -433,7 +435,7 @@ export default function CommunityProfileModal() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block font-mono text-[10px] font-black uppercase text-slate-900">
+                                            <label className="block font-mono text-[10px] font-black text-slate-900 uppercase">
                                                 Category *
                                             </label>
                                             <select
@@ -443,13 +445,15 @@ export default function CommunityProfileModal() {
                                             >
                                                 <option value="code">💻 Code / ROS2 Node</option>
                                                 <option value="cad">⚙️ 3D CAD Model / Assembly</option>
-                                                <option value="telemetry">📈 Telemetry &amp; Log Graph</option>
+                                                <option value="telemetry">
+                                                    📈 Telemetry &amp; Log Graph
+                                                </option>
                                                 <option value="circuit">⚡ PCB &amp; Circuit Diagram</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block font-mono text-[10px] font-black uppercase text-slate-900">
+                                        <label className="block font-mono text-[10px] font-black text-slate-900 uppercase">
                                             Artifact URL (GitHub / Onshape / Google Drive Link)
                                         </label>
                                         <input
@@ -461,7 +465,7 @@ export default function CommunityProfileModal() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-mono text-[10px] font-black uppercase text-slate-900">
+                                        <label className="block font-mono text-[10px] font-black text-slate-900 uppercase">
                                             Description / Technical Specs
                                         </label>
                                         <textarea
@@ -474,7 +478,7 @@ export default function CommunityProfileModal() {
                                     </div>
                                     <button
                                         type="submit"
-                                        className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-5 py-2 font-mono text-xs font-black uppercase text-amber-300 hover:bg-slate-800"
+                                        className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-5 py-2 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
                                     >
                                         📌 Save &amp; Pin to Profile (+50 XP)
                                     </button>
@@ -490,16 +494,18 @@ export default function CommunityProfileModal() {
                                     >
                                         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="border border-slate-900 bg-purple-200 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-purple-900">
+                                                <span className="border border-slate-900 bg-purple-200 px-2 py-0.5 font-mono text-[10px] font-black text-purple-900 uppercase">
                                                     {pin.category === 'code'
                                                         ? '💻 CODE'
                                                         : pin.category === 'cad'
-                                                        ? '⚙️ CAD MODEL'
-                                                        : pin.category === 'telemetry'
-                                                        ? '📈 TELEMETRY'
-                                                        : '⚡ CIRCUIT'}
+                                                          ? '⚙️ CAD MODEL'
+                                                          : pin.category === 'telemetry'
+                                                            ? '📈 TELEMETRY'
+                                                            : '⚡ CIRCUIT'}
                                                 </span>
-                                                <h4 className="text-base font-black text-slate-900">{pin.title}</h4>
+                                                <h4 className="text-base font-black text-slate-900">
+                                                    {pin.title}
+                                                </h4>
                                             </div>
                                             <span className="font-mono text-[10px] font-bold text-slate-400">
                                                 Pinned {pin.date}
@@ -557,16 +563,17 @@ export default function CommunityProfileModal() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                                 <div>
-                                    <h3 className="text-lg font-black uppercase text-slate-900">
+                                    <h3 className="text-lg font-black text-slate-900 uppercase">
                                         ✍️ Crew Recommendations &amp; Peer Praise
                                     </h3>
                                     <p className="font-mono text-xs text-slate-600">
-                                        Testimonials from subsystem leads and teammates praising track performance.
+                                        Testimonials from subsystem leads and teammates praising track
+                                        performance.
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setShowPraiseForm(!showPraiseForm)}
-                                    className="press cursor-pointer border-2 border-slate-900 bg-emerald-400 px-3 py-1.5 font-mono text-xs font-black uppercase text-slate-900 hover:bg-emerald-300"
+                                    className="press cursor-pointer border-2 border-slate-900 bg-emerald-400 px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300"
                                 >
                                     {showPraiseForm ? '✕ Close' : '+ Write Praise (+25 XP)'}
                                 </button>
@@ -578,7 +585,7 @@ export default function CommunityProfileModal() {
                                     onSubmit={handlePraiseSubmit}
                                     className="space-y-3 border-3 border-slate-900 bg-emerald-50 p-5 shadow-[4px_4px_0px_#0f172a]"
                                 >
-                                    <span className="block font-mono text-xs font-black uppercase text-emerald-900">
+                                    <span className="block font-mono text-xs font-black text-emerald-900 uppercase">
                                         // WRITE TESTIMONIAL FOR {currentMember.name}
                                     </span>
                                     <textarea
@@ -591,7 +598,7 @@ export default function CommunityProfileModal() {
                                     />
                                     <button
                                         type="submit"
-                                        className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-5 py-2 font-mono text-xs font-black uppercase text-emerald-300 hover:bg-slate-800"
+                                        className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-5 py-2 font-mono text-xs font-black text-emerald-300 uppercase hover:bg-slate-800"
                                     >
                                         💬 Submit Peer Recommendation (+25 XP)
                                     </button>
@@ -611,7 +618,7 @@ export default function CommunityProfileModal() {
                                                     {item.authorAvatar}
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-xs font-black uppercase text-slate-900">
+                                                    <h5 className="text-xs font-black text-slate-900 uppercase">
                                                         {item.authorName}
                                                     </h5>
                                                     <span className="font-mono text-[10px] font-bold text-sky-700">
@@ -623,7 +630,7 @@ export default function CommunityProfileModal() {
                                                 {item.date}
                                             </span>
                                         </div>
-                                        <p className="border-l-3 border-slate-900 bg-slate-50 p-2.5 font-mono text-xs italic text-slate-800">
+                                        <p className="border-l-3 border-slate-900 bg-slate-50 p-2.5 font-mono text-xs text-slate-800 italic">
                                             "{item.comment}"
                                         </p>
                                     </div>
@@ -638,26 +645,30 @@ export default function CommunityProfileModal() {
                             <div className="relative space-y-6 overflow-hidden border-4 border-slate-900 bg-slate-900 p-6 text-white shadow-[8px_8px_0px_#38bdf8] sm:p-8">
                                 <div className="flex flex-col items-start justify-between gap-4 border-b-4 border-white pb-4 sm:flex-row sm:items-center">
                                     <div>
-                                        <span className="border border-white bg-amber-300 px-3 py-1 font-mono text-xs font-black uppercase text-slate-900">
+                                        <span className="border border-white bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase">
                                             OFFICIAL PROOF OF CONTRIBUTION
                                         </span>
-                                        <h3 className="mt-2 text-2xl font-black uppercase text-white">
+                                        <h3 className="mt-2 text-2xl font-black text-white uppercase">
                                             ASTERIX ENGINEERING PASSPORT
                                         </h3>
                                     </div>
                                     <div className="font-mono text-xs font-bold text-sky-400 sm:text-right">
                                         <div>VERIFIED STUDENT ID</div>
-                                        <div className="text-base font-black text-white">{currentMember.rollNo}</div>
+                                        <div className="text-base font-black text-white">
+                                            {currentMember.rollNo}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div className="space-y-2 font-mono text-xs text-slate-300">
                                         <div>
-                                            Member Name: <strong className="text-white">{currentMember.name}</strong>
+                                            Member Name:{' '}
+                                            <strong className="text-white">{currentMember.name}</strong>
                                         </div>
                                         <div>
-                                            Institution: <strong className="text-white">{currentMember.college}</strong>
+                                            Institution:{' '}
+                                            <strong className="text-white">{currentMember.college}</strong>
                                         </div>
                                         <div>
                                             Current Rank:{' '}
@@ -671,12 +682,14 @@ export default function CommunityProfileModal() {
                                         </div>
                                         <div>
                                             Workshop Track:{' '}
-                                            <strong className="uppercase text-white">{currentMember.track}</strong>
+                                            <strong className="text-white uppercase">
+                                                {currentMember.track}
+                                            </strong>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2 border-2 border-white/30 bg-white/10 p-4 font-mono text-xs text-slate-200">
-                                        <div className="font-black uppercase text-emerald-400 text-[10px]">
+                                        <div className="text-[10px] font-black text-emerald-400 uppercase">
                                             ✓ VERIFIED CONTRIBUTIONS SUMMARY
                                         </div>
                                         <div>• Attended SAE BAJA Autonomous Workshop</div>
@@ -689,14 +702,16 @@ export default function CommunityProfileModal() {
                                 <div className="flex flex-wrap items-center justify-between gap-4 border-t-2 border-white/20 pt-4">
                                     <button
                                         onClick={handleShareCard}
-                                        className="press cursor-pointer border-2 border-white bg-amber-300 px-5 py-2.5 font-mono text-xs font-black uppercase text-slate-900 shadow-[3px_3px_0px_#fff] hover:bg-amber-400"
+                                        className="press cursor-pointer border-2 border-white bg-amber-300 px-5 py-2.5 font-mono text-xs font-black text-slate-900 uppercase shadow-[3px_3px_0px_#fff] hover:bg-amber-400"
                                     >
-                                        {copiedShareLink ? '✓ Proof Link Copied!' : '🔗 Copy Shareable Backlink'}
+                                        {copiedShareLink
+                                            ? '✓ Proof Link Copied!'
+                                            : '🔗 Copy Shareable Backlink'}
                                     </button>
 
                                     <button
                                         onClick={() => window.print()}
-                                        className="press cursor-pointer border-2 border-white bg-sky-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-900 shadow-[3px_3px_0px_#fff] hover:bg-sky-300"
+                                        className="press cursor-pointer border-2 border-white bg-sky-400 px-4 py-2 font-mono text-xs font-black text-slate-900 uppercase shadow-[3px_3px_0px_#fff] hover:bg-sky-300"
                                     >
                                         🖨 Print / Export PDF Card
                                     </button>
@@ -709,13 +724,13 @@ export default function CommunityProfileModal() {
                     <div className="flex items-center justify-between border-t-2 border-slate-200 pt-4">
                         <button
                             onClick={logout}
-                            className="press cursor-pointer border-2 border-slate-900 bg-slate-100 px-4 py-1.5 font-mono text-xs font-black uppercase text-rose-700 shadow-[2px_2px_0px_#0f172a] hover:bg-rose-100"
+                            className="press cursor-pointer border-2 border-slate-900 bg-slate-100 px-4 py-1.5 font-mono text-xs font-black text-rose-700 uppercase shadow-[2px_2px_0px_#0f172a] hover:bg-rose-100"
                         >
                             Log Out Session
                         </button>
                         <button
                             onClick={() => setIsProfileModalOpen(false)}
-                            className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-4 py-1.5 font-mono text-xs font-black uppercase text-white hover:bg-slate-800"
+                            className="press cursor-pointer border-2 border-slate-900 bg-slate-900 px-4 py-1.5 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                         >
                             Close Profile
                         </button>

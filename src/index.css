@@ -161,12 +161,6 @@
   animation-duration: 12s !important;
 }
 
-/* Pause the ribbons while the pointer rests on them. */
-.marquee-hold:hover .animate-marquee-left,
-.marquee-hold:hover .animate-marquee-right {
-  animation-play-state: paused;
-}
-
 /* Cyberbites Stroke Text Typography */
 .text-stroke-black {
   -webkit-text-stroke: 2px var(--color-ink);
@@ -207,11 +201,6 @@
     box-shadow var(--dur-base) var(--ease-brutal);
 }
 
-.cyber-card:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0px var(--color-brand);
-}
-
 .cyber-card-sky {
   background: #f0f9ff;
   border: 3px solid var(--color-brand);
@@ -219,11 +208,6 @@
   transition:
     transform var(--dur-base) var(--ease-brutal),
     box-shadow var(--dur-base) var(--ease-brutal);
-}
-
-.cyber-card-sky:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0px var(--color-ink);
 }
 
 /* Fill is sky-700, not sky-600: white on var(--color-brand) is 4.09:1 and fails AA for
@@ -240,12 +224,6 @@
     background-color var(--dur-fast) var(--ease-brutal);
 }
 
-.cyber-button:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--color-ink);
-  background: var(--color-brand-deeper);
-}
-
 .cyber-button-white {
   background: #ffffff;
   color: var(--color-ink);
@@ -258,10 +236,45 @@
     background-color var(--dur-fast) var(--ease-brutal);
 }
 
-.cyber-button-white:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--color-brand);
-  background: #f8fafc;
+/* =========================================================
+   POINTER-ONLY HOVER
+   Tailwind wraps its own `hover:` utilities in `@media (hover: hover)`, but these
+   hand-written rules are plain CSS and were not covered. On a touch screen a tap
+   latched the hover state on and left it there until something else was tapped --
+   cards stayed lifted, buttons stayed shifted. Gathered here so the guard is in one
+   place and cannot be forgotten when a rule is added.
+
+   The `:active` rules below stay unguarded on purpose: press feedback is exactly
+   what a touch device should keep.
+========================================================= */
+@media (hover: hover) and (pointer: fine) {
+  /* Pause the ribbons while the pointer rests on them. */
+  .marquee-hold:hover .animate-marquee-left,
+  .marquee-hold:hover .animate-marquee-right {
+    animation-play-state: paused;
+  }
+
+  .cyber-card:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px var(--color-brand);
+  }
+
+  .cyber-card-sky:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0px var(--color-ink);
+  }
+
+  .cyber-button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--color-ink);
+    background: var(--color-brand-deeper);
+  }
+
+  .cyber-button-white:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--color-brand);
+    background: #f8fafc;
+  }
 }
 
 /* =========================================================
@@ -598,4 +611,108 @@
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--color-brand-light) #f1f5f9;
+}
+
+/* =========================================================
+   TOUCH TARGETS
+   44px is the smallest reliably hittable target. Applied by hand to the
+   controls that are primary on a phone rather than globally: a blanket
+   min-height on every button would blow apart the dense telemetry rows and the
+   inline footer chips.
+
+   Keyed on `pointer: coarse` rather than a width query, so a touch laptop gets
+   it and a narrow desktop window does not.
+========================================================= */
+@media (pointer: coarse) {
+  .tap {
+    min-height: 44px;
+  }
+
+  .tap-sq {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* =========================================================
+   MODAL SCROLL LOCK
+   `body { overflow: hidden }` does not stop touch scrolling on iOS, and
+   `lenis.stop()` only stops Lenis -- Lenis runs with smoothTouch off, so touch
+   scrolling here is native. `touch-action: none` does stop it; a sheet that
+   scrolls internally opts its own axis back in with `data-modal-scroll`.
+
+   Scoped to `html` and only while a modal is open. An `overflow` on an
+   ancestor can turn it into a scroll container and break `position: sticky`
+   (which is why the intro stage is fixed, not sticky) -- but the sticky footer
+   is fully covered by a modal at that moment, so it cannot be seen mid-lock.
+========================================================= */
+html.modal-open,
+html.modal-open body {
+  overflow: hidden;
+}
+
+html.modal-open body {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+[data-modal-scroll] {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =========================================================
+   SMALL-VIEWPORT TYPE FLOOR
+   Deliberately unlayered and last in the file: Tailwind's arbitrary utilities
+   live in `@layer utilities`, and unlayered rules beat layered ones regardless
+   of specificity, so these win without `!important`.
+
+   639px, not 767px, so nothing here can fight a `sm:` variant (Tailwind's `sm`
+   starts at 640px) in the 640-767 band. Prefixed variants like
+   `sm:text-[10px]` compile to different class names and are untouched.
+
+   Four hand-tuned sizes between 7px and 11px were never a real hierarchy --
+   the eye cannot resolve a 1px step at that size -- so on a phone they collapse
+   to two: ornament and label. Neither exceeds `text-xs` (0.75rem), so no
+   existing `text-[Npx]` / `text-xs` pairing inverts, and `text-xs` / `text-sm`
+   / `text-base` are deliberately left alone.
+========================================================= */
+@media (max-width: 639px) {
+  .text-\[7px\],
+  .text-\[8px\],
+  .text-\[9px\] {
+    font-size: 0.6875rem; /* 11px, was 7-9px */
+  }
+
+  .text-\[10px\],
+  .text-\[11px\] {
+    font-size: 0.75rem; /* 12px, was 10-11px */
+  }
+
+  /* A 10px styled scrollbar is meaningless on a touch screen: there is no thumb
+     to grab and no pointer to hover it. Hand these back to the platform, which
+     draws its own transient indicator. */
+  ::-webkit-scrollbar,
+  .custom-scrollbar::-webkit-scrollbar {
+    width: auto;
+    height: auto;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: auto;
+  }
+}
+
+/* iOS Safari zooms the page when a focused control's text is under 16px, and
+   never zooms back out. `max(1rem, 1em)` raises only the controls that are too
+   small -- anything already at or above 16px keeps its size, since `1em`
+   resolves against the parent -- which is what makes the `!important` safe
+   here. 767px rather than 639px: iPad Safari does the same thing. */
+@media (max-width: 767px) {
+  input,
+  textarea,
+  select {
+    font-size: max(1rem, 1em) !important;
+  }
 }

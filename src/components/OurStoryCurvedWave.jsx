@@ -62,7 +62,14 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                         d="M 0,100 C 300,10 600,190 900,100 C 1200,10 1500,190 1800,100 C 2100,10 2400,190 2700,100"
                         fill="none"
                     />
-                    <text className="fill-sky-400 font-mono text-2xl font-black tracking-widest uppercase sm:text-3xl">
+                    {/* The size looks inverted on purpose. viewBox="0 0 1200 200" with
+                        the default preserveAspectRatio="xMidYMid meet" scales
+                        uniformly by min(renderedWidth/1200, renderedHeight/200). On a
+                        390px phone that is min(0.298, 0.56) = 0.298, width-constrained,
+                        so text-2xl was landing at 7.2px on screen. 2.6rem x 0.298 is
+                        about 12px. Raising h-28 does nothing -- the scale is pinned by
+                        the width, not the height. */}
+                    <text className="fill-sky-400 font-mono text-[2.6rem] font-black tracking-widest uppercase sm:text-3xl">
                         <textPath href="#storyCurve" startOffset="0%">
                             OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦ SAEINDIA a-BAJA 2026 ✦ THE FIRST
                             DRAFT ✦ OUR STORY ✦ FROM TRAINING PROGRAM TO CHENNAI ✦
@@ -157,7 +164,7 @@ export default function OurStoryCurvedWave({ onOpenSponsor }) {
                             onClick={() => setIsExpanded(!isExpanded)}
                             aria-expanded={isExpanded}
                             aria-controls="story-essay"
-                            className="press shadow-brutal-3 hover:shadow-brutal-5 inline-flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-white px-6 py-3 text-xs font-black tracking-wider text-slate-900 uppercase hover:-translate-x-[1px] hover:-translate-y-[1px] hover:bg-sky-100"
+                            className="tap press shadow-brutal-3 hover:shadow-brutal-5 inline-flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-white px-6 py-3 text-xs font-black tracking-wider text-slate-900 uppercase hover:-translate-x-[1px] hover:-translate-y-[1px] hover:bg-sky-100"
                         >
                             <span>
                                 {isExpanded ? 'SHOW LESS' : 'READ FULL STORY (SHOW MORE)'}

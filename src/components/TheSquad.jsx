@@ -1,28 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ScrollStack from './ScrollStack';
 import { useWebsiteData } from '../context/WebsiteDataContext';
+import { useIsNarrow, useMediaQuery } from '../hooks/useMediaQuery';
 
 export default function TheSquad({ onSelectSubsystem }) {
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
     const [activeIdx, setActiveIdx] = useState(0);
-    const [cardWidth, setCardWidth] = useState(840);
+    const isNarrow = useIsNarrow();
+    const isTabletBand = useMediaQuery('(min-width: 640px) and (max-width: 1023px)');
 
-    useEffect(() => {
-        const handleResize = () => {
-            const width = window.innerWidth;
-            if (width < 640) {
-                setCardWidth(width - 32);
-            } else if (width < 1024) {
-                setCardWidth(Math.min(width - 64, 720));
-            } else {
-                setCardWidth(840);
-            }
-        };
-        handleResize();
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    /* The old `width - 32` phone branch was dead weight: the pinned stage is
+       `px-4` and the card box is `w-full` under a `maxWidth`, so on any phone the
+       box is already narrower than the cap and the cap never binds. Dropping it
+       also removes a resize listener and a state write from an effect. */
+    const cardWidth = isTabletBand ? 720 : 840;
 
     const activeSystem = subsystems[activeIdx] || subsystems[0];
 
@@ -103,17 +95,20 @@ export default function TheSquad({ onSelectSubsystem }) {
             {/* React Bits Pro <ScrollStack /> Component with Cartoon / Retro-Brutalist Theme */}
             <ScrollStack
                 variant="deck"
-                scrollLength={0.85}
-                peek={32}
+                scrollLength={isNarrow ? 0.45 : 0.85}
+                peek={isNarrow ? 22 : 32}
                 scaleStep={0.05}
-                blur={2}
-                dim={0.16}
+                /* blur() on every covered card is a filter recomputed over a
+                   ~358x420 box every rAF frame. Dropped on phones and paid for
+                   with a touch more dim, which is a near-free brightness(). */
+                blur={isNarrow ? 0 : 2}
+                dim={isNarrow ? 0.24 : 0.16}
                 smooth={0.16}
-                depth={4}
+                depth={isNarrow ? 2 : 4}
                 cardWidth={cardWidth}
                 cardHeight={0.62}
                 borderRadius={18}
-                perspective={1200}
+                perspective={isNarrow ? 900 : 1200}
                 showProgress={true}
                 showCounter={true}
                 onIndexChange={(idx) => setActiveIdx(idx)}
@@ -199,7 +194,7 @@ export default function TheSquad({ onSelectSubsystem }) {
                                         onSelectSubsystem(system.id);
                                     }
                                 }}
-                                className="shadow-brutal-3 hover:shadow-brutal-1 cursor-pointer border-3 border-slate-900 bg-sky-500 px-4 py-2 text-xs font-black text-slate-950 uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-slate-900 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:px-6 sm:py-2.5 sm:text-sm"
+                                className="shadow-brutal-3 hover:shadow-brutal-1 tap cursor-pointer border-3 border-slate-900 bg-sky-500 px-4 py-2 text-xs font-black text-slate-950 uppercase transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-slate-900 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none sm:px-6 sm:py-2.5 sm:text-sm"
                             >
                                 VIEW CREW →
                             </button>
