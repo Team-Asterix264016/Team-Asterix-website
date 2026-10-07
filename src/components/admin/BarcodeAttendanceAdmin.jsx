@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 
@@ -79,9 +80,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
     // Camera scanner state
     const [isCameraActive, setIsCameraActive] = useState(false);
     const [cameraError, setCameraError] = useState('');
-    const videoRef = useRef(null);
-    const mediaStreamRef = useRef(null);
-    const cameraAnimFrameRef = useRef(null);
+    const html5QrCodeRef = useRef(null);
     const lastCameraScanTimeRef = useRef(0);
     const lastCameraBarcodeRef = useRef('');
 
@@ -230,7 +229,6 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
     };
 
     // Global Keydown Listener Buffer for Hardware Scanners
-    // Hardware scanners act as fast keyboards sending characters < 50ms apart followed by 'Enter'
     useEffect(() => {
         if (scanMode !== 'hardware') return;
 
@@ -240,15 +238,13 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
         const handleGlobalKeyDown = (e) => {
             const now = Date.now();
 
-            // If user is typing in standard inputs other than our barcode box, let it pass
             const activeElem = document.activeElement;
             if (activeElem && activeElem.tagName === 'INPUT' && activeElem !== inputRef.current && activeElem.type === 'text') {
                 return;
             }
 
-            // Key press delta time check
             if (now - lastKeyTime > 250) {
-                keyBuffer = ''; // Reset buffer if typing was slow (manual human typing)
+                keyBuffer = '';
             }
             lastKeyTime = now;
 
@@ -267,87 +263,81 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
         return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     }, [scanMode, processBarcodeScan]);
 
-    // Camera Scanner logic using browser BarcodeDetector API or Canvas frame scanning
-    const stopCamera = useCallback(() => {
-        if (cameraAnimFrameRef.current) {
-            cancelAnimationFrame(cameraAnimFrameRef.current);
-            cameraAnimFrameRef.current = null;
-        }
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-            mediaStreamRef.current = null;
-        }
-        if (videoRef.current) {
-            videoRef.current.srcObject = null;
+    // Universal Camera Scanner logic using Html5Qrcode engine
+    const stopCamera = useCallback(async () => {
+        if (html5QrCodeRef.current) {
+            try {
+                if (html5QrCodeRef.current.isScanning) {
+                    await html5QrCodeRef.current.stop();
+                }
+                html5QrCodeRef.current.clear();
+            } catch (err) {
+                console.error('Error stopping camera:', err);
+            }
+            html5QrCodeRef.current = null;
         }
         setIsCameraActive(false);
     }, []);
 
     const startCamera = useCallback(async () => {
         setCameraError('');
+        await stopCamera();
+
+        const elem = document.getElementById('barcode-camera-container');
+        if (!elem) return;
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-            });
-            mediaStreamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-                await videoRef.current.play();
-            }
+            const scanner = new Html5Qrcode('barcode-camera-container', { verbose: false });
+            html5QrCodeRef.current = scanner;
+
+            await scanner.start(
+                { facingMode: 'environment' },
+                {
+                    fps: 15,
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        return {
+                            width: Math.min(320, Math.floor(viewfinderWidth * 0.85)),
+                            height: Math.min(180, Math.floor(viewfinderHeight * 0.55))
+                        };
+                    }
+                },
+                (decodedText) => {
+                    const now = Date.now();
+                    if (
+                        decodedText &&
+                        (decodedText !== lastCameraBarcodeRef.current || now - lastCameraScanTimeRef.current > 3000)
+                    ) {
+                        lastCameraBarcodeRef.current = decodedText;
+                        lastCameraScanTimeRef.current = now;
+                        processBarcodeScan(decodedText);
+                    }
+                },
+                () => {
+                    // Frame scan tick
+                }
+            );
+
             setIsCameraActive(true);
-
-            // Check BarcodeDetector API support
-            if ('BarcodeDetector' in window) {
-                const detector = new window.BarcodeDetector({
-                    formats: ['code_128', 'code_39', 'qr_code', 'ean_13', 'upc_a', 'upc_e', 'codabar', 'data_matrix']
-                });
-
-                const scanFrame = async () => {
-                    if (!videoRef.current || videoRef.current.readyState < 2) {
-                        cameraAnimFrameRef.current = requestAnimationFrame(scanFrame);
-                        return;
-                    }
-                    try {
-                        const barcodes = await detector.detect(videoRef.current);
-                        if (barcodes && barcodes.length > 0) {
-                            const rawValue = barcodes[0].rawValue;
-                            const now = Date.now();
-                            // Debounce same barcode within 3 seconds
-                            if (
-                                rawValue &&
-                                (rawValue !== lastCameraBarcodeRef.current || now - lastCameraScanTimeRef.current > 3000)
-                            ) {
-                                lastCameraBarcodeRef.current = rawValue;
-                                lastCameraScanTimeRef.current = now;
-                                processBarcodeScan(rawValue);
-                            }
-                        }
-                    } catch {
-                        // Frame detection error, continue next frame
-                    }
-                    cameraAnimFrameRef.current = requestAnimationFrame(scanFrame);
-                };
-
-                cameraAnimFrameRef.current = requestAnimationFrame(scanFrame);
-            } else {
-                setCameraError(
-                    'Native BarcodeDetector API not fully supported in this browser. Please use Google Chrome/Edge or use a physical USB barcode scanner.'
-                );
-            }
         } catch (err) {
-            console.error('Camera access error:', err);
-            setCameraError(err.message || 'Could not access device camera. Please check browser permissions.');
-            stopCamera();
+            console.error('Camera initialization error:', err);
+            setCameraError(err.message || 'Could not access device camera. Please check camera permissions.');
+            setIsCameraActive(false);
         }
     }, [processBarcodeScan, stopCamera]);
 
     useEffect(() => {
         if (scanMode === 'camera') {
-            startCamera();
+            // Small timeout to ensure DOM container is rendered
+            const timer = setTimeout(() => {
+                startCamera();
+            }, 100);
+            return () => {
+                clearTimeout(timer);
+                stopCamera();
+            };
         } else {
             stopCamera();
         }
-        return () => stopCamera();
     }, [scanMode, startCamera, stopCamera]);
 
     // CSV Export Handler
@@ -385,7 +375,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                             Super Admin Tool
                         </span>
                         <span className="rounded bg-emerald-500/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 border border-emerald-400/30">
-                            Hardware & Camera Ready
+                            Universal Scanner Engine
                         </span>
                     </div>
                     <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
@@ -598,27 +588,11 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                     </div>
                 )}
 
-                {/* MODE 2: Built-in Camera Barcode Scanner Viewfinder */}
+                {/* MODE 2: Built-in Camera Barcode Scanner Container */}
                 {scanMode === 'camera' && (
                     <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="relative h-64 w-full max-w-md overflow-hidden rounded-2xl border-4 border-sky-500 bg-black shadow-2xl">
-                            <video
-                                ref={videoRef}
-                                playsInline
-                                muted
-                                className="h-full w-full object-cover"
-                            />
-                            {/* Scanning Viewfinder Target Reticle */}
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                                <div className="relative h-44 w-72 rounded-xl border-2 border-dashed border-sky-400/80 bg-sky-500/5 shadow-[0_0_20px_rgba(56,189,248,0.3)]">
-                                    {/* Scanning Beam Line */}
-                                    <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_10px_#ef4444] animate-pulse" />
-                                </div>
-                            </div>
-
-                            <div className="absolute bottom-2 inset-x-0 text-center text-xs font-bold text-sky-400 bg-slate-950/80 py-1">
-                                Align College ID Barcode inside frame
-                            </div>
+                        <div className="relative w-full max-w-md overflow-hidden rounded-2xl border-4 border-sky-500 bg-black shadow-2xl p-1">
+                            <div id="barcode-camera-container" className="w-full h-64 overflow-hidden rounded-xl bg-slate-950" />
                         </div>
 
                         {cameraError && (
