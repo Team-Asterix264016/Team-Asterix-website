@@ -208,50 +208,62 @@ export default function Car3DCanvas() {
         const proceduralModel = new THREE.Group();
         carRoot.add(proceduralModel);
 
-        // Load Real Team Asterix Autonomous Buggy GLB CAD Assembly Model
+        /* Load the real CAD assembly -- on anything but a phone.
+
+           The GLB is 6.1MB, which is more than every other asset on the landing
+           page put together, and it is fetched on first paint because this canvas
+           sits behind the whole site. On a phone the buggy is posed small and off
+           to one side (see buildKeyframes) and spends most of the page behind
+           opaque content, so almost none of that CAD detail survives to the
+           screen. The procedural model below is the loader's own fallback and is
+           already built either way, so phones keep a real 3D buggy and the intro
+           cross-dissolve still has something to hand off to -- they just skip the
+           download. */
         const gltfLoader = new GLTFLoader();
-        gltfLoader.load(
-            '/assembly_file_for_abaja.glb',
-            (gltf) => {
-                const model = gltf.scene;
+        if (!isNarrowViewport) {
+            gltfLoader.load(
+                '/assembly_file_for_abaja.glb',
+                (gltf) => {
+                    const model = gltf.scene;
 
-                // Auto-center and normalize scale for the CAD assembly
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
+                    // Auto-center and normalize scale for the CAD assembly
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
 
-                model.position.sub(center);
+                    model.position.sub(center);
 
-                // CAD assembly dimensions scaling
-                const maxDim = Math.max(size.x, size.y, size.z);
-                const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
+                    // CAD assembly dimensions scaling
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
 
-                const glbWrapper = new THREE.Group();
-                glbWrapper.add(model);
-                glbWrapper.scale.setScalar(targetScale);
-                glbWrapper.position.y = 0.12;
+                    const glbWrapper = new THREE.Group();
+                    glbWrapper.add(model);
+                    glbWrapper.scale.setScalar(targetScale);
+                    glbWrapper.position.y = 0.12;
 
-                // Enhance materials & shadows for CAD components
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                        if (child.material) {
-                            child.material.envMapIntensity = 1.35;
-                            child.material.needsUpdate = true;
+                    // Enhance materials & shadows for CAD components
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            if (child.material) {
+                                child.material.envMapIntensity = 1.35;
+                                child.material.needsUpdate = true;
+                            }
                         }
-                    }
-                });
+                    });
 
-                // Swap out procedural fallback with real CAD GLB assembly!
-                carRoot.remove(proceduralModel);
-                carRoot.add(glbWrapper);
-            },
-            undefined,
-            (err) => {
-                console.warn('GLB model load notice, keeping procedural fallback:', err);
-            }
-        );
+                    // Swap out procedural fallback with real CAD GLB assembly!
+                    carRoot.remove(proceduralModel);
+                    carRoot.add(glbWrapper);
+                },
+                undefined,
+                (err) => {
+                    console.warn('GLB model load notice, keeping procedural fallback:', err);
+                }
+            );
+        }
 
         const frameGroup = new THREE.Group();
         proceduralModel.add(frameGroup);
