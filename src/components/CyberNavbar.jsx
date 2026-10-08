@@ -289,13 +289,13 @@ export default function CyberNavbar({
 
                                                 <div className="mt-2.5 flex flex-col gap-1.5 border-t border-slate-200 pt-2">
                                                     <a
-                                                        href={`tel:${(contact.phone || '+91 86089 44644').replace(/[^0-9+]/g, '')}`}
+                                                        href="tel:+918608944644"
                                                         className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-slate-700 hover:text-sky-700"
                                                     >
                                                         <span className="flex h-4 w-4 items-center justify-center border border-slate-900 bg-sky-100 p-0.5">
                                                             <Icon name="phone" className="h-2.5 w-2.5" />
                                                         </span>
-                                                        <span>{contact.phone || '+91 86089 44644'}</span>
+                                                        <span>+91 86089 44644</span>
                                                     </a>
                                                     <a
                                                         href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
@@ -509,13 +509,13 @@ export default function CyberNavbar({
                                         </a>
                                     ))}
                                     <a
-                                        href={`tel:${(contact.phone || '+91 86089 44644').replace(/[^0-9+]/g, '')}`}
+                                        href="tel:+918608944644"
                                         className="flex items-center gap-1.5 border border-slate-900 bg-white p-2 font-mono text-[10px] font-bold text-slate-700"
                                     >
                                         <span className="flex h-4 w-4 items-center justify-center border border-slate-900 bg-sky-100 p-0.5">
                                             <Icon name="phone" className="h-2.5 w-2.5" />
                                         </span>
-                                        <span>{contact.phone || '+91 86089 44644'}</span>
+                                        <span>+91 86089 44644</span>
                                     </a>
                                     <a
                                         href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}

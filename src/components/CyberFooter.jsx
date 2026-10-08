@@ -93,14 +93,14 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                         {/* Interactive Quick Contact Chips */}
                         <div className="grid grid-cols-1 gap-2 pt-0.5 font-mono text-xs sm:grid-cols-3">
                             <a
-                                href={`tel:${(contact.phone || '+91 86089 44644').replace(/[^0-9+]/g, '')}`}
+                                href="tel:+918608944644"
                                 className="press shadow-brutal-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-900 bg-white p-2 font-bold text-slate-800 transition-colors hover:border-sky-600 hover:bg-sky-50"
                             >
                                 <span className="flex flex-shrink-0 items-center justify-center rounded border border-slate-900 bg-sky-100 p-1 text-slate-900">
                                     <Icon name="phone" className="h-3.5 w-3.5" />
                                 </span>
                                 <span className="truncate text-[11px]">
-                                    {contact.phone || '+91 86089 44644'}
+                                    +91 86089 44644
                                 </span>
                             </a>
 
