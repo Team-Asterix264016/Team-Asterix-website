@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
+import WorkshopAttendanceSession from '../models/WorkshopAttendanceSession.js';
 import WorkshopResource from '../models/WorkshopResource.js';
 import SiteConfig from '../models/SiteConfig.js';
 import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
@@ -17,6 +18,25 @@ const TOKEN_EXPIRY_MS = 25000; // 25 seconds validity for scanned token
 const ATTENDANCE_SECRET = process.env.ATTENDANCE_SECRET
     || process.env.JWT_SECRET
     || 'asterix-attendance-dynamic-secret-key-2026';
+
+const MAX_ALLOWED_DISTANCE_METERS = 50;
+const MAX_ALLOWED_ACCURACY_METERS = 100;
+
+/**
+ * Calculates geographic distance in meters between two lat/lng coordinates using Haversine formula
+ */
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth radius in meters
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
 
 /**
  * Computes an HMAC signature for a track + sessionId + timeVal
@@ -73,9 +93,48 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: "Invalid track. Must be 'software' or 'powertrain'." });
         }
 
-        const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
-        const signature = signToken(track, sessionId, 'static');
-        const token = `${track}.${sessionId}.static.${signature}`;
+        // If admin provided location when fetching token, store/update it
+        let hasAdminLocation = false;
+        let adminLocation = null;
+        if (req.query.latitude != null && req.query.longitude != null) {
+            const lat = parseFloat(req.query.latitude);
+            const lng = parseFloat(req.query.longitude);
+            const acc = parseFloat(req.query.accuracy);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const updatedSession = await WorkshopAttendanceSession.findOneAndUpdate(
+                    { sessionId },
+                    {
+                        $set: {
+                            track,
+                            sessionNumber,
+                            sessionDate,
+                            sessionTopic,
+                            'adminLocation.latitude': lat,
+                            'adminLocation.longitude': lng,
+                            'adminLocation.accuracy': isNaN(acc) ? null : acc,
+                            'adminLocation.updatedAt': new Date(),
+                            isActive: true
+                        }
+                    },
+                    { upsert: true, new: true }
+                );
+                hasAdminLocation = true;
+                adminLocation = updatedSession.adminLocation;
+            }
+        }
+
+        if (!hasAdminLocation) {
+            const existingSession = await WorkshopAttendanceSession.findOne({ sessionId }).lean();
+            if (existingSession?.adminLocation?.latitude != null) {
+                hasAdminLocation = true;
+                adminLocation = existingSession.adminLocation;
+            }
+        }
+
+        const now = Date.now();
+        const signature = signToken(track, sessionId, now);
+        const token = `${track}.${sessionId}.${now}.${signature}`;
 
         // Construct scan URL for the student
         const hostUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;
@@ -88,7 +147,12 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             sessionNumber,
             sessionDate,
             sessionTopic,
-            scanUrl
+            expiresInMs: ROTATION_INTERVAL_MS,
+            tokenExpiryMs: TOKEN_EXPIRY_MS,
+            rotationIntervalMs: ROTATION_INTERVAL_MS,
+            scanUrl,
+            hasAdminLocation,
+            adminLocation
         });
     } catch (err) {
         console.error('Error generating session token:', err);
@@ -97,12 +161,63 @@ router.get('/session-token', authenticateToken, async (req, res) => {
 });
 
 /**
+ * POST /api/workshop/attendance/session-location
+ * Admin only: Explicitly store/update the admin GPS location for an attendance session
+ */
+router.post('/session-location', authenticateToken, async (req, res) => {
+    try {
+        const { track, sessionNumber, sessionDate, sessionTopic, latitude, longitude, accuracy } = req.body;
+
+        const cleanTrack = String(track || 'software').toLowerCase().trim();
+        const num = parseInt(sessionNumber || '1', 10);
+        const dateStr = String(sessionDate || new Date().toISOString().slice(0, 10)).trim();
+        const sessionId = `${cleanTrack}-s${String(num).padStart(2, '0')}-${dateStr}`;
+
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+        const acc = parseFloat(accuracy);
+
+        if (isNaN(lat) || isNaN(lng)) {
+            return res.status(400).json({ error: 'Valid latitude and longitude coordinates are required.' });
+        }
+
+        const updatedSession = await WorkshopAttendanceSession.findOneAndUpdate(
+            { sessionId },
+            {
+                $set: {
+                    track: cleanTrack,
+                    sessionNumber: num,
+                    sessionDate: dateStr,
+                    sessionTopic: sessionTopic || '',
+                    'adminLocation.latitude': lat,
+                    'adminLocation.longitude': lng,
+                    'adminLocation.accuracy': isNaN(acc) ? null : acc,
+                    'adminLocation.updatedAt': new Date(),
+                    isActive: true
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        return res.json({
+            success: true,
+            message: 'Session GPS location stored successfully!',
+            sessionId,
+            adminLocation: updatedSession.adminLocation
+        });
+    } catch (err) {
+        console.error('Error storing session location:', err);
+        return res.status(500).json({ error: 'Failed to save session GPS location' });
+    }
+});
+
+/**
  * POST /api/workshop/attendance/checkin
- * Public endpoint: Student submits roll number, email, and device ID
+ * Public endpoint: Student submits roll number, email, device ID, and GPS location
  */
 router.post('/checkin', async (req, res) => {
     try {
-        const { token, rollNo, email, deviceId } = req.body;
+        const { token, rollNo, email, deviceId, latitude, longitude, accuracy } = req.body;
 
         if (!token) {
             return res.status(400).json({ error: 'Attendance token is required. Please scan the QR code again.' });
@@ -114,7 +229,26 @@ router.post('/checkin', async (req, res) => {
             return res.status(400).json({ error: 'Device verification token is missing. Please reload the page.' });
         }
 
-        // 1. Verify dynamic rotating token
+        // 1. Verify student GPS location
+        const studentLat = parseFloat(latitude);
+        const studentLng = parseFloat(longitude);
+        const studentAcc = parseFloat(accuracy);
+
+        if (isNaN(studentLat) || isNaN(studentLng)) {
+            return res.status(400).json({
+                error: 'GPS location access is required to verify in-person attendance. Please allow location access on your device.'
+            });
+        }
+
+        // Check GPS accuracy: If accuracy > MAX_ALLOWED_ACCURACY_METERS (100m), ask for better accuracy
+        if (!isNaN(studentAcc) && studentAcc > MAX_ALLOWED_ACCURACY_METERS) {
+            return res.status(400).json({
+                error: `GPS location accuracy is too poor (±${Math.round(studentAcc)}m). Please enable High Accuracy GPS / Location on your device and try again.`,
+                accuracy: Math.round(studentAcc)
+            });
+        }
+
+        // 2. Verify dynamic rotating token
         const tokenData = verifyToken(token);
         if (!tokenData) {
             return res.status(401).json({
@@ -128,7 +262,27 @@ router.post('/checkin', async (req, res) => {
         const cleanEmail = String(email).trim().toLowerCase();
         const cleanDeviceId = String(deviceId).trim();
 
-        // 2. Query student registration in MongoDB
+        // 3. Verify distance against admin's session location
+        const sessionDoc = await WorkshopAttendanceSession.findOne({ sessionId });
+        if (!sessionDoc || !sessionDoc.adminLocation || sessionDoc.adminLocation.latitude == null) {
+            return res.status(400).json({
+                error: 'Attendance session location has not been initialized by the admin yet. Please ask the instructor to start the session with location enabled.'
+            });
+        }
+
+        const adminLat = sessionDoc.adminLocation.latitude;
+        const adminLng = sessionDoc.adminLocation.longitude;
+        const distanceMeters = calculateHaversineDistance(adminLat, adminLng, studentLat, studentLng);
+
+        if (distanceMeters > MAX_ALLOWED_DISTANCE_METERS) {
+            return res.status(403).json({
+                error: `Attendance rejected: You are ${Math.round(distanceMeters)} meters away from the session location. You must be within 50 meters to mark attendance.`,
+                distance: Math.round(distanceMeters),
+                maxAllowed: MAX_ALLOWED_DISTANCE_METERS
+            });
+        }
+
+        // 4. Query student registration in MongoDB
         const registration = await WorkshopRegistration.findOne({
             rollNo: cleanRoll,
             email: cleanEmail
@@ -140,7 +294,7 @@ router.post('/checkin', async (req, res) => {
             });
         }
 
-        // 3. Verify payment status
+        // 5. Verify payment status
         if (registration.status !== 'paid') {
             return res.status(403).json({
                 error: `Your registration is currently marked as "${registration.status}". Attendance can only be recorded for confirmed paid candidates.`,
@@ -148,7 +302,7 @@ router.post('/checkin', async (req, res) => {
             });
         }
 
-        // 4. Verify track eligibility
+        // 6. Verify track eligibility
         const isTrackEnrolled = (registration.tracksEnrolled || []).includes(track) || registration.package === 'combo';
         if (!isTrackEnrolled) {
             const registeredTracks = (registration.tracksEnrolled || []).join(' & ') || registration.package;
@@ -157,7 +311,7 @@ router.post('/checkin', async (req, res) => {
             });
         }
 
-        // 5. Check if candidate already checked in for this session
+        // 7. Check if candidate already checked in for this session
         const existingAttendance = await WorkshopAttendance.findOne({
             rollNo: cleanRoll,
             sessionId
@@ -179,7 +333,7 @@ router.post('/checkin', async (req, res) => {
             });
         }
 
-        // 6. Anti-proxy: Check if this device was already used by a DIFFERENT candidate in this session
+        // 8. Anti-proxy: Check if this device was already used by a DIFFERENT candidate in this session
         const proxyCheck = await WorkshopAttendance.findOne({
             sessionId,
             deviceId: cleanDeviceId,
@@ -194,13 +348,12 @@ router.post('/checkin', async (req, res) => {
         }
 
         // Parse session metadata
-        // sessionId format: "software-s01-2026-10-06"
         const sessionParts = sessionId.split('-');
         const sessionNumStr = sessionParts[1] ? sessionParts[1].replace('s', '') : '1';
         const sessionNumber = parseInt(sessionNumStr, 10) || 1;
         const sessionDate = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
 
-        // 7. Record Attendance
+        // 9. Record Attendance with location details
         const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
         const userAgent = req.headers['user-agent'] || '';
 
@@ -220,6 +373,10 @@ router.post('/checkin', async (req, res) => {
             deviceId: cleanDeviceId,
             ipAddress: Array.isArray(ipAddress) ? ipAddress[0] : ipAddress,
             userAgent,
+            latitude: studentLat,
+            longitude: studentLng,
+            locationAccuracy: !isNaN(studentAcc) ? studentAcc : null,
+            distanceFromAdmin: Math.round(distanceMeters * 10) / 10,
             verifiedBy: 'qr-scan',
             checkedInAt: new Date()
         });
@@ -227,7 +384,7 @@ router.post('/checkin', async (req, res) => {
         res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
         return res.status(201).json({
             success: true,
-            message: 'Attendance confirmed successfully!',
+            message: `Attendance confirmed successfully! (${Math.round(distanceMeters)}m from instructor)`,
             attendance: {
                 name: newAttendance.name,
                 rollNo: newAttendance.rollNo,
@@ -236,7 +393,8 @@ router.post('/checkin', async (req, res) => {
                 year: newAttendance.year,
                 package: newAttendance.package,
                 receiptNo: registration.receiptNo,
-                checkedInAt: newAttendance.checkedInAt
+                checkedInAt: newAttendance.checkedInAt,
+                distanceFromAdmin: newAttendance.distanceFromAdmin
             }
         });
     } catch (err) {
@@ -290,12 +448,18 @@ router.get('/live-status', authenticateToken, async (req, res) => {
             .select('name rollNo department checkedInAt verifiedBy')
             .lean();
 
+        // Check if admin location is set for this session
+        const sessionDoc = await WorkshopAttendanceSession.findOne({ sessionId }).lean();
+        const hasAdminLocation = Boolean(sessionDoc?.adminLocation?.latitude != null);
+
         return res.json({
             sessionId,
             track,
             totalEligible,
             totalPresent,
             percentage,
+            hasAdminLocation,
+            adminLocation: sessionDoc?.adminLocation || null,
             recentCheckins
         });
     } catch (err) {

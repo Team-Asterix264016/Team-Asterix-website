@@ -17,6 +17,53 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
     const [searchQuery, setSearchQuery] = useState('');
     const [actionBusyRoll, setActionBusyRoll] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [locationStatus, setLocationStatus] = useState('idle');
+
+    const handleSetAdminLocation = async () => {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        setLocationStatus('acquiring');
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+                    const res = await fetch(apiUrl('/api/workshop/attendance/session-location'), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            track,
+                            sessionNumber,
+                            sessionDate,
+                            sessionTopic,
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to save location');
+
+                    setLocationStatus('saved');
+                    if (showStatus) showStatus('✓ Session GPS location saved! Students within 50m can check in.');
+                } catch (err) {
+                    alert('Error saving GPS location: ' + err.message);
+                    setLocationStatus('error');
+                }
+            },
+            (err) => {
+                alert('GPS location acquisition error: ' + err.message);
+                setLocationStatus('error');
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    };
 
     const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
@@ -289,13 +336,20 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-[11px] text-slate-500">
+                <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-2 text-[11px] text-slate-500">
                     <span>
                         Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
                     </span>
-                    <span className="text-[10px] font-bold text-sky-700">
-                        Only paid candidates enrolled in {track.toUpperCase()} can check in
-                    </span>
+
+                    <button
+                        type="button"
+                        onClick={handleSetAdminLocation}
+                        className="press shadow-brutal-1 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-sky-300 px-3 py-1 text-[11px] font-black text-slate-950 uppercase hover:bg-sky-400"
+                        title="Acquire admin browser GPS coordinates to enforce 50m distance check"
+                    >
+                        <span>📍</span>
+                        <span>{locationStatus === 'acquiring' ? 'Acquiring GPS...' : locationStatus === 'saved' ? 'Update GPS Location ✓' : 'Set Session GPS Location 📍'}</span>
+                    </button>
                 </div>
             </div>
 

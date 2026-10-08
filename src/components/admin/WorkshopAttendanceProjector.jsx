@@ -15,19 +15,89 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     const [, setScanUrl] = useState('');
     const [error, setError] = useState('');
 
+    // Admin GPS state
+    const [adminCoords, setAdminCoords] = useState(null); // { latitude, longitude, accuracy }
+    const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'acquiring' | 'saved' | 'error'
+    const [locationError, setLocationError] = useState('');
+
     // Live Attendance stream
     const [liveStats, setLiveStats] = useState({
         totalEligible: 0,
         totalPresent: 0,
         percentage: 0,
+        hasAdminLocation: false,
         recentCheckins: []
     });
 
     const projectorRef = useRef(null);
     const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
+<<<<<<< HEAD
     // Fetch static token & generate static QR Code
     const fetchSessionToken = useCallback(async () => {
+=======
+    // Acquire admin's current GPS location via Geolocation API
+    const requestAdminLocation = useCallback((targetTrack = track, targetNum = sessionNumber, targetDate = sessionDate, targetTopic = sessionTopic) => {
+        if (!navigator.geolocation) {
+            setLocationStatus('error');
+            setLocationError('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        setLocationStatus('acquiring');
+        setLocationError('');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const acc = position.coords.accuracy;
+
+                setAdminCoords({ latitude: lat, longitude: lng, accuracy: acc });
+
+                // Post admin location to server to associate with session
+                try {
+                    const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+                    if (token) {
+                        await fetch(apiUrl('/api/workshop/attendance/session-location'), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                track: targetTrack,
+                                sessionNumber: targetNum,
+                                sessionDate: targetDate,
+                                sessionTopic: targetTopic,
+                                latitude: lat,
+                                longitude: lng,
+                                accuracy: acc
+                            })
+                        });
+                    }
+                    setLocationStatus('saved');
+                } catch (err) {
+                    console.error('Failed to post session location to server:', err);
+                    setLocationStatus('saved'); // locally stored coords will be passed with token refresh
+                }
+            },
+            (err) => {
+                console.error('Admin geolocation error:', err);
+                setLocationStatus('error');
+                let msg = 'Failed to get admin location.';
+                if (err.code === 1) msg = 'Location permission denied. Please allow GPS access.';
+                else if (err.code === 2) msg = 'Location unavailable. Turn on device GPS.';
+                else if (err.code === 3) msg = 'GPS request timed out.';
+                setLocationError(msg);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }, [track, sessionNumber, sessionDate, sessionTopic]);
+
+    // Fetch token & generate QR
+    const fetchRotatingToken = useCallback(async () => {
+>>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) {
@@ -42,6 +112,14 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 sessionTopic
             });
 
+            if (adminCoords?.latitude != null && adminCoords?.longitude != null) {
+                query.append('latitude', String(adminCoords.latitude));
+                query.append('longitude', String(adminCoords.longitude));
+                if (adminCoords.accuracy != null) {
+                    query.append('accuracy', String(adminCoords.accuracy));
+                }
+            }
+
             const res = await fetch(apiUrl(`/api/workshop/attendance/session-token?${query.toString()}`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -53,8 +131,13 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
+            setCountdownSeconds(12);
 
-            // Generate crisp high-resolution static QR Code
+            if (data.hasAdminLocation && locationStatus !== 'saved') {
+                setLocationStatus('saved');
+            }
+
+            // Generate crisp high-resolution QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
                 width: 1000,
                 margin: 2,
@@ -70,7 +153,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             console.error('Error fetching attendance session token:', err);
             setError(err.message);
         }
-    }, [track, sessionNumber, sessionDate, sessionTopic]);
+    }, [track, sessionNumber, sessionDate, sessionTopic, adminCoords, locationStatus]);
 
     // Poll live attendance numbers every 3 seconds & rotate token every 12s
     const fetchLiveStatus = useCallback(async () => {
@@ -91,6 +174,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                     totalEligible: data.totalEligible || 0,
                     totalPresent: data.totalPresent || 0,
                     percentage: data.percentage || 0,
+                    hasAdminLocation: data.hasAdminLocation || false,
                     recentCheckins: data.recentCheckins || []
                 });
             }
@@ -99,6 +183,15 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         }
     }, [sessionId]);
 
+<<<<<<< HEAD
+=======
+    // Acquire GPS location on mount / session change
+    useEffect(() => {
+        requestAdminLocation();
+    }, [requestAdminLocation]);
+
+    // 12-second countdown and rotation timer
+>>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
     useEffect(() => {
         fetchSessionToken();
         fetchLiveStatus();
@@ -143,6 +236,61 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 Generating QR Code...
                             </div>
                         )}
+<<<<<<< HEAD
+=======
+
+                        {/* Clean 12-Second Countdown Timer */}
+                        <div className="mt-3 flex shrink-0 items-center gap-2 border border-slate-400 bg-slate-100 px-3.5 py-1 font-mono text-xs font-black text-slate-800 sm:text-sm">
+                            <span>⏱ Code refreshes in:</span>
+                            <span className="w-8 text-center text-base font-black text-rose-600 sm:text-lg">
+                                {countdownSeconds}s
+                            </span>
+                        </div>
+
+                        {/* Admin GPS Location Status Badge */}
+                        <div className="mt-2.5 flex w-full shrink-0 items-center justify-between gap-2 border border-slate-300 bg-slate-50 px-3 py-1 font-mono text-xs">
+                            <div className="flex items-center gap-1.5 truncate">
+                                {locationStatus === 'acquiring' ? (
+                                    <>
+                                        <span className="h-2 w-2 animate-ping rounded-full bg-amber-500"></span>
+                                        <span className="font-bold text-amber-800">Acquiring GPS location...</span>
+                                    </>
+                                ) : locationStatus === 'saved' || liveStats.hasAdminLocation ? (
+                                    <>
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                        <span className="font-bold text-emerald-800">
+                                            📍 Admin GPS Active {adminCoords?.accuracy ? `(±${Math.round(adminCoords.accuracy)}m)` : ''}
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                                        <span className="truncate font-bold text-rose-800">
+                                            {locationError || 'GPS Location Required'}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => requestAdminLocation()}
+                                className="press cursor-pointer border border-slate-400 bg-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-900 uppercase hover:bg-slate-300"
+                                title="Update instructor GPS coordinates for 50m distance validation"
+                            >
+                                {locationStatus === 'acquiring' ? 'Locating...' : 'Update GPS 📍'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mt-2 shrink-0 space-y-0.5 text-center text-xs text-slate-400">
+                        <p className="text-xs font-bold text-slate-200 sm:text-sm">
+                            Scan with your mobile camera to check in
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                            Location enabled · 50m radius distance check active
+                        </p>
+>>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
                     </div>
 
                     {error && (
