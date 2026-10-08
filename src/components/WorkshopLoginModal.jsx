@@ -162,9 +162,18 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                     </button>
                 </form>
 
-                <div className="mt-4 border-t-2 border-slate-200 pt-3 text-center font-mono text-[11px] text-slate-500">
-                    Need help? Contact Team Asterix at{' '}
-                    <strong className="text-slate-800">software.asterix@psgitech.ac.in</strong>
+                <div className="mt-4 border-t-2 border-slate-200 pt-3 space-y-2 text-center font-mono text-[11px] text-slate-600">
+                    <a
+                        href="tel:+918608944644"
+                        className="press shadow-brutal-2 flex items-center justify-center gap-2 border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
+                    >
+                        <span>📞 If any login issues, contact +91 86089 44644</span>
+                        <span>→</span>
+                    </a>
+                    <div>
+                        Or email Team Asterix at{' '}
+                        <strong className="text-slate-800">software.asterix@psgitech.ac.in</strong>
+                    </div>
                 </div>
             </div>
         </div>

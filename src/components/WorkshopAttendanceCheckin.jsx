@@ -445,10 +445,16 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             )}
                         </button>
 
-                        <div className="pt-2 text-center">
-                            <span className="text-[10px] font-bold text-slate-500">
+                        <div className="pt-2 text-center space-y-1.5 font-mono text-[10px]">
+                            <a
+                                href="tel:+918608944644"
+                                className="press inline-flex items-center gap-1 border border-slate-900 bg-amber-200 px-2 py-1 font-bold text-slate-950 uppercase hover:bg-amber-300"
+                            >
+                                📞 Attendance issue? Contact +91 86089 44644
+                            </a>
+                            <div className="font-bold text-slate-500">
                                 Single device check-in active · Session verified
-                            </span>
+                            </div>
                         </div>
                     </form>
                 )}

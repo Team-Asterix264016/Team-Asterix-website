@@ -531,6 +531,16 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 ⚠️ {error}
                             </div>
                         )}
+
+                        <div className="mt-5 border-t-2 border-slate-200 pt-4">
+                            <a
+                                href="tel:+918608944644"
+                                className="press shadow-brutal-3 flex items-center justify-center gap-2 border-2 border-slate-900 bg-amber-300 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
+                            >
+                                <span>📞 If any profile / login issues, contact +91 86089 44644</span>
+                                <span>→</span>
+                            </a>
+                        </div>
                     </div>
 
                     {/* Official Subsystems & Team Portal Hub */}
@@ -682,6 +692,12 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         >
                                             Download Receipt PNG ↓
                                         </button>
+                                        <a
+                                            href="tel:+918608944644"
+                                            className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-sky-400 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300"
+                                        >
+                                            <span>📞 Contact Support (+91 86089 44644)</span>
+                                        </a>
                                         <button
                                             type="button"
                                             onClick={() => {
