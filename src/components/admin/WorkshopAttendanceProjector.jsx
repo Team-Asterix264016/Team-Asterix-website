@@ -4,11 +4,18 @@ import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 
 export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'software' }) {
-    const [track, setTrack] = useState(initialTrack);
+    const [track, setTrack] = useState(() => {
+        if (typeof window !== 'undefined' && window.location.hash) {
+            if (window.location.hash.includes('track=powertrain')) return 'powertrain';
+            if (window.location.hash.includes('track=software')) return 'software';
+        }
+        return initialTrack;
+    });
     const [sessionNumber, setSessionNumber] = useState(1);
     const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [sessionTopic, setSessionTopic] = useState('');
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [countdownSeconds, setCountdownSeconds] = useState(12);
 
     // Dynamic QR state
     const [qrDataUrl, setQrDataUrl] = useState('');
