@@ -32,10 +32,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     const projectorRef = useRef(null);
     const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
-<<<<<<< HEAD
-    // Fetch static token & generate static QR Code
-    const fetchSessionToken = useCallback(async () => {
-=======
     // Acquire admin's current GPS location via Geolocation API
     const requestAdminLocation = useCallback((targetTrack = track, targetNum = sessionNumber, targetDate = sessionDate, targetTopic = sessionTopic) => {
         if (!navigator.geolocation) {
@@ -97,7 +93,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
     // Fetch token & generate QR
     const fetchRotatingToken = useCallback(async () => {
->>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) {
@@ -183,26 +178,35 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         }
     }, [sessionId]);
 
-<<<<<<< HEAD
-=======
     // Acquire GPS location on mount / session change
     useEffect(() => {
         requestAdminLocation();
     }, [requestAdminLocation]);
 
     // 12-second countdown and rotation timer
->>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
     useEffect(() => {
-        fetchSessionToken();
+        fetchRotatingToken();
         fetchLiveStatus();
 
-        // 3-second live status refresh for check-in counter & ticker
+        // 1-second interval to update countdown number
+        const countdownTimer = setInterval(() => {
+            setCountdownSeconds((prev) => {
+                if (prev <= 1) {
+                    fetchRotatingToken();
+                    return 12;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        // 3-second live status refresh
         const pollTimer = setInterval(fetchLiveStatus, 3000);
 
         return () => {
+            clearInterval(countdownTimer);
             clearInterval(pollTimer);
         };
-    }, [fetchSessionToken, fetchLiveStatus]);
+    }, [fetchRotatingToken, fetchLiveStatus]);
 
     // Fullscreen toggle handler
     const toggleFullscreen = () => {
@@ -236,9 +240,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 Generating QR Code...
                             </div>
                         )}
-<<<<<<< HEAD
-=======
-
                         {/* Clean 12-Second Countdown Timer */}
                         <div className="mt-3 flex shrink-0 items-center gap-2 border border-slate-400 bg-slate-100 px-3.5 py-1 font-mono text-xs font-black text-slate-800 sm:text-sm">
                             <span>⏱ Code refreshes in:</span>
@@ -290,7 +291,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                         <p className="text-[11px] text-slate-400">
                             Location enabled · 50m radius distance check active
                         </p>
->>>>>>> de36529 (feat: add GPS location distance verification (50m radius) for attendance checkins)
                     </div>
 
                     {error && (

@@ -93,6 +93,8 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: "Invalid track. Must be 'software' or 'powertrain'." });
         }
 
+        const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
+
         // If admin provided location when fetching token, store/update it
         let hasAdminLocation = false;
         let adminLocation = null;
