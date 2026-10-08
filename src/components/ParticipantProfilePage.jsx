@@ -532,14 +532,11 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             </div>
                         )}
 
-                        <div className="mt-5 border-t-2 border-slate-200 pt-4">
-                            <a
-                                href="tel:+918608944644"
-                                className="press shadow-brutal-3 flex items-center justify-center gap-2 border-2 border-slate-900 bg-amber-300 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
-                            >
-                                <span>📞 If any profile / login issues, contact +91 86089 44644</span>
-                                <span>→</span>
-                            </a>
+                        <div className="mt-4 border-t-2 border-slate-200 pt-3 text-center font-mono text-xs font-bold text-slate-600">
+                            Having trouble unlocking your profile? See the floating support badge on the side or call{' '}
+                            <a href="tel:+918608944644" className="font-black text-slate-950 underline hover:text-sky-700">
+                                +91 86089 44644
+                            </a>.
                         </div>
                     </div>
 
@@ -1590,6 +1587,27 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                     )}
                 </main>
             )}
+            {/* FLOATING SIDE CONTACT SUPPORT WIDGET (Visually striking on dark background) */}
+            <aside className="fixed bottom-6 right-6 z-50 flex items-center">
+                <a
+                    href="tel:+918608944644"
+                    className="group relative flex items-center gap-3 rounded-none border-3 border-slate-900 bg-amber-300 px-4 py-3 font-mono text-xs font-black text-slate-950 uppercase shadow-[6px_6px_0px_#000000] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:bg-amber-400 hover:shadow-[9px_9px_0px_#000000]"
+                    title="Direct Support Line: +91 86089 44644"
+                >
+                    <span className="relative flex h-3.5 w-3.5 items-center justify-center">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-600"></span>
+                    </span>
+                    <div className="flex flex-col text-left leading-tight">
+                        <span className="text-[9px] font-extrabold tracking-widest text-slate-800 uppercase">
+                            LOGIN / PROFILE ISSUES?
+                        </span>
+                        <span className="text-xs font-black text-slate-950">
+                            📞 CONTACT +91 86089 44644 →
+                        </span>
+                    </div>
+                </a>
+            </aside>
         </div>
     );
 }
