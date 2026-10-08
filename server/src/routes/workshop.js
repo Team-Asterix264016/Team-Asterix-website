@@ -1240,23 +1240,22 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Mobile number or Email ID is required.' });
         }
 
-        const isEmail = EMAIL_RE.test(input.toLowerCase());
         const cleanEmail = input.toLowerCase();
         const cleanPhone = normalizePhone(input);
+        const upperInput = input.toUpperCase();
 
-        let query = {};
-        if (isEmail) {
-            query = { email: cleanEmail };
-        } else if (cleanPhone.length >= 10) {
-            query = { phone: cleanPhone };
-        } else {
-            query = {
-                $or: [
-                    { email: cleanEmail },
-                    { phone: cleanPhone }
-                ]
-            };
+        const searchConditions = [
+            { email: cleanEmail },
+            { rollNo: upperInput },
+            { rollNo: input }
+        ];
+
+        if (cleanPhone.length >= 7) {
+            searchConditions.push({ phone: cleanPhone });
+            searchConditions.push({ phone: new RegExp(`${cleanPhone}$`) });
         }
+
+        const query = { $or: searchConditions };
 
         if (!isMongoConnected()) {
             return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });

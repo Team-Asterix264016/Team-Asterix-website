@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiUrl } from '../lib/api';
 import { safeHref } from '../lib/safeHref';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
@@ -255,7 +255,12 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         [identifier, password]
     );
 
+    const hasAutoFilledRef = useRef(false);
+
     useEffect(() => {
+        if (hasAutoFilledRef.current) return;
+        hasAutoFilledRef.current = true;
+
         let savedId = '';
         let savedPwd = '';
         try {
@@ -269,6 +274,17 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             console.error('Failed to parse saved profile auth session:', e);
         }
 
+        let studentStorageId = '';
+        try {
+            const studentStr = localStorage.getItem('workshop_student');
+            if (studentStr) {
+                const parsed = JSON.parse(studentStr);
+                studentStorageId = parsed.email || parsed.rollNo || parsed.phone || '';
+            }
+        } catch (e) {
+            console.error('Failed to parse workshop student from localStorage:', e);
+        }
+
         const params = new URLSearchParams(window.location.search);
         const queryParam =
             params.get('query') ||
@@ -276,16 +292,16 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             params.get('email') ||
             params.get('phone') ||
             savedId ||
+            studentStorageId ||
             currentMember?.rollNo ||
             currentMember?.email ||
             currentMember?.phone;
 
         if (queryParam) {
             setIdentifier(queryParam);
-            if (savedPwd) {
-                setPassword(savedPwd);
-                fetchProfile(queryParam, savedPwd);
-            }
+            const activePwd = savedPwd || 'asterix';
+            setPassword(activePwd);
+            fetchProfile(queryParam, activePwd);
         }
     }, [fetchProfile, currentMember]);
 

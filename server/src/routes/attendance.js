@@ -903,30 +903,57 @@ router.post('/profile', async (req, res) => {
             if (WORKSHOP_TRACKS[trackId]) tracks[trackId] = { ...WORKSHOP_TRACKS[trackId], ...editedTracks[trackId] };
         });
 
-        // Check-ins are keyed by the date the admin opened the QR session for, not by schedule id,
-        // so sessions are matched on track + date. A session counts as conducted once anyone has
-        // checked in to it; only then can a participant be marked as having missed it.
+        // Search attendance records for candidate across all identifying fields
+        const candidateOrConditions = [
+            { registrationId: candidate._id }
+        ];
+        if (candidate.rollNo) {
+            candidateOrConditions.push({ rollNo: candidate.rollNo.toUpperCase() });
+            candidateOrConditions.push({ rollNo: candidate.rollNo });
+        }
+        if (candidate.email) {
+            candidateOrConditions.push({ email: candidate.email.toLowerCase() });
+        }
+
         const [attendanceRecords, conductedSessions] = await Promise.all([
-            WorkshopAttendance.find({ rollNo: candidate.rollNo }).lean(),
+            WorkshopAttendance.find({ $or: candidateOrConditions }).lean(),
             WorkshopAttendance.aggregate([
                 { $match: { track: { $in: tracksEnrolled } } },
                 { $group: { _id: { track: '$track', date: '$sessionDate' } } }
             ])
         ]);
-        const attendanceByDate = new Map(attendanceRecords.map((att) => [`${att.track}|${att.sessionDate}`, att]));
+
+        const attendanceMap = new Map();
+        attendanceRecords.forEach((att) => {
+            if (att.track && att.sessionDate) {
+                attendanceMap.set(`${att.track}|${att.sessionDate}`, att);
+            }
+            if (att.track && att.sessionId) {
+                attendanceMap.set(`${att.track}|${att.sessionId}`, att);
+            }
+            if (att.track && att.sessionNumber) {
+                attendanceMap.set(`${att.track}|s${att.sessionNumber}`, att);
+                attendanceMap.set(`${att.track}|${att.sessionNumber}`, att);
+            }
+        });
         const conductedDates = new Set(conductedSessions.map(({ _id }) => `${_id.track}|${_id.date}`));
 
         // Build session timeline for enrolled track(s)
         const sessionTimeline = [];
         let totalConducted = 0;
         let totalPresent = 0;
+        const matchedAttKeys = new Set();
 
         Object.entries(tracks).forEach(([trackId, trackConfig]) => {
             if (!Array.isArray(trackConfig.schedule)) return;
 
             trackConfig.schedule.forEach((sessionItem) => {
-                const dateKey = `${trackId}|${sessionIsoDate(sessionItem.date, trackConfig)}`;
-                const att = attendanceByDate.get(dateKey);
+                const isoDate = sessionIsoDate(sessionItem.date, trackConfig);
+                const dateKey = `${trackId}|${isoDate}`;
+                const idKey = `${trackId}|${sessionItem.id}`;
+                const numKey = `${trackId}|s${sessionItem.id}`;
+
+                const att = attendanceMap.get(idKey) || attendanceMap.get(numKey) || attendanceMap.get(dateKey);
                 const isHoliday = sessionItem.type === 'holiday';
                 // Catch-ups are optional knowledge-sharing sessions: shown, never counted or marked missed.
                 const isOptional = sessionItem.type === 'catchup';
@@ -937,6 +964,7 @@ router.post('/profile', async (req, res) => {
                 if (!isHoliday && att) {
                     status = 'PRESENT';
                     checkedInAt = att.checkedInAt;
+                    if (att._id) matchedAttKeys.add(String(att._id));
                     if (!isOptional) {
                         totalPresent += 1;
                         totalConducted += 1;
@@ -961,9 +989,35 @@ router.post('/profile', async (req, res) => {
                     subject: sessionItem.subject || null,
                     status,
                     checkedInAt,
-                    isoDate: sessionIsoDate(sessionItem.date, trackConfig)
+                    isoDate
                 });
             });
+        });
+
+        // Also append any extra session check-ins candidate completed that fall outside static schedule
+        attendanceRecords.forEach((att) => {
+            if (att._id && !matchedAttKeys.has(String(att._id))) {
+                totalPresent += 1;
+                totalConducted += 1;
+                const trackConfig = tracks[att.track] || WORKSHOP_TRACKS[att.track] || {};
+                sessionTimeline.push({
+                    id: att.sessionNumber || att.sessionId,
+                    track: att.track,
+                    trackName: trackConfig.name || (att.track || 'workshop').toUpperCase(),
+                    label: `Session ${att.sessionNumber || ''}`,
+                    days: '',
+                    date: att.sessionDate,
+                    title: att.sessionTopic || `${(att.track || 'workshop').toUpperCase()} Workshop Session`,
+                    instructor: '-',
+                    venue: trackConfig.venue || 'Workshop Lab',
+                    type: 'lecture',
+                    project: null,
+                    subject: null,
+                    status: 'PRESENT',
+                    checkedInAt: att.checkedInAt,
+                    isoDate: att.sessionDate
+                });
+            }
         });
 
         // One date-ordered timetable across tracks (combo students otherwise saw every software
