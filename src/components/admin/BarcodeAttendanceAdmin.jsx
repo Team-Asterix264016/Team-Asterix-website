@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 
 /**
  * Web Audio API Sound Synthesizer
@@ -58,11 +59,20 @@ function playAudioTone(type = 'success', isMuted = false) {
 }
 
 export default function BarcodeAttendanceAdmin({ showStatus }) {
-    // Session setup state
-    const [track, setTrack] = useState('software');
-    const [sessionNumber, setSessionNumber] = useState(1);
-    const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [sessionTopic, setSessionTopic] = useState('');
+    const {
+        track,
+        setTrack,
+        sessionNumber,
+        setSessionNumber,
+        sessionDate,
+        setSessionDate,
+        sessionTopic,
+        setSessionTopic,
+        sessionId,
+        scheduleList,
+        currentScheduleMatch,
+        selectScheduleSession
+    } = useAttendanceSession('software');
 
     // Scanner state
     const [scannedInput, setScannedInput] = useState('');
@@ -85,7 +95,6 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
     const lastCameraBarcodeRef = useRef('');
 
     const inputRef = useRef(null);
-    const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
     // Auto-focus input for hands-free hardware scanner operation
     useEffect(() => {
@@ -410,12 +419,31 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
 
             {/* Session Configuration Card */}
             <div className="rounded-xl border-2 border-slate-900 bg-white p-5 shadow-sm">
-                <div className="mb-4 flex items-center justify-between border-b-2 border-slate-100 pb-3">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                <div className="mb-4 flex flex-col justify-between gap-2 border-b-2 border-slate-100 pb-3 sm:flex-row sm:items-center">
+                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 uppercase tracking-wider">
                         <span>🎯 Active Session Settings</span>
                     </h3>
-                    <div className="font-bold text-xs bg-slate-100 px-3 py-1 rounded border border-slate-300">
-                        Session ID: <span className="text-sky-600">{sessionId}</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {scheduleList && scheduleList.length > 0 && (
+                            <select
+                                value={currentScheduleMatch?.id || ''}
+                                onChange={(e) => {
+                                    const s = scheduleList.find((item) => item.id === e.target.value);
+                                    if (s) selectScheduleSession(s);
+                                }}
+                                className="rounded border-2 border-slate-900 bg-amber-100 px-2 py-1 text-xs font-bold text-slate-950 focus:outline-none"
+                            >
+                                <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
+                                {scheduleList.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.label} ({s.dateStr}) — {s.title}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        <div className="rounded border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-bold">
+                            Session ID: <span className="text-sky-600">{sessionId}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -438,10 +466,10 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                         <label className="mb-1 block text-xs font-bold uppercase text-slate-700">Session Number</label>
                         <select
                             value={sessionNumber}
-                            onChange={(e) => setSessionNumber(parseInt(e.target.value, 10) || 1)}
+                            onChange={(e) => setSessionNumber(e.target.value)}
                             className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
                         >
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((num) => (
                                 <option key={num} value={num}>
                                     Session {num}
                                 </option>

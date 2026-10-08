@@ -1,14 +1,26 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 
 export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector }) {
     const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'barcode'
-    const [track, setTrack] = useState('software');
-    const [sessionNumber, setSessionNumber] = useState(1);
-    const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [sessionTopic, setSessionTopic] = useState('');
+
+    const {
+        track,
+        setTrack,
+        sessionNumber,
+        setSessionNumber,
+        sessionDate,
+        setSessionDate,
+        sessionTopic,
+        setSessionTopic,
+        sessionId,
+        scheduleList,
+        currentScheduleMatch,
+        selectScheduleSession
+    } = useAttendanceSession('software');
 
     const [rosterData, setRosterData] = useState({ totalEligible: 0, totalPresent: 0, roster: [] });
     const [isLoading, setIsLoading] = useState(false);
@@ -64,8 +76,6 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     };
-
-    const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
     const fetchRecords = useCallback(async () => {
         setIsLoading(true);
@@ -273,9 +283,31 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 <>
                     {/* Session Settings & Selector Bar */}
                     <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
-                <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
-                    // Attendance Session Configuration
-                </span>
+                <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+                    <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
+                        // Attendance Session Configuration
+                    </span>
+                    {scheduleList && scheduleList.length > 0 && (
+                        <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-[10px] font-bold text-slate-600 uppercase">🗓 Quick Select:</span>
+                            <select
+                                value={currentScheduleMatch?.id || ''}
+                                onChange={(e) => {
+                                    const s = scheduleList.find((item) => item.id === e.target.value);
+                                    if (s) selectScheduleSession(s);
+                                }}
+                                className="border-2 border-slate-900 bg-amber-200 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                            >
+                                <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
+                                {scheduleList.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        {s.label} ({s.dateStr}) — {s.title}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
                     {/* Track Selection */}
@@ -303,7 +335,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                             min="1"
                             max="20"
                             value={sessionNumber}
-                            onChange={(e) => setSessionNumber(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                            onChange={(e) => setSessionNumber(e.target.value)}
                             className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
                         />
                     </div>
@@ -339,6 +371,11 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-2 text-[11px] text-slate-500">
                     <span>
                         Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
+                        {currentScheduleMatch && (
+                            <span className="ml-2 font-bold text-emerald-700">
+                                ✓ Linked to {currentScheduleMatch.label} ({currentScheduleMatch.dateStr})
+                            </span>
+                        )}
                     </span>
 
                     <button

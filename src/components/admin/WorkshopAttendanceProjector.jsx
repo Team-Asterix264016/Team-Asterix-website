@@ -2,18 +2,31 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 
 export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'software' }) {
-    const [track, setTrack] = useState(() => {
+    const startTrack = (() => {
         if (typeof window !== 'undefined' && window.location.hash) {
             if (window.location.hash.includes('track=powertrain')) return 'powertrain';
             if (window.location.hash.includes('track=software')) return 'software';
         }
         return initialTrack;
-    });
-    const [sessionNumber, setSessionNumber] = useState(1);
-    const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [sessionTopic, setSessionTopic] = useState('');
+    })();
+
+    const {
+        track,
+        setTrack,
+        sessionNumber,
+        setSessionNumber,
+        sessionDate,
+        setSessionDate,
+        sessionTopic,
+        setSessionTopic,
+        sessionId,
+        scheduleList,
+        currentScheduleMatch,
+        selectScheduleSession
+    } = useAttendanceSession(startTrack);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [countdownSeconds, setCountdownSeconds] = useState(12);
 
@@ -37,7 +50,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     });
 
     const projectorRef = useRef(null);
-    const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
     // Acquire admin's current GPS location via Geolocation API
     const requestAdminLocation = useCallback((targetTrack = track, targetNum = sessionNumber, targetDate = sessionDate, targetTopic = sessionTopic) => {
@@ -375,6 +387,25 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 </button>
                             </div>
 
+                            {/* Schedule Selector */}
+                            {scheduleList && scheduleList.length > 0 && (
+                                <select
+                                    value={currentScheduleMatch?.id || ''}
+                                    onChange={(e) => {
+                                        const s = scheduleList.find((item) => item.id === e.target.value);
+                                        if (s) selectScheduleSession(s);
+                                    }}
+                                    className="border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                >
+                                    <option value="">-- {track.toUpperCase()} Schedule --</option>
+                                    {scheduleList.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.label} ({s.dateStr}) — {s.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
                             {/* Session Number */}
                             <div className="flex items-center gap-1 border-2 border-slate-700 bg-slate-900 px-2 py-0.5">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">
@@ -385,9 +416,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                     min="1"
                                     max="20"
                                     value={sessionNumber}
-                                    onChange={(e) =>
-                                        setSessionNumber(Math.max(1, parseInt(e.target.value, 10) || 1))
-                                    }
+                                    onChange={(e) => setSessionNumber(e.target.value)}
                                     className="w-8 bg-transparent text-center text-xs font-black text-white focus:outline-none"
                                 />
                             </div>
