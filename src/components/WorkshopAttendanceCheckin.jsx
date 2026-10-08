@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiUrl } from '../lib/api';
 
 // Persistent client-side device identifier for anti-proxy enforcement
@@ -26,8 +26,20 @@ function getOrCreateDeviceId() {
 
 export default function WorkshopAttendanceCheckin({ onGoHome }) {
     const [token, setToken] = useState('');
-    const [rollNo, setRollNo] = useState('715526');
-    const [email, setEmail] = useState('@psgitech.ac.in');
+    const [rollNo, setRollNo] = useState(() => {
+        try {
+            const saved = localStorage.getItem('workshop_student');
+            if (saved) return JSON.parse(saved).rollNo || '';
+        } catch {}
+        return '';
+    });
+    const [email, setEmail] = useState(() => {
+        try {
+            const saved = localStorage.getItem('workshop_student');
+            if (saved) return JSON.parse(saved).email || '';
+        } catch {}
+        return '';
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState(null);
