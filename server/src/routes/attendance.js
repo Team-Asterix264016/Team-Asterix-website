@@ -134,9 +134,9 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             }
         }
 
-        const now = Date.now();
-        const signature = signToken(track, sessionId, now);
-        const token = `${track}.${sessionId}.${now}.${signature}`;
+        const tokenTimeVal = 'static';
+        const signature = signToken(track, sessionId, tokenTimeVal);
+        const token = `${track}.${sessionId}.${tokenTimeVal}.${signature}`;
 
         // Construct scan URL for the student
         const hostUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;

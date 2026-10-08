@@ -28,7 +28,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         selectScheduleSession
     } = useAttendanceSession(startTrack);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [countdownSeconds, setCountdownSeconds] = useState(12);
 
     // Dynamic QR state
     const [qrDataUrl, setQrDataUrl] = useState('');
@@ -110,8 +109,8 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         );
     }, [track, sessionNumber, sessionDate, sessionTopic]);
 
-    // Fetch token & generate QR
-    const fetchRotatingToken = useCallback(async () => {
+    // Fetch session token & generate permanent static QR
+    const fetchSessionToken = useCallback(async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) {
@@ -145,13 +144,12 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
-            setCountdownSeconds(12);
 
             if (data.hasAdminLocation && locationStatus !== 'saved') {
                 setLocationStatus('saved');
             }
 
-            // Generate crisp high-resolution QR Code
+            // Generate crisp high-resolution permanent QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
                 width: 1000,
                 margin: 2,
@@ -169,7 +167,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         }
     }, [track, sessionNumber, sessionDate, sessionTopic, adminCoords, locationStatus]);
 
-    // Poll live attendance numbers every 3 seconds & rotate token every 12s
+    // Poll live attendance numbers every 3 seconds
     const fetchLiveStatus = useCallback(async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
@@ -202,30 +200,17 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         requestAdminLocation();
     }, [requestAdminLocation]);
 
-    // 12-second countdown and rotation timer
+    // Fetch permanent session QR token on mount or parameter changes
     useEffect(() => {
-        fetchRotatingToken();
+        fetchSessionToken();
+    }, [fetchSessionToken]);
+
+    // 3-second live status polling
+    useEffect(() => {
         fetchLiveStatus();
-
-        // 1-second interval to update countdown number
-        const countdownTimer = setInterval(() => {
-            setCountdownSeconds((prev) => {
-                if (prev <= 1) {
-                    fetchRotatingToken();
-                    return 12;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        // 3-second live status refresh
         const pollTimer = setInterval(fetchLiveStatus, 3000);
-
-        return () => {
-            clearInterval(countdownTimer);
-            clearInterval(pollTimer);
-        };
-    }, [fetchRotatingToken, fetchLiveStatus]);
+        return () => clearInterval(pollTimer);
+    }, [fetchLiveStatus]);
 
     // Fullscreen toggle handler
     const toggleFullscreen = () => {
@@ -259,12 +244,10 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 Generating QR Code...
                             </div>
                         )}
-                        {/* Clean 12-Second Countdown Timer */}
-                        <div className="mt-3 flex shrink-0 items-center gap-2 border border-slate-400 bg-slate-100 px-3.5 py-1 font-mono text-xs font-black text-slate-800 sm:text-sm">
-                            <span>⏱ Code refreshes in:</span>
-                            <span className="w-8 text-center text-base font-black text-rose-600 sm:text-lg">
-                                {countdownSeconds}s
-                            </span>
+                        {/* Permanent Session Badge */}
+                        <div className="mt-3 flex shrink-0 items-center gap-2 border border-emerald-600 bg-emerald-50 px-3.5 py-1.5 font-mono text-xs font-black text-emerald-950 sm:text-sm">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600"></span>
+                            <span>📍 Location Verified · Permanent Session QR</span>
                         </div>
 
                         {/* Admin GPS Location Status Badge */}
