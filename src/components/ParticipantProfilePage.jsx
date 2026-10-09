@@ -3,7 +3,7 @@ import { apiUrl } from '../lib/api';
 import { safeHref } from '../lib/safeHref';
 import { useCommunityAuth } from '../context/CommunityAuthContext';
 import { downloadAllIcsFile } from '../utils/calendarUtils';
-import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
+import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../../server/src/config/workshopPackages.js';
 import SessionNotesModal from './SessionNotesModal';
 import { resourceBadge } from '../lib/resourceTypes';
 
@@ -204,6 +204,22 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const [pwdSuccess, setPwdSuccess] = useState('');
     const [pwdLoading, setPwdLoading] = useState(false);
 
+    // Edit profile details modal states
+    const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: '',
+        rollNo: '',
+        email: '',
+        phone: '',
+        department: '',
+        year: '',
+        password: ''
+    });
+    const [editError, setEditError] = useState('');
+    const [editFieldErrors, setEditFieldErrors] = useState({});
+    const [editSuccess, setEditSuccess] = useState('');
+    const [editLoading, setEditLoading] = useState(false);
+
     const fetchProfile = useCallback(
         async (queryVal, pwdVal) => {
             const target = queryVal !== undefined ? queryVal : identifier;
@@ -382,6 +398,113 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             setPwdError('Could not connect to server. Please try again.');
         } finally {
             setPwdLoading(false);
+        }
+    };
+
+    const openEditDetails = () => {
+        const candidate = profile?.candidate || {};
+        setEditForm({
+            name: candidate.name || '',
+            rollNo: candidate.rollNo || '',
+            email: candidate.email || '',
+            phone: candidate.phone || '',
+            department: candidate.department || '',
+            year: candidate.year || '',
+            password: password || ''
+        });
+        setEditError('');
+        setEditFieldErrors({});
+        setEditSuccess('');
+        setIsEditDetailsOpen(true);
+    };
+
+    const closeEditDetails = () => {
+        setIsEditDetailsOpen(false);
+        setEditError('');
+        setEditFieldErrors({});
+        setEditSuccess('');
+    };
+
+    const updateEditField = (field, value) => {
+        setEditForm((prev) => ({ ...prev, [field]: value }));
+        setEditFieldErrors((prev) => (prev[field] ? { ...prev, [field]: '' } : prev));
+    };
+
+    const handleEditDetailsSubmit = async (e) => {
+        e.preventDefault();
+        if (!editForm.password.trim()) {
+            setEditError('Please confirm your profile password to save these changes.');
+            return;
+        }
+
+        setEditLoading(true);
+        setEditError('');
+        setEditFieldErrors({});
+        setEditSuccess('');
+
+        try {
+            const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
+            const res = await fetch(apiUrl('/api/workshop/attendance/profile/update-details'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    identifier: candidateTarget,
+                    password: editForm.password.trim(),
+                    name: editForm.name.trim(),
+                    rollNo: editForm.rollNo.trim().toUpperCase(),
+                    email: editForm.email.trim(),
+                    phone: editForm.phone.trim(),
+                    department: editForm.department,
+                    year: editForm.year
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                setEditSuccess(data.message || 'Profile details updated successfully!');
+                setProfile((prev) =>
+                    prev ? { ...prev, candidate: { ...prev.candidate, ...data.candidate } } : prev
+                );
+                // A corrected roll number or email replaces what unlocks this profile, so the
+                // saved session has to point at the new value or the next visit cannot log in.
+                const nextIdentifier = data.candidate?.rollNo || data.candidate?.email || candidateTarget;
+                setIdentifier(nextIdentifier);
+                try {
+                    sessionStorage.setItem(
+                        'asterix_profile_auth',
+                        JSON.stringify({ identifier: nextIdentifier, password: editForm.password.trim() })
+                    );
+                } catch (err) {
+                    console.error('Failed to update profile auth session:', err);
+                }
+                // The attendance check-in screen prefills from this cached copy, so a stale roll
+                // number here would re-create the mismatch the correction just fixed.
+                try {
+                    const cached = localStorage.getItem('workshop_student');
+                    if (cached) {
+                        localStorage.setItem(
+                            'workshop_student',
+                            JSON.stringify({ ...JSON.parse(cached), ...data.candidate })
+                        );
+                    }
+                } catch (err) {
+                    console.error('Failed to refresh cached workshop student:', err);
+                }
+                setTimeout(
+                    () => {
+                        setIsEditDetailsOpen(false);
+                        setEditSuccess('');
+                    },
+                    data.rollNoChanged ? 3500 : 1500
+                );
+            } else {
+                setEditError(data.error || 'Failed to update your details. Please try again.');
+                setEditFieldErrors(data.fieldErrors || {});
+            }
+        } catch {
+            setEditError('Could not connect to server. Please try again.');
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -658,9 +781,20 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             </span>
                                         </div>
 
-                                        <h2 className="mt-3 text-2xl font-black text-slate-900 uppercase sm:text-4xl">
-                                            {profile.candidate.name}
-                                        </h2>
+                                        <div className="mt-3 flex flex-wrap items-center gap-2.5">
+                                            <h2 className="text-2xl font-black text-slate-900 uppercase sm:text-4xl">
+                                                {profile.candidate.name}
+                                            </h2>
+                                            <button
+                                                type="button"
+                                                onClick={openEditDetails}
+                                                title="Edit your profile details"
+                                                aria-label="Edit your profile details"
+                                                className="press shadow-brutal-2 shrink-0 border-2 border-slate-900 bg-amber-300 px-2 py-1 text-sm leading-none font-black text-slate-950 hover:bg-amber-400"
+                                            >
+                                                ✏️
+                                            </button>
+                                        </div>
                                         <p className="mt-1 font-mono text-sm font-bold text-sky-800">
                                             Roll No: <strong>{profile.candidate.rollNo}</strong> •{' '}
                                             {profile.candidate.department} (
@@ -695,6 +829,13 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         >
                                             <span>📞 Contact Support (+91 86089 44644)</span>
                                         </a>
+                                        <button
+                                            type="button"
+                                            onClick={openEditDetails}
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-white px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-100"
+                                        >
+                                            ✏️ Edit Details
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -1482,6 +1623,214 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                         notes={selectedSession ? notesBySession.get(selectedSession.id) || [] : []}
                         onClose={() => setSelectedSession(null)}
                     />
+
+                    {/* Edit Profile Details Modal */}
+                    {isEditDetailsOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
+                            <div className="shadow-brutal-8 relative my-auto w-full max-w-lg border-4 border-slate-900 bg-white p-6 sm:p-8">
+                                <div className="flex items-start justify-between gap-3 border-b-3 border-slate-900 pb-3">
+                                    <div>
+                                        <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
+                                            Participant Credentials
+                                        </span>
+                                        <h3 className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
+                                            Edit Profile Details ✏️
+                                        </h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={closeEditDetails}
+                                        className="press shrink-0 border-2 border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-xs font-black text-slate-900 hover:bg-rose-200"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleEditDetailsSubmit} className="mt-5 space-y-4">
+                                    <div className="border-2 border-slate-900 bg-slate-100 p-3">
+                                        <p className="font-mono text-[11px] font-bold text-slate-700">
+                                            🔒 Your enrolled track, amount paid and receipt number cannot be
+                                            changed here — call the workshop team on{' '}
+                                            <a
+                                                href="tel:+918608944644"
+                                                className="font-black text-slate-950 underline"
+                                            >
+                                                +91 86089 44644
+                                            </a>{' '}
+                                            if those need a correction.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Registered Number (Roll No)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editForm.rollNo}
+                                            onChange={(e) =>
+                                                updateEditField('rollNo', e.target.value.toUpperCase())
+                                            }
+                                            placeholder="e.g. 26M125"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black tracking-wider text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                        {editFieldErrors.rollNo ? (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.rollNo}
+                                            </p>
+                                        ) : (
+                                            <p className="mt-1 font-mono text-[11px] font-bold text-amber-800">
+                                                ⚠️ Fix this if you typed it wrong while registering — your
+                                                attendance, project and quiz records move to the corrected
+                                                number automatically. Enter it exactly as printed on your ID
+                                                card.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editForm.name}
+                                            onChange={(e) => updateEditField('name', e.target.value)}
+                                            placeholder="Your full name"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                        {editFieldErrors.name && (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            College Email
+                                        </label>
+                                        <input
+                                            type="email"
+                                            value={editForm.email}
+                                            onChange={(e) => updateEditField('email', e.target.value)}
+                                            placeholder="yourname@psgitech.ac.in"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                        {editFieldErrors.email && (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.email}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Phone Number
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            inputMode="numeric"
+                                            value={editForm.phone}
+                                            onChange={(e) => updateEditField('phone', e.target.value)}
+                                            placeholder="10-digit mobile number"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                        {editFieldErrors.phone && (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.phone}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Department
+                                        </label>
+                                        <select
+                                            value={editForm.department}
+                                            onChange={(e) => updateEditField('department', e.target.value)}
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
+                                        >
+                                            <option value="">Select department</option>
+                                            {WORKSHOP_DEPARTMENTS.map((dept) => (
+                                                <option key={dept} value={dept}>
+                                                    {dept}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {editFieldErrors.department && (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.department}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Year
+                                        </label>
+                                        <select
+                                            value={editForm.year}
+                                            onChange={(e) => updateEditField('year', e.target.value)}
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
+                                        >
+                                            <option value="">Select year</option>
+                                            <option value="1">1st Year</option>
+                                            <option value="2">2nd Year</option>
+                                        </select>
+                                        {editFieldErrors.year && (
+                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                {editFieldErrors.year}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="border-t-2 border-slate-200 pt-4">
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                            Confirm Profile Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={editForm.password}
+                                            onChange={(e) => updateEditField('password', e.target.value)}
+                                            placeholder="Your profile password (Default: asterix)"
+                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                        />
+                                    </div>
+
+                                    {editError && (
+                                        <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black text-rose-800 uppercase">
+                                            ⚠️ {editError}
+                                        </div>
+                                    )}
+
+                                    {editSuccess && (
+                                        <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black text-emerald-800 uppercase">
+                                            ✓ {editSuccess}
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={closeEditDetails}
+                                            className="press border-2 border-slate-900 bg-slate-100 px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-200"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={editLoading}
+                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-60"
+                                        >
+                                            {editLoading ? 'Saving…' : 'Save Details ✏️'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Change Password Modal */}
                     {isChangePasswordOpen && (
