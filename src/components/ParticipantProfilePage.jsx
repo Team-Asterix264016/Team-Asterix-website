@@ -514,7 +514,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed font-bold text-slate-600 sm:text-sm">
                                 Enter your college email ID, registered phone number, or roll number below to
                                 access your individual workshop attendance summary, class lecture slides,
-                                SPICE circuits, Colab notebooks, and payment receipt.
+                                SPICE circuits, and Colab notebooks.
                             </p>
                         </div>
 
