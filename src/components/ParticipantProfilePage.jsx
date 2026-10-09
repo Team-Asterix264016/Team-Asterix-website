@@ -46,130 +46,6 @@ const SUBSYSTEMS_PORTAL_DATA = [
     }
 ];
 
-function receiptRows(record) {
-    return [
-        ['Receipt no.', record.receiptNo || 'Being generated'],
-        ['Name', record.name],
-        ['Registered no.', record.rollNo],
-        ['Department', record.department],
-        ['Year', record.year === '1' ? '1st year' : record.year === '2' ? '2nd year' : ''],
-        ['Email', record.email],
-        ['Phone', record.phone],
-        ['Track', record.packageName || record.package],
-        ['Amount paid', `${Number(record.amount || 1000).toLocaleString('en-IN')}`],
-        ['Paid on', record.paidAt ? new Date(record.paidAt).toLocaleDateString('en-IN') : 'Confirmed'],
-        ['Reference', record.registrationId || record._id]
-    ].filter(([, value]) => value);
-}
-
-function downloadReceipt(rows, fileId) {
-    try {
-        const W = 640,
-            PAD = 36,
-            LABEL_W = 170,
-            LINE_H = 24,
-            ROW_PAD = 18;
-        const HEADER_H = 128,
-            FOOTER_H = 84;
-        const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-        const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-        const VALUE_FONT = `700 17px ${SANS}`;
-
-        const canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-        ctx.font = VALUE_FONT;
-
-        const wrapText = (text, maxWidth) => {
-            const lines = [];
-            let line = '';
-            for (const word of String(text).split(' ')) {
-                const next = line ? `${line} ${word}` : word;
-                if (line && ctx.measureText(next).width > maxWidth) {
-                    lines.push(line);
-                    line = word;
-                } else {
-                    line = next;
-                }
-            }
-            if (line) lines.push(line);
-            return lines;
-        };
-
-        const laid = rows.map(([label, value]) => ({
-            label,
-            lines: wrapText(String(value ?? ''), W - PAD * 2 - LABEL_W)
-        }));
-
-        const H =
-            HEADER_H +
-            laid.reduce((sum, row) => sum + row.lines.length * LINE_H + ROW_PAD, 0) +
-            FOOTER_H +
-            16;
-        const scale = 2;
-        canvas.width = W * scale;
-        canvas.height = H * scale;
-        ctx = canvas.getContext('2d');
-        ctx.scale(scale, scale);
-        ctx.textBaseline = 'top';
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = '#fcd34d';
-        ctx.fillRect(0, 0, W, HEADER_H - 16);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, HEADER_H - 20, W, 4);
-
-        ctx.font = `900 13px ${MONO}`;
-        ctx.fillStyle = '#0369a1';
-        ctx.fillText('TEAM ASTERIX · WORKSHOP 2026', PAD, 30);
-        ctx.font = `900 30px ${SANS}`;
-        ctx.fillStyle = '#0f172a';
-        ctx.fillText('PAYMENT RECEIPT', PAD, 52);
-
-        let y = HEADER_H;
-        laid.forEach((row, index) => {
-            const rowH = row.lines.length * LINE_H + ROW_PAD;
-            if (row.label === 'Amount paid') {
-                ctx.fillStyle = '#fcd34d';
-                ctx.fillRect(PAD - 12, y - 2, W - PAD * 2 + 24, rowH);
-            }
-            ctx.font = `900 12px ${MONO}`;
-            ctx.fillStyle = '#64748b';
-            ctx.fillText(row.label.toUpperCase(), PAD, y + 11);
-            ctx.font = VALUE_FONT;
-            ctx.fillStyle = '#0f172a';
-            row.lines.forEach((line, i) => ctx.fillText(line, PAD + LABEL_W, y + 8 + i * LINE_H));
-            y += rowH;
-            if (index < laid.length - 1) {
-                ctx.fillStyle = '#e2e8f0';
-                ctx.fillRect(PAD, y - 2, W - PAD * 2, 2);
-            }
-        });
-
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, y + 8, W, 4);
-        ctx.font = `700 12px ${MONO}`;
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Official Team Asterix Workshop Participant Receipt.', PAD, y + 30);
-
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 8;
-        ctx.strokeRect(0, 0, W, H);
-
-        const safeId = String(fileId || 'Receipt').replace(/[^a-zA-Z0-9_-]/g, '-');
-        const filename = `Asterix-Receipt-${safeId}.png`;
-
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => link.remove(), 1000);
-    } catch (err) {
-        alert('Could not download receipt automatically. Please take a screenshot.');
-    }
-}
-
 export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const communityAuth = useCommunityAuth();
     const currentMember = communityAuth?.currentMember;
@@ -813,24 +689,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                downloadReceipt(
-                                                    receiptRows(profile.candidate),
-                                                    profile.candidate.receiptNo || profile.candidate.rollNo
-                                                )
-                                            }
-                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-900 px-4 py-2.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
-                                        >
-                                            Download Receipt PNG ↓
-                                        </button>
-                                        <a
-                                            href="tel:+918608944644"
-                                            className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-sky-400 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300"
-                                        >
-                                            <span>📞 Contact Support (+91 86089 44644)</span>
-                                        </a>
-                                        <button
-                                            type="button"
                                             onClick={openEditDetails}
                                             className="press shadow-brutal-3 border-2 border-slate-900 bg-white px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-100"
                                         >
@@ -857,35 +715,13 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
 
                                 {/* Summary Badges */}
-                                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="shadow-brutal-2 border-2 border-slate-900 bg-amber-100 p-3">
                                         <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
                                             Enrolled Track(s)
                                         </span>
                                         <strong className="mt-0.5 block text-xs font-black text-slate-950 uppercase sm:text-sm">
                                             {profile.candidate.packageName || profile.candidate.package}
-                                        </strong>
-                                    </div>
-                                    <div className="shadow-brutal-2 border-2 border-slate-900 bg-emerald-100 p-3">
-                                        <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
-                                            Attendance Score
-                                        </span>
-                                        <strong className="mt-0.5 block text-xs font-black text-emerald-950 sm:text-sm">
-                                            {profile.attendanceSummary.attendancePercentage}% (
-                                            {profile.attendanceSummary.totalPresent}/
-                                            {profile.attendanceSummary.totalConducted} Sessions)
-                                        </strong>
-                                    </div>
-                                    <div className="shadow-brutal-2 border-2 border-slate-900 bg-sky-100 p-3">
-                                        <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
-                                            Certificate Status
-                                        </span>
-                                        <strong
-                                            className={`mt-0.5 block text-xs font-black ${profile.attendanceSummary.isEligibleForCertificate ? 'text-emerald-800' : 'text-rose-700'}`}
-                                        >
-                                            {profile.attendanceSummary.isEligibleForCertificate
-                                                ? '✓ Eligible (≥75%)'
-                                                : '⚠️ Under 75%'}
                                         </strong>
                                     </div>
                                     {nextSession ? (
