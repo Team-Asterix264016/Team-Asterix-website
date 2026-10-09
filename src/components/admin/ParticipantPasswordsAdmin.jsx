@@ -61,8 +61,40 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
         };
     }, [fetchAudit]);
 
+    const [actionBusyId, setActionBusyId] = useState(null);
+
     const togglePasswordVisibility = (id) => {
         setShowPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleUpgradeToCombo = async (item) => {
+        if (!item) return;
+        if (item.package === 'combo') {
+            alert(`${item.name} is already enrolled in Combo.`);
+            return;
+        }
+        if (!window.confirm(`Upgrade ${item.name} (${item.rollNo}) to Dual-Track Combo package?`)) {
+            return;
+        }
+
+        setActionBusyId(item.id);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${item.id}/upgrade-combo`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to upgrade candidate');
+
+            if (showStatus) showStatus(data.message || `✓ Upgraded ${item.name} to Combo!`);
+            await fetchAudit(true);
+        } catch (err) {
+            alert('Upgrade error: ' + err.message);
+        } finally {
+            setActionBusyId(null);
+        }
     };
 
     const copyToClipboard = (text, label) => {
@@ -286,9 +318,22 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
 
                                             {/* Track / Package */}
                                             <td className="px-4 py-3 align-top">
-                                                <span className="inline-block rounded border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-sky-950">
-                                                    {item.packageName || item.package}
-                                                </span>
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className="inline-block rounded border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-sky-950">
+                                                        {item.packageName || item.package}
+                                                    </span>
+                                                    {item.package !== 'combo' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUpgradeToCombo(item)}
+                                                            disabled={actionBusyId === item.id}
+                                                            className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                                            title="Upgrade candidate profile to Combo package"
+                                                        >
+                                                            {actionBusyId === item.id ? 'Upgrading…' : '⚡ Upgrade Combo'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Last Login Time */}

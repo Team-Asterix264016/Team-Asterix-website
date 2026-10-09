@@ -143,6 +143,36 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         }
     };
 
+    const handleUpgradeToCombo = async (cand) => {
+        if (!cand || !cand.registrationId) return;
+        if (cand.package === 'combo') {
+            alert(`${cand.name} is already enrolled in Combo.`);
+            return;
+        }
+        if (!window.confirm(`Upgrade ${cand.name} (${cand.rollNo}) to Dual-Track Combo package?`)) {
+            return;
+        }
+
+        setActionBusyRoll(cand.rollNo);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${cand.registrationId}/upgrade-combo`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to upgrade candidate');
+
+            if (showStatus) showStatus(data.message || `✓ Upgraded ${cand.name} to Combo!`);
+            fetchRecords();
+        } catch (err) {
+            alert('Upgrade error: ' + err.message);
+        } finally {
+            setActionBusyRoll(null);
+        }
+    };
+
     // CSV Export handler
     const handleExportCSV = async () => {
         setIsExporting(true);
@@ -585,21 +615,34 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                             )}
                                         </td>
                                         <td className="p-2.5 text-right">
-                                            {!cand.isPresent ? (
-                                                <button
-                                                    type="button"
-                                                    disabled={isBusy}
-                                                    onClick={() => handleManualMark(cand.rollNo)}
-                                                    className="press shadow-brutal-1 cursor-pointer border border-slate-900 bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
-                                                    title="Mark present manually if student phone has issue"
-                                                >
-                                                    {isBusy ? 'Saving...' : 'Mark Present ✓'}
-                                                </button>
-                                            ) : (
-                                                <span className="text-[10px] font-bold text-emerald-700">
-                                                    Recorded
-                                                </span>
-                                            )}
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                {cand.package !== 'combo' && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={isBusy}
+                                                        onClick={() => handleUpgradeToCombo(cand)}
+                                                        className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                                        title="Upgrade participant profile to Combo package"
+                                                    >
+                                                        {isBusy ? 'Upgrading…' : '⚡ Upgrade Combo'}
+                                                    </button>
+                                                )}
+                                                {!cand.isPresent ? (
+                                                    <button
+                                                        type="button"
+                                                        disabled={isBusy}
+                                                        onClick={() => handleManualMark(cand.rollNo)}
+                                                        className="press shadow-brutal-1 cursor-pointer border border-slate-900 bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
+                                                        title="Mark present manually if student phone has issue"
+                                                    >
+                                                        {isBusy ? 'Saving...' : 'Mark Present ✓'}
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold text-emerald-700">
+                                                        Recorded
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );

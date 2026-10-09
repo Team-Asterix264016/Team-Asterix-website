@@ -5,6 +5,7 @@ import Icon from '../Icon';
 import ImageField from './ImageField';
 import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
+import WorkshopAttendeeDetailsAdmin from './WorkshopAttendeeDetailsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
 import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
@@ -591,6 +592,7 @@ export default function AdminDashboard({ onExit }) {
             icon: 'calendar',
             children: [
                 { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
+                { id: 'workshop-attendee-details', label: 'Workshop Attendee Details 👤', icon: 'users' },
                 { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
                 { id: 'barcode-attendance', label: 'Barcode Attendance Scanner ⚡', icon: 'camera' },
@@ -1947,6 +1949,10 @@ export default function AdminDashboard({ onExit }) {
                             showStatus={showStatus}
                             onImageUpload={handleImageUpload}
                         />
+                    )}
+
+                    {activeTab === 'workshop-attendee-details' && (
+                        <WorkshopAttendeeDetailsAdmin showStatus={showStatus} />
                     )}
 
                     {activeTab === 'workshop-registrations' && (

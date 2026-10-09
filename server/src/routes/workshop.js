@@ -1122,11 +1122,181 @@ router.put('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireD
 });
 
 /**
+ * POST /api/workshop/registrations/manual-add
+ * Admin endpoint: Manually add a participant (reflected in profile creation & attendance).
+ */
+router.post('/registrations/manual-add', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const name = String(body.name || '').trim();
+        const email = String(body.email || '').trim().toLowerCase();
+        const phone = normalizePhone(body.phone);
+        const college = String(body.college || 'PSG iTech').trim();
+        const year = String(body.year || '1').trim();
+        const department = String(body.department || '').trim();
+        const rollNo = String(body.rollNo || '').trim().toUpperCase();
+        const pkgId = String(body.package || 'software').toLowerCase().trim();
+        const status = String(body.status || 'paid').toLowerCase().trim();
+
+        if (!name || name.length < 2) {
+            return res.status(400).json({ error: 'Full name is required.' });
+        }
+        if (!EMAIL_RE.test(email)) {
+            return res.status(400).json({ error: 'Enter a valid email address.' });
+        }
+        if (phone.length !== 10) {
+            return res.status(400).json({ error: 'Enter a valid 10-digit phone number.' });
+        }
+        if (!rollNo) {
+            return res.status(400).json({ error: 'Roll / Register number is required.' });
+        }
+        if (!WORKSHOP_DEPARTMENTS.includes(department)) {
+            return res.status(400).json({ error: 'Select a valid department.' });
+        }
+        if (!VALID_YEARS.includes(year)) {
+            return res.status(400).json({ error: 'Select 1st or 2nd year.' });
+        }
+
+        const pkg = getWorkshopPackage(pkgId);
+        if (!pkg) {
+            return res.status(400).json({ error: 'Select a valid workshop package.' });
+        }
+
+        // Check if candidate already registered
+        const existing = await WorkshopRegistration.findOne({
+            $or: [
+                { rollNo },
+                { email },
+                { phone }
+            ]
+        });
+
+        if (existing) {
+            if (existing.status === 'paid') {
+                return res.status(409).json({
+                    error: `Candidate already registered and confirmed as paid (${existing.receiptNo || 'paid'}). Name: ${existing.name}, Roll: ${existing.rollNo}`
+                });
+            } else {
+                // Reuse existing pending registration record
+                existing.name = name;
+                existing.email = email;
+                existing.phone = phone;
+                existing.college = college;
+                existing.year = year;
+                existing.department = department;
+                existing.rollNo = rollNo;
+                existing.package = pkg.id;
+                existing.tracksEnrolled = pkg.tracksIncluded;
+                existing.amount = body.amount ? Number(body.amount) : pkg.price;
+                existing.status = status;
+                if (status === 'paid') {
+                    existing.paidAt = new Date();
+                    if (!existing.receiptNo) {
+                        existing.receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+                    }
+                }
+                await existing.save();
+                return res.status(200).json({
+                    success: true,
+                    message: `Updated existing candidate record to ${status.toUpperCase()}! Receipt: ${existing.receiptNo || 'Pending'}`,
+                    registration: existing
+                });
+            }
+        }
+
+        const tracksEnrolled = pkg.tracksIncluded;
+        const amount = body.amount ? Number(body.amount) : pkg.price;
+
+        let receiptNo = undefined;
+        let paidAt = null;
+
+        if (status === 'paid') {
+            receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+            paidAt = new Date();
+        }
+
+        const registration = await WorkshopRegistration.create({
+            name,
+            email,
+            phone,
+            college,
+            year,
+            department,
+            rollNo,
+            package: pkg.id,
+            tracksEnrolled,
+            amount,
+            currency: WORKSHOP_CURRENCY,
+            status,
+            receiptNo,
+            paidAt
+        });
+
+        console.log(`[ADMIN MANUAL ADD] Added participant ${name} (${rollNo}) - Package: ${pkg.id}, Status: ${status}, Receipt: ${receiptNo || 'none'}`);
+
+        return res.status(201).json({
+            success: true,
+            message: `Participant ${name} added successfully! ${receiptNo ? `Receipt: ${receiptNo}` : ''}`,
+            registration
+        });
+    } catch (err) {
+        console.error('Error adding participant manually:', err);
+        return res.status(500).json({ error: err.message || 'Failed to add participant.' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/:id/upgrade-combo
+ * Admin endpoint: Directly upgrade a candidate's registration to Combo package.
+ */
+router.post('/registrations/:id/upgrade-combo', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const registration = await WorkshopRegistration.findById(id);
+        if (!registration) {
+            return res.status(404).json({ error: 'Registration record not found.' });
+        }
+
+        if (registration.package === 'combo' && registration.tracksEnrolled?.length >= 2) {
+            return res.status(400).json({ error: `${registration.name} is already enrolled in the Combo package.` });
+        }
+
+        registration.package = 'combo';
+        registration.tracksEnrolled = ['software', 'powertrain'];
+        registration.amount = 1750;
+        if (registration.status !== 'paid') {
+            registration.status = 'paid';
+            registration.paidAt = registration.paidAt || new Date();
+            if (!registration.receiptNo) {
+                registration.receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+            }
+        }
+        await registration.save();
+
+        console.log(`[ADMIN UPGRADE COMBO] Upgraded registration ${id} (${registration.name}, ${registration.rollNo}) to COMBO`);
+
+        return res.json({
+            success: true,
+            message: `✓ Upgraded ${registration.name} (${registration.rollNo}) to Dual-Track Combo package!`,
+            registration
+        });
+    } catch (err) {
+        console.error('Error upgrading registration to combo:', err);
+        return res.status(500).json({ error: 'Failed to upgrade registration to combo.' });
+    }
+});
+
+/**
  * POST /api/workshop/registrations/:id/verify-razorpay
  * Protected: SuperAdmins, Leads, and Members.
  * Strictly verifies payment with Razorpay API.
  * Refuses to mark paid unless Razorpay API explicitly confirms status === 'captured'.
  */
+
 router.post('/registrations/:id/verify-razorpay', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
         const { id } = req.params;

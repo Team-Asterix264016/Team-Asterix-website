@@ -4,7 +4,19 @@ import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import WorkshopAnalyticsGraphs from './WorkshopAnalyticsGraphs';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
 
-export default function WorkshopRegistrationsAdmin({ showStatus }) {
+const WORKSHOP_DEPARTMENTS = [
+    'Artificial Intelligence and Data Science',
+    'Civil Engineering',
+    'Computer Science and Engineering',
+    'Electrical and Electronics Engineering',
+    'Electronics and Communication Engineering',
+    'Electronics Engineering (VLSI Design and Technology)',
+    'Instrumentation and Control Engineering',
+    'Mechanical Engineering',
+    'Robotics and Artificial Intelligence'
+];
+
+export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Workshop Registrations' }) {
     const [registrations, setRegistrations] = useState([]);
     const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, failed: 0, revenue: 0 });
     const [isLoading, setIsLoading] = useState(true);
@@ -21,10 +33,28 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
     const [actionBusyId, setActionBusyId] = useState(null);
     const [isSyncingRazorpay, setIsSyncingRazorpay] = useState(false);
 
+    // Add Participant form state
+    const [isAddingParticipant, setIsAddingParticipant] = useState(false);
+    const [addForm, setAddForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        college: 'PSG iTech',
+        year: '1',
+        department: 'Computer Science and Engineering',
+        rollNo: '',
+        package: 'software',
+        status: 'paid'
+    });
+    const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
+    const [addError, setAddError] = useState('');
+
     const detailsModalRef = useModalBehavior(Boolean(selectedRegistration), () =>
         setSelectedRegistration(null)
     );
     const editModalRef = useModalBehavior(Boolean(editingRegistration), () => setEditingRegistration(null));
+    const addModalRef = useModalBehavior(isAddingParticipant, () => setIsAddingParticipant(false));
+
 
     const fetchRegistrations = useCallback(
         async (isSilent = false) => {
@@ -223,6 +253,80 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
         }
     };
 
+    // Upgrade registration to Combo
+    const handleUpgradeToCombo = async (reg) => {
+        if (!reg) return;
+        if (reg.package === 'combo') {
+            alert(`${reg.name} is already enrolled in the Combo package.`);
+            return;
+        }
+        if (!window.confirm(`Upgrade ${reg.name} (${reg.rollNo}) to the Dual-Track Combo package?`)) {
+            return;
+        }
+
+        setActionBusyId(reg._id);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${reg._id}/upgrade-combo`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to upgrade candidate');
+
+            if (showStatus) showStatus(data.message || `✓ Upgraded ${reg.name} to Combo!`);
+            if (selectedRegistration?._id === reg._id) {
+                setSelectedRegistration(data.registration || { ...reg, package: 'combo', tracksEnrolled: ['software', 'powertrain'] });
+            }
+            await fetchRegistrations(true);
+        } catch (err) {
+            alert('Upgrade error: ' + err.message);
+        } finally {
+            setActionBusyId(null);
+        }
+    };
+
+    // Save new participant manually
+    const handleSaveNewParticipant = async (event) => {
+        event.preventDefault();
+        setIsSubmittingAdd(true);
+        setAddError('');
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl('/api/workshop/registrations/manual-add'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(addForm)
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Failed to add participant');
+
+            setIsAddingParticipant(false);
+            setAddForm({
+                name: '',
+                email: '',
+                phone: '',
+                college: 'PSG iTech',
+                year: '1',
+                department: 'Computer Science and Engineering',
+                rollNo: '',
+                package: 'software',
+                status: 'paid'
+            });
+            if (showStatus) showStatus(data.message || `✓ Added ${addForm.name} successfully!`);
+            await fetchRegistrations(true);
+        } catch (err) {
+            setAddError(err.message || 'Failed to add participant.');
+        } finally {
+            setIsSubmittingAdd(false);
+        }
+    };
+
     // Filter registrations by status, package, and search query
     const filteredRegistrations = useMemo(() => {
         const list = registrations.filter((reg) => {
@@ -296,7 +400,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 <div>
                     <div className="flex flex-wrap items-center gap-2">
                         <h2 className="text-xl leading-tight font-black text-slate-900 uppercase sm:text-2xl">
-                            Workshop Registrations
+                            {title}
                         </h2>
                         <span className="flex items-center gap-1 border border-emerald-400 bg-emerald-100 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-emerald-800 uppercase">
                             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
@@ -309,6 +413,18 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setAddError('');
+                            setIsAddingParticipant(true);
+                        }}
+                        className="press shadow-brutal-2 flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-sky-400 px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-sky-300 disabled:opacity-50 sm:flex-none"
+                        title="Add a participant manually to the system"
+                    >
+                        <span>➕</span>
+                        <span>Add Participant</span>
+                    </button>
                     <button
                         type="button"
                         onClick={handleSyncRazorpay}
@@ -337,6 +453,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                         <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
                     </button>
                 </div>
+
             </div>
 
             {/* Error Banner */}
@@ -731,7 +848,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                     ) : null}
                                 </div>
 
-                                <div className="flex items-center gap-2 pt-1">
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
                                     {isPending && (
                                         <button
                                             type="button"
@@ -743,6 +860,17 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                             {actionBusyId === reg._id ? 'Checking…' : '⚡ Check Razorpay'}
                                         </button>
                                     )}
+                                    {reg.package !== 'combo' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUpgradeToCombo(reg)}
+                                            disabled={actionBusyId === reg._id}
+                                            className="press shadow-brutal-1 flex-1 border-2 border-slate-900 bg-purple-400 py-1.5 text-center font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                            title="Upgrade profile to Combo package"
+                                        >
+                                            {actionBusyId === reg._id ? 'Upgrading...' : '⚡ Upgrade Combo'}
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={() => setSelectedRegistration(reg)}
@@ -751,6 +879,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                         Details →
                                     </button>
                                 </div>
+
                             </div>
                         );
                     })
@@ -905,6 +1034,17 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                                         {actionBusyId === reg._id
                                                             ? 'Checking…'
                                                             : '⚡ Check Razorpay'}
+                                                    </button>
+                                                )}
+                                                {reg.package !== 'combo' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUpgradeToCombo(reg)}
+                                                        disabled={actionBusyId === reg._id}
+                                                        className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-1 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                                        title="Upgrade candidate profile to Combo package"
+                                                    >
+                                                        {actionBusyId === reg._id ? 'Upgrading…' : '⚡ Upgrade Combo'}
                                                     </button>
                                                 )}
                                                 <button
@@ -1078,6 +1218,16 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                                             : '⚡ Check with Razorpay'}
                                     </button>
                                 )}
+                                {selectedRegistration.package !== 'combo' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleUpgradeToCombo(selectedRegistration)}
+                                        disabled={actionBusyId === selectedRegistration._id}
+                                        className="press cursor-pointer border-2 border-slate-900 bg-purple-400 px-3.5 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                    >
+                                        {actionBusyId === selectedRegistration._id ? 'Upgrading...' : '⚡ Upgrade to Combo'}
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1193,6 +1343,188 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                     </form>
                 </div>
             )}
+
+            {/* Modal for Adding New Participant */}
+            {isAddingParticipant && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm">
+                    <form
+                        ref={addModalRef}
+                        onSubmit={handleSaveNewParticipant}
+                        className="shadow-brutal-7-brand max-h-[92vh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 sm:p-7"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="add-participant-title"
+                    >
+                        <div className="flex items-start justify-between gap-3 border-b-2 border-slate-200 pb-4">
+                            <div>
+                                <p className="font-mono text-[10px] font-black text-sky-700 uppercase">
+                                    ADMIN PARTICIPANT CREATION
+                                </p>
+                                <h3
+                                    id="add-participant-title"
+                                    className="mt-1 text-lg font-black uppercase text-slate-900"
+                                >
+                                    ➕ Add New Participant
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsAddingParticipant(false)}
+                                disabled={isSubmittingAdd}
+                                className="text-xl font-black text-slate-700 hover:text-rose-600"
+                                aria-label="Close add participant form"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="mt-4 font-mono text-[11px] font-bold text-slate-600">
+                            Participants added with <span className="text-emerald-700 font-black">CONFIRMED PAID</span> status can immediately log into profile creation and are reflected in attendance rosters for their package.
+                        </div>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2 font-mono">
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Full Name *
+                                <input
+                                    type="text"
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.name}
+                                    placeholder="e.g. John Doe"
+                                    required
+                                    onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
+                                />
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Email Address *
+                                <input
+                                    type="email"
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.email}
+                                    placeholder="e.g. 26m125@psgitech.ac.in"
+                                    required
+                                    onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                                />
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Phone Number (10 Digits) *
+                                <input
+                                    type="tel"
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.phone}
+                                    placeholder="9876543210"
+                                    required
+                                    onChange={(e) => setAddForm({ ...addForm, phone: e.target.value })}
+                                />
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Roll / Register Number *
+                                <input
+                                    type="text"
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.rollNo}
+                                    placeholder="e.g. 715526U125 or 26M125"
+                                    required
+                                    onChange={(e) => setAddForm({ ...addForm, rollNo: e.target.value })}
+                                />
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800 sm:col-span-2">
+                                Department *
+                                <select
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.department}
+                                    onChange={(e) => setAddForm({ ...addForm, department: e.target.value })}
+                                >
+                                    {WORKSHOP_DEPARTMENTS.map((dept) => (
+                                        <option key={dept} value={dept}>
+                                            {dept}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Academic Year *
+                                <select
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.year}
+                                    onChange={(e) => setAddForm({ ...addForm, year: e.target.value })}
+                                >
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                </select>
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                College Name
+                                <input
+                                    type="text"
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.college}
+                                    placeholder="PSG iTech"
+                                    onChange={(e) => setAddForm({ ...addForm, college: e.target.value })}
+                                />
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Workshop Package *
+                                <select
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.package}
+                                    onChange={(e) => setAddForm({ ...addForm, package: e.target.value })}
+                                >
+                                    <option value="software">Software & Perception (₹1000)</option>
+                                    <option value="powertrain">Electronics & Powertrain (₹1000)</option>
+                                    <option value="combo">Dual-Track Combo (₹1750)</option>
+                                </select>
+                            </label>
+
+                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                                Payment Status *
+                                <select
+                                    className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
+                                    value={addForm.status}
+                                    onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}
+                                >
+                                    <option value="paid">✓ Confirmed Paid (Generates Receipt)</option>
+                                    <option value="pending">⏳ Pending Unpaid</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        {addError && (
+                            <p
+                                role="alert"
+                                className="mt-4 border-2 border-rose-600 bg-rose-50 px-3 py-2 font-mono text-xs font-bold text-rose-800"
+                            >
+                                ⚠️ {addError}
+                            </p>
+                        )}
+
+                        <div className="mt-6 flex justify-end gap-2 font-mono">
+                            <button
+                                type="button"
+                                onClick={() => setIsAddingParticipant(false)}
+                                disabled={isSubmittingAdd}
+                                className="border-2 border-slate-900 bg-white px-4 py-2 text-xs font-black uppercase hover:bg-slate-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmittingAdd}
+                                className="border-2 border-slate-900 bg-sky-400 px-4 py-2 text-xs font-black uppercase hover:bg-sky-300 disabled:opacity-60"
+                            >
+                                {isSubmittingAdd ? 'Adding...' : 'Add Participant'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
         </div>
     );
 }
+
