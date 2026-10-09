@@ -46,129 +46,28 @@ const SUBSYSTEMS_PORTAL_DATA = [
     }
 ];
 
-function receiptRows(record) {
-    return [
-        ['Receipt no.', record.receiptNo || 'Being generated'],
-        ['Name', record.name],
-        ['Registered no.', record.rollNo],
-        ['Department', record.department],
-        ['Year', record.year === '1' ? '1st year' : record.year === '2' ? '2nd year' : ''],
-        ['Email', record.email],
-        ['Phone', record.phone],
-        ['Track', record.packageName || record.package],
-        ['Amount paid', `${Number(record.amount || 1000).toLocaleString('en-IN')}`],
-        ['Paid on', record.paidAt ? new Date(record.paidAt).toLocaleDateString('en-IN') : 'Confirmed'],
-        ['Reference', record.registrationId || record._id]
-    ].filter(([, value]) => value);
-}
-
-function downloadReceipt(rows, fileId) {
-    try {
-        const W = 640,
-            PAD = 36,
-            LABEL_W = 170,
-            LINE_H = 24,
-            ROW_PAD = 18;
-        const HEADER_H = 128,
-            FOOTER_H = 84;
-        const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-        const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-        const VALUE_FONT = `700 17px ${SANS}`;
-
-        const canvas = document.createElement('canvas');
-        let ctx = canvas.getContext('2d');
-        ctx.font = VALUE_FONT;
-
-        const wrapText = (text, maxWidth) => {
-            const lines = [];
-            let line = '';
-            for (const word of String(text).split(' ')) {
-                const next = line ? `${line} ${word}` : word;
-                if (line && ctx.measureText(next).width > maxWidth) {
-                    lines.push(line);
-                    line = word;
-                } else {
-                    line = next;
-                }
-            }
-            if (line) lines.push(line);
-            return lines;
-        };
-
-        const laid = rows.map(([label, value]) => ({
-            label,
-            lines: wrapText(String(value ?? ''), W - PAD * 2 - LABEL_W)
-        }));
-
-        const H =
-            HEADER_H +
-            laid.reduce((sum, row) => sum + row.lines.length * LINE_H + ROW_PAD, 0) +
-            FOOTER_H +
-            16;
-        const scale = 2;
-        canvas.width = W * scale;
-        canvas.height = H * scale;
-        ctx = canvas.getContext('2d');
-        ctx.scale(scale, scale);
-        ctx.textBaseline = 'top';
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle = '#fcd34d';
-        ctx.fillRect(0, 0, W, HEADER_H - 16);
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, HEADER_H - 20, W, 4);
-
-        ctx.font = `900 13px ${MONO}`;
-        ctx.fillStyle = '#0369a1';
-        ctx.fillText('TEAM ASTERIX · WORKSHOP 2026', PAD, 30);
-        ctx.font = `900 30px ${SANS}`;
-        ctx.fillStyle = '#0f172a';
-        ctx.fillText('PAYMENT RECEIPT', PAD, 52);
-
-        let y = HEADER_H;
-        laid.forEach((row, index) => {
-            const rowH = row.lines.length * LINE_H + ROW_PAD;
-            if (row.label === 'Amount paid') {
-                ctx.fillStyle = '#fcd34d';
-                ctx.fillRect(PAD - 12, y - 2, W - PAD * 2 + 24, rowH);
-            }
-            ctx.font = `900 12px ${MONO}`;
-            ctx.fillStyle = '#64748b';
-            ctx.fillText(row.label.toUpperCase(), PAD, y + 11);
-            ctx.font = VALUE_FONT;
-            ctx.fillStyle = '#0f172a';
-            row.lines.forEach((line, i) => ctx.fillText(line, PAD + LABEL_W, y + 8 + i * LINE_H));
-            y += rowH;
-            if (index < laid.length - 1) {
-                ctx.fillStyle = '#e2e8f0';
-                ctx.fillRect(PAD, y - 2, W - PAD * 2, 2);
-            }
-        });
-
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, y + 8, W, 4);
-        ctx.font = `700 12px ${MONO}`;
-        ctx.fillStyle = '#475569';
-        ctx.fillText('Official Team Asterix Workshop Participant Receipt.', PAD, y + 30);
-
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 8;
-        ctx.strokeRect(0, 0, W, H);
-
-        const safeId = String(fileId || 'Receipt').replace(/[^a-zA-Z0-9_-]/g, '-');
-        const filename = `Asterix-Receipt-${safeId}.png`;
-
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => link.remove(), 1000);
-    } catch (err) {
-        alert('Could not download receipt automatically. Please take a screenshot.');
+// Sessions carry a YYYY-MM-DD isoDate; check-ins recorded outside the published
+// schedule have no printed date or weekday, so the day heading is derived from the
+// isoDate (read as UTC, which is the calendar day the server already computed in IST).
+function formatSessionDay(isoDate, fallback) {
+    if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+        return { day: fallback || 'Date to be announced', weekday: '' };
     }
+    const [year, month, date] = isoDate.split('-').map(Number);
+    const dt = new Date(Date.UTC(year, month - 1, date));
+    return {
+        day: dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+        weekday: dt.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+    };
 }
+
+const SESSION_STATUS_STYLES = {
+    HOLIDAY: { label: '🎉 Holiday', className: 'bg-slate-200 text-slate-700' },
+    PRESENT: { label: '✅ Present', className: 'bg-emerald-400 text-slate-950' },
+    ABSENT: { label: '❌ Missed', className: 'bg-rose-500 text-white' },
+    OPTIONAL: { label: '💬 Optional', className: 'bg-violet-200 text-violet-950' },
+    UPCOMING: { label: '🕒 Upcoming', className: 'bg-sky-200 text-sky-950' }
+};
 
 export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const communityAuth = useCommunityAuth();
@@ -542,6 +441,29 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         notesBySession.get(r.sessionId).push(r);
     });
     const multiTrack = (profile?.candidate?.tracksEnrolled?.length || 0) > 1;
+
+    const timetableQuery = timetableSearch.trim().toLowerCase();
+    const filteredTimetable = (profile?.sessionTimeline || []).filter((item) => {
+        if (timetableFilter !== 'all' && item.type !== timetableFilter) return false;
+        if (!timetableQuery) return true;
+        return (
+            item.title?.toLowerCase().includes(timetableQuery) ||
+            item.instructor?.toLowerCase().includes(timetableQuery) ||
+            item.venue?.toLowerCase().includes(timetableQuery) ||
+            item.label?.toLowerCase().includes(timetableQuery) ||
+            item.project?.toLowerCase().includes(timetableQuery)
+        );
+    });
+    // One heading per day, so a day with three sessions reads as one block instead of
+    // three cards repeating the same date.
+    const timetableDays = [];
+    filteredTimetable.forEach((item) => {
+        const key = item.isoDate || item.date || 'undated';
+        const last = timetableDays[timetableDays.length - 1];
+        if (last && last.key === key) last.sessions.push(item);
+        else timetableDays.push({ key, isoDate: item.isoDate, date: item.date, sessions: [item] });
+    });
+
     // Holidays and optional catch-ups don't count toward attendance.
     const countedSessions = (profile?.sessionTimeline || []).filter(
         (s) => s.type !== 'holiday' && s.type !== 'catchup'
@@ -592,7 +514,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed font-bold text-slate-600 sm:text-sm">
                                 Enter your college email ID, registered phone number, or roll number below to
                                 access your individual workshop attendance summary, class lecture slides,
-                                SPICE circuits, Colab notebooks, and payment receipt.
+                                SPICE circuits, and Colab notebooks.
                             </p>
                         </div>
 
@@ -813,24 +735,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                downloadReceipt(
-                                                    receiptRows(profile.candidate),
-                                                    profile.candidate.receiptNo || profile.candidate.rollNo
-                                                )
-                                            }
-                                            className="press shadow-brutal-3 border-2 border-slate-900 bg-slate-900 px-4 py-2.5 font-mono text-xs font-black text-amber-300 uppercase hover:bg-slate-800"
-                                        >
-                                            Download Receipt PNG ↓
-                                        </button>
-                                        <a
-                                            href="tel:+918608944644"
-                                            className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-sky-400 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300"
-                                        >
-                                            <span>📞 Contact Support (+91 86089 44644)</span>
-                                        </a>
-                                        <button
-                                            type="button"
                                             onClick={openEditDetails}
                                             className="press shadow-brutal-3 border-2 border-slate-900 bg-white px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-100"
                                         >
@@ -857,35 +761,13 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
 
                                 {/* Summary Badges */}
-                                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div className="shadow-brutal-2 border-2 border-slate-900 bg-amber-100 p-3">
                                         <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
                                             Enrolled Track(s)
                                         </span>
                                         <strong className="mt-0.5 block text-xs font-black text-slate-950 uppercase sm:text-sm">
                                             {profile.candidate.packageName || profile.candidate.package}
-                                        </strong>
-                                    </div>
-                                    <div className="shadow-brutal-2 border-2 border-slate-900 bg-emerald-100 p-3">
-                                        <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
-                                            Attendance Score
-                                        </span>
-                                        <strong className="mt-0.5 block text-xs font-black text-emerald-950 sm:text-sm">
-                                            {profile.attendanceSummary.attendancePercentage}% (
-                                            {profile.attendanceSummary.totalPresent}/
-                                            {profile.attendanceSummary.totalConducted} Sessions)
-                                        </strong>
-                                    </div>
-                                    <div className="shadow-brutal-2 border-2 border-slate-900 bg-sky-100 p-3">
-                                        <span className="block font-mono text-[10px] font-black text-slate-600 uppercase">
-                                            Certificate Status
-                                        </span>
-                                        <strong
-                                            className={`mt-0.5 block text-xs font-black ${profile.attendanceSummary.isEligibleForCertificate ? 'text-emerald-800' : 'text-rose-700'}`}
-                                        >
-                                            {profile.attendanceSummary.isEligibleForCertificate
-                                                ? '✓ Eligible (≥75%)'
-                                                : '⚠️ Under 75%'}
                                         </strong>
                                     </div>
                                     {nextSession ? (
@@ -1310,141 +1192,168 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                         </div>
                                     </div>
 
-                                    {/* Session Timetable Grid */}
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                        {profile.sessionTimeline
-                                            .filter((item) => {
-                                                if (
-                                                    timetableFilter !== 'all' &&
-                                                    item.type !== timetableFilter
-                                                )
-                                                    return false;
-                                                if (!timetableSearch.trim()) return true;
-                                                const q = timetableSearch.toLowerCase();
-                                                return (
-                                                    item.title?.toLowerCase().includes(q) ||
-                                                    item.instructor?.toLowerCase().includes(q) ||
-                                                    item.venue?.toLowerCase().includes(q) ||
-                                                    item.label?.toLowerCase().includes(q) ||
-                                                    item.project?.toLowerCase().includes(q)
+                                    {/* Session Timetable List */}
+                                    {timetableDays.length === 0 ? (
+                                        <div className="border-3 border-dashed border-slate-400 bg-slate-50 p-8 text-center font-mono text-xs font-black text-slate-500 uppercase">
+                                            No sessions match this filter or search.
+                                        </div>
+                                    ) : (
+                                        <div className="shadow-brutal-4 divide-y-2 divide-slate-900/15 border-3 border-slate-900 bg-white">
+                                            {timetableDays.map((day) => {
+                                                const { day: dayLabel, weekday } = formatSessionDay(
+                                                    day.isoDate,
+                                                    day.date
                                                 );
-                                            })
-                                            .map((session) => {
-                                                const isHoliday = session.type === 'holiday';
-                                                const sessionNoteCount =
-                                                    notesBySession.get(session.id)?.length || 0;
+                                                const isToday = day.isoDate === todayIst;
                                                 return (
-                                                    <div
-                                                        key={session.id}
-                                                        role={isHoliday ? undefined : 'button'}
-                                                        tabIndex={isHoliday ? undefined : 0}
-                                                        onClick={
-                                                            isHoliday
-                                                                ? undefined
-                                                                : () => setSelectedSession(session)
-                                                        }
-                                                        onKeyDown={
-                                                            isHoliday
-                                                                ? undefined
-                                                                : (e) => {
-                                                                      if (
-                                                                          e.key === 'Enter' ||
-                                                                          e.key === ' '
-                                                                      ) {
-                                                                          if (e.key === ' ')
-                                                                              e.preventDefault();
-                                                                          setSelectedSession(session);
-                                                                      }
-                                                                  }
-                                                        }
-                                                        className={`shadow-brutal-4 flex flex-col border-3 border-slate-900 bg-slate-50 p-4 justify-between${
-                                                            isHoliday
-                                                                ? ''
-                                                                : ' cursor-pointer transition-all hover:-translate-y-0.5 hover:bg-white'
-                                                        }`}
-                                                    >
-                                                        <div>
-                                                            <div className="flex items-center justify-between gap-2 border-b-2 border-slate-900/20 pb-2">
-                                                                <div className="flex flex-wrap items-center gap-1">
-                                                                    <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
-                                                                        {session.label}
-                                                                    </span>
-                                                                    {multiTrack && (
-                                                                        <span
-                                                                            className={`border border-slate-900 px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
-                                                                                session.track === 'powertrain'
-                                                                                    ? 'bg-amber-200'
-                                                                                    : 'bg-sky-200'
-                                                                            }`}
-                                                                        >
-                                                                            {session.track === 'powertrain'
-                                                                                ? 'POWERTRAIN'
-                                                                                : 'SOFTWARE'}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <span className="font-mono text-xs font-black text-slate-800">
-                                                                    {session.date} ({session.days})
-                                                                </span>
-                                                            </div>
-
-                                                            <h4 className="mt-3 text-base font-black text-slate-900 uppercase">
-                                                                {session.title}
-                                                            </h4>
-
-                                                            <div className="mt-2 space-y-1 font-mono text-xs font-bold text-slate-600">
-                                                                <div>
-                                                                    👤 <strong>Instructor:</strong>{' '}
-                                                                    {session.instructor}
-                                                                </div>
-                                                                <div>
-                                                                    📍 <strong>Venue:</strong> {session.venue}
-                                                                </div>
-                                                                {session.project && (
-                                                                    <div className="text-amber-900">
-                                                                        🚀 <strong>Milestone:</strong>{' '}
-                                                                        {session.project}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="mt-4 flex items-center justify-between gap-2 border-t-2 border-slate-900/20 pt-3">
-                                                            <span
-                                                                className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
-                                                                    isHoliday
-                                                                        ? 'bg-slate-200 text-slate-700'
-                                                                        : session.status === 'PRESENT'
-                                                                          ? 'bg-emerald-400 text-slate-950'
-                                                                          : session.status === 'ABSENT'
-                                                                            ? 'bg-rose-500 text-white'
-                                                                            : session.status === 'OPTIONAL'
-                                                                              ? 'bg-violet-200 text-violet-950'
-                                                                              : 'bg-sky-200 text-sky-950'
-                                                                }`}
-                                                            >
-                                                                {isHoliday
-                                                                    ? '🎉 Holiday · no class'
-                                                                    : session.status === 'PRESENT'
-                                                                      ? '✅ Verified Present'
-                                                                      : session.status === 'ABSENT'
-                                                                        ? '❌ Missed'
-                                                                        : session.status === 'OPTIONAL'
-                                                                          ? '💬 Optional · not counted'
-                                                                          : '🕒 Upcoming'}
-                                                            </span>
-                                                            {!isHoliday && (
-                                                                <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
-                                                                    {sessionNoteCount > 0
-                                                                        ? `📚 ${sessionNoteCount} note${sessionNoteCount === 1 ? '' : 's'} →`
-                                                                        : 'View details →'}
+                                                    <div key={day.key}>
+                                                        {/* Day heading */}
+                                                        <div
+                                                            className={`flex flex-wrap items-baseline gap-x-2.5 gap-y-1 border-b-2 border-slate-900 px-4 py-2 font-mono text-xs font-black uppercase ${
+                                                                isToday
+                                                                    ? 'bg-amber-300 text-slate-950'
+                                                                    : 'bg-slate-900 text-amber-300'
+                                                            }`}
+                                                        >
+                                                            <span className="text-sm">{dayLabel}</span>
+                                                            {weekday && (
+                                                                <span
+                                                                    className={
+                                                                        isToday
+                                                                            ? 'text-slate-700'
+                                                                            : 'text-slate-400'
+                                                                    }
+                                                                >
+                                                                    {weekday}
                                                                 </span>
                                                             )}
+                                                            {isToday && (
+                                                                <span className="border border-slate-900 bg-slate-950 px-1.5 py-0.5 text-[10px] text-amber-300">
+                                                                    Today
+                                                                </span>
+                                                            )}
+                                                            <span
+                                                                className={`ml-auto text-[10px] ${isToday ? 'text-slate-700' : 'text-slate-400'}`}
+                                                            >
+                                                                {day.sessions.length} session
+                                                                {day.sessions.length === 1 ? '' : 's'}
+                                                            </span>
                                                         </div>
+
+                                                        {/* Sessions on that day */}
+                                                        {day.sessions.map((session) => {
+                                                            const isHoliday = session.type === 'holiday';
+                                                            const sessionNoteCount =
+                                                                notesBySession.get(session.id)?.length || 0;
+                                                            const status = isHoliday
+                                                                ? SESSION_STATUS_STYLES.HOLIDAY
+                                                                : SESSION_STATUS_STYLES[session.status] ||
+                                                                  SESSION_STATUS_STYLES.UPCOMING;
+                                                            return (
+                                                                <div
+                                                                    key={`${session.track}-${session.id}-${session.isoDate}`}
+                                                                    role={isHoliday ? undefined : 'button'}
+                                                                    tabIndex={isHoliday ? undefined : 0}
+                                                                    onClick={
+                                                                        isHoliday
+                                                                            ? undefined
+                                                                            : () =>
+                                                                                  setSelectedSession(session)
+                                                                    }
+                                                                    onKeyDown={
+                                                                        isHoliday
+                                                                            ? undefined
+                                                                            : (e) => {
+                                                                                  if (
+                                                                                      e.key === 'Enter' ||
+                                                                                      e.key === ' '
+                                                                                  ) {
+                                                                                      if (e.key === ' ')
+                                                                                          e.preventDefault();
+                                                                                      setSelectedSession(
+                                                                                          session
+                                                                                      );
+                                                                                  }
+                                                                              }
+                                                                    }
+                                                                    className={`flex flex-col gap-2 border-b border-slate-900/10 px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-4 ${
+                                                                        isHoliday
+                                                                            ? 'bg-slate-50'
+                                                                            : 'cursor-pointer hover:bg-amber-50'
+                                                                    }`}
+                                                                >
+                                                                    {/* Session label */}
+                                                                    <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:w-32">
+                                                                        <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
+                                                                            {session.label}
+                                                                        </span>
+                                                                        {multiTrack && (
+                                                                            <span
+                                                                                className={`border border-slate-900 px-1.5 py-0.5 font-mono text-[9px] font-black uppercase ${
+                                                                                    session.track ===
+                                                                                    'powertrain'
+                                                                                        ? 'bg-amber-200'
+                                                                                        : 'bg-sky-200'
+                                                                                }`}
+                                                                            >
+                                                                                {session.track ===
+                                                                                'powertrain'
+                                                                                    ? 'PWR'
+                                                                                    : 'SW'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* Title and details */}
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <strong className="block text-sm font-black text-slate-900 uppercase">
+                                                                            {session.title}
+                                                                        </strong>
+                                                                        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] font-bold text-slate-600">
+                                                                            {session.instructor &&
+                                                                                session.instructor !==
+                                                                                    '-' && (
+                                                                                    <span>
+                                                                                        👤{' '}
+                                                                                        {session.instructor}
+                                                                                    </span>
+                                                                                )}
+                                                                            {session.venue && (
+                                                                                <span>
+                                                                                    📍 {session.venue}
+                                                                                </span>
+                                                                            )}
+                                                                            {session.project && (
+                                                                                <span className="text-amber-900">
+                                                                                    🚀 {session.project}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Status */}
+                                                                    <div className="flex shrink-0 items-center gap-2 sm:justify-end">
+                                                                        <span
+                                                                            className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${status.className}`}
+                                                                        >
+                                                                            {status.label}
+                                                                        </span>
+                                                                        {!isHoliday && (
+                                                                            <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
+                                                                                {sessionNoteCount > 0
+                                                                                    ? `📚 ${sessionNoteCount} →`
+                                                                                    : '→'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 );
                                             })}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
