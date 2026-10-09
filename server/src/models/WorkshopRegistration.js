@@ -39,7 +39,20 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
     customPasswordText: { type: String, default: '', trim: true },
     lastLoginAt: { type: Date, default: null },
     loginCount: { type: Number, default: 0 },
-    passwordUpdatedAt: { type: Date, default: null }
+    passwordUpdatedAt: { type: Date, default: null },
+    // Set when a participant edits their own contact details from the profile portal.
+    detailsUpdatedAt: { type: Date, default: null },
+    // Audit trail for roll number corrections, which also move attendance records.
+    rollNoHistory: {
+        type: [{
+            from: { type: String, default: '', trim: true },
+            to: { type: String, default: '', trim: true },
+            changedAt: { type: Date, default: Date.now },
+            changedBy: { type: String, default: 'participant', trim: true },
+            _id: false
+        }],
+        default: []
+    }
 }, {
     timestamps: true
 });

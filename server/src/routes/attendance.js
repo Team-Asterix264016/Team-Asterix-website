@@ -7,9 +7,10 @@ import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopAttendanceSession from '../models/WorkshopAttendanceSession.js';
 import WorkshopResource from '../models/WorkshopResource.js';
 import SiteConfig from '../models/SiteConfig.js';
-import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
+import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../config/workshopPackages.js';
 import { sessionIsoDate } from '../config/sessionDates.js';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
+import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
 
 const router = Router();
 
@@ -1130,6 +1131,207 @@ router.post('/profile/change-password', async (req, res) => {
     } catch (err) {
         console.error('Change password error:', err);
         return res.status(500).json({ ok: false, error: 'Internal server error while updating password.' });
+    }
+});
+
+const PROFILE_EDIT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PROFILE_EDIT_YEARS = ['1', '2'];
+// Roll numbers are the attendance key, so self-service corrections are capped;
+// beyond this the workshop team has to make the change.
+const MAX_SELF_ROLL_NO_CHANGES = 3;
+
+// Email / roll no / phone all unlock the same profile, so every lookup matches on all three.
+function candidateSearchConditions(queryRaw) {
+    const digits = queryRaw.replace(/\D/g, '');
+    const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+    const conditions = [{ email: queryRaw.toLowerCase() }, { rollNo: queryRaw.toUpperCase() }];
+    if (phoneDigits.length >= 7) {
+        conditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+    }
+    return conditions;
+}
+
+/**
+ * POST /api/workshop/attendance/profile/update-details
+ * Public endpoint: Candidate corrects their own credentials after re-entering their password.
+ * The roll number is editable because plenty of registrations were typed wrong, and a wrong
+ * roll number is what breaks attendance matching. A correction therefore also rewrites the
+ * roll number stored on that participant's attendance, project and quiz records, which are
+ * matched on registrationId so the history follows the person rather than the old roll number.
+ * Track, amount and receipt number stay locked.
+ */
+router.post('/profile/update-details', async (req, res) => {
+    try {
+        const { identifier, password } = req.body || {};
+        const queryRaw = String(identifier || '').trim();
+        const pwd = String(password || '').trim();
+
+        if (!queryRaw) {
+            return res.status(400).json({ ok: false, error: 'Candidate identifier is required.' });
+        }
+        if (!pwd) {
+            return res.status(400).json({ ok: false, error: 'Please confirm your profile password to save changes.' });
+        }
+
+        const trim = (value, max) => String(value ?? '').trim().slice(0, max);
+        const updates = {
+            name: trim(req.body.name, 100),
+            email: trim(req.body.email, 254).toLowerCase(),
+            phone: trim(req.body.phone, 20).replace(/\D/g, '').slice(-10),
+            department: trim(req.body.department, 100),
+            year: trim(req.body.year, 2),
+            rollNo: normalizeRollNo(trim(req.body.rollNo, 40))
+        };
+
+        const fieldErrors = {};
+        if (updates.name.length < 2) fieldErrors.name = 'Enter your full name.';
+        if (!PROFILE_EDIT_EMAIL_RE.test(updates.email)) {
+            fieldErrors.email = 'Enter a valid email address.';
+        } else if (!updates.email.endsWith('@psgitech.ac.in')) {
+            fieldErrors.email = 'Please use your college email address (@psgitech.ac.in).';
+        }
+        if (updates.phone.length !== 10) fieldErrors.phone = 'Enter a valid 10-digit phone number.';
+        if (!WORKSHOP_DEPARTMENTS.includes(updates.department)) fieldErrors.department = 'Select your department.';
+        if (!PROFILE_EDIT_YEARS.includes(updates.year)) fieldErrors.year = 'Select 1st or 2nd year.';
+        if (!ROLL_NO_RE.test(updates.rollNo)) {
+            fieldErrors.rollNo = 'Enter your registered number as printed on your ID (letters and digits, e.g. 26M125).';
+        }
+
+        if (Object.keys(fieldErrors).length > 0) {
+            return res.status(400).json({
+                ok: false,
+                error: Object.values(fieldErrors)[0],
+                fieldErrors
+            });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({
+            $or: candidateSearchConditions(queryRaw),
+            status: 'paid'
+        }).sort({ paidAt: -1, createdAt: -1 });
+
+        if (!candidate) {
+            return res.status(404).json({ ok: false, error: 'Candidate registration profile not found.' });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, pwd);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                ok: false,
+                error: candidate.passwordHash
+                    ? 'Password is incorrect. Re-enter your profile password to save these changes.'
+                    : 'Password is incorrect. The initial default password for all participants is "asterix".'
+            });
+        }
+
+        const previousRollNo = candidate.rollNo || '';
+        const previousEmail = candidate.email || '';
+        const rollNoChanged = normalizeRollNo(previousRollNo) !== updates.rollNo;
+
+        // The email and phone both unlock a profile, so they can't be pointed at someone else's.
+        if (updates.email !== previousEmail || updates.phone !== candidate.phone) {
+            const clash = await WorkshopRegistration.findOne({
+                _id: { $ne: candidate._id },
+                status: 'paid',
+                $or: [{ email: updates.email }, { phone: updates.phone }]
+            }).lean();
+
+            if (clash) {
+                return res.status(409).json({
+                    ok: false,
+                    error: clash.email === updates.email
+                        ? 'That email address is already used by another registered participant.'
+                        : 'That phone number is already used by another registered participant.',
+                    fieldErrors: clash.email === updates.email
+                        ? { email: 'Already in use by another participant.' }
+                        : { phone: 'Already in use by another participant.' }
+                });
+            }
+        }
+
+        if (rollNoChanged) {
+            const changeCount = Array.isArray(candidate.rollNoHistory) ? candidate.rollNoHistory.length : 0;
+            if (changeCount >= MAX_SELF_ROLL_NO_CHANGES) {
+                return res.status(429).json({
+                    ok: false,
+                    error: `Your registered number has already been corrected ${changeCount} times. Please contact the workshop team on +91 86089 44644 for any further change.`,
+                    fieldErrors: { rollNo: 'Change limit reached — contact the workshop team.' }
+                });
+            }
+
+            const rollClash = await WorkshopRegistration.findOne({
+                _id: { $ne: candidate._id },
+                rollNo: new RegExp(`^${updates.rollNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+            }).lean();
+
+            if (rollClash) {
+                return res.status(409).json({
+                    ok: false,
+                    error: 'That registered number belongs to another registration. Please check it against your ID card, or contact the workshop team if it is really yours.',
+                    fieldErrors: { rollNo: 'Already used by another registration.' }
+                });
+            }
+
+            // Attendance enforces one check-in per roll number per session, so attendance rows
+            // already sitting under the new roll number (a manual admin entry, say) would make
+            // the migration collide.
+            const strayAttendance = await WorkshopAttendance.exists({
+                rollNo: updates.rollNo,
+                registrationId: { $ne: candidate._id }
+            });
+
+            if (strayAttendance) {
+                return res.status(409).json({
+                    ok: false,
+                    error: 'Attendance has already been recorded under that registered number for another participant. Please contact the workshop team on +91 86089 44644 so they can merge the records.',
+                    fieldErrors: { rollNo: 'Attendance already recorded under this number.' }
+                });
+            }
+        }
+
+        candidate.name = updates.name;
+        candidate.email = updates.email;
+        candidate.phone = updates.phone;
+        candidate.department = updates.department;
+        candidate.year = updates.year;
+        candidate.rollNo = updates.rollNo;
+        candidate.detailsUpdatedAt = new Date();
+        if (rollNoChanged) {
+            candidate.rollNoHistory = [
+                ...(candidate.rollNoHistory || []),
+                { from: previousRollNo, to: updates.rollNo, changedAt: new Date(), changedBy: 'participant' }
+            ];
+        }
+        await candidate.save();
+
+        // Keep the denormalized copies in step, or the corrected roll number would read as a
+        // mismatch everywhere the old one was stored.
+        let synced = null;
+        try {
+            synced = await syncParticipantIdentity(candidate, { previousEmail });
+        } catch (syncErr) {
+            console.error('Participant identity sync failed after self-edit:', syncErr);
+        }
+
+        return res.json({
+            ok: true,
+            message: rollNoChanged
+                ? `Details updated. Your registered number is now ${updates.rollNo} and your attendance records have been moved across.`
+                : 'Profile details updated successfully!',
+            rollNoChanged,
+            syncedRecords: synced,
+            candidate: {
+                name: candidate.name,
+                email: candidate.email,
+                phone: candidate.phone,
+                department: candidate.department,
+                year: candidate.year,
+                rollNo: candidate.rollNo
+            }
+        });
+    } catch (err) {
+        console.error('Update profile details error:', err);
+        return res.status(500).json({ ok: false, error: 'Internal server error while updating profile details.' });
     }
 });
 

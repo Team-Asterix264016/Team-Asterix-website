@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
-import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
 import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
+import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
 import {
     WORKSHOP_PACKAGES,
     WORKSHOP_TRACKS,
@@ -1071,6 +1071,33 @@ router.put('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireD
             return res.status(400).json({ error: 'Enter a valid 10-digit phone number.' });
         }
 
+        const existing = await WorkshopRegistration.findById(id, { rollNo: 1, email: 1, rollNoHistory: 1 }).lean();
+        if (!existing) return res.status(404).json({ error: 'Workshop registration not found.' });
+
+        studentFields.rollNo = normalizeRollNo(studentFields.rollNo);
+        if (!ROLL_NO_RE.test(studentFields.rollNo)) {
+            return res.status(400).json({ error: 'Enter a valid registered number (letters and digits, e.g. 26M125).' });
+        }
+
+        const rollNoChanged = normalizeRollNo(existing.rollNo) !== studentFields.rollNo;
+        if (rollNoChanged) {
+            // Attendance allows one check-in per roll number per session, so rows already filed
+            // under the new number would collide when this registration's records are moved.
+            const strayAttendance = await WorkshopAttendance.exists({
+                rollNo: studentFields.rollNo,
+                registrationId: { $ne: existing._id }
+            });
+            if (strayAttendance) {
+                return res.status(409).json({
+                    error: `Attendance is already recorded under ${studentFields.rollNo} for a different registration. Merge those records before reassigning this roll number.`
+                });
+            }
+            studentFields.rollNoHistory = [
+                ...(existing.rollNoHistory || []),
+                { from: existing.rollNo || '', to: studentFields.rollNo, changedAt: new Date(), changedBy: req.user?.name || req.user?.email || 'admin' }
+            ];
+        }
+
         const registration = await WorkshopRegistration.findByIdAndUpdate(
             id,
             { $set: studentFields },
@@ -1078,12 +1105,16 @@ router.put('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireD
         );
         if (!registration) return res.status(404).json({ error: 'Workshop registration not found.' });
 
-        await WorkshopProjectSubmission.updateOne(
-            { registrationId: registration._id },
-            { $set: studentFields }
-        );
+        // Attendance, project and quiz records keep their own copy of these fields, so an edit
+        // that is not pushed through to them is what shows up later as a roll number mismatch.
+        let syncedRecords = null;
+        try {
+            syncedRecords = await syncParticipantIdentity(registration, { previousEmail: existing.email });
+        } catch (syncErr) {
+            console.error('Participant identity sync failed after admin edit:', syncErr);
+        }
 
-        res.json({ success: true, registration });
+        res.json({ success: true, registration, rollNoChanged, syncedRecords });
     } catch (err) {
         console.error('Error updating workshop student details:', err);
         res.status(500).json({ error: 'Could not update the student record.' });

@@ -1169,8 +1169,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus }) {
                             </p>
                         )}
                         <p className="mt-4 text-[11px] font-bold text-slate-500">
-                            These fields update the workshop registration and any linked project submission.
-                            Package and payment details are unchanged.
+                            These fields update the workshop registration and the participant&apos;s
+                            attendance, project and quiz records, so a corrected registered number keeps its
+                            attendance history. Package and payment details are unchanged.
                         </p>
                         <div className="mt-5 flex justify-end gap-2">
                             <button
