@@ -6,6 +6,7 @@ import { downloadAllIcsFile } from '../utils/calendarUtils';
 import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../../server/src/config/workshopPackages.js';
 import SessionNotesModal from './SessionNotesModal';
 import { resourceBadge } from '../lib/resourceTypes';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const SUBSYSTEMS_PORTAL_DATA = [
     {
@@ -323,6 +324,15 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         setEditFieldErrors({});
         setEditSuccess('');
     };
+
+    const closeChangePassword = useCallback(() => {
+        setIsChangePasswordOpen(false);
+        setPwdError('');
+        setPwdSuccess('');
+    }, []);
+
+    const editDetailsModalRef = useModalBehavior(isEditDetailsOpen, closeEditDetails);
+    const changePasswordModalRef = useModalBehavior(isChangePasswordOpen, closeChangePassword);
 
     const updateEditField = (field, value) => {
         setEditForm((prev) => ({ ...prev, [field]: value }));
@@ -1519,14 +1529,24 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
 
                     {/* Edit Profile Details Modal */}
                     {isEditDetailsOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm">
-                            <div className="shadow-brutal-8 relative my-auto w-full max-w-lg border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                <div className="flex items-start justify-between gap-3 border-b-3 border-slate-900 pb-3">
+                        <div
+                            ref={editDetailsModalRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="edit-profile-title"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 sm:p-6 backdrop-blur-sm"
+                            onClick={closeEditDetails}
+                        >
+                            <div
+                                className="shadow-brutal-8 relative flex max-h-[90dvh] sm:max-h-[85dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex shrink-0 items-start justify-between gap-3 border-b-3 border-slate-900 bg-white p-5 sm:p-6 pb-4">
                                     <div>
                                         <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                                             Participant Credentials
                                         </span>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
+                                        <h3 id="edit-profile-title" className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
                                             Edit Profile Details ✏️
                                         </h3>
                                     </div>
@@ -1539,172 +1559,178 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleEditDetailsSubmit} className="mt-5 space-y-4">
-                                    <div className="border-2 border-slate-900 bg-slate-100 p-3">
-                                        <p className="font-mono text-[11px] font-bold text-slate-700">
-                                            🔒 Your enrolled track, amount paid and receipt number cannot be
-                                            changed here — call the workshop team on{' '}
-                                            <a
-                                                href="tel:+918608944644"
-                                                className="font-black text-slate-950 underline"
+                                <form onSubmit={handleEditDetailsSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                                    <div
+                                        data-lenis-prevent
+                                        data-modal-scroll
+                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6 scroll-smooth overscroll-contain"
+                                    >
+                                        <div className="border-2 border-slate-900 bg-slate-100 p-3">
+                                            <p className="font-mono text-[11px] font-bold text-slate-700">
+                                                🔒 Your enrolled track, amount paid and receipt number cannot be
+                                                changed here — call the workshop team on{' '}
+                                                <a
+                                                    href="tel:+918608944644"
+                                                    className="font-black text-slate-950 underline"
+                                                >
+                                                    +91 86089 44644
+                                                </a>{' '}
+                                                if those need a correction.
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Registered Number (Roll No)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editForm.rollNo}
+                                                onChange={(e) =>
+                                                    updateEditField('rollNo', e.target.value.toUpperCase())
+                                                }
+                                                placeholder="e.g. 26M125"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black tracking-wider text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                            {editFieldErrors.rollNo ? (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.rollNo}
+                                                </p>
+                                            ) : (
+                                                <p className="mt-1 font-mono text-[11px] font-bold text-amber-800">
+                                                    ⚠️ Fix this if you typed it wrong while registering — your
+                                                    attendance, project and quiz records move to the corrected
+                                                    number automatically. Enter it exactly as printed on your ID
+                                                    card.
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Full Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editForm.name}
+                                                onChange={(e) => updateEditField('name', e.target.value)}
+                                                placeholder="Your full name"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                            {editFieldErrors.name && (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.name}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                College Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={editForm.email}
+                                                onChange={(e) => updateEditField('email', e.target.value)}
+                                                placeholder="yourname@psgitech.ac.in"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                            {editFieldErrors.email && (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.email}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Phone Number
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                inputMode="numeric"
+                                                value={editForm.phone}
+                                                onChange={(e) => updateEditField('phone', e.target.value)}
+                                                placeholder="10-digit mobile number"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                            {editFieldErrors.phone && (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.phone}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Department
+                                            </label>
+                                            <select
+                                                value={editForm.department}
+                                                onChange={(e) => updateEditField('department', e.target.value)}
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
                                             >
-                                                +91 86089 44644
-                                            </a>{' '}
-                                            if those need a correction.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Registered Number (Roll No)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={editForm.rollNo}
-                                            onChange={(e) =>
-                                                updateEditField('rollNo', e.target.value.toUpperCase())
-                                            }
-                                            placeholder="e.g. 26M125"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black tracking-wider text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                        {editFieldErrors.rollNo ? (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.rollNo}
-                                            </p>
-                                        ) : (
-                                            <p className="mt-1 font-mono text-[11px] font-bold text-amber-800">
-                                                ⚠️ Fix this if you typed it wrong while registering — your
-                                                attendance, project and quiz records move to the corrected
-                                                number automatically. Enter it exactly as printed on your ID
-                                                card.
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Full Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={editForm.name}
-                                            onChange={(e) => updateEditField('name', e.target.value)}
-                                            placeholder="Your full name"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                        {editFieldErrors.name && (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.name}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            College Email
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={editForm.email}
-                                            onChange={(e) => updateEditField('email', e.target.value)}
-                                            placeholder="yourname@psgitech.ac.in"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                        {editFieldErrors.email && (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.email}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Phone Number
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            inputMode="numeric"
-                                            value={editForm.phone}
-                                            onChange={(e) => updateEditField('phone', e.target.value)}
-                                            placeholder="10-digit mobile number"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                        {editFieldErrors.phone && (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.phone}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Department
-                                        </label>
-                                        <select
-                                            value={editForm.department}
-                                            onChange={(e) => updateEditField('department', e.target.value)}
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
-                                        >
-                                            <option value="">Select department</option>
-                                            {WORKSHOP_DEPARTMENTS.map((dept) => (
-                                                <option key={dept} value={dept}>
-                                                    {dept}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {editFieldErrors.department && (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.department}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Year
-                                        </label>
-                                        <select
-                                            value={editForm.year}
-                                            onChange={(e) => updateEditField('year', e.target.value)}
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
-                                        >
-                                            <option value="">Select year</option>
-                                            <option value="1">1st Year</option>
-                                            <option value="2">2nd Year</option>
-                                        </select>
-                                        {editFieldErrors.year && (
-                                            <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
-                                                {editFieldErrors.year}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="border-t-2 border-slate-200 pt-4">
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Confirm Profile Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={editForm.password}
-                                            onChange={(e) => updateEditField('password', e.target.value)}
-                                            placeholder="Your profile password (Default: asterix)"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    {editError && (
-                                        <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black text-rose-800 uppercase">
-                                            ⚠️ {editError}
+                                                <option value="">Select department</option>
+                                                {WORKSHOP_DEPARTMENTS.map((dept) => (
+                                                    <option key={dept} value={dept}>
+                                                        {dept}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {editFieldErrors.department && (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.department}
+                                                </p>
+                                            )}
                                         </div>
-                                    )}
 
-                                    {editSuccess && (
-                                        <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black text-emerald-800 uppercase">
-                                            ✓ {editSuccess}
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Year
+                                            </label>
+                                            <select
+                                                value={editForm.year}
+                                                onChange={(e) => updateEditField('year', e.target.value)}
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
+                                            >
+                                                <option value="">Select year</option>
+                                                <option value="1">1st Year</option>
+                                                <option value="2">2nd Year</option>
+                                            </select>
+                                            {editFieldErrors.year && (
+                                                <p className="mt-1 font-mono text-[11px] font-black text-rose-700">
+                                                    {editFieldErrors.year}
+                                                </p>
+                                            )}
                                         </div>
-                                    )}
 
-                                    <div className="flex justify-end gap-2 pt-2">
+                                        <div className="border-t-2 border-slate-200 pt-4">
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Confirm Profile Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={editForm.password}
+                                                onChange={(e) => updateEditField('password', e.target.value)}
+                                                placeholder="Your profile password (Default: asterix)"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        {editError && (
+                                            <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black text-rose-800 uppercase">
+                                                ⚠️ {editError}
+                                            </div>
+                                        )}
+
+                                        {editSuccess && (
+                                            <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black text-emerald-800 uppercase">
+                                                ✓ {editSuccess}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex shrink-0 items-center justify-end gap-2 border-t-3 border-slate-900 bg-slate-50 p-4 sm:p-5">
                                         <button
                                             type="button"
                                             onClick={closeEditDetails}
@@ -1727,90 +1753,98 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
 
                     {/* Change Password Modal */}
                     {isChangePasswordOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-                            <div className="shadow-brutal-8 relative w-full max-w-md border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                <div className="flex items-center justify-between border-b-3 border-slate-900 pb-3">
+                        <div
+                            ref={changePasswordModalRef}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="change-password-title"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 sm:p-6 backdrop-blur-sm"
+                            onClick={closeChangePassword}
+                        >
+                            <div
+                                className="shadow-brutal-8 relative flex max-h-[90dvh] sm:max-h-[85dvh] w-full max-w-md flex-col border-4 border-slate-900 bg-white"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="flex shrink-0 items-center justify-between border-b-3 border-slate-900 bg-white p-5 sm:p-6 pb-4">
                                     <div>
                                         <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                                             Account Security
                                         </span>
-                                        <h3 className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
+                                        <h3 id="change-password-title" className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
                                             Change Profile Password 🔑
                                         </h3>
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            setIsChangePasswordOpen(false);
-                                            setPwdError('');
-                                            setPwdSuccess('');
-                                        }}
-                                        className="press border-2 border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-xs font-black text-slate-900 hover:bg-rose-200"
+                                        onClick={closeChangePassword}
+                                        className="press shrink-0 border-2 border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-xs font-black text-slate-900 hover:bg-rose-200"
                                     >
                                         ✕
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleChangePasswordSubmit} className="mt-5 space-y-4">
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Current Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={pwdCurrent}
-                                            onChange={(e) => setPwdCurrent(e.target.value)}
-                                            placeholder="Current password (Default: asterix)"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            New Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={pwdNew}
-                                            onChange={(e) => setPwdNew(e.target.value)}
-                                            placeholder="Enter your new password"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
-                                            Confirm New Password
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={pwdConfirm}
-                                            onChange={(e) => setPwdConfirm(e.target.value)}
-                                            placeholder="Confirm your new password"
-                                            className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
-                                        />
-                                    </div>
-
-                                    {pwdError && (
-                                        <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black text-rose-800 uppercase">
-                                            ⚠️ {pwdError}
+                                <form onSubmit={handleChangePasswordSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                                    <div
+                                        data-lenis-prevent
+                                        data-modal-scroll
+                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6 scroll-smooth overscroll-contain"
+                                    >
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Current Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={pwdCurrent}
+                                                onChange={(e) => setPwdCurrent(e.target.value)}
+                                                placeholder="Current password (Default: asterix)"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
                                         </div>
-                                    )}
 
-                                    {pwdSuccess && (
-                                        <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black text-emerald-800 uppercase">
-                                            ✓ {pwdSuccess}
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                New Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={pwdNew}
+                                                onChange={(e) => setPwdNew(e.target.value)}
+                                                placeholder="Enter your new password"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
                                         </div>
-                                    )}
 
-                                    <div className="flex justify-end gap-2 pt-2">
+                                        <div>
+                                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
+                                                Confirm New Password
+                                            </label>
+                                            <input
+                                                type="password"
+                                                value={pwdConfirm}
+                                                onChange={(e) => setPwdConfirm(e.target.value)}
+                                                placeholder="Confirm your new password"
+                                                className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
+                                            />
+                                        </div>
+
+                                        {pwdError && (
+                                            <div className="border-2 border-rose-600 bg-rose-50 p-2.5 text-center font-mono text-xs font-black text-rose-800 uppercase">
+                                                ⚠️ {pwdError}
+                                            </div>
+                                        )}
+
+                                        {pwdSuccess && (
+                                            <div className="border-2 border-emerald-600 bg-emerald-50 p-2.5 text-center font-mono text-xs font-black text-emerald-800 uppercase">
+                                                ✓ {pwdSuccess}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="flex shrink-0 items-center justify-end gap-2 border-t-3 border-slate-900 bg-slate-50 p-4 sm:p-5">
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setIsChangePasswordOpen(false);
-                                                setPwdError('');
-                                                setPwdSuccess('');
-                                            }}
+                                            onClick={closeChangePassword}
                                             className="press border-2 border-slate-900 bg-slate-100 px-4 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-200"
                                         >
                                             Cancel
