@@ -30,12 +30,41 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
     const [searchQuery, setSearchQuery] = useState('');
 
     const [selectedRegistration, setSelectedRegistration] = useState(null);
+    const [candidateAttendance, setCandidateAttendance] = useState([]);
+    const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
     const [editingRegistration, setEditingRegistration] = useState(null);
     const [isSavingStudent, setIsSavingStudent] = useState(false);
     const [studentEditError, setStudentEditError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
     const [actionBusyId, setActionBusyId] = useState(null);
     const [isSyncingRazorpay, setIsSyncingRazorpay] = useState(false);
+
+    // Fetch student details and attendance history when participant is selected
+    const handleViewParticipant = useCallback(async (reg) => {
+        setSelectedRegistration(reg);
+        if (!reg) return;
+        setIsLoadingAttendance(true);
+        setCandidateAttendance([]);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(
+                apiUrl(`/api/workshop/student-status?rollNo=${encodeURIComponent(reg.rollNo || '')}&email=${encodeURIComponent(reg.email || '')}`),
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            if (res.ok) {
+                const data = await res.json();
+                setCandidateAttendance(data.attendance || []);
+            }
+        } catch (err) {
+            console.error('Error fetching candidate attendance:', err);
+        } finally {
+            setIsLoadingAttendance(false);
+        }
+    }, []);
 
     // Add Participant form state
     const [isAddingParticipant, setIsAddingParticipant] = useState(false);
@@ -174,11 +203,12 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
         }
     };
 
-    // Delete an unneeded pending registration
+    // Delete a student registration and all their attendance records
     const handleDeleteRegistration = async (reg) => {
+        if (!reg) return;
         if (
             !window.confirm(
-                `Are you sure you want to remove the pending registration for ${reg.name} (${reg.rollNo})?`
+                `Are you sure you want to permanently delete registration and attendance records for ${reg.name} (${reg.rollNo})?`
             )
         ) {
             return;
@@ -197,7 +227,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to delete registration');
 
-            if (showStatus) showStatus('✓ Registration record removed.');
+            if (showStatus) showStatus(data.message || `✓ Registration record for ${reg.name} removed.`);
             setSelectedRegistration(null);
             await fetchRegistrations(true);
         } catch (err) {
@@ -559,8 +589,8 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 font-mono text-xs font-bold text-slate-600">
-                        <span>All Attempts Recorded</span>
-                        <span className="text-amber-700">{summary.pending} Unpaid</span>
+                        <span>All Enrolled Records</span>
+                        <span className="font-bold text-emerald-700">{summary.paid} Paid</span>
                     </div>
                 </div>
 
@@ -689,27 +719,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         <span>Combo: {summary.softwareCapacity?.comboPaid ?? 0}</span>
                     </div>
                 </div>
-
-                {/* 6. Pending Unpaid */}
-                <div className="shadow-brutal-4 flex flex-col justify-between border-2 border-slate-900 bg-amber-50 p-4 sm:p-5">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs font-black tracking-wider text-amber-800 uppercase">
-                            Pending Unpaid
-                        </span>
-                        <span className="border border-amber-400 bg-amber-200 px-2 py-0.5 font-mono text-[10px] font-black text-amber-900 uppercase">
-                            Follow Up
-                        </span>
-                    </div>
-                    <div className="my-1">
-                        <span className="font-mono text-3xl font-black tracking-tight text-amber-600 sm:text-4xl">
-                            {summary.pending}
-                        </span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-amber-200 pt-2 font-mono text-xs font-bold text-slate-600">
-                        <span>Unverified Orders</span>
-                        <span className="font-bold text-amber-800">Use Sync Razorpay</span>
-                    </div>
-                </div>
             </div>
 
             {/* Visual Analytics Graphs */}
@@ -803,17 +812,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     >
                         🎓 2nd Year
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => setStatusFilter('pending')}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            statusFilter === 'pending'
-                                ? 'shadow-brutal-1 border-amber-900 bg-amber-400 text-slate-950'
-                                : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
-                        }`}
-                    >
-                        ⏳ Pending Unpaid
-                    </button>
                 </div>
 
                 {/* Dropdowns & Search Input Grid */}
@@ -829,8 +827,8 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                             className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs font-bold focus:outline-none"
                         >
                             <option value="paid">✓ Confirmed Paid ({summary.paid}) [Default]</option>
-                            <option value="pending">⏳ Pending Unpaid ({summary.pending})</option>
                             <option value="all">All Statuses ({registrations.length})</option>
+                            <option value="pending">⏳ Pending Unpaid ({summary.pending})</option>
                             <option value="failed">✕ Payment Failed ({summary.failed})</option>
                         </select>
                     </div>
@@ -1000,8 +998,13 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </div>
 
                                 <div>
-                                    <h4 className="text-sm leading-snug font-black text-slate-900 uppercase">
-                                        {reg.name}
+                                    <h4
+                                        onClick={() => handleViewParticipant(reg)}
+                                        className="text-sm leading-snug font-black text-slate-900 uppercase cursor-pointer hover:text-sky-700 hover:underline flex items-center gap-1.5"
+                                        title="Click to view details and attendance history"
+                                    >
+                                        <span>{reg.name}</span>
+                                        <span className="text-[10px] text-sky-700">👤</span>
                                     </h4>
                                     <div className="mt-0.5 text-[11px] font-bold text-slate-700">
                                         {reg.rollNo} • Year {reg.year} ({reg.department})
@@ -1026,17 +1029,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                                    {isPending && (
-                                        <button
-                                            type="button"
-                                            onClick={() => handleVerifySingleRazorpay(reg)}
-                                            disabled={actionBusyId === reg._id}
-                                            className="press shadow-brutal-1 flex-1 border-2 border-slate-900 bg-amber-400 py-1.5 text-center font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300 disabled:opacity-50"
-                                            title="Check Razorpay API to see if candidate paid"
-                                        >
-                                            {actionBusyId === reg._id ? 'Checking…' : '⚡ Check Razorpay'}
-                                        </button>
-                                    )}
                                     {reg.package !== 'combo' && (
                                         <button
                                             type="button"
@@ -1050,10 +1042,19 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                     )}
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedRegistration(reg)}
+                                        onClick={() => handleViewParticipant(reg)}
                                         className="press shadow-brutal-1 flex-1 border-2 border-slate-900 bg-slate-100 py-1.5 text-center font-mono text-xs font-black text-slate-900 uppercase hover:bg-sky-100"
                                     >
                                         Details →
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDeleteRegistration(reg)}
+                                        disabled={actionBusyId === reg._id}
+                                        className="press shadow-brutal-1 border-2 border-slate-900 bg-rose-500 px-3 py-1.5 text-center font-mono text-xs font-black text-white uppercase hover:bg-rose-600 disabled:opacity-50"
+                                        title="Delete student record"
+                                    >
+                                        🗑 Delete
                                     </button>
                                 </div>
 
@@ -1069,7 +1070,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     <thead>
                         <tr className="border-b-2 border-slate-900 bg-slate-900 text-[11px] font-black text-white uppercase">
                             <th className="p-3 whitespace-nowrap"># Receipt</th>
-                            <th className="p-3">Candidate</th>
+                            <th className="p-3">Candidate (Click for Details)</th>
                             <th className="p-3">Roll No &amp; Dept</th>
                             <th className="p-3">Package</th>
                             <th className="p-3">Amount</th>
@@ -1115,9 +1116,17 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                             )}
                                         </td>
 
-                                        {/* Candidate Details */}
+                                        {/* Candidate Details (Clickable Name) */}
                                         <td className="p-3">
-                                            <div className="font-bold text-slate-900">{reg.name}</div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleViewParticipant(reg)}
+                                                className="text-left font-bold text-slate-900 uppercase hover:text-sky-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                title="Click to view candidate details & attendance log"
+                                            >
+                                                <span>{reg.name}</span>
+                                                <span className="text-sky-700 text-[10px]">👤</span>
+                                            </button>
                                             <div className="text-[11px] text-slate-600">{reg.email}</div>
                                             <div className="text-[10px] font-bold text-sky-700">
                                                 {reg.phone}
@@ -1200,19 +1209,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                         {/* Actions */}
                                         <td className="p-3 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-1.5">
-                                                {isPending && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleVerifySingleRazorpay(reg)}
-                                                        disabled={actionBusyId === reg._id}
-                                                        className="press cursor-pointer border border-slate-900 bg-amber-400 px-2 py-1 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-amber-300 disabled:opacity-50"
-                                                        title="Check Razorpay API to see if candidate paid"
-                                                    >
-                                                        {actionBusyId === reg._id
-                                                            ? 'Checking…'
-                                                            : '⚡ Check Razorpay'}
-                                                    </button>
-                                                )}
                                                 {reg.package !== 'combo' && (
                                                     <button
                                                         type="button"
@@ -1226,10 +1222,19 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                                 )}
                                                 <button
                                                     type="button"
-                                                    onClick={() => setSelectedRegistration(reg)}
+                                                    onClick={() => handleViewParticipant(reg)}
                                                     className="press cursor-pointer border border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-sky-100"
                                                 >
                                                     Details →
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleDeleteRegistration(reg)}
+                                                    disabled={actionBusyId === reg._id}
+                                                    className="press cursor-pointer border border-rose-600 bg-rose-50 px-2 py-1 font-mono text-[10px] font-black text-rose-700 uppercase hover:bg-rose-600 hover:text-white disabled:opacity-50"
+                                                    title="Permanently delete student record"
+                                                >
+                                                    🗑 Delete
                                                 </button>
                                             </div>
                                         </td>
@@ -1260,7 +1265,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
                             <div>
                                 <span className="block font-mono text-[10px] font-black text-sky-700 uppercase">
-                                    REGISTRATION RECORD
+                                    PARTICIPANT DETAILS &amp; ATTENDANCE
                                 </span>
                                 <h3
                                     id="workshop-registration-details-title"
@@ -1337,21 +1342,59 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </div>
                             </div>
 
+                            {/* Participant Attendance History Section */}
+                            <div className="space-y-2 border-2 border-slate-900 bg-sky-50/50 p-3">
+                                <div className="flex items-center justify-between border-b border-slate-300 pb-1.5">
+                                    <span className="font-mono text-xs font-black text-slate-900 uppercase">
+                                        📅 Attendance History ({candidateAttendance.length} Sessions)
+                                    </span>
+                                    {isLoadingAttendance && (
+                                        <span className="font-mono text-[10px] font-bold text-sky-700 animate-pulse">
+                                            Loading...
+                                        </span>
+                                    )}
+                                </div>
+
+                                {isLoadingAttendance ? (
+                                    <div className="py-3 text-center font-mono text-xs text-slate-500">
+                                        Fetching attendance logs...
+                                    </div>
+                                ) : candidateAttendance.length === 0 ? (
+                                    <div className="py-2.5 text-center font-mono text-xs font-bold text-slate-500">
+                                        No attendance check-in records found for this student yet.
+                                    </div>
+                                ) : (
+                                    <div className="max-h-48 overflow-y-auto space-y-1.5 font-mono text-xs">
+                                        {candidateAttendance.map((att, idx) => (
+                                            <div
+                                                key={att._id || idx}
+                                                className="flex flex-wrap items-center justify-between gap-1 border border-slate-300 bg-white p-2"
+                                            >
+                                                <div>
+                                                    <div className="font-bold text-slate-900">
+                                                        {att.sessionTopic || `Session ${att.sessionNumber || ''}`}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        {(att.track || 'workshop').toUpperCase()} • {att.sessionDate || att.sessionId}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right text-[10px]">
+                                                    <span className="inline-block border border-emerald-500 bg-emerald-100 px-1.5 py-0.5 font-bold text-emerald-900 uppercase">
+                                                        ✓ {att.verifiedBy || 'Present'}
+                                                    </span>
+                                                    <div className="mt-0.5 text-slate-500">
+                                                        {formatDate(att.checkedInAt)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="space-y-1 border border-slate-200 bg-slate-50 p-3">
                                 <div className="text-[10px] font-black text-slate-500 uppercase">
-                                    Transaction References
-                                </div>
-                                <div>
-                                    <span className="text-slate-500">Order ID: </span>
-                                    <span className="font-bold break-all text-slate-900">
-                                        {selectedRegistration.razorpayOrderId || 'N/A'}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-500">Payment ID: </span>
-                                    <span className="font-bold break-all text-slate-900">
-                                        {selectedRegistration.razorpayPaymentId || 'N/A'}
-                                    </span>
+                                    Registration Timestamps
                                 </div>
                                 <div>
                                     <span className="text-slate-500">Paid At: </span>
@@ -1370,31 +1413,17 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
 
                         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2">
                             <div>
-                                {selectedRegistration.status === 'pending' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleDeleteRegistration(selectedRegistration)}
-                                        disabled={actionBusyId === selectedRegistration._id}
-                                        className="press cursor-pointer border border-rose-600 bg-rose-50 px-3 py-1.5 font-mono text-xs font-bold text-rose-700 uppercase hover:bg-rose-100"
-                                    >
-                                        🗑 Delete Entry
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteRegistration(selectedRegistration)}
+                                    disabled={actionBusyId === selectedRegistration._id}
+                                    className="press cursor-pointer border-2 border-slate-900 bg-rose-500 px-3 py-1.5 font-mono text-xs font-black text-white uppercase hover:bg-rose-600 disabled:opacity-50"
+                                    title="Permanently delete student record and attendance"
+                                >
+                                    {actionBusyId === selectedRegistration._id ? 'Deleting...' : '🗑 Delete Student'}
+                                </button>
                             </div>
                             <div className="flex items-center gap-2">
-                                {selectedRegistration.status === 'pending' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleVerifySingleRazorpay(selectedRegistration)}
-                                        disabled={actionBusyId === selectedRegistration._id}
-                                        className="press cursor-pointer border-2 border-slate-900 bg-amber-400 px-3.5 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300 disabled:opacity-50"
-                                        title="Check Razorpay API to see if candidate paid"
-                                    >
-                                        {actionBusyId === selectedRegistration._id
-                                            ? 'Checking Razorpay…'
-                                            : '⚡ Check with Razorpay'}
-                                    </button>
-                                )}
                                 {selectedRegistration.package !== 'combo' && (
                                     <button
                                         type="button"

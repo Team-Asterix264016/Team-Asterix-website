@@ -1411,16 +1411,21 @@ router.delete('/registrations/:id', authenticateToken, requireLeadOrAdmin, requi
 
         const reg = await WorkshopRegistration.findById(id);
         if (!reg) {
-            return res.status(404).json({ error: 'Registration not found.' });
+            return res.status(404).json({ error: 'Registration record not found.' });
         }
 
-        if (reg.status === 'paid') {
-            return res.status(403).json({ error: 'Cannot delete a confirmed paid registration.' });
-        }
+        // Delete associated attendance records for clean removal
+        await WorkshopAttendance.deleteMany({
+            $or: [
+                { registrationId: reg._id },
+                { rollNo: reg.rollNo },
+                { email: reg.email }
+            ]
+        });
 
         await WorkshopRegistration.findByIdAndDelete(id);
-        console.log(`[ADMIN] Deleted duplicate pending registration ${id} (${reg.name})`);
-        res.json({ success: true, message: 'Registration record removed successfully.' });
+        console.log(`[ADMIN DELETE] Removed registration record ${id} (${reg.name}, ${reg.rollNo})`);
+        res.json({ success: true, message: `✓ Registration record for ${reg.name} (${reg.rollNo}) removed successfully.` });
     } catch (err) {
         console.error('Error deleting registration:', err);
         res.status(500).json({ error: 'Failed to delete registration.' });
