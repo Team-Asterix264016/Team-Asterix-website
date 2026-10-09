@@ -1061,15 +1061,12 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     {/* Header & Sync Bar */}
                                     <div className="flex flex-col justify-between gap-4 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
                                         <div>
-                                            <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                                Interactive Workshop Timetable &amp; Master Schedule
-                                            </span>
-                                            <h3 className="mt-1 text-2xl font-black text-slate-900 uppercase sm:text-3xl">
-                                                Workshop Timetable &amp; Session Schedule
+                                            <h3 className="text-2xl font-black text-slate-900 uppercase sm:text-3xl">
+                                                Workshop Timetable
                                             </h3>
                                             <p className="mt-1 text-xs font-bold text-slate-600">
-                                                Track all session dates, timings, lab venues, handled
-                                                instructors, mini projects, and reporting instructions.
+                                                Your sessions day by day. Open any session for its full
+                                                details and notes.
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2">
@@ -1085,7 +1082,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 }
                                                 className="press shadow-brutal-3 border-2 border-slate-900 bg-amber-300 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
                                             >
-                                                📅 Sync All Sessions to Google Calendar (.ics)
+                                                📅 Add All to Calendar (.ics)
                                             </button>
                                         </div>
                                     </div>
@@ -1186,7 +1183,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 type="text"
                                                 value={timetableSearch}
                                                 onChange={(e) => setTimetableSearch(e.target.value)}
-                                                placeholder="🔍 Search sessions, topics, venue..."
+                                                placeholder="🔍 Search sessions, topics, instructors..."
                                                 className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none"
                                             />
                                         </div>
@@ -1228,16 +1225,10 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                 </span>
                                                             )}
                                                             {isToday && (
-                                                                <span className="border border-slate-900 bg-slate-950 px-1.5 py-0.5 text-[10px] text-amber-300">
+                                                                <span className="ml-auto border border-slate-900 bg-slate-950 px-1.5 py-0.5 text-[10px] text-amber-300">
                                                                     Today
                                                                 </span>
                                                             )}
-                                                            <span
-                                                                className={`ml-auto text-[10px] ${isToday ? 'text-slate-700' : 'text-slate-400'}`}
-                                                            >
-                                                                {day.sessions.length} session
-                                                                {day.sessions.length === 1 ? '' : 's'}
-                                                            </span>
                                                         </div>
 
                                                         {/* Sessions on that day */}
@@ -1276,7 +1267,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                                   }
                                                                               }
                                                                     }
-                                                                    className={`flex flex-col gap-2 border-b border-slate-900/10 px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:gap-4 ${
+                                                                    className={`flex flex-col gap-2 border-b border-slate-900/10 px-4 py-4 last:border-b-0 sm:flex-row sm:items-center sm:gap-5 ${
                                                                         isHoliday
                                                                             ? 'bg-slate-50'
                                                                             : 'cursor-pointer hover:bg-amber-50'
@@ -1309,43 +1300,36 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                         <strong className="block text-sm font-black text-slate-900 uppercase">
                                                                             {session.title}
                                                                         </strong>
-                                                                        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] font-bold text-slate-600">
+                                                                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[11px] font-bold text-slate-500">
                                                                             {session.instructor &&
                                                                                 session.instructor !==
                                                                                     '-' && (
                                                                                     <span>
-                                                                                        👤{' '}
                                                                                         {session.instructor}
                                                                                     </span>
                                                                                 )}
-                                                                            {session.venue && (
-                                                                                <span>
-                                                                                    📍 {session.venue}
+                                                                            {session.project && (
+                                                                                <span className="text-amber-800">
+                                                                                    🚀 {session.project}
                                                                                 </span>
                                                                             )}
-                                                                            {session.project && (
-                                                                                <span className="text-amber-900">
-                                                                                    🚀 {session.project}
+                                                                            {sessionNoteCount > 0 && (
+                                                                                <span className="text-sky-800">
+                                                                                    📚 {sessionNoteCount} note
+                                                                                    {sessionNoteCount === 1
+                                                                                        ? ''
+                                                                                        : 's'}
                                                                                 </span>
                                                                             )}
                                                                         </div>
                                                                     </div>
 
                                                                     {/* Status */}
-                                                                    <div className="flex shrink-0 items-center gap-2 sm:justify-end">
-                                                                        <span
-                                                                            className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${status.className}`}
-                                                                        >
-                                                                            {status.label}
-                                                                        </span>
-                                                                        {!isHoliday && (
-                                                                            <span className="font-mono text-[10px] font-black text-sky-800 uppercase">
-                                                                                {sessionNoteCount > 0
-                                                                                    ? `📚 ${sessionNoteCount} →`
-                                                                                    : '→'}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
+                                                                    <span
+                                                                        className={`shrink-0 self-start border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase sm:self-auto ${status.className}`}
+                                                                    >
+                                                                        {status.label}
+                                                                    </span>
                                                                 </div>
                                                             );
                                                         })}

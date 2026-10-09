@@ -23,7 +23,6 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
     const isHoliday = session.type === 'holiday';
     const takeaways = notes.flatMap((n) => n.takeaways || []).filter(Boolean);
     const showInstructor = session.instructor && session.instructor !== '-';
-    const showVenue = session.venue && session.venue !== '-';
 
     return (
         <div
@@ -102,11 +101,6 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
                     {showInstructor && (
                         <div>
                             👤 <strong>Instructor:</strong> {session.instructor}
-                        </div>
-                    )}
-                    {showVenue && (
-                        <div>
-                            📍 <strong>Venue:</strong> {session.venue}
                         </div>
                     )}
                     {session.project && (
