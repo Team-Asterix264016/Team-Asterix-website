@@ -212,43 +212,54 @@ export default function Car3DCanvas() {
 
         const applyCADMaterials = (model) => {
             model.traverse((child) => {
-                if (child.isMesh) {
+                if (child.isMesh && child.material) {
                     child.castShadow = true;
                     child.receiveShadow = true;
 
-                    const matName = (child.material?.name || '').toLowerCase();
+                    const origMats = Array.isArray(child.material) ? child.material : [child.material];
                     const meshName = (child.name || '').toLowerCase();
 
-                    if (meshName.includes('tire') || matName.includes('rubber')) {
-                        child.material = rubberTireMaterial;
-                    } else if (
-                        meshName.includes('chassis') ||
-                        meshName.includes('frame') ||
-                        meshName.includes('baja05') ||
-                        meshName.includes('spona') ||
-                        matName.includes('blue') ||
-                        matName.includes('color-') ||
-                        matName.includes('unnamed') ||
-                        matName.includes('test')
-                    ) {
-                        child.material = skyBluePowderCoat;
-                    } else if (meshName.includes('caliper')) {
-                        child.material = brakeCaliperRedMaterial;
-                    } else if (
-                        meshName.includes('disc') ||
-                        meshName.includes('rotor') ||
-                        matName.includes('steel') ||
-                        matName.includes('chrome')
-                    ) {
-                        child.material = chromeMaterial;
-                    } else if (matName.includes('bronze') || matName.includes('gold')) {
-                        child.material = foxBronzeMaterial;
-                    } else if (matName.includes('aluminum') || meshName.includes('fork') || meshName.includes('hub')) {
-                        child.material = brushedSteelMaterial;
-                    } else if (child.material) {
-                        child.material.envMapIntensity = 1.8;
-                        child.material.needsUpdate = true;
-                    }
+                    const newMats = origMats.map((mat) => {
+                        if (!mat) return mat;
+                        const matName = (mat.name || '').toLowerCase();
+
+                        if (meshName.includes('tire') || matName.includes('rubber')) {
+                            return rubberTireMaterial;
+                        } else if (
+                            meshName.includes('chassis') ||
+                            meshName.includes('frame') ||
+                            meshName.includes('baja05') ||
+                            meshName.includes('spona') ||
+                            matName.includes('blue') ||
+                            matName.includes('color-') ||
+                            matName.includes('unnamed') ||
+                            matName.includes('test')
+                        ) {
+                            return skyBluePowderCoat;
+                        } else if (meshName.includes('caliper')) {
+                            return brakeCaliperRedMaterial;
+                        } else if (
+                            meshName.includes('disc') ||
+                            meshName.includes('rotor') ||
+                            matName.includes('steel') ||
+                            matName.includes('chrome')
+                        ) {
+                            return chromeMaterial;
+                        } else if (matName.includes('bronze') || matName.includes('gold')) {
+                            return foxBronzeMaterial;
+                        } else if (matName.includes('aluminum') || meshName.includes('fork') || meshName.includes('hub')) {
+                            return brushedSteelMaterial;
+                        }
+                        try {
+                            mat.envMapIntensity = 1.8;
+                            mat.needsUpdate = true;
+                        } catch (e) {
+                            // ignore property set on uncustomized material
+                        }
+                        return mat;
+                    });
+
+                    child.material = Array.isArray(child.material) ? newMats : newMats[0];
                 }
             });
         };

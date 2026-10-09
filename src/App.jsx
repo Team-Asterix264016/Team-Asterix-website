@@ -19,6 +19,7 @@ import { CommunityAuthProvider } from './context/CommunityAuthContext';
 import CommunityLoginModal from './components/community/CommunityLoginModal';
 import CommunityProfileModal from './components/community/CommunityProfileModal';
 import CommunityMessagingDrawer from './components/community/CommunityMessagingDrawer';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
@@ -450,13 +451,15 @@ function MainApp() {
 
 export default function App() {
     return (
-        <WebsiteDataProvider>
-            <CommunityAuthProvider>
-                <MainApp />
-                <CommunityLoginModal />
-                <CommunityProfileModal />
-                <CommunityMessagingDrawer />
-            </CommunityAuthProvider>
-        </WebsiteDataProvider>
+        <ErrorBoundary>
+            <WebsiteDataProvider>
+                <CommunityAuthProvider>
+                    <MainApp />
+                    <CommunityLoginModal />
+                    <CommunityProfileModal />
+                    <CommunityMessagingDrawer />
+                </CommunityAuthProvider>
+            </WebsiteDataProvider>
+        </ErrorBoundary>
     );
 }
