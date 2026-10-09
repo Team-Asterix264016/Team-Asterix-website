@@ -1964,12 +1964,6 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                                         <strong className="font-black text-sky-800">{item.instructor}</strong>
                                                     </span>
                                                 )}
-                                                {item.venue && item.venue !== '-' && (
-                                                    <span className="flex items-center gap-1 text-slate-700">
-                                                        <span>📍 Venue:</span>
-                                                        <strong>{item.venue}</strong>
-                                                    </span>
-                                                )}
                                                 {item.project && (
                                                     <span className="flex items-center gap-1 text-emerald-800">
                                                         <span>🚀 Milestone:</span>

@@ -240,9 +240,6 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                                 </span>
                             )}
                             <span>
-                                📍 Venue: <strong>{session.venue || 'Autonomous Systems Lab'}</strong>
-                            </span>
-                            <span>
                                 ⏰ Time: <strong>5:10 PM – 6:50 PM</strong>
                             </span>
                         </div>
