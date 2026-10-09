@@ -1031,7 +1031,7 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                 </h4>
                                             </div>
                                             <span className="text-[10px] font-bold text-slate-500">
-                                                Seats & INR Revenue
+                                                Seat Breakdown
                                             </span>
                                         </div>
 
@@ -1072,18 +1072,17 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                                                 {pkg.label}
                                                             </div>
                                                             <div className="text-[10px] font-bold text-slate-500">
-                                                                {pkg.count} enrolled · {pkg.countPct}% of
-                                                                seats
+                                                                {pkg.countPct}% of total cohort
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div className="text-right">
-                                                        <div className="text-xs font-black text-slate-900">
-                                                            {formatCurrency(pkg.revenue)}
+                                                    <div className="text-right font-mono">
+                                                        <div className="text-sm font-black text-slate-900">
+                                                            {pkg.count}
                                                         </div>
-                                                        <div className="text-[10px] font-bold text-emerald-700">
-                                                            {pkg.revPct}% of revenue
+                                                        <div className="text-[10px] font-bold text-slate-500">
+                                                            Enrolled
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1100,9 +1099,9 @@ export default function WorkshopAnalyticsGraphs({ registrations = [] }) {
                                             </strong>
                                         </span>
                                         <span>
-                                            Total:{' '}
-                                            <strong className="font-black text-emerald-700">
-                                                {formatCurrency(packageStats.totalRevenue)}
+                                            Cohort Total:{' '}
+                                            <strong className="font-black text-sky-800">
+                                                {packageStats.totalCount} Participants
                                             </strong>
                                         </span>
                                     </div>

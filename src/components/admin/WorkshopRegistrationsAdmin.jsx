@@ -21,10 +21,14 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
     const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, failed: 0, revenue: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    // By default, show ONLY the confirmed paid list as requested
+    // Filter states
     const [statusFilter, setStatusFilter] = useState('paid');
     const [packageFilter, setPackageFilter] = useState('all');
+    const [enrolledTrackFilter, setEnrolledTrackFilter] = useState('all');
+    const [deptFilter, setDeptFilter] = useState('all');
+    const [yearFilter, setYearFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     const [editingRegistration, setEditingRegistration] = useState(null);
     const [isSavingStudent, setIsSavingStudent] = useState(false);
@@ -327,12 +331,30 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
         }
     };
 
-    // Filter registrations by status, package, and search query
+    // Filter registrations by status, package, track, department, year, and search query
     const filteredRegistrations = useMemo(() => {
         const list = registrations.filter((reg) => {
+            // Status filter
             if (statusFilter !== 'all' && reg.status !== statusFilter) return false;
+
+            // Package filter (exact package: software, powertrain, combo)
             if (packageFilter !== 'all' && reg.package !== packageFilter) return false;
 
+            // Enrolled Track filter (whether enrolled in software or powertrain)
+            if (enrolledTrackFilter !== 'all') {
+                const tracks = Array.isArray(reg.tracksEnrolled) ? reg.tracksEnrolled : [reg.package];
+                if (reg.package !== 'combo' && !tracks.includes(enrolledTrackFilter)) {
+                    return false;
+                }
+            }
+
+            // Department filter
+            if (deptFilter !== 'all' && reg.department !== deptFilter) return false;
+
+            // Academic Year filter
+            if (yearFilter !== 'all' && String(reg.year) !== String(yearFilter)) return false;
+
+            // Search query
             if (!searchQuery.trim()) return true;
             const q = searchQuery.toLowerCase().trim();
             const matchName = reg.name?.toLowerCase().includes(q);
@@ -341,8 +363,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             const matchRollNo = reg.rollNo?.toLowerCase().includes(q);
             const matchDept = reg.department?.toLowerCase().includes(q);
             const matchReceipt = reg.receiptNo?.toLowerCase().includes(q);
-            const matchOrder = reg.razorpayOrderId?.toLowerCase().includes(q);
-            const matchPayment = reg.razorpayPaymentId?.toLowerCase().includes(q);
+            const matchCollege = reg.college?.toLowerCase().includes(q);
 
             return (
                 matchName ||
@@ -351,8 +372,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                 matchRollNo ||
                 matchDept ||
                 matchReceipt ||
-                matchOrder ||
-                matchPayment
+                matchCollege
             );
         });
 
@@ -367,7 +387,8 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             const timeB = new Date(b.paidAt || b.createdAt || 0).getTime();
             return timeB - timeA;
         });
-    }, [registrations, statusFilter, packageFilter, searchQuery]);
+    }, [registrations, statusFilter, packageFilter, enrolledTrackFilter, deptFilter, yearFilter, searchQuery]);
+
 
     const formatCurrency = (amt) => {
         return new Intl.NumberFormat('en-IN', {
@@ -498,28 +519,29 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     </div>
                 </div>
 
-                {/* 2. Total Revenue */}
-                <div className="shadow-brutal-4 flex flex-col justify-between border-2 border-slate-900 bg-emerald-400 p-4 text-slate-950 sm:p-5">
+                {/* 2. Combo Dual-Track Enrolled */}
+                <div className="shadow-brutal-4 flex flex-col justify-between border-2 border-slate-900 bg-purple-100 p-4 text-slate-950 sm:p-5">
                     <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs font-black tracking-wider text-slate-950 uppercase">
-                            Total Revenue
+                        <span className="font-mono text-xs font-black tracking-wider text-purple-950 uppercase">
+                            Combo Enrolled
                         </span>
-                        <span className="shadow-brutal-1 border border-slate-950 bg-white px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
-                            INR Net
+                        <span className="shadow-brutal-1 border border-purple-950 bg-purple-300 px-2 py-0.5 font-mono text-[10px] font-black text-purple-950 uppercase">
+                            Dual-Track
                         </span>
                     </div>
                     <div className="my-1">
-                        <span className="font-mono text-2xl font-black tracking-tight whitespace-nowrap text-slate-950 sm:text-3xl lg:text-4xl">
-                            {formatCurrency(summary.revenue)}
+                        <span className="font-mono text-3xl font-black tracking-tight text-purple-950 sm:text-4xl">
+                            {summary.powertrainCapacity?.comboPaid ?? 0}
                         </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-emerald-500 pt-2 font-mono text-xs font-bold text-slate-900">
-                        <span>Razorpay Settlements</span>
-                        <span className="py-0.2 border border-slate-900 bg-emerald-300 px-1.5 text-[10px]">
-                            Active
+                    <div className="mt-2 flex items-center justify-between border-t border-purple-300 pt-2 font-mono text-xs font-bold text-purple-900">
+                        <span>Both Software &amp; Powertrain</span>
+                        <span className="py-0.2 border border-purple-900 bg-purple-200 px-1.5 text-[10px]">
+                            Full Access
                         </span>
                     </div>
                 </div>
+
 
                 {/* 3. Total Registered */}
                 <div className="shadow-brutal-4 flex flex-col justify-between border-2 border-slate-900 bg-slate-50 p-4 sm:p-5">
@@ -694,12 +716,112 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             <WorkshopAnalyticsGraphs registrations={registrations} />
 
             {/* Filter and Search Bar */}
-            <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-3 sm:p-4">
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 md:grid-cols-4">
+            <div className="shadow-brutal-3 space-y-3.5 border-2 border-slate-900 bg-slate-50 p-3 sm:p-4">
+                {/* 1-Click Quick Filter Pills */}
+                <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 pb-2.5">
+                    <span className="font-mono text-[10px] font-black text-slate-600 uppercase pr-1">
+                        Quick Filter:
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setStatusFilter('paid');
+                            setPackageFilter('all');
+                            setEnrolledTrackFilter('all');
+                            setDeptFilter('all');
+                            setYearFilter('all');
+                        }}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            packageFilter === 'all' && enrolledTrackFilter === 'all' && deptFilter === 'all' && yearFilter === 'all' && statusFilter === 'paid'
+                                ? 'shadow-brutal-1 border-slate-900 bg-slate-900 text-white'
+                                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                        }`}
+                    >
+                        All Paid Candidates
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setPackageFilter('software');
+                            setEnrolledTrackFilter('all');
+                        }}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            packageFilter === 'software'
+                                ? 'shadow-brutal-1 border-sky-900 bg-sky-400 text-slate-950'
+                                : 'border-sky-300 bg-sky-50 text-sky-900 hover:bg-sky-100'
+                        }`}
+                    >
+                        💻 Software Track
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setPackageFilter('powertrain');
+                            setEnrolledTrackFilter('all');
+                        }}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            packageFilter === 'powertrain'
+                                ? 'shadow-brutal-1 border-amber-900 bg-amber-400 text-slate-950'
+                                : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                        }`}
+                    >
+                        ⚡ Powertrain Track
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setPackageFilter('combo');
+                            setEnrolledTrackFilter('all');
+                        }}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            packageFilter === 'combo'
+                                ? 'shadow-brutal-1 border-purple-900 bg-purple-400 text-slate-950'
+                                : 'border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100'
+                        }`}
+                    >
+                        📦 Combo (Both Tracks)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setYearFilter(yearFilter === '1' ? 'all' : '1')}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            yearFilter === '1'
+                                ? 'shadow-brutal-1 border-indigo-900 bg-indigo-400 text-slate-950'
+                                : 'border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100'
+                        }`}
+                    >
+                        🎓 1st Year
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setYearFilter(yearFilter === '2' ? 'all' : '2')}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            yearFilter === '2'
+                                ? 'shadow-brutal-1 border-teal-900 bg-teal-400 text-slate-950'
+                                : 'border-teal-300 bg-teal-50 text-teal-900 hover:bg-teal-100'
+                        }`}
+                    >
+                        🎓 2nd Year
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setStatusFilter('pending')}
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
+                            statusFilter === 'pending'
+                                ? 'shadow-brutal-1 border-amber-900 bg-amber-400 text-slate-950'
+                                : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                        }`}
+                    >
+                        ⏳ Pending Unpaid
+                    </button>
+                </div>
+
+                {/* Dropdowns & Search Input Grid */}
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-5">
                     {/* Status Filter */}
                     <div>
                         <label className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
-                            Status (Default: Paid)
+                            Payment Status
                         </label>
                         <select
                             value={statusFilter}
@@ -708,7 +830,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         >
                             <option value="paid">✓ Confirmed Paid ({summary.paid}) [Default]</option>
                             <option value="pending">⏳ Pending Unpaid ({summary.pending})</option>
-                            <option value="all">All Registrations ({registrations.length})</option>
+                            <option value="all">All Statuses ({registrations.length})</option>
                             <option value="failed">✕ Payment Failed ({summary.failed})</option>
                         </select>
                     </div>
@@ -724,55 +846,110 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                             className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs font-bold focus:outline-none"
                         >
                             <option value="all">All Packages</option>
-                            <option value="software">Software Track</option>
-                            <option value="powertrain">Powertrain Track</option>
-                            <option value="combo">Combo Package</option>
+                            <option value="software">Software Track (Alone)</option>
+                            <option value="powertrain">Powertrain Track (Alone)</option>
+                            <option value="combo">Combo Package (Dual-Track)</option>
                         </select>
                     </div>
 
-                    {/* Search Input */}
-                    <div className="sm:col-span-2">
+                    {/* Enrolled Track Filter */}
+                    <div>
                         <label className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
-                            Search Candidate / Roll No / Email
+                            Enrolled Track
                         </label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by name, roll no, email, AST-WS-xxxx..."
-                                className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs focus:outline-none"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute top-1.5 right-2 font-mono text-xs font-bold text-slate-500 hover:text-slate-900"
-                                >
-                                    ✕ Clear
-                                </button>
-                            )}
-                        </div>
+                        <select
+                            value={enrolledTrackFilter}
+                            onChange={(e) => setEnrolledTrackFilter(e.target.value)}
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs font-bold focus:outline-none"
+                        >
+                            <option value="all">All Tracks</option>
+                            <option value="software">Enrolled in Software (Software + Combo)</option>
+                            <option value="powertrain">Enrolled in Powertrain (Powertrain + Combo)</option>
+                        </select>
+                    </div>
+
+                    {/* Academic Year Filter */}
+                    <div>
+                        <label className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
+                            Academic Year
+                        </label>
+                        <select
+                            value={yearFilter}
+                            onChange={(e) => setYearFilter(e.target.value)}
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs font-bold focus:outline-none"
+                        >
+                            <option value="all">All Years</option>
+                            <option value="1">1st Year</option>
+                            <option value="2">2nd Year</option>
+                        </select>
+                    </div>
+
+                    {/* Department Filter */}
+                    <div>
+                        <label className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
+                            Department
+                        </label>
+                        <select
+                            value={deptFilter}
+                            onChange={(e) => setDeptFilter(e.target.value)}
+                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs font-bold focus:outline-none"
+                        >
+                            <option value="all">All Departments</option>
+                            {WORKSHOP_DEPARTMENTS.map((dept) => (
+                                <option key={dept} value={dept}>
+                                    {dept}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-1 border-t border-slate-200 pt-1 font-mono text-[11px] font-bold text-slate-500">
+                {/* Instant Search Bar */}
+                <div>
+                    <label className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
+                        Search Candidate Name / Roll No / Email / Dept
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Type name, roll number, email, department, receipt number..."
+                            className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:outline-none"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute top-2 right-2.5 font-mono text-xs font-bold text-slate-500 hover:text-slate-900"
+                            >
+                                ✕ Clear
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-1 border-t border-slate-200 pt-1.5 font-mono text-[11px] font-bold text-slate-600">
                     <span>
-                        Showing {filteredRegistrations.length} of {registrations.length} entries
+                        Showing <strong className="text-slate-900">{filteredRegistrations.length}</strong> of {registrations.length} matching participants
                     </span>
-                    {(statusFilter !== 'paid' || packageFilter !== 'all' || searchQuery) && (
+                    {(statusFilter !== 'paid' || packageFilter !== 'all' || enrolledTrackFilter !== 'all' || deptFilter !== 'all' || yearFilter !== 'all' || searchQuery) && (
                         <button
                             onClick={() => {
                                 setStatusFilter('paid');
                                 setPackageFilter('all');
+                                setEnrolledTrackFilter('all');
+                                setDeptFilter('all');
+                                setYearFilter('all');
                                 setSearchQuery('');
                             }}
-                            className="cursor-pointer text-sky-700 hover:underline"
+                            className="cursor-pointer text-sky-700 hover:underline font-black"
                         >
-                            Reset to Paid Only
+                            ✕ Reset All Filters
                         </button>
                     )}
                 </div>
             </div>
+
 
             {/* Mobile-Friendly Candidate Cards (Visible on screens < 768px) */}
             <div className="block space-y-3 md:hidden">
