@@ -195,11 +195,11 @@ export default function Car3DCanvas() {
             metalness: 0.75
         });
 
-        const brakeCaliperRedMaterial = coatedMaterial(
-            { color: 0xdc2626, roughness: 0.18, metalness: 0.35 },
-            { clearcoat: 0.8, clearcoatRoughness: 0.08 },
-            0.15
-        );
+        const brakeRotorMaterial = new THREE.MeshStandardMaterial({
+            color: 0xd4d4d8,
+            roughness: 0.18,
+            metalness: 0.95
+        });
 
         // --- 3D VEHICLE ASSEMBLY (REAL GLB CAD MODEL) ---
         const carRoot = new THREE.Group();
@@ -208,105 +208,62 @@ export default function Car3DCanvas() {
         const proceduralModel = new THREE.Group();
         carRoot.add(proceduralModel);
 
+        /* Load the real CAD assembly -- on anything but a phone.
+
+           The GLB is 6.1MB, which is more than every other asset on the landing
+           page put together, and it is fetched on first paint because this canvas
+           sits behind the whole site. On a phone the buggy is posed small and off
+           to one side (see buildKeyframes) and spends most of the page behind
+           opaque content, so almost none of that CAD detail survives to the
+           screen. The procedural model below is the loader's own fallback and is
+           already built either way, so phones keep a real 3D buggy and the intro
+           cross-dissolve still has something to hand off to -- they just skip the
+           download. */
         const gltfLoader = new GLTFLoader();
+        if (!isNarrowViewport) {
+            gltfLoader.load(
+                '/assembly_file_for_abaja.glb',
+                (gltf) => {
+                    const model = gltf.scene;
 
-        const applyCADMaterials = (model) => {
-            model.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
+                    // Auto-center and normalize scale for the CAD assembly
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
 
-                    const origMats = Array.isArray(child.material) ? child.material : [child.material];
-                    const meshName = (child.name || '').toLowerCase();
+                    model.position.sub(center);
 
-                    const newMats = origMats.map((mat) => {
-                        if (!mat) return mat;
-                        const matName = (mat.name || '').toLowerCase();
+                    // CAD assembly dimensions scaling
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const targetScale = maxDim > 0 ? 2.8 / maxDim : 1;
 
-                        if (meshName.includes('tire') || matName.includes('rubber')) {
-                            return rubberTireMaterial;
-                        } else if (
-                            meshName.includes('chassis') ||
-                            meshName.includes('frame') ||
-                            meshName.includes('baja05') ||
-                            meshName.includes('spona') ||
-                            matName.includes('blue') ||
-                            matName.includes('color-') ||
-                            matName.includes('unnamed') ||
-                            matName.includes('test')
-                        ) {
-                            return skyBluePowderCoat;
-                        } else if (meshName.includes('caliper')) {
-                            return brakeCaliperRedMaterial;
-                        } else if (
-                            meshName.includes('disc') ||
-                            meshName.includes('rotor') ||
-                            matName.includes('steel') ||
-                            matName.includes('chrome')
-                        ) {
-                            return chromeMaterial;
-                        } else if (matName.includes('bronze') || matName.includes('gold')) {
-                            return foxBronzeMaterial;
-                        } else if (matName.includes('aluminum') || meshName.includes('fork') || meshName.includes('hub')) {
-                            return brushedSteelMaterial;
+                    const glbWrapper = new THREE.Group();
+                    glbWrapper.add(model);
+                    glbWrapper.scale.setScalar(targetScale);
+                    glbWrapper.position.y = 0.12;
+
+                    // Enhance materials & shadows for CAD components
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                            if (child.material) {
+                                child.material.envMapIntensity = 1.35;
+                                child.material.needsUpdate = true;
+                            }
                         }
-                        try {
-                            mat.envMapIntensity = 1.8;
-                            mat.needsUpdate = true;
-                        } catch (e) {
-                            // ignore property set on uncustomized material
-                        }
-                        return mat;
                     });
 
-                    child.material = Array.isArray(child.material) ? newMats : newMats[0];
+                    // Swap out procedural fallback with real CAD GLB assembly!
+                    carRoot.remove(proceduralModel);
+                    carRoot.add(glbWrapper);
+                },
+                undefined,
+                (err) => {
+                    console.warn('GLB model load notice, keeping procedural fallback:', err);
                 }
-            });
-        };
-
-        const onGLBLoaded = (gltf) => {
-            const model = gltf.scene;
-
-            // Auto-center and normalize scale for the CAD assembly
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-
-            model.position.sub(center);
-
-            // CAD assembly dimensions scaling
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const targetScale = maxDim > 0 ? 2.85 / maxDim : 1;
-
-            const glbWrapper = new THREE.Group();
-            glbWrapper.add(model);
-            glbWrapper.scale.setScalar(targetScale);
-            glbWrapper.position.y = 0.12;
-
-            // Apply realistic PBR materials & shadow casting
-            applyCADMaterials(model);
-
-            // Swap out procedural fallback with real CAD GLB assembly!
-            carRoot.remove(proceduralModel);
-            carRoot.add(glbWrapper);
-        };
-
-        gltfLoader.load(
-            '/assembly_file_for_abaja.glb',
-            onGLBLoaded,
-            undefined,
-            (err) => {
-                console.warn('Primary GLB path notice, trying fallback name:', err);
-                gltfLoader.load(
-                    '/assembly_file_for_abaja (1).glb',
-                    onGLBLoaded,
-                    undefined,
-                    (err2) => {
-                        console.warn('GLB load error, keeping procedural model:', err2);
-                    }
-                );
-            }
-        );
+            );
+        }
 
         const frameGroup = new THREE.Group();
         proceduralModel.add(frameGroup);
