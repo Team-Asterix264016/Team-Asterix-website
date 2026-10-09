@@ -64,7 +64,91 @@ const DesktopControls = ({ pivot, min, max, zoomEnabled }) => {
     );
 };
 
-const GLTFContent = ({ url, children }) => children(useGLTF(url).scene.clone());
+const GLTFContent = ({ url, children }) => {
+    const { scene } = useGLTF(url);
+    const processedScene = useMemo(() => {
+        const cloned = scene.clone(true);
+
+        const skyBluePowderCoat = new THREE.MeshPhysicalMaterial({
+            color: 0x0284c7,
+            roughness: 0.15,
+            metalness: 0.35,
+            clearcoat: 0.9,
+            clearcoatRoughness: 0.06,
+            reflectivity: 0.95
+        });
+        const rubberTireMaterial = new THREE.MeshStandardMaterial({
+            color: 0x14181c,
+            roughness: 0.88,
+            metalness: 0.04
+        });
+        const chromeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.05,
+            metalness: 0.95
+        });
+        const caliperRed = new THREE.MeshPhysicalMaterial({
+            color: 0xdc2626,
+            roughness: 0.18,
+            metalness: 0.35,
+            clearcoat: 0.8
+        });
+        const foxBronze = new THREE.MeshStandardMaterial({
+            color: 0x6e4a2c,
+            roughness: 0.22,
+            metalness: 0.9
+        });
+        const brushedSteel = new THREE.MeshStandardMaterial({
+            color: 0xd1d5db,
+            roughness: 0.26,
+            metalness: 0.88
+        });
+
+        cloned.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+
+                const matName = (child.material?.name || '').toLowerCase();
+                const meshName = (child.name || '').toLowerCase();
+
+                if (meshName.includes('tire') || matName.includes('rubber')) {
+                    child.material = rubberTireMaterial;
+                } else if (
+                    meshName.includes('chassis') ||
+                    meshName.includes('frame') ||
+                    meshName.includes('baja05') ||
+                    meshName.includes('spona') ||
+                    matName.includes('blue') ||
+                    matName.includes('color-') ||
+                    matName.includes('unnamed') ||
+                    matName.includes('test')
+                ) {
+                    child.material = skyBluePowderCoat;
+                } else if (meshName.includes('caliper')) {
+                    child.material = caliperRed;
+                } else if (
+                    meshName.includes('disc') ||
+                    meshName.includes('rotor') ||
+                    matName.includes('steel') ||
+                    matName.includes('chrome')
+                ) {
+                    child.material = chromeMaterial;
+                } else if (matName.includes('bronze') || matName.includes('gold')) {
+                    child.material = foxBronze;
+                } else if (matName.includes('aluminum') || meshName.includes('fork') || meshName.includes('hub')) {
+                    child.material = brushedSteel;
+                } else if (child.material) {
+                    child.material.envMapIntensity = 1.8;
+                    child.material.needsUpdate = true;
+                }
+            }
+        });
+        return cloned;
+    }, [scene]);
+
+    return children(processedScene);
+};
 const FBXContent = ({ url, children }) => children(useFBX(url).clone());
 const OBJContent = ({ url, children }) => children(useLoader(OBJLoader, url).clone());
 const ProceduralContent = ({ children }) => children(buildBajaCarGroup());
