@@ -26,6 +26,7 @@ import attendanceRoutes from './routes/attendance.js';
 import quizRoutes from './routes/quiz.js';
 import workshopProjectRoutes from './routes/workshopProjects.js';
 import blogRoutes from './routes/blog.js';
+import communityRoutes from './routes/community.js';
 import { describeRazorpayStatus } from './lib/razorpay.js';
 import { isWhatsAppConfigured } from './lib/whatsapp.js';
 import { whatsappActivityMiddleware } from './middleware/whatsappActivity.js';
@@ -123,6 +124,7 @@ app.use('/api/workshop/projects', workshopProjectRoutes);
 app.use('/api/workshop/attendance', attendanceRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/blog', blogRoutes);
+app.use('/api/community', communityRoutes);
 
 // Global error handler
 app.use((err, req, res, _next) => {

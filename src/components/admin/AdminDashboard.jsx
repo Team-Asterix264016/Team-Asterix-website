@@ -12,6 +12,8 @@ import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
 import ParticipantPasswordsAdmin from './ParticipantPasswordsAdmin';
+import CommunityBlogAdmin from './CommunityBlogAdmin';
+import MailClusterAdmin from './MailClusterAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 export default function AdminDashboard({ onExit }) {
@@ -64,9 +66,8 @@ export default function AdminDashboard({ onExit }) {
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
-    const [isWebsiteContentOpen, setIsWebsiteContentOpen] = useState(true);
-    const [isWorkshopOpen, setIsWorkshopOpen] = useState(true);
-    const [isDevOpen, setIsDevOpen] = useState(true);
+    // Sidebar groups start expanded; a group id maps to false once collapsed.
+    const [openGroups, setOpenGroups] = useState({});
 
     // Live Connector Health Monitor
     const [liveHealth, setLiveHealth] = useState({
@@ -424,8 +425,16 @@ export default function AdminDashboard({ onExit }) {
     // Export subscribers as CSV
     const handleExportSubscribersCSV = () => {
         if (!subscribers.length) return;
-        const header = ['Email', 'Phone', 'Joined Date'].join(',');
-        const rows = subscribers.map((s) => `"${s.email}","${s.phone || ''}","${s.created_at || ''}"`);
+        // Subscriber emails are public input: quote every cell and defuse spreadsheet formulas.
+        const cell = (value) => {
+            let text = value == null ? '' : String(value);
+            if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+        const header = ['Email', 'Phone', 'Source', 'Joined Date'].join(',');
+        const rows = subscribers.map((s) =>
+            [s.email, s.phone, s.source || 'home', s.created_at].map(cell).join(',')
+        );
         const csvContent = 'data:text/csv;charset=utf-8,' + [header, ...rows].join('\n');
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
@@ -673,12 +682,22 @@ export default function AdminDashboard({ onExit }) {
             ]
         },
         {
+            id: 'community-group',
+            label: 'COMMUNITY',
+            isGroup: true,
+            icon: 'megaphone',
+            children: [
+                { id: 'community-blog', label: 'Horizon Blog Posts', icon: 'book' },
+                { id: 'subscribers', label: 'Newsletter Subscribers', icon: 'inbox' },
+                { id: 'mail-cluster', label: 'Mail Cluster', icon: 'users' }
+            ]
+        },
+        {
             id: 'dev-group',
             label: 'For the DEV 🛠️',
             isGroup: true,
             icon: 'settings',
             children: [
-                { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
                 { id: 'accounts', label: 'Team Accounts', icon: 'users' },
                 { id: 'settings', label: 'Settings & Backup', icon: 'settings' }
             ]
@@ -797,18 +816,7 @@ export default function AdminDashboard({ onExit }) {
                     {tabs.map((tab) => {
                         if (tab.isGroup) {
                             const isAnyChildActive = tab.children.some((c) => c.id === activeTab);
-                            const isExpanded =
-                                tab.id === 'website-content-group'
-                                    ? isWebsiteContentOpen
-                                    : tab.id === 'dev-group'
-                                      ? isDevOpen
-                                      : isWorkshopOpen;
-                            const toggleExpanded =
-                                tab.id === 'website-content-group'
-                                    ? setIsWebsiteContentOpen
-                                    : tab.id === 'dev-group'
-                                      ? setIsDevOpen
-                                      : setIsWorkshopOpen;
+                            const isExpanded = openGroups[tab.id] !== false;
 
                             const groupStyles = {
                                 'website-content-group': {
@@ -829,6 +837,15 @@ export default function AdminDashboard({ onExit }) {
                                     activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-amber-400 font-black text-slate-950',
                                     inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-amber-300 hover:bg-amber-50'
                                 },
+                                'community-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-violet-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-violet-400/80 bg-violet-50/90 text-violet-950 font-bold hover:bg-violet-100 hover:border-violet-600',
+                                    badgeActive: 'border border-slate-900 bg-violet-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-violet-400 bg-violet-200 text-violet-950 font-bold',
+                                    borderLeft: 'border-l-2 border-violet-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-violet-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-violet-300 hover:bg-violet-50'
+                                },
                                 'dev-group': {
                                     activeHeader: 'shadow-brutal-2 border-slate-900 bg-emerald-400 text-slate-950 font-black',
                                     inactiveHeader: 'border-2 border-emerald-400/80 bg-emerald-50/90 text-emerald-950 font-bold hover:bg-emerald-100 hover:border-emerald-600',
@@ -846,13 +863,9 @@ export default function AdminDashboard({ onExit }) {
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            toggleExpanded((prev) => {
-                                                const next = !prev;
-                                                if (next && !tab.children.some((c) => c.id === activeTab)) {
-                                                    setActiveTab(tab.children[0].id);
-                                                }
-                                                return next;
-                                            });
+                                            const next = !isExpanded;
+                                            setOpenGroups((prev) => ({ ...prev, [tab.id]: next }));
+                                            if (next && !isAnyChildActive) setActiveTab(tab.children[0].id);
                                         }}
                                         className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs uppercase transition-all ${
                                             isAnyChildActive ? currentStyle.activeHeader : currentStyle.inactiveHeader
@@ -2146,6 +2159,10 @@ export default function AdminDashboard({ onExit }) {
                         <ParticipantPasswordsAdmin showStatus={showStatus} />
                     )}
 
+                    {activeTab === 'community-blog' && <CommunityBlogAdmin />}
+
+                    {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
+
                     {/* TAB 5: GALLERY & MEDIA */}
                     {activeTab === 'gallery' && (
                         <div className="space-y-6">
@@ -2473,11 +2490,11 @@ export default function AdminDashboard({ onExit }) {
                             <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200 pb-4">
                                 <div>
                                     <h2 className="text-2xl font-black text-slate-900 uppercase">
-                                        Alliance Leads & Subscribers
+                                        Newsletter Subscribers
                                     </h2>
                                     <p className="mt-1 font-mono text-xs font-bold text-slate-500">
-                                        Submissions from the "Join the Alliance" newsletter form, stored
-                                        securely in MongoDB Atlas.
+                                        Signups from the home page "Join the Alliance" form, the community
+                                        page and Horizon blog posts.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -2503,8 +2520,8 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
                             ) : subscribers.length === 0 ? (
                                 <div className="border-2 border-dashed border-slate-300 p-8 text-center font-mono text-xs text-slate-500">
-                                    No alliance leads recorded yet. Submissions from the website newsletter
-                                    section will appear here automatically.
+                                    No subscribers yet. Signups from the home page, community page and blog
+                                    posts appear here automatically.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto border-2 border-slate-900">
@@ -2513,6 +2530,7 @@ export default function AdminDashboard({ onExit }) {
                                             <tr>
                                                 <th className="p-2.5">Email</th>
                                                 <th className="p-2.5">Phone</th>
+                                                <th className="p-2.5">Source</th>
                                                 <th className="p-2.5">Joined Date</th>
                                                 <th className="p-2.5 text-right">Actions</th>
                                             </tr>
@@ -2525,6 +2543,9 @@ export default function AdminDashboard({ onExit }) {
                                                     </td>
                                                     <td className="p-2.5 text-slate-600">
                                                         {sub.phone || '—'}
+                                                    </td>
+                                                    <td className="p-2.5 text-[11px] text-slate-600 uppercase">
+                                                        {sub.source || 'home'}
                                                     </td>
                                                     <td className="p-2.5 text-[11px] text-slate-500">
                                                         {sub.created_at
