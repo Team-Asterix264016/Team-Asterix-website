@@ -65,7 +65,7 @@ export default function CommunityBlogAdmin() {
                 The editor is coming later. Until then a developer adds a post from a Markdown file with front
                 matter:
                 <code className="mt-2 block overflow-x-auto bg-slate-900 px-3 py-2 whitespace-nowrap text-slate-100">
-                    node server/scripts/importBlogPost.js post.md --publish
+                    cd server && node --use-system-ca src/scripts/importBlogPost.js post.md --publish
                 </code>
             </div>
 

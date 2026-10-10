@@ -1,9 +1,10 @@
 // Adds or updates one Horizon blog post from a Markdown file, until the admin
 // editor exists.
 //
-//   node server/scripts/importBlogPost.js post.md             saves as a draft
-//   node server/scripts/importBlogPost.js post.md --publish   saves and publishes
-//   node server/scripts/importBlogPost.js post.md --dry-run   prints, touches nothing
+// Run from server/:
+//   node --use-system-ca src/scripts/importBlogPost.js post.md             saves as a draft
+//   node --use-system-ca src/scripts/importBlogPost.js post.md --publish   saves and publishes
+//   node --use-system-ca src/scripts/importBlogPost.js post.md --dry-run   prints, touches nothing
 //
 // The file starts with front matter (title is required; slug defaults to it):
 //
@@ -19,11 +20,11 @@
 //   ---
 //   ## First heading
 //   Body in Markdown...
-import '../src/loadEnv.js';
+import '../loadEnv.js';
 import fs from 'node:fs';
 import mongoose from 'mongoose';
-import BlogPost from '../src/models/BlogPost.js';
-import { parsePostFile, readMinutes } from '../src/lib/blog.js';
+import BlogPost from '../models/BlogPost.js';
+import { parsePostFile, readMinutes } from '../lib/blog.js';
 
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith('--'));
@@ -31,7 +32,7 @@ const publish = args.includes('--publish');
 const dryRun = args.includes('--dry-run');
 
 if (!file) {
-    console.error('Usage: node server/scripts/importBlogPost.js <post.md> [--publish] [--dry-run]');
+    console.error('Usage: node --use-system-ca src/scripts/importBlogPost.js <post.md> [--publish] [--dry-run]');
     process.exit(1);
 }
 
