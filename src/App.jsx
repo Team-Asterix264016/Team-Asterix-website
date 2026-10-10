@@ -25,7 +25,7 @@ const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttend
 const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
 const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
 const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
-const CookingChefCommunity = lazy(() => import('./components/community/CookingChefCommunity'));
+const CommunityPage = lazy(() => import('./components/community/CommunityPage'));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -39,7 +39,7 @@ function MainApp() {
             window.location.hash === '#profile' ||
             window.location.pathname.startsWith('/workshop/profile')
     );
-    const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash === '#community');
+    const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash.startsWith('#community'));
     const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
         () => window.location.hash === '#workshop-project-submit'
     );
@@ -83,7 +83,7 @@ function MainApp() {
                     hash === '#workshop' ||
                     window.location.pathname.startsWith('/workshop/profile')
             );
-            setIsCommunityPage(hash === '#community');
+            setIsCommunityPage(hash.startsWith('#community'));
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
@@ -234,12 +234,12 @@ function MainApp() {
         const hash = window.location.hash;
         if (
             hash.startsWith('#admin') ||
+            hash.startsWith('#community') ||
             [
                 '#sponsor',
                 '#workshop',
                 '#workshop-profile',
                 '#profile',
-                '#community',
                 '#workshop-project-submit',
                 '#model'
             ].includes(hash)
@@ -286,7 +286,7 @@ function MainApp() {
     if (isCommunityPage) {
         return (
             <Suspense fallback={pageFallback}>
-                <CookingChefCommunity onBack={handleBackToHome} />
+                <CommunityPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
