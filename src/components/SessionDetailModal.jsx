@@ -192,7 +192,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm sm:p-6"
             onClick={onClose}
         >
             <div

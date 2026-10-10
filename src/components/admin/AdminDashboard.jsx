@@ -615,7 +615,7 @@ export default function AdminDashboard({ onExit }) {
         <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 select-text selection:bg-sky-500 selection:text-white">
             {/* Top Navigation Bar */}
             <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b-4 border-slate-900 bg-white px-4 py-3 sm:px-8">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                     <button
                         onClick={onExit}
                         className="press press-flat group flex flex-shrink-0 cursor-pointer items-center text-left focus:outline-none"
@@ -626,12 +626,12 @@ export default function AdminDashboard({ onExit }) {
                             decoding="async"
                             src={teamLogo}
                             alt="Team Asterix"
-                            className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                            className="h-6 w-auto object-contain transition-transform group-hover:scale-105 sm:h-8"
                         />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-base leading-none font-black text-slate-900 uppercase sm:text-lg">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <h1 className="text-base leading-none font-black break-words text-slate-900 uppercase sm:text-lg">
                                 ASTERIX MANAGEMENT CONSOLE
                             </h1>
                             <span
@@ -1459,7 +1459,7 @@ export default function AdminDashboard({ onExit }) {
                                                         className="min-w-0 flex-1 border-2 border-slate-900 bg-sky-50 px-2 py-0.5 font-mono text-[11px] font-black uppercase focus:outline-none"
                                                     />
                                                 </div>
-                                                <div className="flex items-center justify-between gap-2 pt-1">
+                                                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                                                     <div className="flex items-center gap-1.5">
                                                         <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
                                                             Status:
@@ -2661,7 +2661,7 @@ export default function AdminDashboard({ onExit }) {
                                         type="file"
                                         accept=".json"
                                         onChange={handleRestoreBackup}
-                                        className="font-mono text-xs"
+                                        className="w-full max-w-full font-mono text-xs"
                                     />
                                 </div>
                             </div>

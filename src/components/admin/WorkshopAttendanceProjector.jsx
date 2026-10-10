@@ -34,80 +34,15 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     const [, setScanUrl] = useState('');
     const [error, setError] = useState('');
 
-    // Admin GPS state
-    const [adminCoords, setAdminCoords] = useState(null); // { latitude, longitude, accuracy }
-    const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'acquiring' | 'saved' | 'error'
-    const [locationError, setLocationError] = useState('');
-
     // Live Attendance stream
     const [liveStats, setLiveStats] = useState({
         totalEligible: 0,
         totalPresent: 0,
         percentage: 0,
-        hasAdminLocation: false,
         recentCheckins: []
     });
 
     const projectorRef = useRef(null);
-
-    // Acquire admin's current GPS location via Geolocation API
-    const requestAdminLocation = useCallback((targetTrack = track, targetNum = sessionNumber, targetDate = sessionDate, targetTopic = sessionTopic) => {
-        if (!navigator.geolocation) {
-            setLocationStatus('error');
-            setLocationError('Geolocation is not supported by your browser.');
-            return;
-        }
-
-        setLocationStatus('acquiring');
-        setLocationError('');
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const acc = position.coords.accuracy;
-
-                setAdminCoords({ latitude: lat, longitude: lng, accuracy: acc });
-
-                // Post admin location to server to associate with session
-                try {
-                    const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-                    if (token) {
-                        await fetch(apiUrl('/api/workshop/attendance/session-location'), {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                                track: targetTrack,
-                                sessionNumber: targetNum,
-                                sessionDate: targetDate,
-                                sessionTopic: targetTopic,
-                                latitude: lat,
-                                longitude: lng,
-                                accuracy: acc
-                            })
-                        });
-                    }
-                    setLocationStatus('saved');
-                } catch (err) {
-                    console.error('Failed to post session location to server:', err);
-                    setLocationStatus('saved'); // locally stored coords will be passed with token refresh
-                }
-            },
-            (err) => {
-                console.error('Admin geolocation error:', err);
-                setLocationStatus('error');
-                let msg = 'Failed to get admin location.';
-                if (err.code === 1) msg = 'Location permission denied. Please allow GPS access.';
-                else if (err.code === 2) msg = 'Location unavailable. Turn on device GPS.';
-                else if (err.code === 3) msg = 'GPS request timed out.';
-                setLocationError(msg);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    }, [track, sessionNumber, sessionDate, sessionTopic]);
 
     // Fetch session token & generate permanent static QR
     const fetchSessionToken = useCallback(async () => {
@@ -125,14 +60,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 sessionTopic
             });
 
-            if (adminCoords?.latitude != null && adminCoords?.longitude != null) {
-                query.append('latitude', String(adminCoords.latitude));
-                query.append('longitude', String(adminCoords.longitude));
-                if (adminCoords.accuracy != null) {
-                    query.append('accuracy', String(adminCoords.accuracy));
-                }
-            }
-
             const res = await fetch(apiUrl(`/api/workshop/attendance/session-token?${query.toString()}`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -144,10 +71,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
-
-            if (data.hasAdminLocation && locationStatus !== 'saved') {
-                setLocationStatus('saved');
-            }
 
             // Generate crisp high-resolution permanent QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
@@ -165,7 +88,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             console.error('Error fetching attendance session token:', err);
             setError(err.message);
         }
-    }, [track, sessionNumber, sessionDate, sessionTopic, adminCoords, locationStatus]);
+    }, [track, sessionNumber, sessionDate, sessionTopic]);
 
     // Poll live attendance numbers every 3 seconds
     const fetchLiveStatus = useCallback(async () => {
@@ -186,7 +109,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                     totalEligible: data.totalEligible || 0,
                     totalPresent: data.totalPresent || 0,
                     percentage: data.percentage || 0,
-                    hasAdminLocation: data.hasAdminLocation || false,
                     recentCheckins: data.recentCheckins || []
                 });
             }
@@ -194,11 +116,6 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             // silent poll error
         }
     }, [sessionId]);
-
-    // Acquire GPS location on mount / session change
-    useEffect(() => {
-        requestAdminLocation();
-    }, [requestAdminLocation]);
 
     // Fetch permanent session QR token on mount or parameter changes
     useEffect(() => {
@@ -226,11 +143,11 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     return (
         <div
             ref={projectorRef}
-            className="flex h-screen max-h-screen w-screen flex-col justify-center overflow-hidden bg-slate-950 p-3 font-mono text-white select-none sm:p-5 lg:p-6"
+            className="flex min-h-[100dvh] w-full flex-col justify-center bg-slate-950 p-3 font-mono text-white select-none sm:p-5 lg:h-screen lg:max-h-screen lg:overflow-hidden lg:p-6"
         >
-            <div className="mx-auto grid h-full max-h-full w-full max-w-[1700px] grid-cols-1 items-center gap-4 overflow-hidden lg:grid-cols-12 lg:gap-8">
+            <div className="mx-auto grid w-full max-w-[1700px] grid-cols-1 items-center gap-4 lg:h-full lg:max-h-full lg:grid-cols-12 lg:gap-8 lg:overflow-hidden">
                 {/* LEFT: ONLY THE QR CODE (Fitted to screen height) */}
-                <div className="flex h-full flex-col items-center justify-center overflow-hidden py-1 lg:col-span-7 xl:col-span-8">
+                <div className="flex flex-col items-center justify-center py-1 lg:col-span-7 lg:h-full lg:overflow-hidden xl:col-span-8">
                     {/* Dynamic QR Container */}
                     <div className="shadow-brutal-10-light flex max-h-[calc(100vh-80px)] max-w-full shrink-0 flex-col items-center justify-center border-4 border-slate-900 bg-white p-3 sm:p-5 lg:p-6">
                         {qrDataUrl ? (
@@ -247,51 +164,13 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                         {/* Permanent Session Badge */}
                         <div className="mt-3 flex shrink-0 items-center gap-2 border border-emerald-600 bg-emerald-50 px-3.5 py-1.5 font-mono text-xs font-black text-emerald-950 sm:text-sm">
                             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600"></span>
-                            <span>📍 Location Verified · Permanent Session QR</span>
-                        </div>
-
-                        {/* Admin GPS Location Status Badge */}
-                        <div className="mt-2.5 flex w-full shrink-0 items-center justify-between gap-2 border border-slate-300 bg-slate-50 px-3 py-1 font-mono text-xs">
-                            <div className="flex items-center gap-1.5 truncate">
-                                {locationStatus === 'acquiring' ? (
-                                    <>
-                                        <span className="h-2 w-2 animate-ping rounded-full bg-amber-500"></span>
-                                        <span className="font-bold text-amber-800">Acquiring GPS location...</span>
-                                    </>
-                                ) : locationStatus === 'saved' || liveStats.hasAdminLocation ? (
-                                    <>
-                                        <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                        <span className="font-bold text-emerald-800">
-                                            📍 Admin GPS Active {adminCoords?.accuracy ? `(±${Math.round(adminCoords.accuracy)}m)` : ''}
-                                        </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                                        <span className="truncate font-bold text-rose-800">
-                                            {locationError || 'GPS Location Required'}
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => requestAdminLocation()}
-                                className="press cursor-pointer border border-slate-400 bg-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-900 uppercase hover:bg-slate-300"
-                                title="Update instructor GPS coordinates for 50m distance validation"
-                            >
-                                {locationStatus === 'acquiring' ? 'Locating...' : 'Update GPS 📍'}
-                            </button>
+                            <span>Permanent Session QR</span>
                         </div>
                     </div>
 
                     <div className="mt-2 shrink-0 space-y-0.5 text-center text-xs text-slate-400">
                         <p className="text-xs font-bold text-slate-200 sm:text-sm">
                             Scan with your mobile camera to check in
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                            Location enabled · 50m radius distance check active
                         </p>
                     </div>
 
@@ -303,7 +182,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 </div>
 
                 {/* RIGHT: ALL HEADERS, CONTROLS, AND STATS (Strictly within height) */}
-                <div className="flex h-full flex-col justify-between gap-2.5 overflow-hidden py-1 lg:col-span-5 xl:col-span-4">
+                <div className="flex flex-col justify-between gap-2.5 py-1 lg:col-span-5 lg:h-full lg:overflow-hidden xl:col-span-4">
                     {/* Header Block (All headers moved here) */}
                     <div className="shadow-brutal-4 shrink-0 space-y-2 border-2 border-slate-800 bg-slate-900/80 p-3">
                         {/* Top Title & Controls */}
@@ -378,7 +257,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                         const s = scheduleList.find((item) => item.id === e.target.value);
                                         if (s) selectScheduleSession(s);
                                     }}
-                                    className="border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                    className="min-w-0 max-w-full border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
                                 >
                                     <option value="">-- {track.toUpperCase()} Schedule --</option>
                                     {scheduleList.map((s) => (

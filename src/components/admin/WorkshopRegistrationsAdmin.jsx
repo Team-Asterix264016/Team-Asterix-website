@@ -1260,7 +1260,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         aria-modal="true"
                         aria-labelledby="workshop-registration-details-title"
                         tabIndex={-1}
-                        className="shadow-brutal-8 max-h-[90vh] w-full max-w-[calc(100vw-2rem)] max-w-lg space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-4 sm:p-6"
+                        className="shadow-brutal-8 max-h-[90dvh] w-full max-w-[calc(100vw-2rem)] max-w-lg space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-4 sm:p-6"
                     >
                         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
                             <div>
@@ -1462,7 +1462,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     <form
                         ref={editModalRef}
                         onSubmit={handleSaveStudent}
-                        className="shadow-brutal-7-brand max-h-[92vh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 sm:p-7"
+                        className="shadow-brutal-7-brand max-h-[92dvh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 sm:p-7"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="edit-workshop-student-title"
@@ -1556,7 +1556,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     <form
                         ref={addModalRef}
                         onSubmit={handleSaveNewParticipant}
-                        className="shadow-brutal-7-brand max-h-[92vh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 sm:p-7"
+                        className="shadow-brutal-7-brand max-h-[92dvh] w-full max-w-xl overflow-y-auto border-4 border-slate-900 bg-white p-5 sm:p-7"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="add-participant-title"

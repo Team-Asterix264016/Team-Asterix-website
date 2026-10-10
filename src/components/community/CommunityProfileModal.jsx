@@ -90,7 +90,7 @@ export default function CommunityProfileModal() {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-3 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm sm:p-6"
             data-lenis-prevent="true"
             data-lenis-prevent-wheel="true"
         >

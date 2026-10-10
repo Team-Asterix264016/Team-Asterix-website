@@ -431,7 +431,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                     const s = scheduleList.find((item) => item.id === e.target.value);
                                     if (s) selectScheduleSession(s);
                                 }}
-                                className="rounded border-2 border-slate-900 bg-amber-100 px-2 py-1 text-xs font-bold text-slate-950 focus:outline-none"
+                                className="min-w-0 max-w-full rounded border-2 border-slate-900 bg-amber-100 px-2 py-1 text-xs font-bold text-slate-950 focus:outline-none"
                             >
                                 <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
                                 {scheduleList.map((s) => (

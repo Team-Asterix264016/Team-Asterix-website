@@ -29,53 +29,6 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
     const [searchQuery, setSearchQuery] = useState('');
     const [actionBusyRoll, setActionBusyRoll] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
-    const [locationStatus, setLocationStatus] = useState('idle');
-
-    const handleSetAdminLocation = async () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser.');
-            return;
-        }
-
-        setLocationStatus('acquiring');
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                try {
-                    const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-                    const res = await fetch(apiUrl('/api/workshop/attendance/session-location'), {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            track,
-                            sessionNumber,
-                            sessionDate,
-                            sessionTopic,
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            accuracy: position.coords.accuracy
-                        })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Failed to save location');
-
-                    setLocationStatus('saved');
-                    if (showStatus) showStatus('✓ Session GPS location saved! Students within 50m can check in.');
-                } catch (err) {
-                    alert('Error saving GPS location: ' + err.message);
-                    setLocationStatus('error');
-                }
-            },
-            (err) => {
-                alert('GPS location acquisition error: ' + err.message);
-                setLocationStatus('error');
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    };
 
     const fetchRecords = useCallback(async () => {
         setIsLoading(true);
@@ -318,15 +271,15 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         // Attendance Session Configuration
                     </span>
                     {scheduleList && scheduleList.length > 0 && (
-                        <div className="flex items-center gap-1.5 text-xs">
-                            <span className="text-[10px] font-bold text-slate-600 uppercase">🗓 Quick Select:</span>
+                        <div className="flex min-w-0 items-center gap-1.5 text-xs">
+                            <span className="shrink-0 text-[10px] font-bold text-slate-600 uppercase">🗓 Quick Select:</span>
                             <select
                                 value={currentScheduleMatch?.id || ''}
                                 onChange={(e) => {
                                     const s = scheduleList.find((item) => item.id === e.target.value);
                                     if (s) selectScheduleSession(s);
                                 }}
-                                className="border-2 border-slate-900 bg-amber-200 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                className="min-w-0 max-w-full border-2 border-slate-900 bg-amber-200 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
                             >
                                 <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
                                 {scheduleList.map((s) => (
@@ -407,16 +360,6 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                             </span>
                         )}
                     </span>
-
-                    <button
-                        type="button"
-                        onClick={handleSetAdminLocation}
-                        className="press shadow-brutal-1 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-sky-300 px-3 py-1 text-[11px] font-black text-slate-950 uppercase hover:bg-sky-400"
-                        title="Acquire admin browser GPS coordinates to enforce 50m distance check"
-                    >
-                        <span>📍</span>
-                        <span>{locationStatus === 'acquiring' ? 'Acquiring GPS...' : locationStatus === 'saved' ? 'Update GPS Location ✓' : 'Set Session GPS Location 📍'}</span>
-                    </button>
                 </div>
             </div>
 

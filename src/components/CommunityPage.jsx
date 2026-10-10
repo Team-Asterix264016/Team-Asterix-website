@@ -717,7 +717,7 @@ export default function CommunityPage({ onBack }) {
                         aria-modal="true"
                         aria-labelledby="community-thread-title"
                         tabIndex={-1}
-                        className="shadow-brutal-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden border-4 border-slate-900 bg-white"
+                        className="shadow-brutal-10 flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden border-4 border-slate-900 bg-white"
                     >
                         {/* Header */}
                         <div className="z-10 flex flex-shrink-0 items-center justify-between border-b-4 border-slate-900 bg-slate-900 p-4 text-white">
@@ -817,7 +817,7 @@ export default function CommunityPage({ onBack }) {
                         aria-modal="true"
                         aria-labelledby="community-blog-title"
                         tabIndex={-1}
-                        className="shadow-brutal-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden border-4 border-slate-900 bg-white"
+                        className="shadow-brutal-10 flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden border-4 border-slate-900 bg-white"
                     >
                         {/* Header */}
                         <div className="z-10 flex flex-shrink-0 items-center justify-between border-b-4 border-slate-900 bg-slate-900 p-4 text-white">
@@ -889,7 +889,7 @@ export default function CommunityPage({ onBack }) {
                         aria-modal="true"
                         aria-labelledby="community-new-discussion-title"
                         tabIndex={-1}
-                        className="shadow-brutal-10 custom-scrollbar max-h-[90vh] w-full max-w-xl space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-6"
+                        className="shadow-brutal-10 custom-scrollbar max-h-[90dvh] w-full max-w-xl space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-6"
                     >
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                             <h3
@@ -990,7 +990,7 @@ export default function CommunityPage({ onBack }) {
                         aria-modal="true"
                         aria-labelledby="community-new-project-title"
                         tabIndex={-1}
-                        className="shadow-brutal-10 custom-scrollbar max-h-[90vh] w-full max-w-xl space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-6"
+                        className="shadow-brutal-10 custom-scrollbar max-h-[90dvh] w-full max-w-xl space-y-4 overflow-y-auto border-4 border-slate-900 bg-white p-6"
                     >
                         <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                             <h3

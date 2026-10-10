@@ -50,6 +50,10 @@ export function useModalBehavior(isOpen, onClose) {
 
         const previouslyFocused = document.activeElement;
         lockScroll();
+        /* A stopped Lenis cancels every wheel and touchmove outside a
+           `data-lenis-prevent` subtree, which froze the dialog's own scrolling
+           on phones along with the page behind it. */
+        containerRef.current?.setAttribute('data-lenis-prevent', '');
 
         const focusables = () => {
             const root = containerRef.current;

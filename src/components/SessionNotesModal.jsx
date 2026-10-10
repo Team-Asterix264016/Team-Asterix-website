@@ -26,7 +26,7 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 sm:p-4"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}

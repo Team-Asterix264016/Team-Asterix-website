@@ -996,8 +996,11 @@ export default function QuizRunner({ onBack }) {
 
                 {/* Submit Confirmation Modal */}
                 {showConfirmModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm">
-                        <div className="shadow-brutal-8 w-full max-w-md space-y-4 border-4 border-slate-900 bg-white p-6 font-mono">
+                    <div
+                        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/80 p-4 backdrop-blur-sm"
+                        data-lenis-prevent
+                    >
+                        <div className="shadow-brutal-8 my-auto w-full max-w-md space-y-4 border-4 border-slate-900 bg-white p-6 font-mono">
                             <div className="flex items-center gap-2 border-b-2 border-slate-200 pb-2">
                                 <span className="text-xl">🏁</span>
                                 <h3 className="text-base font-black text-slate-900 uppercase">

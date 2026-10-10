@@ -447,7 +447,7 @@ export default function QuizAdmin({ showStatus }) {
                         aria-modal="true"
                         aria-labelledby="quiz-submissions-modal-title"
                         tabIndex={-1}
-                        className="shadow-brutal-8 anim-pop flex max-h-[90vh] w-full max-w-5xl flex-col border-4 border-slate-900 bg-white"
+                        className="shadow-brutal-8 anim-pop flex max-h-[90dvh] w-full max-w-5xl flex-col border-4 border-slate-900 bg-white"
                     >
                         {/* Header */}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-b-4 border-slate-900 bg-amber-300 p-4 sm:p-5">
@@ -879,7 +879,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 aria-modal="true"
                 aria-labelledby="quiz-editor-modal-title"
                 tabIndex={-1}
-                className="shadow-brutal-8 anim-pop flex max-h-[92vh] w-full max-w-4xl flex-col border-4 border-slate-900 bg-white"
+                className="shadow-brutal-8 anim-pop flex max-h-[92dvh] w-full max-w-4xl flex-col border-4 border-slate-900 bg-white"
             >
                 {/* Modal Header */}
                 <div className="flex items-center justify-between gap-3 border-b-4 border-slate-900 bg-sky-300 p-4 sm:p-5">

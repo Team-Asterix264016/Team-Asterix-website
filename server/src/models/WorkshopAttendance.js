@@ -82,23 +82,6 @@ const WorkshopAttendanceSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    // GPS Verification metadata
-    latitude: {
-        type: Number,
-        default: null
-    },
-    longitude: {
-        type: Number,
-        default: null
-    },
-    locationAccuracy: {
-        type: Number,
-        default: null
-    },
-    distanceFromAdmin: {
-        type: Number,
-        default: null
-    },
     verifiedBy: {
         type: String,
         enum: ['qr-scan', 'manual-admin', 'barcode-scanner'],

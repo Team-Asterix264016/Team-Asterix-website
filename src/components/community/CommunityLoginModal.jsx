@@ -19,11 +19,11 @@ export default function CommunityLoginModal() {
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto"
             data-lenis-prevent="true"
             data-lenis-prevent-wheel="true"
         >
-            <div className="bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-md w-full p-6 sm:p-8 space-y-5 animate-pop">
+            <div className="my-auto bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#0f172a] max-w-md w-full p-6 sm:p-8 space-y-5 animate-pop">
                 <div className="flex items-center justify-between border-b-4 border-slate-900 pb-3">
                     <div>
                         <span className="px-2 py-0.5 bg-sky-400 text-slate-900 border border-slate-900 font-mono text-[9px] font-black uppercase">

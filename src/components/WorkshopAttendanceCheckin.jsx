@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { apiUrl } from '../lib/api';
 
 // Persistent client-side device identifier for anti-proxy enforcement
@@ -43,60 +43,6 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState(null);
-
-    // Student GPS Location state
-    const [studentCoords, setStudentCoords] = useState(null); // { latitude, longitude, accuracy }
-    const [locationStatus, setLocationStatus] = useState('idle'); // 'idle' | 'acquiring' | 'acquired' | 'error' | 'poor_accuracy'
-    const [locationError, setLocationError] = useState('');
-
-    // Acquire student's current GPS location via Geolocation API
-    const acquireStudentLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            setLocationStatus('error');
-            setLocationError('GPS Geolocation is not supported by your mobile browser.');
-            return Promise.reject(new Error('Geolocation not supported'));
-        }
-
-        setLocationStatus('acquiring');
-        setLocationError('');
-
-        return new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const acc = position.coords.accuracy;
-
-                    const coordsObj = { latitude: lat, longitude: lng, accuracy: acc };
-                    setStudentCoords(coordsObj);
-
-                    if (acc > 100) {
-                        setLocationStatus('poor_accuracy');
-                        setLocationError(`GPS location accuracy is too low (±${Math.round(acc)}m). Please enable High Accuracy / Location on your phone.`);
-                    } else {
-                        setLocationStatus('acquired');
-                    }
-                    resolve(coordsObj);
-                },
-                (err) => {
-                    console.error('Student location acquisition error:', err);
-                    setLocationStatus('error');
-                    let msg = 'Failed to acquire your GPS location.';
-                    if (err.code === 1) msg = 'Location permission denied. Please allow location access in your browser settings.';
-                    else if (err.code === 2) msg = 'Location unavailable. Ensure GPS/Location service is turned ON.';
-                    else if (err.code === 3) msg = 'Location request timed out. Please try again.';
-                    setLocationError(msg);
-                    reject(new Error(msg));
-                },
-                { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-            );
-        });
-    }, []);
-
-    // Acquire location on page mount
-    useEffect(() => {
-        acquireStudentLocation().catch(() => {});
-    }, [acquireStudentLocation]);
 
     // Extract token from URL hash or query params
     useEffect(() => {
@@ -153,24 +99,6 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
         setIsSubmitting(true);
 
         try {
-            // Ensure location is acquired before submitting
-            let currentCoords = studentCoords;
-            if (!currentCoords || currentCoords.latitude == null) {
-                try {
-                    currentCoords = await acquireStudentLocation();
-                } catch (locErr) {
-                    throw new Error(locErr.message || 'GPS location is required to record attendance.');
-                }
-            }
-
-            if (!currentCoords || currentCoords.latitude == null || currentCoords.longitude == null) {
-                throw new Error('GPS location access is required. Please enable location access in browser settings.');
-            }
-
-            if (currentCoords.accuracy != null && currentCoords.accuracy > 100) {
-                throw new Error(`GPS location accuracy is too poor (±${Math.round(currentCoords.accuracy)}m). Turn on High Accuracy GPS / Location on your phone.`);
-            }
-
             const deviceId = getOrCreateDeviceId();
             const res = await fetch(apiUrl('/api/workshop/attendance/checkin'), {
                 method: 'POST',
@@ -179,10 +107,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                     token,
                     rollNo: cleanRoll,
                     email: cleanEmail,
-                    deviceId,
-                    latitude: currentCoords.latitude,
-                    longitude: currentCoords.longitude,
-                    accuracy: currentCoords.accuracy
+                    deviceId
                 })
             });
 
@@ -282,14 +207,6 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                                     </span>
                                 </div>
                             )}
-                            {successData.distanceFromAdmin != null && (
-                                <div className="flex justify-between border-b border-slate-200 pb-1">
-                                    <span className="text-[11px] text-slate-500">Classroom Proximity:</span>
-                                    <span className="font-bold text-emerald-700">
-                                        {successData.distanceFromAdmin}m from instructor ✓
-                                    </span>
-                                </div>
-                            )}
                             <div className="flex justify-between pt-0.5">
                                 <span className="text-[11px] text-slate-500">Recorded At:</span>
                                 <span className="text-[11px] font-bold text-slate-700">
@@ -323,54 +240,6 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             <p className="mt-1 text-[11px] font-bold text-slate-500">
                                 Enter your registered details to verify your in-person presence.
                             </p>
-                        </div>
-
-                        {/* GPS Location Status Indicator Banner */}
-                        <div className="border-2 border-slate-900 bg-slate-50 p-3 text-xs">
-                            <div className="flex items-center justify-between gap-2">
-                                <div className="flex items-center gap-2 truncate">
-                                    {locationStatus === 'acquiring' ? (
-                                        <>
-                                            <span className="h-2.5 w-2.5 animate-ping rounded-full bg-amber-500 shrink-0"></span>
-                                            <span className="font-bold text-amber-900 truncate">Detecting GPS location...</span>
-                                        </>
-                                    ) : locationStatus === 'acquired' ? (
-                                        <>
-                                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                                            <span className="font-bold text-emerald-900 truncate">
-                                                📍 GPS Acquired (±{Math.round(studentCoords?.accuracy || 0)}m precision)
-                                            </span>
-                                        </>
-                                    ) : locationStatus === 'poor_accuracy' ? (
-                                        <>
-                                            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                                            <span className="font-bold text-amber-900 truncate">
-                                                ⚠️ Accuracy low (±{Math.round(studentCoords?.accuracy || 0)}m)
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                                            <span className="font-bold text-rose-900 truncate">
-                                                {locationError || 'GPS location required'}
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => acquireStudentLocation().catch(() => {})}
-                                    className="press shrink-0 border border-slate-900 bg-white px-2 py-0.5 text-[10px] font-black text-slate-900 uppercase hover:bg-slate-100"
-                                >
-                                    {locationStatus === 'acquiring' ? 'Locating...' : 'Refresh GPS 📍'}
-                                </button>
-                            </div>
-                            {locationStatus === 'poor_accuracy' && (
-                                <p className="mt-1 text-[10px] font-semibold text-amber-800">
-                                    Turn on High Accuracy / GPS mode on your phone for precise 50m distance validation.
-                                </p>
-                            )}
                         </div>
 
                         {/* Error Alert */}
