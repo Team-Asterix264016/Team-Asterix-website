@@ -4,20 +4,27 @@ import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
-// POST /api/subscribers (Public - Join the Alliance)
+const SOURCES = ['home', 'community', 'blog'];
+
+// POST /api/subscribers (Public - Join the Alliance, community page, blog posts)
 router.post('/', async (req, res) => {
     try {
-        const { email, phone } = req.body;
+        const { email, phone, source } = req.body;
         if (!email || !email.includes('@')) {
             return res.status(400).json({ error: 'A valid email address is required.' });
         }
 
         const cleanEmail = email.trim().toLowerCase();
-        const cleanPhone = phone ? phone.trim() : null;
+        const cleanPhone = typeof phone === 'string' ? phone.trim() : '';
 
+        // An email-only signup (community, blog) must not wipe a phone given earlier,
+        // and the first place someone subscribed from is the one kept.
         await Subscriber.findOneAndUpdate(
             { email: cleanEmail },
-            { $set: { phone: cleanPhone } },
+            {
+                ...(cleanPhone ? { $set: { phone: cleanPhone } } : {}),
+                $setOnInsert: { source: SOURCES.includes(source) ? source : 'home' }
+            },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
@@ -39,6 +46,7 @@ router.get('/', authenticateToken, async (req, res) => {
             id: s._id.toString(),
             email: s.email,
             phone: s.phone,
+            source: s.source || 'home',
             created_at: s.createdAt
         }));
         res.json(list);
