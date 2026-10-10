@@ -78,7 +78,18 @@ export default function MailClusterAdmin({ showStatus }) {
     };
 
     const exportCsv = () => {
-        const header = ['Email', 'Name', 'Department', 'Year', 'Segments', 'Last login', 'Login count', 'Subscribed', 'Source'];
+        const header = [
+            'Email',
+            'Name',
+            'Department',
+            'Year',
+            'Segments',
+            'Last login',
+            'Login count',
+            'Subscribed',
+            'Source',
+            'Unsubscribe link'
+        ];
         const rows = visible.map((c) =>
             [
                 c.email,
@@ -89,7 +100,8 @@ export default function MailClusterAdmin({ showStatus }) {
                 c.lastLoginAt || '',
                 c.loginCount || 0,
                 c.subscribedAt || '',
-                c.source || ''
+                c.source || '',
+                c.unsubscribeUrl || ''
             ]
                 .map(csvCell)
                 .join(',')
@@ -108,7 +120,7 @@ export default function MailClusterAdmin({ showStatus }) {
         showStatus?.(`Exported ${visible.length} contact${visible.length === 1 ? '' : 's'}.`);
     };
 
-    const counts = state.counts || { total: 0, participants: 0, subscribers: 0, both: 0 };
+    const counts = state.counts || { total: 0, participants: 0, subscribers: 0, both: 0, optedOut: 0 };
     const tiles = [
         { label: 'Unique emails', value: counts.total },
         { label: 'Logged-in participants', value: counts.participants },
@@ -128,6 +140,9 @@ export default function MailClusterAdmin({ showStatus }) {
                     </h2>
                     <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                         Everyone who has logged in to a workshop profile, plus newsletter subscribers.
+                        {state.status === 'ready' && counts.optedOut > 0
+                            ? ` ${counts.optedOut} opted out and ${counts.optedOut === 1 ? 'is' : 'are'} left out.`
+                            : ''}
                     </p>
                 </div>
                 <button
@@ -199,7 +214,9 @@ export default function MailClusterAdmin({ showStatus }) {
                     </div>
                 </div>
                 <p className="font-mono text-[10px] font-bold text-slate-600">
-                    Paste copied addresses into BCC, never To or CC, so recipients cannot see each other.
+                    Paste copied addresses into BCC, never To or CC, so recipients cannot see each other. For
+                    newsletters, send from a mail-merge tool with the CSV instead: its &quot;Unsubscribe link&quot;
+                    column gives each person their own link, which a BCC email cannot.
                 </p>
                 {manualCopy && (
                     <div>

@@ -12,6 +12,8 @@ export default function NewsletterSignup({
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState('idle'); // 'idle' | 'sending' | 'done' | 'error'
     const [message, setMessage] = useState('');
+    // Decoy field: hidden from people, filled by bots, and the server drops those signups.
+    const [trap, setTrap] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,7 +26,7 @@ export default function NewsletterSignup({
             const res = await fetch(apiUrl('/api/subscribers'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: clean, source })
+                body: JSON.stringify({ email: clean, source, website: trap })
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -56,6 +58,19 @@ export default function NewsletterSignup({
                 </p>
             ) : (
                 <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                        <label>
+                            Website
+                            <input
+                                type="text"
+                                name="website"
+                                tabIndex={-1}
+                                autoComplete="off"
+                                value={trap}
+                                onChange={(e) => setTrap(e.target.value)}
+                            />
+                        </label>
+                    </div>
                     <label htmlFor={inputId} className="sr-only">
                         Email address
                     </label>

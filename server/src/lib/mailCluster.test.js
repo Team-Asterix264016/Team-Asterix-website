@@ -11,7 +11,7 @@ test('merges a participant and a subscriber with the same email (case-insensitiv
     assert.deepEqual(contacts[0].segments, ['participant', 'subscriber']);
     assert.equal(contacts[0].email, 'asha@psgitech.ac.in');
     assert.equal(contacts[0].source, 'blog');
-    assert.deepEqual(counts, { total: 1, participants: 1, subscribers: 1, both: 1 });
+    assert.deepEqual(counts, { total: 1, participants: 1, subscribers: 1, both: 1, optedOut: 0 });
 });
 
 test('keeps the latest login and sums login counts across duplicate registrations', () => {
@@ -43,5 +43,23 @@ test('drops entries without a usable email and sorts by email', () => {
         [{ email: null }, { email: 'a@x.in' }]
     );
     assert.deepEqual(contacts.map((c) => c.email), ['a@x.in', 'b@x.in']);
-    assert.deepEqual(counts, { total: 2, participants: 1, subscribers: 1, both: 0 });
+    assert.deepEqual(counts, { total: 2, participants: 1, subscribers: 1, both: 0, optedOut: 0 });
+});
+
+test('opted-out emails and unsubscribed subscribers are dropped from every segment and counted once', () => {
+    const { contacts, counts } = buildMailCluster(
+        [
+            { email: 'Out@x.in', name: 'Opted Out Participant' },
+            { email: 'keep@x.in', name: 'Keep' },
+            { email: 'gone@x.in', name: 'Unsubscribed and participant' }
+        ],
+        [
+            { email: 'gone@x.in', unsubscribedAt: '2026-10-01' },
+            { email: 'sub@x.in', createdAt: '2026-09-01' }
+        ],
+        ['out@x.in']
+    );
+    assert.deepEqual(contacts.map((c) => c.email), ['keep@x.in', 'sub@x.in']);
+    assert.equal(counts.optedOut, 2);
+    assert.equal(counts.total, 2);
 });

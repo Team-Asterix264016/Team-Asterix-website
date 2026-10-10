@@ -5,13 +5,20 @@ import { resourceBadge } from '../../lib/resourceTypes';
 import { formatPostDate } from '../../lib/postDate';
 import BlogArticle from './BlogArticle';
 import NewsletterSignup from './NewsletterSignup';
+import UnsubscribePanel from './UnsubscribePanel';
 
 /* Read-only community hub. Routes live in the hash so links and the back
-   button work: #community (blog), #community/resources, #community/blog/<slug>. */
+   button work: #community (blog), #community/resources, #community/blog/<slug>,
+   and #community/unsubscribe?e=<email>&t=<token> from our emails. */
 function parseRoute(hash) {
-    const parts = hash.replace(/^#community\/?/, '').split('/').filter(Boolean);
+    const [path, query = ''] = hash.replace(/^#community\/?/, '').split('?');
+    const parts = path.split('/').filter(Boolean);
     if (parts[0] === 'blog' && parts[1]) return { view: 'article', slug: decodeURIComponent(parts[1]) };
     if (parts[0] === 'resources') return { view: 'resources' };
+    if (parts[0] === 'unsubscribe') {
+        const params = new URLSearchParams(query);
+        return { view: 'unsubscribe', email: params.get('e') || '', token: params.get('t') || '' };
+    }
     return { view: 'blog' };
 }
 
@@ -305,6 +312,8 @@ export default function CommunityPage({ onBack }) {
             <main className="flex-1">
                 {route.view === 'article' ? (
                     <BlogArticle key={route.slug} slug={route.slug} />
+                ) : route.view === 'unsubscribe' ? (
+                    <UnsubscribePanel key={`${route.email}|${route.token}`} email={route.email} token={route.token} />
                 ) : (
                     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-8 sm:py-14">
                         <div className="max-w-2xl">

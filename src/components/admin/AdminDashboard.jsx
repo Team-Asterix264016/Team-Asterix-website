@@ -431,9 +431,9 @@ export default function AdminDashboard({ onExit }) {
             if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
             return `"${text.replace(/"/g, '""')}"`;
         };
-        const header = ['Email', 'Phone', 'Source', 'Joined Date'].join(',');
+        const header = ['Email', 'Phone', 'Source', 'Joined Date', 'Unsubscribed'].join(',');
         const rows = subscribers.map((s) =>
-            [s.email, s.phone, s.source || 'home', s.created_at].map(cell).join(',')
+            [s.email, s.phone, s.source || 'home', s.created_at, s.unsubscribed_at || ''].map(cell).join(',')
         );
         const csvContent = 'data:text/csv;charset=utf-8,' + [header, ...rows].join('\n');
         const encodedUri = encodeURI(csvContent);
@@ -2537,6 +2537,7 @@ export default function AdminDashboard({ onExit }) {
                                                 <th className="p-2.5">Email</th>
                                                 <th className="p-2.5">Phone</th>
                                                 <th className="p-2.5">Source</th>
+                                                <th className="p-2.5">Status</th>
                                                 <th className="p-2.5">Joined Date</th>
                                                 <th className="p-2.5 text-right">Actions</th>
                                             </tr>
@@ -2552,6 +2553,16 @@ export default function AdminDashboard({ onExit }) {
                                                     </td>
                                                     <td className="p-2.5 text-[11px] text-slate-600 uppercase">
                                                         {sub.source || 'home'}
+                                                    </td>
+                                                    <td className="p-2.5 text-[11px]">
+                                                        {sub.unsubscribed_at ? (
+                                                            <span className="font-bold text-rose-700">
+                                                                Unsubscribed{' '}
+                                                                {new Date(sub.unsubscribed_at).toLocaleDateString()}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-bold text-emerald-700">Active</span>
+                                                        )}
                                                     </td>
                                                     <td className="p-2.5 text-[11px] text-slate-500">
                                                         {sub.created_at

@@ -17,6 +17,11 @@ const SubscriberSchema = new mongoose.Schema({
         type: String,
         enum: ['home', 'community', 'blog'],
         default: 'home'
+    },
+    // Set by the unsubscribe link; cleared if they subscribe again.
+    unsubscribedAt: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

@@ -7,6 +7,8 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
     const [submitted, setSubmitted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [statusNote, setStatusNote] = useState('');
+    // Decoy field: hidden from people, filled by bots, and the server drops those signups.
+    const [trap, setTrap] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,7 +21,7 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
             const res = await fetch(apiUrl('/api/subscribers'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, phone })
+                body: JSON.stringify({ email, phone, website: trap })
             });
 
             if (res.ok) {
@@ -120,6 +122,19 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                 onSubmit={handleSubmit}
                                 className="mx-auto flex max-w-3xl flex-col gap-4 sm:flex-row"
                             >
+                                <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                                    <label>
+                                        Website
+                                        <input
+                                            type="text"
+                                            name="website"
+                                            tabIndex={-1}
+                                            autoComplete="off"
+                                            value={trap}
+                                            onChange={(e) => setTrap(e.target.value)}
+                                        />
+                                    </label>
+                                </div>
                                 <input
                                     data-assemble="left"
                                     type="email"

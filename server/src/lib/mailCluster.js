@@ -2,14 +2,23 @@
  * Merges logged-in workshop participants and newsletter subscribers into one
  * contact list keyed by lowercase email. A person who is both appears once with
  * both segments. Someone with several paid registrations keeps their latest
- * login and their summed login count.
+ * login and their summed login count. Anyone on the opt-out list, or a
+ * subscriber who unsubscribed, is left out of every segment and only counted.
  */
-export function buildMailCluster(participants = [], subscribers = []) {
+export function buildMailCluster(participants = [], subscribers = [], optOutEmails = []) {
     const byEmail = new Map();
+    const normalize = (email) => String(email || '').trim().toLowerCase();
+    const optedOut = new Set(optOutEmails.map(normalize));
+    for (const s of subscribers) if (s.unsubscribedAt) optedOut.add(normalize(s.email));
+    const suppressed = new Set();
 
     const contactFor = (email) => {
-        const key = String(email || '').trim().toLowerCase();
+        const key = normalize(email);
         if (!key.includes('@')) return null;
+        if (optedOut.has(key)) {
+            suppressed.add(key);
+            return null;
+        }
         if (!byEmail.has(key)) {
             byEmail.set(key, {
                 email: key,
@@ -57,7 +66,8 @@ export function buildMailCluster(participants = [], subscribers = []) {
             total: contacts.length,
             participants: contacts.filter((c) => has(c, 'participant')).length,
             subscribers: contacts.filter((c) => has(c, 'subscriber')).length,
-            both: contacts.filter((c) => has(c, 'participant') && has(c, 'subscriber')).length
+            both: contacts.filter((c) => has(c, 'participant') && has(c, 'subscriber')).length,
+            optedOut: suppressed.size
         }
     };
 }
