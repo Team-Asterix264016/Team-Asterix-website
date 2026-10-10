@@ -65,14 +65,74 @@ export function parsePostFile(text) {
     };
 }
 
+// Links and images end up in public pages, so only http(s) and same-site paths pass.
+export function isSafeUrl(url) {
+    if (url.startsWith('/')) return !url.startsWith('//');
+    try {
+        const { protocol } = new URL(url);
+        return protocol === 'https:' || protocol === 'http:';
+    } catch {
+        return false;
+    }
+}
+
+const LIMITS = { title: 200, excerpt: 600, body: 50000, coverAlt: 300, author: 120, authorRole: 120, category: 60 };
+const POSITION_RE = /^\d{1,3}% \d{1,3}%$/;
+
+/**
+ * Validates an admin create/update request into a BlogPost document.
+ * Returns { doc } or { error, field }. Status and publishedAt are the route's job.
+ */
+export function parseBlogBody(body = {}) {
+    const text = (key) => String(body[key] ?? '').trim();
+    const doc = {
+        title: text('title'),
+        excerpt: text('excerpt'),
+        body: String(body.body ?? '').replace(/\r\n/g, '\n').trim(),
+        coverImage: text('coverImage'),
+        coverAlt: text('coverAlt'),
+        author: text('author') || 'Team Asterix',
+        authorRole: text('authorRole'),
+        category: text('category'),
+        featured: body.featured === true
+    };
+
+    if (!doc.title) return { error: 'Give the post a title.', field: 'title' };
+    for (const [key, max] of Object.entries(LIMITS)) {
+        if (doc[key].length > max) return { error: `${key} is too long (max ${max} characters).`, field: key };
+    }
+
+    doc.slug = slugify(text('slug') || doc.title);
+    if (!doc.slug) return { error: 'The URL slug needs at least one letter or digit.', field: 'slug' };
+
+    if (doc.coverImage && !isSafeUrl(doc.coverImage)) {
+        return { error: 'Cover image must be an http(s) URL or a site path starting with /.', field: 'coverImage' };
+    }
+
+    const rawTags = Array.isArray(body.tags) ? body.tags : String(body.tags ?? '').split(',');
+    const seen = new Set();
+    doc.tags = rawTags
+        .map((t) => String(t).trim().replace(/^#/, ''))
+        .filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
+    if (doc.tags.length > 10 || doc.tags.some((t) => t.length > 40)) {
+        return { error: 'Use at most 10 tags of up to 40 characters each.', field: 'tags' };
+    }
+
+    doc.coverPosition = POSITION_RE.test(text('coverPosition')) ? text('coverPosition') : '50% 50%';
+    return { doc };
+}
+
 // The shape the public list and the admin table both use: everything but the body.
 export function toListItem(post) {
     return {
+        id: String(post._id ?? ''),
         slug: post.slug,
         title: post.title,
         excerpt: post.excerpt,
         coverImage: post.coverImage,
         coverAlt: post.coverAlt,
+        coverPosition: post.coverPosition || '50% 50%',
+        featured: Boolean(post.featured),
         author: post.author,
         authorRole: post.authorRole,
         category: post.category,
