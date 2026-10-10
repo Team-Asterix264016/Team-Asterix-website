@@ -963,7 +963,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                 ) : (
                     filteredRegistrations.map((reg) => {
                         const isPaid = reg.status === 'paid';
-                        const isPending = reg.status === 'pending';
 
                         return (
                             <div

@@ -64,7 +64,9 @@ export default function AdminDashboard({ onExit }) {
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
+    const [isWebsiteContentOpen, setIsWebsiteContentOpen] = useState(true);
     const [isWorkshopOpen, setIsWorkshopOpen] = useState(true);
+    const [isDevOpen, setIsDevOpen] = useState(true);
 
     useEffect(() => {
         try {
@@ -580,11 +582,21 @@ export default function AdminDashboard({ onExit }) {
     const isSuperAdmin = currentUser?.accessLevel === 'SuperAdmin';
 
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: 'overview' },
-        { id: 'hero', label: 'Hero & Branding', icon: 'edit' },
-        { id: 'story', label: 'Our Story', icon: 'book' },
-        { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
-        { id: 'sponsorship', label: 'Sponsorship Portal', icon: 'folder' },
+        {
+            id: 'website-content-group',
+            label: 'WEBSITE CONTENT CMS',
+            isGroup: true,
+            icon: 'edit',
+            children: [
+                { id: 'overview', label: 'Overview', icon: 'overview' },
+                { id: 'hero', label: 'Hero & Branding', icon: 'edit' },
+                { id: 'story', label: 'Our Story', icon: 'book' },
+                { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
+                { id: 'sponsorship', label: 'Sponsorship Portal', icon: 'folder' },
+                { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
+                { id: 'updates', label: 'Team Updates', icon: 'megaphone' }
+            ]
+        },
         {
             id: 'workshop-group',
             label: 'WORKSHOP MANAGEMENT',
@@ -604,11 +616,17 @@ export default function AdminDashboard({ onExit }) {
                     : [])
             ]
         },
-        { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
-        { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
-        { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
-        { id: 'accounts', label: 'Team Accounts', icon: 'users' },
-        { id: 'settings', label: 'Settings & Backup', icon: 'settings' }
+        {
+            id: 'dev-group',
+            label: 'For the DEV 🛠️',
+            isGroup: true,
+            icon: 'settings',
+            children: [
+                { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
+                { id: 'accounts', label: 'Team Accounts', icon: 'users' },
+                { id: 'settings', label: 'Settings & Backup', icon: 'settings' }
+            ]
+        }
     ];
 
     return (
@@ -723,15 +741,28 @@ export default function AdminDashboard({ onExit }) {
                     {tabs.map((tab) => {
                         if (tab.isGroup) {
                             const isAnyChildActive = tab.children.some((c) => c.id === activeTab);
+                            const isExpanded =
+                                tab.id === 'website-content-group'
+                                    ? isWebsiteContentOpen
+                                    : tab.id === 'dev-group'
+                                      ? isDevOpen
+                                      : isWorkshopOpen;
+                            const toggleExpanded =
+                                tab.id === 'website-content-group'
+                                    ? setIsWebsiteContentOpen
+                                    : tab.id === 'dev-group'
+                                      ? setIsDevOpen
+                                      : setIsWorkshopOpen;
+
                             return (
                                 <div key={tab.id} className="my-0.5 flex flex-col gap-1">
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            setIsWorkshopOpen((prev) => {
+                                            toggleExpanded((prev) => {
                                                 const next = !prev;
-                                                if (next && !activeTab.startsWith('workshop-')) {
-                                                    setActiveTab('workshop-schedule');
+                                                if (next && !tab.children.some((c) => c.id === activeTab)) {
+                                                    setActiveTab(tab.children[0].id);
                                                 }
                                                 return next;
                                             });
@@ -741,7 +772,7 @@ export default function AdminDashboard({ onExit }) {
                                                 ? 'shadow-brutal-2 border-slate-900 bg-slate-900 text-white'
                                                 : 'border-slate-900 bg-slate-100 text-slate-900 hover:bg-sky-100'
                                         }`}
-                                        aria-expanded={isWorkshopOpen}
+                                        aria-expanded={isExpanded}
                                     >
                                         <span className="flex items-center gap-2">
                                             <Icon name={tab.icon} className="h-4 w-4" />
@@ -758,12 +789,12 @@ export default function AdminDashboard({ onExit }) {
                                                 {tab.children.length}
                                             </span>
                                             <span className="text-[10px] leading-none font-black">
-                                                {isWorkshopOpen ? '▲' : '▼'}
+                                                {isExpanded ? '▲' : '▼'}
                                             </span>
                                         </span>
                                     </button>
 
-                                    {isWorkshopOpen && (
+                                    {isExpanded && (
                                         <div className="my-1 ml-1 flex flex-col gap-1 border-l-2 border-slate-300 pl-2">
                                             {tab.children.map((child) => {
                                                 const isTabRestricted = child.adminOnly && !isAdmin;

@@ -24,6 +24,34 @@ function getOrCreateDeviceId() {
     }
 }
 
+function triggerSuccessFeedback(studentName = '') {
+    // 1. Mobile Haptic Vibration
+    try {
+        if (typeof window !== 'undefined' && 'navigator' in window && typeof navigator.vibrate === 'function') {
+            navigator.vibrate([70, 40, 70]);
+        }
+    } catch {}
+
+    // 2. Synthesized Web Audio Chime
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+        }
+    } catch {}
+}
+
 export default function WorkshopAttendanceCheckin({ onGoHome }) {
     const [token, setToken] = useState('');
     const [rollNo, setRollNo] = useState(() => {
@@ -116,14 +144,15 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                 throw new Error(data.error || 'Failed to record attendance');
             }
 
-            setSuccessData(
-                data.attendance || {
-                    name: 'Student Candidate',
-                    rollNo: cleanRoll,
-                    track: tokenInfo?.track || 'workshop',
-                    checkedInAt: new Date().toISOString()
-                }
-            );
+            const record = data.attendance || {
+                name: 'Student Candidate',
+                rollNo: cleanRoll,
+                track: tokenInfo?.track || 'workshop',
+                checkedInAt: new Date().toISOString()
+            };
+
+            setSuccessData(record);
+            triggerSuccessFeedback(record.name);
         } catch (err) {
             console.error('Checkin failed:', err);
             setError(err.message || 'Could not record attendance. Please try again.');

@@ -5,53 +5,71 @@ import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 
 /**
- * Web Audio API Sound Synthesizer
- * Zero external audio files required — generates immediate, reliable audio cues.
+ * Web Audio API Sound Synthesizer, Mobile Haptic Engine & Speech Synthesis
+ * Zero external audio files required — generates immediate, reliable audio cues & haptics.
  */
-function playAudioTone(type = 'success', isMuted = false) {
+function playAudioTone(type = 'success', isMuted = false, candidateName = '') {
+    // 1. Mobile Haptic Vibration Feedback
+    try {
+        if (typeof window !== 'undefined' && 'navigator' in window && typeof navigator.vibrate === 'function') {
+            if (type === 'success') {
+                navigator.vibrate([60, 40, 60]); // Double pulse tick
+            } else if (type === 'warning') {
+                navigator.vibrate([120]);
+            } else {
+                navigator.vibrate([180, 80, 180]); // Error double buzz
+            }
+        }
+    } catch {
+        // Ignore vibration errors on unsupported devices
+    }
+
     if (isMuted) return;
+
+    // 2. Web Audio API Chime Synth
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
+        if (AudioCtx) {
+            const ctx = new AudioCtx();
 
-        if (type === 'success') {
-            // High double-tone chime (880Hz -> 1760Hz)
-            const osc1 = ctx.createOscillator();
-            const gain1 = ctx.createGain();
-            osc1.type = 'sine';
-            osc1.frequency.setValueAtTime(880, ctx.currentTime);
-            osc1.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.12);
-            gain1.gain.setValueAtTime(0.25, ctx.currentTime);
-            gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-            osc1.connect(gain1);
-            gain1.connect(ctx.destination);
-            osc1.start();
-            osc1.stop(ctx.currentTime + 0.25);
-        } else if (type === 'warning') {
-            // Dual warm pulse tone (587Hz)
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-            gain.gain.setValueAtTime(0.2, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.3);
-        } else {
-            // Error low buzz tone (220Hz)
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, ctx.currentTime);
-            gain.gain.setValueAtTime(0.25, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.35);
+            if (type === 'success') {
+                // High double-tone chime (880Hz -> 1760Hz)
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(880, ctx.currentTime);
+                osc1.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.12);
+                gain1.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start();
+                osc1.stop(ctx.currentTime + 0.25);
+            } else if (type === 'warning') {
+                // Dual warm pulse tone (587Hz)
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            } else {
+                // Error low buzz tone (220Hz)
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            }
         }
     } catch {
         // Ignore audio playback blocks if user hasn't interacted yet
@@ -182,7 +200,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                 }
 
                 if (data.alreadyRecorded) {
-                    playAudioTone('warning', isAudioMuted);
+                    playAudioTone('warning', isAudioMuted, data.candidate?.name);
                     const resultObj = {
                         type: 'warning',
                         message: data.message || `Already Marked: ${data.candidate?.name || barcode}`,
@@ -194,7 +212,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                     setRecentScans((prev) => [resultObj, ...prev.slice(0, 49)]);
                     if (showStatus) showStatus(`⚠️ ${data.message}`);
                 } else {
-                    playAudioTone('success', isAudioMuted);
+                    playAudioTone('success', isAudioMuted, data.candidate?.name);
                     const resultObj = {
                         type: 'success',
                         message: data.message || `✓ Attendance Marked: ${data.candidate?.name}`,

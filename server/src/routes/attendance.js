@@ -1299,5 +1299,133 @@ router.post('/clear-all', authenticateToken, requireSuperAdmin, async (req, res)
     }
 });
 
+/**
+ * GET /api/workshop/attendance/export-csv
+ * Download session attendance log as a CSV file.
+ */
+router.get('/export-csv', authenticateToken, async (req, res) => {
+    try {
+        const { track = 'software', sessionNumber } = req.query;
+        const filter = { track: String(track).toLowerCase() };
+        if (sessionNumber) {
+            filter.sessionNumber = Number(sessionNumber);
+        }
+
+        const records = await WorkshopAttendance.find(filter).sort({ sessionNumber: 1, checkedInAt: -1 }).lean();
+        const rollNumbers = Array.from(new Set(records.map(r => r.rollNo).filter(Boolean)));
+
+        const registrations = await WorkshopRegistration.find({ rollNo: { $in: rollNumbers } }).lean();
+        const regMap = new Map();
+        registrations.forEach(r => regMap.set(r.rollNo?.toLowerCase()?.trim(), r));
+
+        const csvHeaders = ['Roll No', 'Name', 'Department', 'Year', 'Track', 'Session Number', 'Session Topic', 'Status', 'Check-in Method', 'Check-in Time'];
+        const csvRows = [csvHeaders.join(',')];
+
+        records.forEach(r => {
+            const reg = regMap.get(r.rollNo?.toLowerCase()?.trim()) || {};
+            const row = [
+                `"${r.rollNo || ''}"`,
+                `"${(reg.name || r.name || '').replace(/"/g, '""')}"`,
+                `"${(reg.department || '').replace(/"/g, '""')}"`,
+                `"${reg.year || ''}"`,
+                `"${r.track || ''}"`,
+                `"${r.sessionNumber || 1}"`,
+                `"${(r.sessionTopic || '').replace(/"/g, '""')}"`,
+                `"${r.status || 'present'}"`,
+                `"${r.scanMethod || 'barcode'}"`,
+                `"${r.checkedInAt ? new Date(r.checkedInAt).toLocaleString('en-IN') : ''}"`
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const filename = `attendance_${track}_session_${sessionNumber || 'all'}_${Date.now()}.csv`;
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.status(200).send(csvContent);
+    } catch (err) {
+        console.error('Error exporting attendance CSV:', err);
+        return res.status(500).json({ error: 'Failed to export attendance CSV' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/bulk-reconcile
+ * Bulk import offline scanned roll numbers from CSV / text list.
+ */
+router.post('/bulk-reconcile', authenticateToken, async (req, res) => {
+    try {
+        const { track = 'software', sessionNumber = 1, sessionDate, sessionTopic, rollNumbers = [] } = req.body;
+        if (!Array.isArray(rollNumbers) || rollNumbers.length === 0) {
+            return res.status(400).json({ error: 'No roll numbers provided for bulk reconcile' });
+        }
+
+        const normalizedRolls = rollNumbers.map(r => normalizeRollNo(r)).filter(Boolean);
+        const uniqueRolls = Array.from(new Set(normalizedRolls));
+
+        const matchedRegs = await WorkshopRegistration.find({
+            rollNo: { $in: uniqueRolls.map(r => new RegExp(`^${r}$`, 'i')) },
+            status: 'paid'
+        }).lean();
+
+        const regMap = new Map();
+        matchedRegs.forEach(reg => regMap.set(normalizeRollNo(reg.rollNo), reg));
+
+        let createdCount = 0;
+        let skippedCount = 0;
+        const details = [];
+
+        for (const roll of uniqueRolls) {
+            const reg = regMap.get(roll);
+            if (!reg) {
+                skippedCount++;
+                details.push({ rollNo: roll, status: 'SKIPPED_UNREGISTERED' });
+                continue;
+            }
+
+            const existing = await WorkshopAttendance.findOne({
+                rollNo: reg.rollNo,
+                track: String(track).toLowerCase(),
+                sessionNumber: Number(sessionNumber)
+            });
+
+            if (existing) {
+                skippedCount++;
+                details.push({ rollNo: reg.rollNo, status: 'SKIPPED_ALREADY_PRESENT' });
+            } else {
+                await WorkshopAttendance.create({
+                    registrationId: reg.registrationId,
+                    rollNo: reg.rollNo,
+                    name: reg.name,
+                    email: reg.email,
+                    phone: reg.phone,
+                    track: String(track).toLowerCase(),
+                    sessionNumber: Number(sessionNumber),
+                    sessionDate: sessionDate || new Date().toISOString().split('T')[0],
+                    sessionTopic: sessionTopic || `Session ${sessionNumber}`,
+                    status: 'present',
+                    scanMethod: 'offline_csv_reconcile',
+                    checkedInAt: new Date()
+                });
+                createdCount++;
+                details.push({ rollNo: reg.rollNo, name: reg.name, status: 'CHECKED_IN' });
+            }
+        }
+
+        return res.json({
+            success: true,
+            createdCount,
+            skippedCount,
+            totalProcessed: uniqueRolls.length,
+            details
+        });
+    } catch (err) {
+        console.error('Error performing bulk attendance reconcile:', err);
+        return res.status(500).json({ error: 'Failed to bulk reconcile attendance' });
+    }
+});
+
 export default router;
+
 

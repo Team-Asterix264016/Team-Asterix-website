@@ -1530,6 +1530,7 @@ router.post('/login', async (req, res) => {
         return res.json({
             success: true,
             token,
+            isDefaultPassword: isDefaultPwd,
             student: tokenPayload
         });
     } catch (err) {
