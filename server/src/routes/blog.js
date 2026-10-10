@@ -21,7 +21,33 @@ const adminOnly = [authenticateToken, requireLeadOrAdmin, requireDb];
 const PUBLIC_ORDER = { featured: -1, publishedAt: -1 };
 
 function withBody(post) {
-    return { ...toListItem(post), body: post.body };
+    return {
+        ...toListItem(post),
+        body: post.body,
+        takeaways: post.takeaways || [],
+        reactionCounts: post.reactionCounts || {}
+    };
+}
+
+// "Keep reading": posts sharing the category or a tag first, topped up with the newest.
+async function relatedPosts(post, limit = 3) {
+    const others = { ...PUBLISHED, _id: { $ne: post._id } };
+    const topical = [];
+    if (post.category || post.tags?.length) {
+        const or = [];
+        if (post.category) or.push({ category: post.category });
+        if (post.tags?.length) or.push({ tags: { $in: post.tags } });
+        topical.push(...(await BlogPost.find({ ...others, $or: or }).sort(PUBLIC_ORDER).limit(limit).lean()));
+    }
+    if (topical.length < limit) {
+        const seen = topical.map((p) => p._id);
+        const fill = await BlogPost.find({ ...others, _id: { $nin: [post._id, ...seen] } })
+            .sort({ publishedAt: -1 })
+            .limit(limit - topical.length)
+            .lean();
+        topical.push(...fill);
+    }
+    return topical.map(toListItem);
 }
 
 // A post gets its publish date the first time it goes live and keeps it after that,
@@ -172,7 +198,7 @@ router.get('/:slug', requireDb, async (req, res) => {
         const post = await BlogPost.findOne({ ...PUBLISHED, slug }).lean();
         if (!post) return res.status(404).json({ error: 'Post not found' });
 
-        const [older, newer] = await Promise.all([
+        const [older, newer, related] = await Promise.all([
             BlogPost.findOne({ ...PUBLISHED, publishedAt: { $lt: post.publishedAt } })
                 .sort({ publishedAt: -1 })
                 .select('slug title')
@@ -180,13 +206,15 @@ router.get('/:slug', requireDb, async (req, res) => {
             BlogPost.findOne({ ...PUBLISHED, publishedAt: { $gt: post.publishedAt } })
                 .sort({ publishedAt: 1 })
                 .select('slug title')
-                .lean()
+                .lean(),
+            relatedPosts(post)
         ]);
 
         return res.json({
-            post: { ...toListItem(post), body: post.body },
+            post: withBody(post),
             previous: older ? { slug: older.slug, title: older.title } : null,
-            next: newer ? { slug: newer.slug, title: newer.title } : null
+            next: newer ? { slug: newer.slug, title: newer.title } : null,
+            related
         });
     } catch (err) {
         console.error('Error loading blog post:', err);

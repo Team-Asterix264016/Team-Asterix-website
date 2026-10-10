@@ -26,6 +26,7 @@ import attendanceRoutes from './routes/attendance.js';
 import quizRoutes from './routes/quiz.js';
 import workshopProjectRoutes from './routes/workshopProjects.js';
 import blogRoutes from './routes/blog.js';
+import blogEngagementRoutes from './routes/blogEngagement.js';
 import communityRoutes from './routes/community.js';
 import { describeRazorpayStatus } from './lib/razorpay.js';
 import { isWhatsAppConfigured } from './lib/whatsapp.js';
@@ -123,6 +124,8 @@ app.use('/api/workshop', workshopRoutes);
 app.use('/api/workshop/projects', workshopProjectRoutes);
 app.use('/api/workshop/attendance', attendanceRoutes);
 app.use('/api/quiz', quizRoutes);
+// Engagement first: its /admin/comments and /admin/analytics routes must win over /admin/:id.
+app.use('/api/blog', blogEngagementRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/community', communityRoutes);
 

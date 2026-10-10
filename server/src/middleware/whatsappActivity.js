@@ -26,7 +26,9 @@ const RESOURCE_LABELS = {
     upload: 'website media',
     workshop: 'workshop records',
     quiz: 'quiz activity',
-    auth: 'team account settings'
+    auth: 'team account settings',
+    blog: 'Horizon blog posts',
+    community: 'community data'
 };
 
 export function describeWebsiteChange(method, pathname) {
@@ -83,6 +85,10 @@ export function whatsappActivityMiddleware(req, res, next) {
             else if (event.type === 'project') message = `Workshop project submitted${studentName}`;
             else if (event.type === 'attendance') message = `Workshop attendance marked${studentName}`;
             else return;
+        } else if (event?.type === 'blog-comment') {
+            const clip = (text, max) => String(text || '').replace(/[\r\n]/g, ' ').slice(0, max);
+            message = `New comment on "${clip(event.post, 80)}" by ${clip(event.name, 60)}`
+                + (event.pending ? ' (waiting for approval in the admin portal)' : '');
         } else if (req.user) {
             const adminName = String(req.user.name || req.user.username || 'Admin').replace(/[\r\n]/g, ' ').slice(0, 80);
             const changedResource = describeWebsiteChange(method, pathname)

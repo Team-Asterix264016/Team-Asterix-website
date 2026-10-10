@@ -119,7 +119,29 @@ export function parseBlogBody(body = {}) {
     }
 
     doc.coverPosition = POSITION_RE.test(text('coverPosition')) ? text('coverPosition') : '50% 50%';
+
+    // One takeaway per line (or an array), up to eight short points.
+    const rawTakeaways = Array.isArray(body.takeaways) ? body.takeaways : String(body.takeaways ?? '').split('\n');
+    doc.takeaways = rawTakeaways.map((t) => String(t).replace(/^\s*[-*•]\s*/, '').trim()).filter(Boolean);
+    if (doc.takeaways.length > 8 || doc.takeaways.some((t) => t.length > 200)) {
+        return { error: 'Use at most 8 takeaways of up to 200 characters each.', field: 'takeaways' };
+    }
+
+    doc.commentsMode = COMMENT_MODES.includes(body.commentsMode) ? body.commentsMode : 'open';
     return { doc };
+}
+
+const COMMENT_MODES = ['open', 'approval', 'closed'];
+
+const sum = (counts) => Object.values(counts || {}).reduce((total, n) => total + (Number(n) || 0), 0);
+
+// Public numbers shown on cards and in the article header.
+export function publicStats(post) {
+    return {
+        views: post.viewCount || 0,
+        reactions: sum(post.reactionCounts),
+        comments: post.commentCount || 0
+    };
 }
 
 // The shape the public list and the admin table both use: everything but the body.
@@ -140,6 +162,8 @@ export function toListItem(post) {
         status: post.status,
         publishedAt: post.publishedAt,
         updatedAt: post.updatedAt,
-        readMinutes: readMinutes(post.body)
+        readMinutes: readMinutes(post.body),
+        commentsMode: post.commentsMode || 'open',
+        stats: publicStats(post)
     };
 }
