@@ -10,6 +10,7 @@ import TheSquad from './components/TheSquad';
 import CyberNewsletterCTA from './components/CyberNewsletterCTA';
 import TeamGallery from './components/TeamGallery';
 import OurStoryCurvedWave from './components/OurStoryCurvedWave';
+import HomeBlogStrip from './components/community/HomeBlogStrip';
 import CyberFooter from './components/CyberFooter';
 import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
@@ -407,6 +408,9 @@ function MainApp() {
 
                         {/* "OUR STORY" - Animated Sinusoidal Wave SVG Curved Text */}
                         <OurStoryCurvedWave onOpenSponsor={handleOpenSponsor} />
+
+                        {/* Latest Horizon posts; renders nothing until one is published */}
+                        <HomeBlogStrip />
 
                         {/* "JOIN THE ALLIANCE" - Brutalist Sponsor / Newsletter Form */}
                         <CyberNewsletterCTA onOpenSponsor={handleOpenSponsor} />

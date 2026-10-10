@@ -199,6 +199,16 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                 </button>
 
                                 <a
+                                    href="#community"
+                                    className="hover:shadow-brutal-2 group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg border border-slate-900 bg-violet-50 p-2 text-left font-bold text-slate-900 no-underline transition-all hover:bg-violet-200"
+                                >
+                                    <span>Horizon Blog</span>
+                                    <span className="font-mono text-[11px] text-slate-500 transition-all group-hover:translate-x-0.5 group-hover:text-violet-800">
+                                        →
+                                    </span>
+                                </a>
+
+                                <a
                                     href="#hero"
                                     className="group tap -mx-1.5 flex cursor-pointer items-center justify-between rounded-lg p-1.5 font-mono text-[10px] font-bold text-slate-500 transition-all hover:bg-slate-200/70 hover:text-slate-950"
                                 >
