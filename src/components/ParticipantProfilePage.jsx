@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiUrl } from '../lib/api';
 import { safeHref } from '../lib/safeHref';
-import { useCommunityAuth } from '../context/CommunityAuthContext';
 import { downloadAllIcsFile } from '../utils/calendarUtils';
 import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../../server/src/config/workshopPackages.js';
 import SessionNotesModal from './SessionNotesModal';
@@ -71,8 +70,6 @@ const SESSION_STATUS_STYLES = {
 };
 
 export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
-    const communityAuth = useCommunityAuth();
-    const currentMember = communityAuth?.currentMember;
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState(() => {
         try {
@@ -208,10 +205,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             params.get('email') ||
             params.get('phone') ||
             savedId ||
-            studentStorageId ||
-            currentMember?.rollNo ||
-            currentMember?.email ||
-            currentMember?.phone;
+            studentStorageId;
 
         if (queryParam) {
             setIdentifier(queryParam);
@@ -219,7 +213,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
             setPassword(activePwd);
             fetchProfile(queryParam, activePwd);
         }
-    }, [fetchProfile, currentMember]);
+    }, [fetchProfile]);
 
     const handleSearch = (e) => {
         e.preventDefault();

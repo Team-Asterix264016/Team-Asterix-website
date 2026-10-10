@@ -13,12 +13,7 @@ import OurStoryCurvedWave from './components/OurStoryCurvedWave';
 import CyberFooter from './components/CyberFooter';
 import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
-import WorkshopLoginModal from './components/WorkshopLoginModal';
 import { WebsiteDataProvider } from './context/WebsiteDataContext';
-import { CommunityAuthProvider } from './context/CommunityAuthContext';
-import CommunityLoginModal from './components/community/CommunityLoginModal';
-import CommunityProfileModal from './components/community/CommunityProfileModal';
-import CommunityMessagingDrawer from './components/community/CommunityMessagingDrawer';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
@@ -57,7 +52,6 @@ function MainApp() {
         window.location.hash.startsWith('#attendance-projector')
     );
     const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
-    const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [lenisInstance, setLenisInstance] = useState(null);
 
     const scrollToTop = () => {
@@ -433,18 +427,6 @@ function MainApp() {
                     onOpenWorkshop={handleOpenWorkshop}
                 />
             </div>
-
-            <WorkshopLoginModal
-                isOpen={loginModalOpen}
-                onClose={() => setLoginModalOpen(false)}
-                onSuccess={() => {
-                    setLoginModalOpen(false);
-                    closeAll();
-                    setIsWorkshopPage(true);
-                    window.location.hash = '#workshop';
-                    scrollToTop();
-                }}
-            />
         </div>
     );
 }
@@ -453,12 +435,7 @@ export default function App() {
     return (
         <ErrorBoundary>
             <WebsiteDataProvider>
-                <CommunityAuthProvider>
-                    <MainApp />
-                    <CommunityLoginModal />
-                    <CommunityProfileModal />
-                    <CommunityMessagingDrawer />
-                </CommunityAuthProvider>
+                <MainApp />
             </WebsiteDataProvider>
         </ErrorBoundary>
     );

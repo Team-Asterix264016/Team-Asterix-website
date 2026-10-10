@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import teamLogo from '../assets/Screenshot 2026-08-26 232320.png';
 import TextDock, { DockTextItem } from './Dock';
 import { useWebsiteData } from '../context/WebsiteDataContext';
-import { useCommunityAuth } from '../context/CommunityAuthContext';
 import Icon from './Icon';
 
 export default function CyberNavbar({
@@ -15,10 +14,6 @@ export default function CyberNavbar({
     onOpenProfile
 }) {
     const { siteData } = useWebsiteData();
-    const communityAuth = useCommunityAuth();
-    const currentMember = communityAuth?.currentMember;
-    const setIsProfileModalOpen = communityAuth?.setIsProfileModalOpen;
-    const setIsLoginModalOpen = communityAuth?.setIsLoginModalOpen;
     const subsystems = siteData.subsystems;
     const { contact } = siteData;
     const [shopOpen, setShopOpen] = useState(false);
@@ -317,13 +312,8 @@ export default function CyberNavbar({
                                     <DockTextItem
                                         mouseX={mouseX}
                                         onClick={() => {
-                                            if (currentMember) {
-                                                setIsProfileModalOpen?.(true);
-                                            } else if (onOpenProfile) {
-                                                onOpenProfile();
-                                            } else {
-                                                setIsLoginModalOpen?.(true);
-                                            }
+                                            if (onOpenProfile) onOpenProfile();
+                                            else window.location.hash = '#workshop-profile';
                                         }}
                                         className={`cursor-pointer border-slate-900 ${
                                             currentPage === 'profile'
@@ -335,16 +325,7 @@ export default function CyberNavbar({
                                                 : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
                                         }`}
                                     >
-                                        {currentMember ? (
-                                            <span className="flex items-center gap-1.5 font-mono text-[11px] font-black">
-                                                <span className="flex h-4 w-4 items-center justify-center border border-slate-900 bg-slate-900 text-amber-300">
-                                                    {currentMember.avatar}
-                                                </span>
-                                                <span>LVL {currentMember.level}</span>
-                                            </span>
-                                        ) : (
-                                            <span>PROFILE 🔓</span>
-                                        )}
+                                        <span>PROFILE 🔓</span>
                                     </DockTextItem>
 
                                     {/* Community Button */}

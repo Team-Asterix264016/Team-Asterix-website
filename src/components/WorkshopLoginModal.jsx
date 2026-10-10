@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { apiUrl } from '../lib/api';
-import { useCommunityAuth } from '../context/CommunityAuthContext';
 
 export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
-    const communityAuth = useCommunityAuth();
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -46,11 +44,6 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
             // Save JWT token & student profile in localStorage
             localStorage.setItem('workshop_jwt', data.token);
             localStorage.setItem('workshop_student', JSON.stringify(data.student));
-
-            // Sync with persistent Community Profile
-            if (communityAuth?.loginWithRollOrPhone) {
-                communityAuth.loginWithRollOrPhone(trimmed);
-            }
 
             setLoading(false);
             if (onSuccess) onSuccess(data.student, data.token);
