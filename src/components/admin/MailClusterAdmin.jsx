@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { adminGet } from './adminGet';
+import { adminGet } from './adminRequest';
 
 const SEGMENTS = [
     { id: 'all', label: 'All' },

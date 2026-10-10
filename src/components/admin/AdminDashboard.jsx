@@ -2159,7 +2159,13 @@ export default function AdminDashboard({ onExit }) {
                         <ParticipantPasswordsAdmin showStatus={showStatus} />
                     )}
 
-                    {activeTab === 'community-blog' && <CommunityBlogAdmin />}
+                    {activeTab === 'community-blog' && (
+                        <CommunityBlogAdmin
+                            showStatus={showStatus}
+                            onUploadImage={handleImageUpload}
+                            defaultAuthor={currentUser?.name}
+                        />
+                    )}
 
                     {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
 

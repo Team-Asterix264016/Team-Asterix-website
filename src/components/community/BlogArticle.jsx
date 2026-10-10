@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiUrl } from '../../lib/api';
 import { safeHref } from '../../lib/safeHref';
-import { renderMarkdown } from '../../lib/renderMarkdown';
+import ArticleBody from './ArticleBody';
 import { formatPostDate } from '../../lib/postDate';
 import NewsletterSignup from './NewsletterSignup';
 
@@ -206,13 +206,12 @@ export default function BlogArticle({ slug }) {
                     <img
                         src={cover}
                         alt={post.coverAlt || ''}
+                        style={{ objectPosition: post.coverPosition || '50% 50%' }}
                         className="mt-8 aspect-[16/9] w-full border-4 border-slate-900 object-cover"
                     />
                 )}
 
-                <div className="mx-auto mt-8 max-w-[38rem] text-[17px] leading-[1.75] break-words text-slate-800 sm:text-[18px]">
-                    {renderMarkdown(post.body)}
-                </div>
+                <ArticleBody markdown={post.body} className="mt-8" />
 
                 {post.tags?.length > 0 && (
                     <ul className="mx-auto mt-10 flex max-w-[38rem] flex-wrap gap-2" aria-label="Tags">
