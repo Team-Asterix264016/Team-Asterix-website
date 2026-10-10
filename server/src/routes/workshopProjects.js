@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import WorkshopProjectConfig from '../models/WorkshopProjectConfig.js';
 import WorkshopProjectSubmission from '../models/WorkshopProjectSubmission.js';
-import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import WorkshopRegistration, { withoutSecrets } from '../models/WorkshopRegistration.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
 
@@ -242,7 +242,7 @@ router.get('/admin/registrations', authenticateToken, requireLeadOrAdmin, requir
         res.json({
             success: true,
             registrations: registrations.map(registration => ({
-                ...registration,
+                ...withoutSecrets(registration),
                 projectSubmission: submissionByRegistration.get(String(registration._id)) || null
             }))
         });

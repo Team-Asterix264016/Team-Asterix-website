@@ -961,7 +961,6 @@ router.post('/profile/change-password', async (req, res) => {
 
         const salt = bcrypt.genSaltSync(10);
         candidate.passwordHash = bcrypt.hashSync(newPwd, salt);
-        candidate.customPasswordText = newPwd;
         candidate.passwordUpdatedAt = new Date();
         await candidate.save();
 

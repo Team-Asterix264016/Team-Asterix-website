@@ -2,7 +2,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import WorkshopRegistration, { withoutSecrets } from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
 import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
@@ -868,7 +868,8 @@ function csvCell(value) {
 /**
  * GET /api/workshop/registrations/superadmin-security
  * Strictly Protected: SuperAdmin only.
- * Returns participant login history, timestamps, and custom passwords.
+ * Returns participant login history and whether each participant has set their
+ * own password. Passwords are stored only as bcrypt hashes and are never returned.
  */
 router.get('/registrations/superadmin-security', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
     try {
@@ -878,9 +879,6 @@ router.get('/registrations/superadmin-security', authenticateToken, requireSuper
 
         const auditList = registrations.map((r) => {
             const isCustomPassword = Boolean(r.passwordHash);
-            const password = isCustomPassword
-                ? (r.customPasswordText || '[Custom Password Set]')
-                : 'asterix (Default)';
 
             return {
                 id: r._id,
@@ -897,7 +895,6 @@ router.get('/registrations/superadmin-security', authenticateToken, requireSuper
                 lastLoginAt: r.lastLoginAt || null,
                 loginCount: r.loginCount || 0,
                 isCustomPassword,
-                customPasswordText: password,
                 passwordUpdatedAt: r.passwordUpdatedAt || null,
                 paidAt: r.paidAt
             };
@@ -918,6 +915,38 @@ router.get('/registrations/superadmin-security', authenticateToken, requireSuper
     } catch (err) {
         console.error('Error fetching SuperAdmin security audit:', err);
         return res.status(500).json({ error: 'Failed to fetch SuperAdmin security audit' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/:id/reset-password
+ * SuperAdmin only: puts a participant who has forgotten their password back on
+ * the default one. Only the hash is stored, so there is nothing to read back.
+ */
+router.post('/registrations/:id/reset-password', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const registration = await WorkshopRegistration.findByIdAndUpdate(
+            id,
+            { $set: { passwordHash: '', passwordUpdatedAt: new Date() } },
+            { new: true }
+        );
+        if (!registration) {
+            return res.status(404).json({ error: 'Registration record not found.' });
+        }
+
+        console.log(`[ADMIN PASSWORD RESET] ${req.user.username} reset ${registration.rollNo} to the default password`);
+        return res.json({
+            success: true,
+            message: `${registration.name} (${registration.rollNo}) can now sign in with the default password "asterix".`
+        });
+    } catch (err) {
+        console.error('Error resetting participant password:', err);
+        return res.status(500).json({ error: 'Failed to reset the password.' });
     }
 });
 
@@ -967,7 +996,7 @@ router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, a
                 (r.phone && paidCandidateKeys.has(normalizePhone(r.phone)))
             );
             return {
-                ...r,
+                ...withoutSecrets(r),
                 isSuperseded: Boolean(candidatePaid)
             };
         });

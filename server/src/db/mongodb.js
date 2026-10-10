@@ -5,6 +5,7 @@ import TeamMember from '../models/TeamMember.js';
 import GalleryItem from '../models/GalleryItem.js';
 import TeamUpdate from '../models/TeamUpdate.js';
 import User from '../models/User.js';
+import WorkshopRegistration from '../models/WorkshopRegistration.js';
 
 let isConnected = false;
 
@@ -32,6 +33,7 @@ export async function connectMongoDB() {
         isConnected = true;
         console.log(`🍃 Successfully connected to MongoDB Atlas (database: ${dbName})!`);
         await seedDatabaseIfNeeded();
+        await purgeLegacyPlaintextPasswords();
         return true;
     } catch (err) {
         // Fallback for environments with custom or system-managed certificates (e.g. Windows Node 24)
@@ -45,6 +47,7 @@ export async function connectMongoDB() {
             isConnected = true;
             console.log(`🍃 Successfully connected to MongoDB Atlas (TLS fallback enabled, database: ${dbName})!`);
             await seedDatabaseIfNeeded();
+        await purgeLegacyPlaintextPasswords();
             return true;
         } catch (retryErr) {
             console.error('❌ Failed to connect to MongoDB Atlas:', retryErr.message);
@@ -52,6 +55,25 @@ export async function connectMongoDB() {
             isConnected = false;
             return false;
         }
+    }
+}
+
+/* Participant passwords used to be stored a second time in plain text
+   (customPasswordText). Only the bcrypt hash is kept now; this clears the old
+   copies and is a no-op once none are left. It goes through the native driver
+   because the field is no longer in the schema, and Mongoose would strip it
+   from the $unset. */
+export async function purgeLegacyPlaintextPasswords() {
+    try {
+        const { modifiedCount } = await WorkshopRegistration.collection.updateMany(
+            { customPasswordText: { $exists: true } },
+            { $unset: { customPasswordText: '' } }
+        );
+        if (modifiedCount > 0) {
+            console.log(`🔐 Removed stored plaintext passwords from ${modifiedCount} registration(s).`);
+        }
+    } catch (err) {
+        console.error('Failed to remove stored plaintext passwords:', err.message);
     }
 }
 

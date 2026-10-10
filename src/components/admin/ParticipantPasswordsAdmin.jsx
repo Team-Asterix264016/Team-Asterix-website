@@ -9,7 +9,6 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'loggedin' | 'custom' | 'default'
-    const [showPasswords, setShowPasswords] = useState({}); // id -> boolean
 
     const fetchAudit = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoading(true);
@@ -63,8 +62,28 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
 
     const [actionBusyId, setActionBusyId] = useState(null);
 
-    const togglePasswordVisibility = (id) => {
-        setShowPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+    // Passwords are stored only as hashes, so a forgotten one can't be read back;
+    // the participant is put back on the default and sets a new one themselves.
+    const handleResetPassword = async (item) => {
+        if (!window.confirm(`Reset ${item.name} (${item.rollNo}) to the default password "asterix"?`)) return;
+
+        setActionBusyId(item.id);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${item.id}/reset-password`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+
+            if (showStatus) showStatus(data.message || `✓ Reset ${item.name} to the default password`);
+            await fetchAudit(true);
+        } catch (err) {
+            alert('Reset error: ' + err.message);
+        } finally {
+            setActionBusyId(null);
+        }
     };
 
     const handleUpgradeToCombo = async (item) => {
@@ -95,11 +114,6 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
         } finally {
             setActionBusyId(null);
         }
-    };
-
-    const copyToClipboard = (text, label) => {
-        navigator.clipboard.writeText(text);
-        if (showStatus) showStatus(`Copied ${label} to clipboard!`);
     };
 
     const formatDateTime = (dateStr) => {
@@ -155,10 +169,10 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                             </span>
                         </div>
                         <h2 className="mt-2 text-3xl font-black uppercase text-slate-950 sm:text-4xl">
-                            Participant Logins &amp; Custom Passwords 🔑
+                            Participant Logins &amp; Password Status 🔑
                         </h2>
                         <p className="mt-1 font-mono text-xs font-bold text-slate-900">
-                            Live credentials log tracking paid participants who logged into their profile, their login timestamps, login frequency, and their actual custom passwords.
+                            Paid participants who logged into their profile, when and how often, and whether they set their own password. Passwords are stored only as one-way hashes and cannot be viewed; reset a participant to the default if they forget theirs.
                         </p>
                     </div>
 
@@ -282,13 +296,12 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                     <th className="px-4 py-3.5">Track / Package</th>
                                     <th className="px-4 py-3.5">Last Profile Login</th>
                                     <th className="px-4 py-3.5">Login Count</th>
-                                    <th className="px-4 py-3.5">Password Status &amp; Custom Password</th>
+                                    <th className="px-4 py-3.5">Password Status</th>
                                     <th className="px-4 py-3.5">Password Updated</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y-2 divide-slate-200 font-medium">
                                 {filteredList.map((item, idx) => {
-                                    const isVisible = Boolean(showPasswords[item.id]);
                                     const formattedLogin = formatDateTime(item.lastLoginAt);
                                     const formattedPwdUpdate = formatDateTime(item.passwordUpdatedAt);
 
@@ -367,29 +380,15 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                                         <span className="inline-block rounded border border-slate-900 bg-sky-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
                                                             🔒 Custom Password Set
                                                         </span>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <code className="rounded border border-slate-900 bg-slate-900 px-2 py-1 font-mono text-xs font-black text-amber-300">
-                                                                {isVisible ? item.customPasswordText : '••••••••••••'}
-                                                            </code>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => togglePasswordVisibility(item.id)}
-                                                                className="press border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 hover:bg-slate-100"
-                                                                title={isVisible ? 'Hide Password' : 'Show Plaintext Password'}
-                                                            >
-                                                                {isVisible ? 'Hide 🙈' : 'Show 👁️'}
-                                                            </button>
-                                                            {isVisible && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => copyToClipboard(item.customPasswordText, `${item.name}'s password`)}
-                                                                    className="press border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 hover:bg-amber-400"
-                                                                    title="Copy Password"
-                                                                >
-                                                                    Copy 📋
-                                                                </button>
-                                                            )}
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleResetPassword(item)}
+                                                            disabled={actionBusyId === item.id}
+                                                            className="press block border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-rose-100 disabled:opacity-50"
+                                                            title="Put this participant back on the default password"
+                                                        >
+                                                            {actionBusyId === item.id ? 'Resetting…' : '↺ Reset to default'}
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-1">

@@ -35,8 +35,8 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
     // do not collide on the unique index.
     receiptNo: { type: String, unique: true, sparse: true },
     paidAt: { type: Date, default: null },
+    // bcrypt hash only; empty means the participant still uses the default password.
     passwordHash: { type: String, default: '', trim: true },
-    customPasswordText: { type: String, default: '', trim: true },
     lastLoginAt: { type: Date, default: null },
     loginCount: { type: Number, default: 0 },
     passwordUpdatedAt: { type: Date, default: null },
@@ -60,6 +60,15 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
 WorkshopRegistrationSchema.index({ razorpayOrderId: 1 });
 WorkshopRegistrationSchema.index({ email: 1, status: 1 });
 WorkshopRegistrationSchema.index({ package: 1, status: 1, createdAt: -1 });
+
+/* Password material never leaves the server. customPasswordText is a retired
+   plaintext copy that older documents may still carry until the startup purge
+   (db/mongodb.js) clears it. */
+export function withoutSecrets({ passwordHash: _hash, customPasswordText: _plain, ...rest }) {
+    return rest;
+}
+
+WorkshopRegistrationSchema.set('toJSON', { transform: (_doc, ret) => withoutSecrets(ret) });
 
 export default mongoose.models.WorkshopRegistration
     || mongoose.model('WorkshopRegistration', WorkshopRegistrationSchema);
