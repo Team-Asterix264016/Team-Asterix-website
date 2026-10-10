@@ -68,6 +68,62 @@ export default function AdminDashboard({ onExit }) {
     const [isWorkshopOpen, setIsWorkshopOpen] = useState(true);
     const [isDevOpen, setIsDevOpen] = useState(true);
 
+    // Live Connector Health Monitor
+    const [liveHealth, setLiveHealth] = useState({
+        apiConnected: false,
+        apiLatencyMs: null,
+        dbConnected: false,
+        dbProvider: 'Checking...',
+        lastChecked: null,
+        isChecking: false
+    });
+
+    const checkLiveConnectors = useCallback(async () => {
+        setLiveHealth((prev) => ({ ...prev, isChecking: true }));
+        const startTime = performance.now();
+        try {
+            const res = await fetch(apiUrl('/api/health'), { cache: 'no-store' });
+            const endTime = performance.now();
+            const latency = Math.round(endTime - startTime);
+
+            if (res.ok) {
+                const data = await res.json();
+                setLiveHealth({
+                    apiConnected: true,
+                    apiLatencyMs: latency,
+                    dbConnected: Boolean(data.database?.connected),
+                    dbProvider: data.database?.provider || 'MongoDB Atlas',
+                    lastChecked: new Date(),
+                    isChecking: false
+                });
+            } else {
+                setLiveHealth({
+                    apiConnected: false,
+                    apiLatencyMs: latency,
+                    dbConnected: false,
+                    dbProvider: 'HTTP Error ' + res.status,
+                    lastChecked: new Date(),
+                    isChecking: false
+                });
+            }
+        } catch {
+            setLiveHealth({
+                apiConnected: false,
+                apiLatencyMs: null,
+                dbConnected: false,
+                dbProvider: 'API Server Offline',
+                lastChecked: new Date(),
+                isChecking: false
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        checkLiveConnectors();
+        const timer = setInterval(checkLiveConnectors, 10000);
+        return () => clearInterval(timer);
+    }, [checkLiveConnectors]);
+
     useEffect(() => {
         try {
             sessionStorage.setItem('admin_active_tab', activeTab);
@@ -754,6 +810,37 @@ export default function AdminDashboard({ onExit }) {
                                       ? setIsDevOpen
                                       : setIsWorkshopOpen;
 
+                            const groupStyles = {
+                                'website-content-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-sky-500 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-sky-400/80 bg-sky-50/90 text-sky-950 font-bold hover:bg-sky-100 hover:border-sky-600',
+                                    badgeActive: 'border border-slate-900 bg-sky-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-sky-400 bg-sky-200 text-sky-950 font-bold',
+                                    borderLeft: 'border-l-2 border-sky-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-sky-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-sky-300 hover:bg-sky-50'
+                                },
+                                'workshop-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-amber-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-amber-400/80 bg-amber-50/90 text-amber-950 font-bold hover:bg-amber-100 hover:border-amber-600',
+                                    badgeActive: 'border border-slate-900 bg-amber-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-amber-400 bg-amber-200 text-amber-950 font-bold',
+                                    borderLeft: 'border-l-2 border-amber-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-amber-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-amber-300 hover:bg-amber-50'
+                                },
+                                'dev-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-emerald-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-emerald-400/80 bg-emerald-50/90 text-emerald-950 font-bold hover:bg-emerald-100 hover:border-emerald-600',
+                                    badgeActive: 'border border-slate-900 bg-emerald-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-emerald-400 bg-emerald-200 text-emerald-950 font-bold',
+                                    borderLeft: 'border-l-2 border-emerald-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-emerald-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-emerald-300 hover:bg-emerald-50'
+                                }
+                            };
+                            const currentStyle = groupStyles[tab.id] || groupStyles['website-content-group'];
+
                             return (
                                 <div key={tab.id} className="my-0.5 flex flex-col gap-1">
                                     <button
@@ -767,10 +854,8 @@ export default function AdminDashboard({ onExit }) {
                                                 return next;
                                             });
                                         }}
-                                        className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs font-black uppercase transition-colors ${
-                                            isAnyChildActive
-                                                ? 'shadow-brutal-2 border-slate-900 bg-slate-900 text-white'
-                                                : 'border-slate-900 bg-slate-100 text-slate-900 hover:bg-sky-100'
+                                        className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs uppercase transition-all ${
+                                            isAnyChildActive ? currentStyle.activeHeader : currentStyle.inactiveHeader
                                         }`}
                                         aria-expanded={isExpanded}
                                     >
@@ -780,10 +865,8 @@ export default function AdminDashboard({ onExit }) {
                                         </span>
                                         <span className="flex items-center gap-1.5">
                                             <span
-                                                className={`border px-1.5 py-0.5 font-mono text-[9px] font-bold ${
-                                                    isAnyChildActive
-                                                        ? 'border-sky-300 bg-sky-400 text-slate-900'
-                                                        : 'border-slate-400 bg-white text-slate-700'
+                                                className={`px-1.5 py-0.5 font-mono text-[9px] ${
+                                                    isAnyChildActive ? currentStyle.badgeActive : currentStyle.badgeInactive
                                                 }`}
                                             >
                                                 {tab.children.length}
@@ -795,7 +878,7 @@ export default function AdminDashboard({ onExit }) {
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="my-1 ml-1 flex flex-col gap-1 border-l-2 border-slate-300 pl-2">
+                                        <div className={`my-1 ml-1 flex flex-col gap-1 ${currentStyle.borderLeft}`}>
                                             {tab.children.map((child) => {
                                                 const isTabRestricted = child.adminOnly && !isAdmin;
                                                 const isActive = activeTab === child.id;
@@ -804,9 +887,7 @@ export default function AdminDashboard({ onExit }) {
                                                         key={child.id}
                                                         onClick={() => setActiveTab(child.id)}
                                                         className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3 py-2 text-left font-mono text-[11px] uppercase transition-all ${
-                                                            isActive
-                                                                ? 'shadow-brutal-2 translate-x-1 border-slate-900 bg-sky-500 font-black text-slate-950'
-                                                                : 'border-transparent bg-white font-bold text-slate-800 hover:border-slate-300 hover:bg-sky-50'
+                                                            isActive ? currentStyle.activeChild : currentStyle.inactiveChild
                                                         }`}
                                                         aria-current={isActive ? 'page' : undefined}
                                                     >
@@ -859,14 +940,64 @@ export default function AdminDashboard({ onExit }) {
                         );
                     })}
 
+                    {/* Live Health & Real-time Connectors Status Monitor */}
                     <div className="mt-6 border-t-2 border-slate-200 pt-4">
-                        <div className="space-y-1 font-mono text-[10px] text-slate-500">
-                            <div>
-                                •{' '}
-                                {isServerConnected
-                                    ? '✓ Database connected (MongoDB Atlas)'
-                                    : '• Local browser cache'}
+                        <div className="shadow-brutal-2 border-2 border-slate-900 bg-slate-900 p-3 text-white font-mono text-xs">
+                            <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2.5">
+                                <span className="text-[10px] font-black tracking-widest text-sky-400 uppercase flex items-center gap-1.5">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    LIVE CONNECTORS
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={checkLiveConnectors}
+                                    disabled={liveHealth.isChecking}
+                                    className="text-[9px] font-bold uppercase text-slate-400 hover:text-white underline cursor-pointer disabled:opacity-50"
+                                    title="Ping API and Database now"
+                                >
+                                    {liveHealth.isChecking ? 'Pinging...' : 'Ping Now ⚡'}
+                                </button>
                             </div>
+
+                            <div className="space-y-2 text-[11px]">
+                                {/* 1. Frontend -> Backend API Connector */}
+                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.apiConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'}`}></span>
+                                        <div className="min-w-0 truncate">
+                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Frontend ↔ Backend API</span>
+                                            <span className="block text-[9px] text-slate-400 truncate">
+                                                {liveHealth.apiConnected ? `REST Engine (${liveHealth.apiLatencyMs}ms)` : 'API Offline'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.apiConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-rose-500 bg-rose-950 text-rose-300'}`}>
+                                        {liveHealth.apiConnected ? `${liveHealth.apiLatencyMs}ms` : 'OFFLINE'}
+                                    </span>
+                                </div>
+
+                                {/* 2. Backend -> Database Connector */}
+                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.dbConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-500'}`}></span>
+                                        <div className="min-w-0 truncate">
+                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Backend ↔ Database</span>
+                                            <span className="block text-[9px] text-slate-400 truncate">
+                                                {liveHealth.dbConnected ? liveHealth.dbProvider : 'DB Disconnected'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.dbConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-amber-500 bg-amber-950 text-amber-300'}`}>
+                                        {liveHealth.dbConnected ? 'CONNECTED' : 'OFFLINE'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 space-y-1 font-mono text-[10px] text-slate-500">
                             <div>• {siteData.subsystems.length} Subsystems active</div>
                             <div>• {siteData.gallery.length} Gallery items</div>
                             <div>• {subscribers.length} Alliance leads captured</div>
