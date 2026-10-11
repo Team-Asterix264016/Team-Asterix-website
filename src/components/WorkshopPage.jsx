@@ -843,7 +843,7 @@ export default function WorkshopPage({ onBack }) {
                                 window.location.hash = '#workshop-profile';
                             }}
                             aria-haspopup="dialog"
-                            aria-label="Participant Profile and Attendance Locker"
+                            aria-label="Participant Profile and Notes Locker"
                             className="press shadow-brutal-3-brand inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-purple-300 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-400 sm:px-4"
                         >
                             <svg
@@ -897,7 +897,7 @@ export default function WorkshopPage({ onBack }) {
                                 }}
                                 className="press shadow-brutal-4-brand flex cursor-pointer items-center gap-2 border-2 border-slate-900 bg-purple-400 px-5 py-3 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-300"
                             >
-                                <span>My Profile & Attendance Notes</span>
+                                <span>My Profile & Notes</span>
                                 <span>🔓</span>
                             </button>
                             <button
@@ -1048,10 +1048,10 @@ export default function WorkshopPage({ onBack }) {
                                         </span>
                                     </div>
                                     <h3 className="text-lg leading-tight font-black text-slate-900 uppercase sm:text-2xl">
-                                        Check Your Registered Track &amp; Attendance Records
+                                        Check Your Registered Track &amp; Workshop Schedule
                                     </h3>
                                     <p className="max-w-2xl text-xs font-bold text-slate-800 sm:text-sm">
-                                        Registered for the workshop? Enter your registered email or phone number to unlock your verified participant status, downloadable payment receipt, attendance logs, and project submissions.
+                                        Registered for the workshop? Enter your registered email or phone number to unlock your verified participant status, downloadable payment receipt, session schedule, and project submissions.
                                     </p>
                                 </div>
                                 <button

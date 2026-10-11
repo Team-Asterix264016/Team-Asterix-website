@@ -83,7 +83,7 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
                             : session.status === 'ABSENT'
                               ? '❌ Missed'
                               : session.status === 'OPTIONAL'
-                                ? '💬 Optional knowledge-sharing session · not counted for attendance'
+                                ? '💬 Optional knowledge-sharing session'
                                 : '🕒 Upcoming'}
                     </span>
                     {session.status === 'PRESENT' && session.checkedInAt && (

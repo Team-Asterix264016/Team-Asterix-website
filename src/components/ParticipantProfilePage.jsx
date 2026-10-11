@@ -83,7 +83,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [profile, setProfile] = useState(null);
-    const [activeTab, setActiveTab] = useState('attendance');
+    const [activeTab, setActiveTab] = useState('timetable');
     const [timetableFilter, setTimetableFilter] = useState('all');
     const [timetableSearch, setTimetableSearch] = useState('');
     const [notesModuleFilter, setNotesModuleFilter] = useState('all');
@@ -468,10 +468,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         else timetableDays.push({ key, isoDate: item.isoDate, date: item.date, sessions: [item] });
     });
 
-    // Holidays and optional catch-ups don't count toward attendance.
-    const countedSessions = (profile?.sessionTimeline || []).filter(
-        (s) => s.type !== 'holiday' && s.type !== 'catchup'
-    ).length;
     const nextSession = profile?.sessionTimeline?.find(
         (s) => s.type !== 'holiday' && s.isoDate && s.isoDate >= todayIst
     );
@@ -517,7 +513,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             </h1>
                             <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed font-bold text-slate-600 sm:text-sm">
                                 Enter your college email ID, registered phone number, or roll number below to
-                                access your individual workshop attendance summary, class lecture slides,
+                                access your class timetable schedule, lecture slides,
                                 SPICE circuits, and Colab notebooks.
                             </p>
                         </div>
@@ -677,7 +673,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             </h3>
                                             <p className="mt-1 font-mono text-xs font-bold text-slate-900">
                                                 Please set your custom password now to secure your personal
-                                                workshop profile &amp; attendance records.
+                                                workshop profile &amp; records.
                                             </p>
                                         </div>
                                         <button
@@ -807,21 +803,9 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                 </div>
                             </div>
 
-                            {/* 3 Main Navigation Tabs */}
+                            {/* Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">
-                                <div className="grid grid-cols-1 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase sm:grid-cols-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setActiveTab('attendance')}
-                                        className={`px-3 py-3 text-center transition-all ${
-                                            activeTab === 'attendance'
-                                                ? 'shadow-brutal-2 bg-amber-300 text-slate-950'
-                                                : 'text-slate-300 hover:text-white'
-                                        }`}
-                                    >
-                                        📊 Attendance ({profile.attendanceSummary.totalPresent}/
-                                        {profile.attendanceSummary.totalConducted})
-                                    </button>
+                                <div className="grid grid-cols-1 gap-1 border-4 border-slate-900 bg-slate-900 p-1 font-mono text-xs font-black uppercase sm:grid-cols-2">
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('timetable')}
@@ -846,218 +830,6 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </button>
                                 </div>
                             </div>
-
-                            {/* TAB 1: Session Attendance */}
-                            {activeTab === 'attendance' && (
-                                <div className="shadow-brutal-8 border-4 border-slate-900 bg-white p-6 sm:p-8">
-                                    <div className="flex flex-col justify-between gap-3 border-b-4 border-slate-900 pb-5 md:flex-row md:items-center">
-                                        <div>
-                                            <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                                                Graphical Attendance Visualizer &amp; Certificate Eligibility
-                                            </span>
-                                            <h3 className="mt-1 text-2xl font-black text-slate-900 uppercase sm:text-3xl">
-                                                Attendance Dashboard &amp; Analytics
-                                            </h3>
-                                        </div>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    window.location.assign('#workshop-project-submit')
-                                                }
-                                                className="press shadow-brutal-3 flex items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-emerald-300"
-                                            >
-                                                <span>📤 UPLOAD / SUBMIT PROJECT</span>
-                                                <span>→</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Graphical Stats Deck */}
-                                    <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-                                        {/* 1. Circular SVG Arc Gauge Chart */}
-                                        <div className="shadow-brutal-4 flex flex-col items-center justify-center border-3 border-slate-900 bg-slate-900 p-5 text-center text-white">
-                                            <span className="font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
-                                                ATTENDANCE RATE GAUGE
-                                            </span>
-
-                                            <div className="relative mt-3 flex items-center justify-center">
-                                                <svg
-                                                    className="h-32 w-32 -rotate-90 transform"
-                                                    viewBox="0 0 120 120"
-                                                >
-                                                    <circle
-                                                        cx="60"
-                                                        cy="60"
-                                                        r="48"
-                                                        stroke="#1e293b"
-                                                        strokeWidth="12"
-                                                        fill="transparent"
-                                                    />
-                                                    <circle
-                                                        cx="60"
-                                                        cy="60"
-                                                        r="48"
-                                                        stroke={
-                                                            profile.attendanceSummary.attendancePercentage >=
-                                                            75
-                                                                ? '#10b981'
-                                                                : profile.attendanceSummary
-                                                                        .attendancePercentage >= 50
-                                                                  ? '#f59e0b'
-                                                                  : '#f43f5e'
-                                                        }
-                                                        strokeWidth="12"
-                                                        strokeDasharray="301.59"
-                                                        strokeDashoffset={
-                                                            301.59 -
-                                                            (301.59 *
-                                                                (profile.attendanceSummary
-                                                                    .attendancePercentage || 0)) /
-                                                                100
-                                                        }
-                                                        strokeLinecap="round"
-                                                        fill="transparent"
-                                                        className="transition-all duration-1000 ease-out"
-                                                    />
-                                                </svg>
-                                                <div className="absolute flex flex-col items-center justify-center">
-                                                    <span className="font-mono text-2xl font-black text-amber-300">
-                                                        {profile.attendanceSummary.attendancePercentage}%
-                                                    </span>
-                                                    <span className="font-mono text-[9px] font-bold text-slate-400 uppercase">
-                                                        {profile.attendanceSummary.totalPresent}/
-                                                        {profile.attendanceSummary.totalConducted || 1}{' '}
-                                                        Attended
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-3">
-                                                <span
-                                                    className={`inline-block border border-slate-900 px-3 py-1 font-mono text-xs font-black uppercase ${
-                                                        profile.attendanceSummary.isEligibleForCertificate
-                                                            ? 'bg-emerald-400 text-slate-950'
-                                                            : 'bg-amber-300 text-slate-950'
-                                                    }`}
-                                                >
-                                                    {profile.attendanceSummary.isEligibleForCertificate
-                                                        ? '✓ Certificate Qualified'
-                                                        : '⚠️ Certificate Threshold Pending'}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* 2. Certificate Threshold Progress Bar */}
-                                        <div className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-amber-50/80 p-5">
-                                            <div>
-                                                <span className="font-mono text-xs font-black tracking-widest text-amber-900 uppercase">
-                                                    CERTIFICATE QUALIFICATION METER (75% TARGET)
-                                                </span>
-                                                <h4 className="mt-1 text-lg font-black text-slate-900 uppercase">
-                                                    {profile.attendanceSummary.isEligibleForCertificate
-                                                        ? 'Target Reached (≥ 75%)'
-                                                        : `${Math.max(0, 75 - profile.attendanceSummary.attendancePercentage)}% Required for Certificate`}
-                                                </h4>
-                                                <p className="mt-1 text-xs font-bold text-slate-700">
-                                                    Team Asterix certificates are awarded to candidates
-                                                    maintaining 75% or higher session attendance.
-                                                </p>
-                                            </div>
-
-                                            <div className="mt-4">
-                                                <div className="mb-1 flex justify-between font-mono text-[10px] font-black text-slate-700">
-                                                    <span>0%</span>
-                                                    <span className="text-amber-900">🎯 75% Target</span>
-                                                    <span>100%</span>
-                                                </div>
-                                                <div className="shadow-brutal-2 relative h-6 w-full border-2 border-slate-900 bg-white p-0.5">
-                                                    <div
-                                                        className="absolute top-0 bottom-0 z-10 w-1 bg-amber-600"
-                                                        style={{ left: '75%' }}
-                                                        title="75% Target Threshold"
-                                                    />
-                                                    <div
-                                                        className={`h-full transition-all duration-700 ${
-                                                            profile.attendanceSummary.attendancePercentage >=
-                                                            75
-                                                                ? 'bg-emerald-500'
-                                                                : 'bg-amber-400'
-                                                        }`}
-                                                        style={{
-                                                            width: `${Math.min(100, profile.attendanceSummary.attendancePercentage || 0)}%`
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 3. Session Statistics Summary */}
-                                        <div className="shadow-brutal-4 flex flex-col justify-between border-3 border-slate-900 bg-sky-50/80 p-5">
-                                            <span className="font-mono text-xs font-black tracking-widest text-sky-900 uppercase">
-                                                SUBSYSTEM SESSION METRICS
-                                            </span>
-
-                                            <div className="mt-3 grid grid-cols-2 gap-2">
-                                                <div className="shadow-brutal-2 border-2 border-slate-900 bg-white p-2.5 text-center">
-                                                    <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
-                                                        Total Sessions
-                                                    </span>
-                                                    <strong className="block text-xl font-black text-slate-900">
-                                                        {countedSessions}
-                                                    </strong>
-                                                </div>
-                                                <div className="shadow-brutal-2 border-2 border-slate-900 bg-white p-2.5 text-center">
-                                                    <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
-                                                        Conducted
-                                                    </span>
-                                                    <strong className="block text-xl font-black text-sky-900">
-                                                        {profile.attendanceSummary.totalConducted || 0}
-                                                    </strong>
-                                                </div>
-                                                <div className="shadow-brutal-2 border-2 border-slate-900 bg-white p-2.5 text-center">
-                                                    <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
-                                                        Verified Present
-                                                    </span>
-                                                    <strong className="block text-xl font-black text-emerald-700">
-                                                        {profile.attendanceSummary.totalPresent || 0}
-                                                    </strong>
-                                                </div>
-                                                <div className="shadow-brutal-2 border-2 border-slate-900 bg-white p-2.5 text-center">
-                                                    <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
-                                                        Upcoming
-                                                    </span>
-                                                    <strong className="block text-xl font-black text-amber-700">
-                                                        {countedSessions -
-                                                            (profile.attendanceSummary.totalConducted || 0)}
-                                                    </strong>
-                                                </div>
-                                            </div>
-
-                                            <div className="mt-3 border-t-2 border-slate-300 pt-2 font-mono text-[11px] font-bold text-slate-600">
-                                                Candidate Track:{' '}
-                                                <strong className="text-slate-900 uppercase">
-                                                    {profile.candidate.package}
-                                                </strong>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-8 flex flex-col justify-between gap-3 border-t-4 border-slate-900 pt-6 sm:flex-row sm:items-center">
-                                        <p className="font-mono text-xs font-bold text-slate-700">
-                                            Each session&apos;s status, notes and key takeaways are in the
-                                            Timetable tab.
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveTab('timetable')}
-                                            className="press shadow-brutal-2 shrink-0 border-2 border-slate-900 bg-sky-400 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300"
-                                        >
-                                            Open timetable →
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* TAB 2: Workshop Timetable & Schedule */}
                             {activeTab === 'timetable' && (
@@ -1593,7 +1365,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             ) : (
                                                 <p className="mt-1 font-mono text-[11px] font-bold text-amber-800">
                                                     ⚠️ Fix this if you typed it wrong while registering — your
-                                                    attendance, project and quiz records move to the corrected
+                                                    project and quiz records move to the corrected
                                                     number automatically. Enter it exactly as printed on your ID
                                                     card.
                                                 </p>
