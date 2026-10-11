@@ -326,7 +326,7 @@ export default function CommunityPage({ onBack }) {
                                 </div>
                                 <div className="flex flex-wrap gap-2.5">
                                     <a
-                                        href="https://github.com/Team-Asterix"
+                                        href="https://github.com/Team-Asterix264016"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="press shadow-brutal-2 border-2 border-white bg-slate-800 px-4 py-2 font-mono text-xs font-black uppercase text-white no-underline hover:bg-slate-700"

@@ -94,7 +94,7 @@ export default function CyberNavbar({
         {
             name: 'GitHub',
             handle: 'Team-Asterix264016',
-            url: 'https://github.com/Team-Asterix264016/',
+            url: contact.githubUrl || 'https://github.com/Team-Asterix264016/',
             color: 'hover:bg-slate-100 hover:text-slate-950',
             icon: (
                 <svg className="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
