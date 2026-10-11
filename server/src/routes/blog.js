@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import BlogPost from '../models/BlogPost.js';
+import BlogView from '../models/BlogView.js';
+import BlogInteraction from '../models/BlogInteraction.js';
+import BlogComment from '../models/BlogComment.js';
 import { isMongoConnected } from '../db/mongodb.js';
 import { authenticateToken, requireLeadOrAdmin } from '../middleware/auth.js';
 import { toListItem, parseBlogBody } from '../lib/blog.js';
@@ -181,6 +184,12 @@ router.delete('/admin/:id', ...adminOnly, async (req, res) => {
         if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Post not found' });
         const deleted = await BlogPost.findByIdAndDelete(req.params.id);
         if (!deleted) return res.status(404).json({ error: 'Post not found' });
+        // Its views, reactions, votes and comments mean nothing without it.
+        await Promise.all([
+            BlogView.deleteMany({ post: deleted._id }),
+            BlogInteraction.deleteMany({ post: deleted._id }),
+            BlogComment.deleteMany({ post: deleted._id })
+        ]);
         return res.json({ success: true });
     } catch (err) {
         console.error('Error deleting blog post:', err);
