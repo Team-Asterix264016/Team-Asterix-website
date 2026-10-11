@@ -11,6 +11,7 @@
     "server": "node server/src/index.js",
     "build": "vite build",
     "lint": "oxlint",
+    "test": "node --test \"server/src/**/*.test.js\" \"src/lib/**/*.test.js\"",
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\" \"index.html\"",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" \"index.html\""

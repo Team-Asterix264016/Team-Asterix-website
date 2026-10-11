@@ -56,12 +56,18 @@ export function pollKey(question) {
  *   - Radar
  *   :::
  *
- * src/lib/renderMarkdown.jsx reads the same syntax; votes are keyed by the question.
+ * src/lib/markdownBlocks.js reads the same syntax; votes are keyed by the question.
  */
 export function parsePolls(body) {
     const polls = [];
     const lines = String(body || '').replace(/\r\n/g, '\n').split('\n');
     for (let i = 0; i < lines.length; i += 1) {
+        // A poll written inside a code block is shown as code, not asked.
+        if (lines[i].trim().startsWith('```')) {
+            i += 1;
+            while (i < lines.length && !lines[i].trim().startsWith('```')) i += 1;
+            continue;
+        }
         const open = lines[i].match(/^:::poll\s+(.+?)\s*$/);
         if (!open) continue;
         const options = [];

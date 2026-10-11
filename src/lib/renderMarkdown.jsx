@@ -1,11 +1,10 @@
 import { safeHref } from './safeHref';
+import { CodeBlock, ZoomFigure, StaticPoll } from '../components/community/ArticleBlocks';
 
-/* A deliberately small Markdown subset for Horizon blog posts, rendered to React
-   elements. Nothing is ever passed through innerHTML, so post text cannot inject
-   markup, and every link and image URL goes through safeHref.
+/* Renders the blocks from markdownBlocks.js to React elements. Nothing is ever
+   passed through innerHTML, so post text cannot inject markup, and every link
+   and image URL goes through safeHref.
 
-   Blocks: # / ## (h2), ### (h3), #### (h4), paragraphs, - * + lists, 1. lists,
-   > quotes, ``` fenced code, --- rules, and an image alone on its line (figure).
    Inline: `code`, **bold**, *italic* / _italic_, [text](url), ![alt](url). */
 
 const INLINE =
@@ -28,10 +27,10 @@ function renderLink(text, url, key) {
     );
 }
 
-function renderImage(alt, url, key, className = 'my-2 inline-block max-w-full') {
+function renderImage(alt, url, key) {
     const src = safeHref(url);
     if (!src) return null;
-    return <img key={key} src={src} alt={alt} loading="lazy" decoding="async" className={className} />;
+    return <img key={key} src={src} alt={alt} loading="lazy" decoding="async" className="my-2 inline-block max-w-full" />;
 }
 
 export function renderInline(text) {
@@ -73,145 +72,102 @@ export function renderInline(text) {
     return out;
 }
 
-const HEADING = /^(#{1,4})\s+(.+?)\s*#*\s*$/;
-const UL_ITEM = /^\s*[-*+]\s+(.*)$/;
-const OL_ITEM = /^\s*\d+[.)]\s+(.*)$/;
-const RULE = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
-const LONE_IMAGE = /^\s*!\[([^\]]*)\]\(([^)\s]+)\)\s*$/;
-
-const HEADING_TAG = { 1: 'h2', 2: 'h2', 3: 'h3', 4: 'h4' };
-const HEADING_CLASS = {
-    h2: 'mt-12 mb-4 font-display text-2xl leading-tight font-bold text-slate-900 sm:text-[1.75rem]',
-    h3: 'mt-9 mb-3 font-display text-xl leading-snug font-bold text-slate-900',
-    h4: 'mt-7 mb-2 text-lg font-bold text-slate-900'
+const CALLOUT_STYLE = {
+    note: { icon: 'ℹ️', label: 'Note', box: 'border-sky-600 bg-sky-50' },
+    tip: { icon: '💡', label: 'Tip', box: 'border-emerald-600 bg-emerald-50' },
+    warning: { icon: '⚠️', label: 'Heads up', box: 'border-amber-500 bg-amber-50' }
 };
 
-export function renderMarkdown(markdown) {
-    const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
-    const blocks = [];
-    let i = 0;
+const HEADING_TAG = { 2: 'h2', 3: 'h3', 4: 'h4' };
+const HEADING_CLASS = {
+    h2: 'mt-12 mb-4 scroll-mt-24 font-display text-2xl leading-tight font-bold text-slate-900 sm:text-[1.75rem]',
+    h3: 'mt-9 mb-3 scroll-mt-24 font-display text-xl leading-snug font-bold text-slate-900',
+    h4: 'mt-7 mb-2 scroll-mt-24 text-lg font-bold text-slate-900'
+};
 
-    while (i < lines.length) {
-        const line = lines[i];
-        const key = `b${i}`;
-
-        if (!line.trim()) {
-            i += 1;
-            continue;
-        }
-
-        if (line.trim().startsWith('```')) {
-            const code = [];
-            i += 1;
-            while (i < lines.length && !lines[i].trim().startsWith('```')) code.push(lines[i++]);
-            i += 1; // closing fence
-            blocks.push(
-                <pre
-                    key={key}
-                    className="my-6 overflow-x-auto border-2 border-slate-900 bg-slate-900 p-4 font-mono text-[13px] leading-relaxed text-slate-100"
-                >
-                    <code>{code.join('\n')}</code>
-                </pre>
-            );
-            continue;
-        }
-
-        const heading = line.match(HEADING);
-        if (heading) {
-            const Tag = HEADING_TAG[heading[1].length];
-            blocks.push(
-                <Tag key={key} className={HEADING_CLASS[Tag]}>
-                    {renderInline(heading[2])}
-                </Tag>
-            );
-            i += 1;
-            continue;
-        }
-
-        if (RULE.test(line)) {
-            blocks.push(<hr key={key} className="my-10 border-t-2 border-slate-200" />);
-            i += 1;
-            continue;
-        }
-
-        const image = line.match(LONE_IMAGE);
-        if (image) {
-            const img = renderImage(image[1], image[2], `${key}-img`, 'w-full border-2 border-slate-900');
-            if (img) {
-                blocks.push(
-                    <figure key={key} className="my-8">
-                        {img}
-                        {image[1] && (
-                            <figcaption className="mt-2 text-center text-sm text-slate-500">{image[1]}</figcaption>
-                        )}
-                    </figure>
+/**
+ * options.renderPoll(poll) draws a live poll; without it polls render as a static preview.
+ * options.showProblems shows poll mistakes inline, for the editor preview.
+ */
+export function renderBlocks(blocks, options = {}) {
+    const { renderPoll, showProblems = false } = options;
+    return blocks.map((block, n) => {
+        const key = `${block.type}-${n}`;
+        switch (block.type) {
+            case 'heading': {
+                const Tag = HEADING_TAG[block.level];
+                return (
+                    <Tag key={key} id={block.id} className={HEADING_CLASS[Tag]}>
+                        {renderInline(block.text)}
+                    </Tag>
                 );
             }
-            i += 1;
-            continue;
-        }
-
-        if (line.trimStart().startsWith('>')) {
-            const quote = [];
-            while (i < lines.length && lines[i].trimStart().startsWith('>')) {
-                quote.push(lines[i].trimStart().replace(/^>\s?/, ''));
-                i += 1;
+            case 'paragraph':
+                return (
+                    <p key={key} className="my-5">
+                        {renderInline(block.text)}
+                    </p>
+                );
+            case 'list': {
+                const ListTag = block.ordered ? 'ol' : 'ul';
+                return (
+                    <ListTag
+                        key={key}
+                        className={`my-5 space-y-2 pl-6 ${block.ordered ? 'list-decimal' : 'list-disc'} marker:text-slate-500`}
+                    >
+                        {block.items.map((item, i) => (
+                            <li key={i} className="pl-1">
+                                {renderInline(item)}
+                            </li>
+                        ))}
+                    </ListTag>
+                );
             }
-            blocks.push(
-                <blockquote
-                    key={key}
-                    className="my-7 border-l-4 border-sky-500 bg-sky-50 py-3 pr-4 pl-5 text-slate-700 italic"
-                >
-                    {renderInline(quote.join(' '))}
-                </blockquote>
-            );
-            continue;
-        }
-
-        if (UL_ITEM.test(line) || OL_ITEM.test(line)) {
-            const ordered = OL_ITEM.test(line) && !UL_ITEM.test(line);
-            const pattern = ordered ? OL_ITEM : UL_ITEM;
-            const items = [];
-            while (i < lines.length && pattern.test(lines[i])) {
-                items.push(lines[i].match(pattern)[1]);
-                i += 1;
+            case 'quote':
+                return (
+                    <blockquote
+                        key={key}
+                        className="my-7 border-l-4 border-sky-500 bg-sky-50 py-3 pr-4 pl-5 text-slate-700 italic"
+                    >
+                        {renderInline(block.text)}
+                    </blockquote>
+                );
+            case 'code':
+                return <CodeBlock key={key} text={block.text} />;
+            case 'figure': {
+                const src = safeHref(block.url);
+                return src ? <ZoomFigure key={key} alt={block.alt} src={src} /> : null;
             }
-            const ListTag = ordered ? 'ol' : 'ul';
-            blocks.push(
-                <ListTag
-                    key={key}
-                    className={`my-5 space-y-2 pl-6 ${ordered ? 'list-decimal' : 'list-disc'} marker:text-slate-500`}
-                >
-                    {items.map((item, n) => (
-                        <li key={n} className="pl-1">
-                            {renderInline(item)}
-                        </li>
-                    ))}
-                </ListTag>
-            );
-            continue;
+            case 'rule':
+                return <hr key={key} className="my-10 border-t-2 border-slate-200" />;
+            case 'callout': {
+                const style = CALLOUT_STYLE[block.variant];
+                return (
+                    <aside key={key} className={`my-7 border-l-4 px-5 py-4 ${style.box}`}>
+                        <p className="font-bold text-slate-900">
+                            <span aria-hidden="true">{style.icon} </span>
+                            {block.title ? renderInline(block.title) : style.label}
+                        </p>
+                        <div className="text-[0.95em] [&>*:first-child]:mt-2 [&>*:last-child]:mb-0">
+                            {renderBlocks(block.blocks, options)}
+                        </div>
+                    </aside>
+                );
+            }
+            case 'poll':
+                return renderPoll ? <div key={key}>{renderPoll(block)}</div> : <StaticPoll key={key} poll={block} />;
+            case 'poll-error':
+                return showProblems ? (
+                    <p
+                        key={key}
+                        role="note"
+                        className="my-6 border-2 border-dashed border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-800"
+                    >
+                        ⚠️ Poll “{block.question}” will not be shown. {block.reason}
+                    </p>
+                ) : null;
+            default:
+                return null;
         }
-
-        const para = [];
-        while (
-            i < lines.length &&
-            lines[i].trim() &&
-            !HEADING.test(lines[i]) &&
-            !lines[i].trim().startsWith('```') &&
-            !lines[i].trimStart().startsWith('>') &&
-            !UL_ITEM.test(lines[i]) &&
-            !OL_ITEM.test(lines[i]) &&
-            !RULE.test(lines[i])
-        ) {
-            para.push(lines[i].trim());
-            i += 1;
-        }
-        blocks.push(
-            <p key={key} className="my-5">
-                {renderInline(para.join(' '))}
-            </p>
-        );
-    }
-
-    return blocks;
+    });
 }
