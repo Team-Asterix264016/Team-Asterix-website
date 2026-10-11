@@ -22,9 +22,9 @@ Deferred on 11 Oct 2026. Ordered by impact; each item says why it matters and wh
 - Batching within the provider's limits; bounces and spam complaints feed the opt-out list; a send log.
 - **Before the first send:** set `UNSUBSCRIBE_SECRET` on Render so unsubscribe links keep working if `JWT_SECRET` ever changes.
 
-## 3. Stronger bot protection on subscribe
+## 3. Stronger bot protection on subscribe and comments
 
-Only if bot signups get past the hidden decoy field and the per-IP rate limit. Add Cloudflare Turnstile to both subscribe forms and verify the token on `POST /api/subscribers`.
+Only if bot signups or comments get past the hidden decoy field and the per-IP rate limit. Add Cloudflare Turnstile to both subscribe forms and the comment form, and verify the token on `POST /api/subscribers` and `POST /api/blog/:slug/comments`.
 
 ## 4. Projects showcase
 
@@ -43,7 +43,11 @@ Only if bot signups get past the hidden decoy field and the per-IP rate limit. A
 
 - Scheduled publishing (publish at a set date and time).
 - Image upload inside the post body (today the editor takes image URLs there; only the cover has an uploader).
-- View counts and "more from this category".
+- Reply notifications: email a commenter when someone answers them. Needs the email provider from item 2 and an opt-in email field on the comment form.
+- Highlight to share: select a sentence in a post and share it as a quote.
+- Post series: "Part 2 of 4" navigation for multi-part write-ups.
+- A reading list ("save for later") for readers, kept in their browser.
+- Analytics retention: `BlogView` keeps one document per view forever. Add a TTL index (for example 13 months) once the collection grows, and a CSV export of a post's numbers before old views expire.
 
 ## 7. Navigation label
 
@@ -60,3 +64,6 @@ The blog is now the main content of the Community page. Decide whether the navba
 - [ ] Admin → Community → Horizon Blog Posts: create a test post, publish it, see it on `/#community` and in the home page strip, then delete it.
 - [ ] Subscribe from the community page; it appears under Newsletter Subscribers with source `community`.
 - [ ] Export the Mail Cluster CSV, open one "Unsubscribe link", click Unsubscribe; the address shows as Unsubscribed and drops out of the Mail Cluster.
+- [ ] Open a published post from a phone through a WhatsApp share link. After reading to the end, Admin → Horizon Blog Posts → 📊 Stats shows the view with source WhatsApp, device Phone, and one read.
+- [ ] React, vote in a poll and post a comment on the live site; the counts show on the post card and in Stats, and the comment raises the WhatsApp alert.
+- [ ] Report a comment from three different browsers; it moves to Admin → Blog Comments → Needs review.
