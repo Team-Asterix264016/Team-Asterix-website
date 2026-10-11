@@ -6,13 +6,12 @@ import NewsletterSignup from './NewsletterSignup';
 import UnsubscribePanel from './UnsubscribePanel';
 
 /* Read-only community hub. Routes live in the hash so links and the back
-   button work: #community (blog), #community/pipeline, #community/blog/<slug>,
-   and #community/unsubscribe?e=<email>&t=<token>. */
+   button work: #community (blog), #community/blog/<slug>, and
+   #community/unsubscribe?e=<email>&t=<token>. */
 function parseRoute(hash) {
     const [path, query = ''] = hash.replace(/^#community\/?/, '').split('?');
     const parts = path.split('/').filter(Boolean);
     if (parts[0] === 'blog' && parts[1]) return { view: 'article', slug: decodeURIComponent(parts[1]) };
-    if (parts[0] === 'pipeline') return { view: 'pipeline' };
     if (parts[0] === 'unsubscribe') {
         const params = new URLSearchParams(query);
         return { view: 'unsubscribe', email: params.get('e') || '', token: params.get('t') || '' };
@@ -66,158 +65,6 @@ function ErrorBlock({ message, onRetry }) {
     );
 }
 
-// Upcoming editorial write-ups in development by the Asterix subsystems
-const UPCOMING_PIPELINE = [
-    {
-        id: 'fea-4130',
-        title: 'FEA of 4130 Spaceframe Under SAE Roll-Over & Dynamic Impact Load Cases',
-        category: 'Chassis & FEA',
-        badgeColor: 'bg-amber-300',
-        author: 'Asterix Chassis Team',
-        readTime: '9 min read',
-        status: 'Final Proofing',
-        statusColor: 'bg-emerald-300 text-emerald-950',
-        summary:
-            'A comprehensive breakdown of boundary constraints, weldment sizing, and how we minimized roll-cage mass by 8.4% while exceeding SAE India 2026 deformation margins.',
-        tags: ['ANSYS Meshing', 'Torsional Rigidity', 'SAE Load Cases']
-    },
-    {
-        id: 'telemetry-lora',
-        title: 'Telemetry From The Dirt: Real-Time LoRa & CAN-Bus Sensor Logging on ESP32',
-        category: 'Electronics & DAQ',
-        badgeColor: 'bg-cyan-300',
-        author: 'Electronics & Firmware Lead',
-        readTime: '12 min read',
-        status: 'Bench Testing',
-        statusColor: 'bg-sky-300 text-sky-950',
-        summary:
-            'Dealing with alternator ripple noise, potting custom PCB housings against mud ingress, and streaming high-frequency suspension potentiometer data over 1.2km line-of-sight.',
-        tags: ['CAN 2.0B', 'LoRa 433MHz', 'Noise Isolation', 'Pit Dashboard']
-    },
-    {
-        id: 'cvt-tuning',
-        title: 'CVT Tuning Dynamics: Primary Spring Rates, Flyweights & Thermal Belt Slip',
-        category: 'Powertrain & CVT',
-        badgeColor: 'bg-rose-300',
-        author: 'Powertrain Division',
-        readTime: '11 min read',
-        status: 'Track Validated',
-        statusColor: 'bg-emerald-300 text-emerald-950',
-        summary:
-            'How we tuned our engagement RPM for maximum initial acceleration out of muddy hairpins and mitigated secondary sheave thermal degradation during grueling 4-hour endurance heats.',
-        tags: ['Flyweight Profiling', 'Secondary Preload', 'IR Belt Temp']
-    },
-    {
-        id: 'suspension-geometry',
-        title: 'Double Wishbone Kinematics: Anti-Dive, Camber Recovery & Steering Rack Optimization',
-        category: 'Vehicle Dynamics',
-        badgeColor: 'bg-violet-300',
-        author: 'Vehicle Dynamics Team',
-        readTime: '14 min read',
-        status: 'CAD Validated',
-        statusColor: 'bg-amber-300 text-amber-950',
-        summary:
-            'Kinematic modeling in Lotus Suspension, bump steer elimination, and custom CNC upright geometry designed for high-impact boulder strikes and rut tracks.',
-        tags: ['Lotus Shark Modeling', 'Ackermann Geometry', '7075-T6 CNC']
-    }
-];
-
-
-
-function scrollToNewsletter() {
-    const el = document.getElementById('newsletter-section');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-        const input = el.querySelector('input[type="email"]');
-        if (input) input.focus();
-    }
-}
-
-/* ====================================================================
-   PIPELINE / UPCOMING WRITE-UPS SHOWCASE
-   Used both when blog has no published posts and in the dedicated tab
-   ==================================================================== */
-function PipelineShowcase({ isStandalone = false }) {
-    return (
-        <div className="space-y-6">
-            {!isStandalone && (
-                <div className="shadow-brutal-4 border-4 border-slate-900 bg-amber-300 p-6 sm:p-8">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <span className="border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[11px] font-black uppercase text-slate-950">
-                            // 2026 EDITORIAL DISPATCH PREVIEW //
-                        </span>
-                        <span className="font-mono text-xs font-black uppercase text-slate-900">
-                            4 Subsystem Reports In Final Polish
-                        </span>
-                    </div>
-                    <h2 className="mt-4 font-display text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">
-                        First Horizon Deep-Dives Are Landing Soon
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-800 sm:text-base">
-                        Our subsystem engineers are wrapping up initial write-ups from our 2026 build season.
-                        Check out what is dropping into the archive below, and subscribe to receive the full write-ups
-                        directly in your inbox.
-                    </p>
-                </div>
-            )}
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {UPCOMING_PIPELINE.map((item) => (
-                    <article
-                        key={item.id}
-                        className="shadow-brutal-4 flex flex-col justify-between border-4 border-slate-900 bg-white p-6"
-                    >
-                        <div>
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span
-                                    className={`border-2 border-slate-900 ${item.badgeColor} px-2 py-0.5 font-mono text-[11px] font-black uppercase text-slate-950`}
-                                >
-                                    {item.category}
-                                </span>
-                                <span
-                                    className={`border-2 border-slate-900 ${item.statusColor} px-2 py-0.5 font-mono text-[10px] font-black uppercase`}
-                                >
-                                    ● {item.status}
-                                </span>
-                            </div>
-
-                            <h3 className="mt-3 font-display text-xl font-bold leading-snug text-slate-900">
-                                {item.title}
-                            </h3>
-
-                            <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.summary}</p>
-
-                            <div className="mt-4 flex flex-wrap gap-1.5">
-                                {item.tags.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="border border-slate-300 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700"
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t-2 border-slate-200 pt-4">
-                            <span className="font-mono text-xs font-bold text-slate-500">
-                                {item.author} · {item.readTime}
-                            </span>
-                            <button
-                                type="button"
-                                onClick={scrollToNewsletter}
-                                className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-amber-300 px-3 py-1.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
-                            >
-                                Notify me on drop ↓
-                            </button>
-                        </div>
-                    </article>
-                ))}
-            </div>
-        </div>
-    );
-}
-
 /* ====================================================================
    BLOG LIST WITH FILTERING, SEARCH, AND RICH FALLBACK
    ==================================================================== */
@@ -263,9 +110,15 @@ function BlogList() {
         return <ErrorBlock message={`Could not load posts. ${state.error}`} onRetry={reload} />;
     }
 
-    // When there are no published posts in DB yet: render the rich upcoming pipeline showcase!
     if (posts.length === 0) {
-        return <PipelineShowcase />;
+        return (
+            <div className="border-2 border-dashed border-slate-300 bg-white p-8 text-center">
+                <p className="font-display text-2xl font-bold text-slate-900">First posts are on the way</p>
+                <p className="mx-auto mt-2 max-w-md text-slate-600">
+                    Subscribe below and we will email you when the first Horizon write-up goes live.
+                </p>
+            </div>
+        );
     }
 
     const [featured, ...rest] = filtered;
@@ -389,11 +242,6 @@ function BlogList() {
 
 
 
-const TABS = [
-    { view: 'blog', label: 'Horizon Blog', href: '#community' },
-    { view: 'pipeline', label: 'In The Paddock', href: '#community/pipeline' }
-];
-
 export default function CommunityPage({ onBack }) {
     const [route, setRoute] = useState(() => parseRoute(window.location.hash));
 
@@ -455,31 +303,8 @@ export default function CommunityPage({ onBack }) {
 
                         </div>
 
-                        {/* Navigation Tabs */}
-                        <nav aria-label="Community sections" className="mt-10 flex flex-wrap gap-2 border-b-4 border-slate-900">
-                            {TABS.map((tab) => {
-                                const active = route.view === tab.view;
-                                return (
-                                    <a
-                                        key={tab.view}
-                                        href={tab.href}
-                                        aria-current={active ? 'page' : undefined}
-                                        className={`-mb-1 border-4 border-b-0 px-5 py-2.5 font-mono text-xs font-black uppercase no-underline transition-colors ${
-                                            active
-                                                ? 'border-slate-900 bg-white text-slate-900 shadow-brutal-2'
-                                                : 'border-transparent text-slate-600 hover:text-slate-950 hover:bg-slate-100'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </a>
-                                );
-                            })}
-                        </nav>
-
-                        {/* Active Tab View */}
-                        <div className="mt-8">
-                            {route.view === 'pipeline' && <PipelineShowcase isStandalone={true} />}
-                            {route.view === 'blog' && <BlogList />}
+                        <div className="mt-10">
+                            <BlogList />
                         </div>
 
 
@@ -529,7 +354,7 @@ export default function CommunityPage({ onBack }) {
                         </section>
 
                         {/* Newsletter Signup Container */}
-                        <div id="newsletter-section" className="mt-14 max-w-3xl">
+                        <div id="newsletter-section" className="mt-14 w-full">
                             <div className="mb-2 flex items-center gap-2">
                                 <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
                                     DIRECT DISPATCH

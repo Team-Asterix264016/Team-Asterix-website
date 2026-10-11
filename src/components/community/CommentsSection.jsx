@@ -495,7 +495,7 @@ export default function CommentsSection({ slug, initialMode, onCountChange, ref 
             ref={ref}
             id="comments"
             aria-labelledby="comments-heading"
-            className="mx-auto mt-14 max-w-[38rem] scroll-mt-24"
+            className="mt-14 scroll-mt-24"
         >
             <div className="flex flex-wrap items-end justify-between gap-3 border-b-4 border-slate-900 pb-3">
                 <h2 id="comments-heading" className="font-display text-2xl font-bold text-slate-900">

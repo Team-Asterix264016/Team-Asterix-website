@@ -45,7 +45,7 @@ export default function NewsletterSignup({
     };
 
     return (
-        <section className="shadow-brutal-4 border-4 border-slate-900 bg-amber-100 p-5 sm:p-6">
+        <section className="w-full shadow-brutal-4 border-4 border-slate-900 bg-amber-100 p-5 sm:p-7 md:p-8">
             <h2 className="text-lg leading-tight font-black text-slate-900 uppercase sm:text-xl">{title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{blurb}</p>
 
