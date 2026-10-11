@@ -3,8 +3,6 @@ import Lenis from 'lenis';
 import useScrollAssembly from './hooks/useScrollAssembly';
 import useParallax from './hooks/useParallax';
 import CyberNavbar from './components/CyberNavbar';
-import IntroScrollSequence from './components/IntroScrollSequence';
-import CyberHero from './components/CyberHero';
 import MarqueeTicker from './components/MarqueeTicker';
 import TheSquad from './components/TheSquad';
 import CyberNewsletterCTA from './components/CyberNewsletterCTA';
@@ -16,6 +14,8 @@ import SubsystemDetail from './components/SubsystemDetail';
 import FloatingBackground from './components/FloatingBackground';
 import { WebsiteDataProvider } from './context/WebsiteDataContext';
 import ErrorBoundary from './components/ErrorBoundary';
+
+import HeroPaddockGrid from './components/heroes/HeroPaddockGrid';
 
 const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
@@ -391,11 +391,8 @@ function MainApp() {
                        section that should stay solid still carries its own
                        background (the marquee, gallery, story, CTA and footer). */
                     <main className="relative z-10 border-b-4 border-slate-900 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
-                        {/* 115-Frame Pre-Rendered Cinema Intro Scroll Sequence */}
-                        <IntroScrollSequence />
-
-                        {/* Hero Section with Filled & Stroke Typography, Badges and 3D Baja Inspector Option */}
-                        <CyberHero onOpenModelViewer={handleOpenModelViewer} />
+                        {/* Official Hero: Authentic Paddock & Trackside Photo Bento Grid */}
+                        <HeroPaddockGrid onOpenModelViewer={handleOpenModelViewer} />
 
                         {/* Infinite Double Marquee Ribbon */}
                         <MarqueeTicker />
