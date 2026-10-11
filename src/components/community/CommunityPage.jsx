@@ -6,14 +6,13 @@ import NewsletterSignup from './NewsletterSignup';
 import UnsubscribePanel from './UnsubscribePanel';
 
 /* Read-only community hub. Routes live in the hash so links and the back
-   button work: #community (blog), #community/pipeline,
-   #community/faq, #community/blog/<slug>, and #community/unsubscribe?e=<email>&t=<token>. */
+   button work: #community (blog), #community/pipeline, #community/blog/<slug>,
+   and #community/unsubscribe?e=<email>&t=<token>. */
 function parseRoute(hash) {
     const [path, query = ''] = hash.replace(/^#community\/?/, '').split('?');
     const parts = path.split('/').filter(Boolean);
     if (parts[0] === 'blog' && parts[1]) return { view: 'article', slug: decodeURIComponent(parts[1]) };
     if (parts[0] === 'pipeline') return { view: 'pipeline' };
-    if (parts[0] === 'faq') return { view: 'faq' };
     if (parts[0] === 'unsubscribe') {
         const params = new URLSearchParams(query);
         return { view: 'unsubscribe', email: params.get('e') || '', token: params.get('t') || '' };
@@ -123,61 +122,7 @@ const UPCOMING_PIPELINE = [
     }
 ];
 
-// Core pillars of open engineering
-const COMMUNITY_PILLARS = [
-    {
-        icon: '📐',
-        title: 'Transparent CAD & FEA',
-        color: 'bg-amber-300',
-        description:
-            'No black boxes. We share real boundary conditions, ANSYS stress maps, weld setups, and SolidWorks CAD files so collegiate builders learn faster.'
-    },
-    {
-        icon: '⚡',
-        title: 'Mud-Tested Telemetry',
-        color: 'bg-cyan-300',
-        description:
-            'Real-world sensor logs from dynamic trials. Learn how we log suspension displacement, brake rotor temperatures, and live LoRa streams.'
-    },
-    {
-        icon: '🏁',
-        title: 'Unfiltered Race Logs',
-        color: 'bg-rose-300',
-        description:
-            'Honest post-race debriefs. We break down trackside failures, 4-hour endurance pit strategies, and fixes made with limited tools in the paddock.'
-    },
-    {
-        icon: '🛠️',
-        title: 'Open Engineering Vault',
-        color: 'bg-emerald-300',
-        description:
-            'Direct access to suspension kinematics spreadsheets, scrutineering checklists, workshop slide decks, and rulebook study guides.'
-    }
-];
 
-// FAQs for the community hub
-const FAQS = [
-    {
-        q: 'What is Horizon?',
-        a: 'Horizon is Team Asterix’s open engineering publication and technical vault. We write detailed technical debriefs, share simulation methodologies, and publish open tools for collegiate motorsport engineers across the globe.'
-    },
-    {
-        q: 'Who writes these technical articles?',
-        a: 'Every piece is authored directly by Team Asterix subsystem leads and race engineers—covering chassis design, powertrain tuning, suspension kinematics, electronics, and race operations.'
-    },
-    {
-        q: 'Are the CAD models, spreadsheets, and firmware free to use?',
-        a: 'Yes! All calculations, checklists, and code snippets published in Horizon are open for students, teams, and enthusiasts to study, replicate, and improve.'
-    },
-    {
-        q: 'Can external student teams collaborate or pitch a guest write-up?',
-        a: 'Absolutely. We welcome guest technical breakdowns, joint simulation studies, and peer discussions. Drop your topic idea in the Garage Q&A box below or connect with our leads on Discord.'
-    },
-    {
-        q: 'How often are new articles published?',
-        a: 'During build season and competition testing, we publish 2–3 deep-dives per month. Newsletter subscribers receive full technical write-ups straight to their inbox the day they go live.'
-    }
-];
 
 function scrollToNewsletter() {
     const el = document.getElementById('newsletter-section');
@@ -442,158 +387,11 @@ function BlogList() {
     );
 }
 
-/* ====================================================================
-   INTERACTIVE "ASK THE GARAGE / TOPIC SUGGESTION" WIDGET
-   ==================================================================== */
-function TopicSuggestionWidget() {
-    const [votes, setVotes] = useState({
-        'Rollcage Triangulation in ANSYS': 42,
-        'ESP32 LoRa Pit Telemetry Schematics': 56,
-        'CVT Tuning & Flyweight Profiles': 35,
-        'Brake Proportioning Valve Setup': 28
-    });
-    const [voted, setVoted] = useState({});
-    const [topicInput, setTopicInput] = useState('');
-    const [submitted, setSubmitted] = useState(false);
 
-    const handleVote = (topic) => {
-        if (voted[topic]) return;
-        setVotes((prev) => ({ ...prev, [topic]: (prev[topic] || 0) + 1 }));
-        setVoted((prev) => ({ ...prev, [topic]: true }));
-    };
-
-    const handleCustomSubmit = (e) => {
-        e.preventDefault();
-        const clean = topicInput.trim();
-        if (!clean) return;
-        setVotes((prev) => ({ ...prev, [clean]: 1 }));
-        setVoted((prev) => ({ ...prev, [clean]: true }));
-        setTopicInput('');
-        setSubmitted(true);
-        setTimeout(() => setSubmitted(false), 5000);
-    };
-
-    return (
-        <section className="shadow-brutal-4 border-4 border-slate-900 bg-white p-6 sm:p-8">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
-                    // GARAGE DISPATCH POLL //
-                </span>
-                <span className="font-mono text-xs font-bold text-slate-500">Community Topic Voting</span>
-            </div>
-
-            <h3 className="mt-3 font-display text-2xl font-bold text-slate-900">
-                What should Team Asterix break down next?
-            </h3>
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                Our subsystem leads prioritize technical articles and workshop guides based on what students and builders
-                want to learn most. Upvote an existing topic or pitch a challenge from your own garage.
-            </p>
-
-            {/* Voting chips */}
-            <div className="mt-5 flex flex-wrap gap-2.5">
-                {Object.entries(votes).map(([topic, count]) => (
-                    <button
-                        key={topic}
-                        type="button"
-                        onClick={() => handleVote(topic)}
-                        className={`press shadow-brutal-2 cursor-pointer border-2 border-slate-900 px-3 py-2 font-mono text-xs font-black uppercase transition-colors ${
-                            voted[topic]
-                                ? 'bg-slate-900 text-white'
-                                : 'bg-slate-50 text-slate-900 hover:bg-amber-200'
-                        }`}
-                    >
-                        <span>{voted[topic] ? '✓ ' : '+1 '}</span>
-                        <span>{topic}</span>
-                        <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] text-slate-800">
-                            {count}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
-            {/* Custom pitch input */}
-            <form onSubmit={handleCustomSubmit} className="mt-6 flex flex-col gap-2 sm:flex-row">
-                <input
-                    type="text"
-                    value={topicInput}
-                    onChange={(e) => setTopicInput(e.target.value)}
-                    placeholder="Suggest a specific mechanism, formula, or subsystem topic…"
-                    className="flex-1 border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                />
-                <button
-                    type="submit"
-                    className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-slate-900 px-5 py-2.5 font-mono text-xs font-black uppercase text-white hover:bg-slate-800"
-                >
-                    Pitch Topic
-                </button>
-            </form>
-
-            {submitted && (
-                <p className="mt-3 border-2 border-emerald-700 bg-emerald-50 p-2 font-mono text-xs font-bold text-emerald-950">
-                    ✓ Topic added to the voting pool! Our team reviews requests every week.
-                </p>
-            )}
-        </section>
-    );
-}
-
-/* ====================================================================
-   GARAGE FAQ VIEW
-   ==================================================================== */
-function GarageFaq() {
-    const [openIndex, setOpenIndex] = useState(0);
-
-    return (
-        <div className="space-y-6">
-            <div className="border-4 border-slate-900 bg-amber-300 p-6 shadow-brutal-4">
-                <span className="border-2 border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
-                    // GARAGE KNOWLEDGE BASE //
-                </span>
-                <h2 className="mt-3 font-display text-2xl font-bold text-slate-950 sm:text-3xl">
-                    Frequently Asked Questions
-                </h2>
-                <p className="mt-1 text-sm font-medium text-slate-800 sm:text-base">
-                    Everything you need to know about Horizon write-ups, open engineering resources, and collaborating
-                    with Team Asterix.
-                </p>
-            </div>
-
-            <div className="space-y-3">
-                {FAQS.map((faq, i) => {
-                    const isOpen = openIndex === i;
-                    return (
-                        <div
-                            key={faq.q}
-                            className="shadow-brutal-4 border-4 border-slate-900 bg-white"
-                        >
-                            <button
-                                type="button"
-                                onClick={() => setOpenIndex(isOpen ? -1 : i)}
-                                className="flex w-full cursor-pointer items-center justify-between p-5 text-left font-display text-lg font-bold text-slate-900 hover:bg-slate-50"
-                            >
-                                <span>{faq.q}</span>
-                                <span className="ml-4 font-mono text-xl">{isOpen ? '−' : '+'}</span>
-                            </button>
-                            {isOpen && (
-                                <div className="border-t-2 border-slate-200 p-5 pt-3">
-                                    <p className="text-sm leading-relaxed text-slate-700">{faq.a}</p>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <TopicSuggestionWidget />
-        </div>
-    );
-}
 
 const TABS = [
     { view: 'blog', label: 'Horizon Blog', href: '#community' },
-    { view: 'pipeline', label: 'In The Paddock', href: '#community/pipeline' },
-    { view: 'faq', label: 'Garage Q&A', href: '#community/faq' }
+    { view: 'pipeline', label: 'In The Paddock', href: '#community/pipeline' }
 ];
 
 export default function CommunityPage({ onBack }) {
@@ -654,33 +452,7 @@ export default function CommunityPage({ onBack }) {
                                 from the Team Asterix garage. Written by student engineers for the next generation of racers.
                             </p>
 
-                            {/* Telemetry Stat Badges */}
-                            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                                <div className="border-2 border-slate-900 bg-slate-50 p-3 shadow-brutal-2">
-                                    <div className="font-mono text-2xl font-black text-slate-900">4,000+</div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        CAD & FEA Hours
-                                    </div>
-                                </div>
-                                <div className="border-2 border-slate-900 bg-slate-50 p-3 shadow-brutal-2">
-                                    <div className="font-mono text-2xl font-black text-slate-900">100%</div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        Student Engineered
-                                    </div>
-                                </div>
-                                <div className="border-2 border-slate-900 bg-slate-50 p-3 shadow-brutal-2">
-                                    <div className="font-mono text-2xl font-black text-slate-900">Open</div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        Tools & Schematics
-                                    </div>
-                                </div>
-                                <div className="border-2 border-slate-900 bg-slate-50 p-3 shadow-brutal-2">
-                                    <div className="font-mono text-2xl font-black text-slate-900">SAE Baja</div>
-                                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                        Track Tested Data
-                                    </div>
-                                </div>
-                            </div>
+
                         </div>
 
                         {/* Navigation Tabs */}
@@ -707,51 +479,10 @@ export default function CommunityPage({ onBack }) {
                         {/* Active Tab View */}
                         <div className="mt-8">
                             {route.view === 'pipeline' && <PipelineShowcase isStandalone={true} />}
-                            {route.view === 'faq' && <GarageFaq />}
                             {route.view === 'blog' && <BlogList />}
                         </div>
 
-                        {/* Core Engineering Pillars */}
-                        <section className="mt-16">
-                            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-900 pb-3">
-                                <h2 className="font-display text-2xl font-bold uppercase text-slate-900">
-                                    What We Document On Horizon
-                                </h2>
-                                <span className="font-mono text-xs font-black uppercase text-sky-800">
-                                    Open Engineering Philosophy
-                                </span>
-                            </div>
 
-                            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                                {COMMUNITY_PILLARS.map((pillar) => (
-                                    <div
-                                        key={pillar.title}
-                                        className="shadow-brutal-4 flex flex-col justify-between border-4 border-slate-900 bg-white p-5"
-                                    >
-                                        <div>
-                                            <div
-                                                className={`flex h-12 w-12 items-center justify-center border-2 border-slate-900 ${pillar.color} text-2xl shadow-brutal-2`}
-                                            >
-                                                {pillar.icon}
-                                            </div>
-                                            <h3 className="mt-4 font-display text-lg font-bold text-slate-900">
-                                                {pillar.title}
-                                            </h3>
-                                            <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                                                {pillar.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        {/* Interactive Topic Suggestion Section (shown on main blog/pipeline view) */}
-                        {route.view !== 'faq' && (
-                            <div className="mt-14">
-                                <TopicSuggestionWidget />
-                            </div>
-                        )}
 
                         {/* Community Discussion Channels Strip */}
                         <section className="mt-14 shadow-brutal-4 border-4 border-slate-900 bg-slate-900 p-6 text-white sm:p-8">
@@ -778,7 +509,7 @@ export default function CommunityPage({ onBack }) {
                                         🐙 GitHub Vault
                                     </a>
                                     <a
-                                        href="https://instagram.com"
+                                        href="https://www.instagram.com/team.asterix"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="press shadow-brutal-2 border-2 border-white bg-rose-500 px-4 py-2 font-mono text-xs font-black uppercase text-white no-underline hover:bg-rose-600"
@@ -786,12 +517,12 @@ export default function CommunityPage({ onBack }) {
                                         📸 Instagram
                                     </a>
                                     <a
-                                        href="https://youtube.com"
+                                        href="https://www.linkedin.com/company/teamasterix/"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="press shadow-brutal-2 border-2 border-white bg-amber-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 no-underline hover:bg-amber-300"
+                                        className="press shadow-brutal-2 border-2 border-white bg-sky-600 px-4 py-2 font-mono text-xs font-black uppercase text-white no-underline hover:bg-sky-500"
                                     >
-                                        🎬 YouTube
+                                        💼 LinkedIn
                                     </a>
                                 </div>
                             </div>
