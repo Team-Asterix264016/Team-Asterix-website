@@ -24,12 +24,27 @@ export function PostCover({ post, className }) {
     );
 }
 
+// Date, read time, and reaction and comment counts once a post has any.
 export function PostMeta({ post }) {
+    const reactions = post.stats?.reactions || 0;
+    const comments = post.stats?.comments || 0;
     return (
         <p className="font-mono text-[11px] font-bold text-slate-500">
             <time dateTime={post.publishedAt || undefined}>{formatPostDate(post.publishedAt)}</time>
             <span aria-hidden="true"> · </span>
             {post.readMinutes} min read
+            {reactions > 0 && (
+                <>
+                    <span aria-hidden="true"> · ❤️ {reactions}</span>
+                    <span className="sr-only">, {reactions} reactions</span>
+                </>
+            )}
+            {comments > 0 && (
+                <>
+                    <span aria-hidden="true"> · 💬 {comments}</span>
+                    <span className="sr-only">, {comments} comments</span>
+                </>
+            )}
         </p>
     );
 }

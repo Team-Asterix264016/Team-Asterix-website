@@ -22,3 +22,10 @@ export function countWords(body) {
 export function readMinutes(body) {
     return Math.max(1, Math.ceil(countWords(body) / 200));
 }
+
+/* A view counts as a read once the reader reached the end of the post and spent
+   real time on it: about a third of the estimated read time, 15 s to 2 min. */
+export function isRead({ maxScroll, engagedSeconds, readMinutes: minutes }) {
+    const needed = Math.min(120, Math.max(15, Math.round(minutes * 60 * 0.3)));
+    return maxScroll >= 90 && engagedSeconds >= needed;
+}
