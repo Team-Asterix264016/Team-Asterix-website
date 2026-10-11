@@ -157,6 +157,10 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                       ? 'Post unpublished and kept as a draft.'
                       : 'Draft saved.'
             );
+            if (targetStatus === 'published') {
+                onClose?.();
+                return;
+            }
         } catch (err) {
             setError({ message: err.message, field: err.field || '' });
         } finally {
