@@ -15,21 +15,18 @@ export const SHARE_TARGETS = [
     {
         channel: 'whatsapp',
         label: 'WhatsApp',
-        className: 'bg-emerald-300 hover:bg-emerald-200',
         href: (slug, title) =>
             `https://wa.me/?text=${encodeURIComponent(`${title} ${postUrl(slug, 'whatsapp')}`)}`
     },
     {
         channel: 'linkedin',
         label: 'LinkedIn',
-        className: 'bg-sky-300 hover:bg-sky-200',
         href: (slug) =>
             `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl(slug, 'linkedin'))}`
     },
     {
         channel: 'x',
         label: 'X',
-        className: 'bg-white hover:bg-slate-100',
         href: (slug, title) =>
             `https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(postUrl(slug, 'x'))}`
     }

@@ -243,7 +243,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                         <td className="p-2.5 whitespace-nowrap text-slate-700">
                                             <span title="Views">👁 {post.stats?.views || 0}</span>
                                             <span className="mx-1.5 text-slate-300">|</span>
-                                            <span title="Reactions">❤️ {post.stats?.reactions || 0}</span>
+                                            <span title="Reactions">👍 {post.stats?.reactions || 0}</span>
                                             <span className="mx-1.5 text-slate-300">|</span>
                                             <span title="Comments">💬 {post.stats?.comments || 0}</span>
                                         </td>

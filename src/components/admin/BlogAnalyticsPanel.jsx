@@ -14,10 +14,10 @@ const RANGES = [
 ];
 
 const REACTION_LABELS = {
-    like: '❤️ Like',
-    insightful: '💡 Insightful',
-    fire: '🔥 Fire',
-    clap: '👏 Applause'
+    like: 'Like',
+    insightful: 'Insightful',
+    fire: 'Impressive',
+    clap: 'Applause'
 };
 const SHARE_LABELS = {
     whatsapp: 'WhatsApp',

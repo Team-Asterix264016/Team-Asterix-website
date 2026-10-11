@@ -1,4 +1,5 @@
 import { safeHref } from '../../lib/safeHref';
+import { PiThumbsUp, PiChatCircle } from 'react-icons/pi';
 import { formatPostDate } from '../../lib/postDate';
 
 // Post card pieces shared by the community page and the home page strip.
@@ -35,13 +36,19 @@ export function PostMeta({ post }) {
             {post.readMinutes} min read
             {reactions > 0 && (
                 <>
-                    <span aria-hidden="true"> · ❤️ {reactions}</span>
+                    <span aria-hidden="true" className="inline-flex items-center gap-1">
+                        <span className="px-1">·</span>
+                        <PiThumbsUp className="h-3.5 w-3.5" /> {reactions}
+                    </span>
                     <span className="sr-only">, {reactions} reactions</span>
                 </>
             )}
             {comments > 0 && (
                 <>
-                    <span aria-hidden="true"> · 💬 {comments}</span>
+                    <span aria-hidden="true" className="inline-flex items-center gap-1">
+                        <span className="px-1">·</span>
+                        <PiChatCircle className="h-3.5 w-3.5" /> {comments}
+                    </span>
                     <span className="sr-only">, {comments} comments</span>
                 </>
             )}

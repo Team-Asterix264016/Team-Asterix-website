@@ -4,11 +4,12 @@ import { apiUrl } from './api';
    call to the /api/blog engagement routes. Rules the server enforces live in
    server/src/lib/engagement.js. */
 
+// The order readers see; icons live with the buttons in ReaderActions.jsx.
 export const REACTIONS = [
-    { type: 'like', emoji: '❤️', label: 'Like' },
-    { type: 'insightful', emoji: '💡', label: 'Insightful' },
-    { type: 'fire', emoji: '🔥', label: 'Fire' },
-    { type: 'clap', emoji: '👏', label: 'Applause' }
+    { type: 'like', label: 'Like' },
+    { type: 'insightful', label: 'Insightful' },
+    { type: 'fire', label: 'Impressive' },
+    { type: 'clap', label: 'Applause' }
 ];
 
 export const COMMENT_MAX = 2000;

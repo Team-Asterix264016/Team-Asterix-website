@@ -1,4 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
+import {
+    PiThumbsUp,
+    PiThumbsUpFill,
+    PiLightbulb,
+    PiLightbulbFill,
+    PiFire,
+    PiFireFill,
+    PiHandsClapping,
+    PiHandsClappingFill,
+    PiWhatsappLogo,
+    PiLinkedinLogo,
+    PiXLogo,
+    PiLink,
+    PiCheck,
+    PiShareNetwork,
+    PiChatCircle,
+    PiSpeakerHigh,
+    PiPause,
+    PiPlay,
+    PiStop
+} from 'react-icons/pi';
 import { REACTIONS } from '../../lib/blogEngagement';
 import {
     SHARE_TARGETS,
@@ -7,6 +28,19 @@ import {
     shareNatively,
     scrollToElement
 } from '../../lib/readerShare';
+
+// Outline icon at rest, filled once this reader has reacted.
+const REACTION_ICONS = {
+    like: [PiThumbsUp, PiThumbsUpFill],
+    insightful: [PiLightbulb, PiLightbulbFill],
+    fire: [PiFire, PiFireFill],
+    clap: [PiHandsClapping, PiHandsClappingFill]
+};
+
+const SHARE_ICONS = { whatsapp: PiWhatsappLogo, linkedin: PiLinkedinLogo, x: PiXLogo };
+
+const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600';
+const iconButton = `inline-flex h-10 w-10 cursor-pointer items-center justify-center border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-900 hover:text-slate-900 ${focusRing}`;
 
 export function ShareButtons({ post, onShare }) {
     const [copied, setCopied] = useState('');
@@ -22,79 +56,79 @@ export function ShareButtons({ post, onShare }) {
         setTimeout(() => setCopied(''), 2500);
     };
 
-    const button =
-        'press shadow-brutal-2 inline-flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 px-3 py-2 font-mono text-[11px] font-black text-slate-950 uppercase no-underline';
-
     return (
-        <div className="flex flex-wrap gap-2">
-            {SHARE_TARGETS.map((target) => (
-                <a
-                    key={target.channel}
-                    href={target.href(post.slug, post.title)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => onShare(target.channel)}
-                    className={`${button} ${target.className}`}
-                >
-                    {target.label}
-                </a>
-            ))}
-            <button type="button" onClick={copy} className={`${button} bg-amber-300 hover:bg-amber-200`}>
-                {copied === 'done'
-                    ? '✓ Link copied'
-                    : copied === 'failed'
-                      ? 'Copy from address bar'
-                      : 'Copy link'}
+        <div className="flex flex-wrap items-center gap-2">
+            {SHARE_TARGETS.map((target) => {
+                const Icon = SHARE_ICONS[target.channel];
+                return (
+                    <a
+                        key={target.channel}
+                        href={target.href(post.slug, post.title)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => onShare(target.channel)}
+                        aria-label={`Share on ${target.label}`}
+                        title={`Share on ${target.label}`}
+                        className={iconButton}
+                    >
+                        <Icon aria-hidden="true" className="h-5 w-5" />
+                    </a>
+                );
+            })}
+            <button
+                type="button"
+                onClick={copy}
+                className={`inline-flex h-10 cursor-pointer items-center gap-2 border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-900 hover:text-slate-900 ${focusRing}`}
+            >
+                {copied === 'done' ? (
+                    <PiCheck aria-hidden="true" className="h-[18px] w-[18px] text-emerald-700" />
+                ) : (
+                    <PiLink aria-hidden="true" className="h-[18px] w-[18px]" />
+                )}
+                <span aria-live="polite">
+                    {copied === 'done' ? 'Link copied' : copied === 'failed' ? 'Copy from the address bar' : 'Copy link'}
+                </span>
             </button>
             {canShareNatively() && (
                 <button
                     type="button"
                     onClick={() => shareNatively(post, onShare)}
-                    className={`${button} bg-white hover:bg-slate-100`}
+                    aria-label="More ways to share"
+                    title="More ways to share"
+                    className={iconButton}
                 >
-                    More…
+                    <PiShareNetwork aria-hidden="true" className="h-5 w-5" />
                 </button>
             )}
         </div>
     );
 }
 
-export function ReactionButtons({ engagement, size = 'large' }) {
-    const large = size === 'large';
+export function ReactionButtons({ engagement }) {
     return (
-        <div className={large ? 'grid grid-cols-2 gap-2 sm:grid-cols-4' : 'flex gap-1'}>
+        <div className="flex flex-wrap gap-2">
             {REACTIONS.map((r) => {
                 const on = engagement.mine.includes(r.type);
                 const count = engagement.reactions[r.type] || 0;
+                const [Outline, Filled] = REACTION_ICONS[r.type];
+                const Icon = on ? Filled : Outline;
                 return (
                     <button
                         key={r.type}
                         type="button"
                         aria-pressed={on}
-                        aria-label={`${r.label}: ${count}`}
-                        title={r.label}
+                        aria-label={`${r.label}${count ? `, ${count}` : ''}`}
                         onClick={() => engagement.toggleReaction(r.type)}
-                        className={`press flex cursor-pointer items-center justify-center border-2 transition-transform active:scale-90 ${
-                            large ? 'flex-col gap-0.5 px-2 py-3' : 'gap-1 px-2 py-1'
-                        } ${
+                        className={`inline-flex h-10 cursor-pointer items-center gap-2 border px-3.5 text-sm font-medium transition-colors ${focusRing} ${
                             on
-                                ? 'shadow-brutal-2 border-slate-900 bg-amber-300'
-                                : 'border-slate-300 bg-white hover:border-slate-900'
+                                ? 'border-slate-900 bg-slate-900 text-white'
+                                : 'border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-900'
                         }`}
                     >
-                        <span
-                            aria-hidden="true"
-                            className={large ? 'text-2xl leading-none' : 'text-base leading-none'}
-                        >
-                            {r.emoji}
-                        </span>
-                        <span className="font-mono text-xs font-black text-slate-900 tabular-nums">
-                            {count}
-                        </span>
-                        {large && (
-                            <span className="font-mono text-[10px] font-bold text-slate-600 uppercase">
-                                {r.label}
-                            </span>
+                        <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
+                        <span>{r.label}</span>
+                        {count > 0 && (
+                            <span className={`tabular-nums ${on ? 'text-slate-300' : 'text-slate-400'}`}>{count}</span>
                         )}
                     </button>
                 );
@@ -181,7 +215,16 @@ export function ListenButton({ paragraphs, className = '' }) {
                 aria-label={mode === 'playing' ? 'Pause reading aloud' : 'Listen to this post'}
                 className={`${base} ${mode === 'idle' ? 'bg-white hover:bg-slate-100' : 'bg-sky-300'}`}
             >
-                {mode === 'idle' ? '🔊 Listen' : mode === 'playing' ? '❚❚ Pause' : '▶ Resume'}
+                <span className="inline-flex items-center gap-1.5">
+                    {mode === 'idle' ? (
+                        <PiSpeakerHigh aria-hidden="true" className="h-4 w-4" />
+                    ) : mode === 'playing' ? (
+                        <PiPause aria-hidden="true" className="h-4 w-4" />
+                    ) : (
+                        <PiPlay aria-hidden="true" className="h-4 w-4" />
+                    )}
+                    {mode === 'idle' ? 'Listen' : mode === 'playing' ? 'Pause' : 'Resume'}
+                </span>
             </button>
             {mode !== 'idle' && (
                 <button
@@ -190,7 +233,7 @@ export function ListenButton({ paragraphs, className = '' }) {
                     aria-label="Stop reading aloud"
                     className={`${base} bg-white`}
                 >
-                    ■
+                    <PiStop aria-hidden="true" className="h-4 w-4" />
                 </button>
             )}
         </span>
@@ -221,8 +264,8 @@ export function FloatingActions({ post, engagement, commentCount, headerRef, end
     }, [headerRef, endRef]);
 
     const liked = engagement.mine.includes('like');
-    const item =
-        'flex cursor-pointer items-center gap-1.5 px-3 py-2 font-mono text-xs font-black text-slate-900 hover:bg-slate-100';
+    const LikeIcon = liked ? PiThumbsUpFill : PiThumbsUp;
+    const item = `flex cursor-pointer items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 ${focusRing}`;
 
     const share = async () => {
         if (!(await shareNatively(post, engagement.share))) scrollToElement(endRef.current);
@@ -235,16 +278,16 @@ export function FloatingActions({ post, engagement, commentCount, headerRef, end
             }`}
             aria-hidden={!visible}
         >
-            <div className="shadow-brutal-4 flex divide-x-2 divide-slate-900 border-2 border-slate-900 bg-white">
+            <div className="flex divide-x divide-slate-200 border border-slate-300 bg-white shadow-lg">
                 <button
                     type="button"
                     tabIndex={visible ? 0 : -1}
                     aria-pressed={liked}
                     aria-label={`Like: ${engagement.reactions.like || 0}`}
                     onClick={() => engagement.toggleReaction('like')}
-                    className={`${item} ${liked ? 'bg-amber-300 hover:bg-amber-200' : ''}`}
+                    className={`${item} ${liked ? 'text-slate-900' : ''}`}
                 >
-                    <span aria-hidden="true">❤️</span>
+                    <LikeIcon aria-hidden="true" className="h-[18px] w-[18px]" />
                     <span className="tabular-nums">{engagement.reactions.like || 0}</span>
                 </button>
                 <button
@@ -254,11 +297,11 @@ export function FloatingActions({ post, engagement, commentCount, headerRef, end
                     onClick={() => scrollToElement(commentsRef.current)}
                     className={item}
                 >
-                    <span aria-hidden="true">💬</span>
+                    <PiChatCircle aria-hidden="true" className="h-[18px] w-[18px]" />
                     <span className="tabular-nums">{commentCount}</span>
                 </button>
                 <button type="button" tabIndex={visible ? 0 : -1} onClick={share} className={item}>
-                    <span aria-hidden="true">↗</span> Share
+                    <PiShareNetwork aria-hidden="true" className="h-[18px] w-[18px]" /> Share
                 </button>
             </div>
         </div>
