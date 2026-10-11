@@ -13,6 +13,7 @@ import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
 import ParticipantPasswordsAdmin from './ParticipantPasswordsAdmin';
 import CommunityBlogAdmin from './CommunityBlogAdmin';
+import BlogCommentsAdmin from './BlogCommentsAdmin';
 import MailClusterAdmin from './MailClusterAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
@@ -688,6 +689,7 @@ export default function AdminDashboard({ onExit }) {
             icon: 'megaphone',
             children: [
                 { id: 'community-blog', label: 'Horizon Blog Posts', icon: 'book' },
+                { id: 'blog-comments', label: 'Blog Comments', icon: 'edit' },
                 { id: 'subscribers', label: 'Newsletter Subscribers', icon: 'inbox' },
                 { id: 'mail-cluster', label: 'Mail Cluster', icon: 'users' }
             ]
@@ -2164,8 +2166,11 @@ export default function AdminDashboard({ onExit }) {
                             showStatus={showStatus}
                             onUploadImage={handleImageUpload}
                             defaultAuthor={currentUser?.name}
+                            onOpenComments={() => setActiveTab('blog-comments')}
                         />
                     )}
+
+                    {activeTab === 'blog-comments' && <BlogCommentsAdmin showStatus={showStatus} />}
 
                     {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
 

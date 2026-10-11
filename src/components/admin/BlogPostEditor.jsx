@@ -17,6 +17,8 @@ const EMPTY = {
     authorRole: '',
     category: '',
     tags: '',
+    takeaways: '',
+    commentsMode: 'open',
     featured: false
 };
 
@@ -39,6 +41,8 @@ function toForm(post) {
         authorRole: post.authorRole || '',
         category: post.category || '',
         tags: (post.tags || []).join(', '),
+        takeaways: (post.takeaways || []).join('\n'),
+        commentsMode: post.commentsMode || 'open',
         featured: Boolean(post.featured)
     };
 }
@@ -54,7 +58,15 @@ const TOOLS = [
     { id: 'quote', label: '❝ Quote', title: 'Quote' },
     { id: 'code', label: '</> Code', title: 'Code block' },
     { id: 'image', label: '🖼 Image', title: 'Image' },
-    { id: 'rule', label: '—', title: 'Divider' }
+    { id: 'rule', label: '—', title: 'Divider' },
+    { id: 'callout', label: '💡 Callout', title: 'Callout box (note, tip or warning)' },
+    { id: 'poll', label: '📊 Poll', title: 'Reader poll' }
+];
+
+const COMMENT_MODES = [
+    { id: 'open', label: 'Open', hint: 'Comments appear as soon as they are posted.' },
+    { id: 'approval', label: 'Approve first', hint: 'Comments wait in Blog Comments until you approve them.' },
+    { id: 'closed', label: 'Closed', hint: 'No new comments. Existing ones stay visible.' }
 ];
 
 const inputClass = (invalid) =>
@@ -230,6 +242,8 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
         else if (id === 'code') insertBlock('```\ncode\n```', 'code');
         else if (id === 'image') insertBlock('![Describe the image](https://)', 'https://');
         else if (id === 'rule') insertBlock('---', '---');
+        else if (id === 'callout') insertBlock(':::tip Title (optional)\nWrite the tip here.\n:::', 'Write the tip here.');
+        else if (id === 'poll') insertBlock(':::poll Your question?\n- First option\n- Second option\n:::', 'Your question?');
     };
 
     if (loadState === 'loading') {
@@ -405,7 +419,7 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                     <p className="mx-auto mt-3 max-w-[38rem] text-lg text-slate-600">{form.excerpt}</p>
                                 )}
                                 {form.body.trim() ? (
-                                    <ArticleBody markdown={form.body} className="mt-6" />
+                                    <ArticleBody markdown={form.body} showProblems className="mt-6" />
                                 ) : (
                                     <p className="mx-auto mt-6 max-w-[38rem] font-mono text-xs text-slate-500">
                                         Nothing written yet.
@@ -416,6 +430,11 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                         <p className="mt-1 font-mono text-[10px] text-slate-500">
                             {words} words · {readMinutes(form.body)} min read · Markdown: ## heading, **bold**,
                             *italic*, - list, [text](url), ![alt](image url)
+                        </p>
+                        <p className="mt-1 font-mono text-[10px] text-slate-500">
+                            Callouts start with :::note, :::tip or :::warning and end with :::. Polls start with
+                            :::poll and the question, list 2 to 8 options, and end with :::. Votes belong to the
+                            question, so rewording a live poll's question starts its count again.
                         </p>
                     </div>
                 </div>
@@ -439,6 +458,43 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                             </span>
                         </label>
                     </div>
+
+                    <Field
+                        label={`Key takeaways (${form.takeaways.split('\n').filter((t) => t.trim()).length}/8)`}
+                        hint="One point per line. Shown in a box above the post."
+                        htmlFor={ids('takeaways')}
+                    >
+                        <textarea
+                            id={ids('takeaways')}
+                            value={form.takeaways}
+                            rows={4}
+                            onChange={(e) => update('takeaways', e.target.value)}
+                            data-lenis-prevent
+                            aria-invalid={error.field === 'takeaways' || undefined}
+                            placeholder={'What readers should remember\nOne short point per line'}
+                            className={inputClass(error.field === 'takeaways')}
+                        />
+                    </Field>
+
+                    <fieldset className="space-y-2 border-2 border-slate-900 bg-white p-3">
+                        <legend className="px-1 font-mono text-[10px] font-black text-slate-700 uppercase">Comments</legend>
+                        {COMMENT_MODES.map((mode) => (
+                            <label key={mode.id} className="flex cursor-pointer items-start gap-2 text-sm">
+                                <input
+                                    type="radio"
+                                    name={ids('commentsMode')}
+                                    value={mode.id}
+                                    checked={form.commentsMode === mode.id}
+                                    onChange={() => update('commentsMode', mode.id)}
+                                    className="mt-1 h-4 w-4 accent-violet-600"
+                                />
+                                <span>
+                                    <span className="font-bold">{mode.label}</span>
+                                    <span className="block text-xs text-slate-600">{mode.hint}</span>
+                                </span>
+                            </label>
+                        ))}
+                    </fieldset>
 
                     <Field
                         label="URL slug"
