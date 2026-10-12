@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
+import { QUIZ_PRESETS } from '../../data/quizPresets';
 
 function formatDateTimeInput(dateVal) {
     if (!dateVal) return '';
@@ -130,6 +131,17 @@ export default function QuizAdmin({ showStatus }) {
             alert('Failed to load submissions: ' + err.message);
         } finally {
             setIsSubmissionsLoading(false);
+        }
+    };
+
+    // Open the big-screen live leaderboard in its own tab, so the admin panel
+    // stays usable on the operator's laptop while the projector shows the board.
+    const handleOpenProjector = (quiz) => {
+        const url = `${window.location.origin}${window.location.pathname}#quiz-projector/${quiz._id}`;
+        const opened = window.open(url, '_blank', 'noopener');
+        if (!opened) {
+            // Popup blocked — fall back to this tab.
+            window.location.hash = `#quiz-projector/${quiz._id}`;
         }
     };
 
@@ -285,6 +297,12 @@ export default function QuizAdmin({ showStatus }) {
                                                     ? '✓ Results Published'
                                                     : '⏳ Results Scheduled'}
                                             </span>
+
+                                            {quiz.instantFeedback && (
+                                                <span className="border border-amber-600 bg-amber-200 px-2 py-0.5 font-mono text-[10px] font-black text-amber-950 uppercase">
+                                                    ⚡ Answers On The Spot
+                                                </span>
+                                            )}
                                         </div>
 
                                         {quiz.description && (
@@ -338,6 +356,16 @@ export default function QuizAdmin({ showStatus }) {
                                         >
                                             <span>📊</span>
                                             <span>Results ({quiz.submissionCount})</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleOpenProjector(quiz)}
+                                            className="press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-violet-300 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200"
+                                            title="Open the big-screen live leaderboard"
+                                        >
+                                            <span>📺</span>
+                                            <span>Projector</span>
                                         </button>
 
                                         <button
@@ -674,6 +702,10 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
 
     const [showExplanations, setShowExplanations] = useState(initialData?.showExplanations !== false);
     const [shuffleQuestions, setShuffleQuestions] = useState(Boolean(initialData?.shuffleQuestions));
+    const [instantFeedback, setInstantFeedback] = useState(Boolean(initialData?.instantFeedback));
+
+    // Ready-made papers from src/data/quizPresets.js
+    const [selectedPresetId, setSelectedPresetId] = useState('');
 
     // Questions state
     const [questions, setQuestions] = useState(() => {
@@ -715,6 +747,46 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
             end.setDate(end.getDate() + 1);
             setResultsPublishTime(formatDateTimeInput(end));
         }
+    };
+
+    // Load a ready-made paper from src/data/quizPresets.js. Fills in everything
+    // except the schedule — exam start, exam end and results release stay
+    // exactly as the organiser set them.
+    const handleLoadPreset = () => {
+        const preset = QUIZ_PRESETS.find((p) => p.presetId === selectedPresetId);
+        if (!preset) {
+            setFormError('Pick a ready paper to load first.');
+            return;
+        }
+
+        const hasTypedQuestions = questions.some((q) => q.questionText.trim() || q.explanation.trim());
+        if (
+            (hasTypedQuestions || title.trim()) &&
+            !window.confirm(
+                `Load "${preset.label}"? This replaces the title, description, duration and all ${preset.questions.length} questions currently in this form. Your exam and results times are left untouched.`
+            )
+        ) {
+            return;
+        }
+
+        setTitle(preset.title);
+        setSlug(preset.slug || '');
+        setDescription(preset.description || '');
+        setDurationMinutes(preset.durationMinutes || 20);
+        setShowExplanations(preset.showExplanations !== false);
+        setShuffleQuestions(Boolean(preset.shuffleQuestions));
+        setInstantFeedback(Boolean(preset.instantFeedback));
+        setQuestions(
+            preset.questions.map((q) => ({
+                questionText: q.questionText,
+                options: [...q.options],
+                correctOptionIndex: Number(q.correctOptionIndex) || 0,
+                points: Number(q.points) || 1,
+                explanation: q.explanation || ''
+            }))
+        );
+        setFormError('');
+        setActiveTab('questions');
     };
 
     // Question operations
@@ -837,6 +909,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 resultsPublishTime: new Date(resultsPublishTime).toISOString(),
                 showExplanations,
                 shuffleQuestions,
+                instantFeedback,
                 questions
             };
 
@@ -942,6 +1015,51 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
                     {activeTab === 'settings' ? (
                         <div className="space-y-5">
+                            {/* Ready-made papers kept in code (src/data/quizPresets.js) */}
+                            {QUIZ_PRESETS.length > 0 && (
+                                <div className="shadow-brutal-4 space-y-2.5 border-3 border-slate-900 bg-violet-50 p-4">
+                                    <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
+                                        <span>⚡</span>
+                                        <span>Load a Ready Paper (no retyping)</span>
+                                    </h4>
+                                    <div className="flex flex-col gap-2 sm:flex-row">
+                                        <select
+                                            value={selectedPresetId}
+                                            onChange={(e) => setSelectedPresetId(e.target.value)}
+                                            className="flex-1 cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-bold"
+                                        >
+                                            <option value="">— Select a prepared question paper —</option>
+                                            {QUIZ_PRESETS.map((preset) => (
+                                                <option key={preset.presetId} value={preset.presetId}>
+                                                    {preset.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={handleLoadPreset}
+                                            disabled={!selectedPresetId}
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-violet-300 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            Load Paper →
+                                        </button>
+                                    </div>
+                                    {selectedPresetId && (
+                                        <p className="font-mono text-[11px] font-bold text-slate-600">
+                                            {
+                                                QUIZ_PRESETS.find((p) => p.presetId === selectedPresetId)
+                                                    ?.summary
+                                            }
+                                        </p>
+                                    )}
+                                    <p className="font-mono text-[10px] font-bold text-violet-900">
+                                        Fills in the title, description, duration, answer-on-the-spot setting
+                                        and every question with its answer key. Your exam start, exam end and
+                                        results release times are never changed — set those yourself below.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Title & Slug */}
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div className="sm:col-span-2">
@@ -1103,6 +1221,25 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                                 className="h-4 w-4 accent-slate-900"
                                             />
                                             <span>Shuffle question order for each participant</span>
+                                        </label>
+                                        <label className="flex cursor-pointer items-start gap-2 border-2 border-slate-900 bg-amber-100 p-2.5 font-mono text-xs font-bold text-slate-800">
+                                            <input
+                                                type="checkbox"
+                                                checked={instantFeedback}
+                                                onChange={(e) => setInstantFeedback(e.target.checked)}
+                                                className="mt-0.5 h-4 w-4 accent-slate-900"
+                                            />
+                                            <span>
+                                                <strong className="block uppercase">
+                                                    Answer on the spot
+                                                </strong>
+                                                <span className="font-normal text-slate-600">
+                                                    Mark each answer the instant it is picked and show the
+                                                    participant whether they got it right. Choices become
+                                                    final once answered, and the projector leaderboard scores
+                                                    people live as they play.
+                                                </span>
+                                            </span>
                                         </label>
                                     </div>
                                 </div>

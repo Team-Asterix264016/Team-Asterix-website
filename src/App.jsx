@@ -25,6 +25,7 @@ const WorkshopAttendanceProjector = lazy(() => import('./components/admin/Worksh
 const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttendanceCheckin'));
 const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
 const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
+const QuizLeaderboardProjector = lazy(() => import('./components/admin/QuizLeaderboardProjector'));
 const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
 const CommunityPage = lazy(() => import('./components/community/CommunityPage'));
 
@@ -40,7 +41,9 @@ function MainApp() {
             window.location.hash === '#profile' ||
             window.location.pathname.startsWith('/workshop/profile')
     );
-    const [isCommunityPage, setIsCommunityPage] = useState(() => window.location.hash.startsWith('#community'));
+    const [isCommunityPage, setIsCommunityPage] = useState(() =>
+        window.location.hash.startsWith('#community')
+    );
     const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
         () => window.location.hash === '#workshop-project-submit'
     );
@@ -52,7 +55,12 @@ function MainApp() {
     const [isProjectorPage, setIsProjectorPage] = useState(() =>
         window.location.hash.startsWith('#attendance-projector')
     );
-    const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
+    const [isQuizProjectorPage, setIsQuizProjectorPage] = useState(() =>
+        window.location.hash.startsWith('#quiz-projector')
+    );
+    const [isQuizPage, setIsQuizPage] = useState(
+        () => window.location.hash.startsWith('#quiz') && !window.location.hash.startsWith('#quiz-projector')
+    );
     const [lenisInstance, setLenisInstance] = useState(null);
 
     const scrollToTop = () => {
@@ -88,7 +96,8 @@ function MainApp() {
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
-            setIsQuizPage(hash.startsWith('#quiz'));
+            setIsQuizProjectorPage(hash.startsWith('#quiz-projector'));
+            setIsQuizPage(hash.startsWith('#quiz') && !hash.startsWith('#quiz-projector'));
             if (hash === '#model') setIsModelPage(true);
             scrollToTop();
         };
@@ -116,6 +125,7 @@ function MainApp() {
         isWorkshopProjectPage,
         isAttendancePage,
         isProjectorPage,
+        isQuizProjectorPage,
         isQuizPage,
         selectedSubsystem,
         isModelPage,
@@ -312,6 +322,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <WorkshopAttendanceCheckin onGoHome={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isQuizProjectorPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <QuizLeaderboardProjector onExit={handleBackToHome} />
             </Suspense>
         );
     }
