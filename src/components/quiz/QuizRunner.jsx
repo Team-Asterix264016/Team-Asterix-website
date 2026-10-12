@@ -679,6 +679,10 @@ export default function QuizRunner({ onBack }) {
         );
     }
 
+    const isUpcoming = quizData ? (Boolean(timeUntilStart) || quizData.stage === 'upcoming') : false;
+    const isEnded = quizData ? quizData.stage === 'ended' : false;
+    const isActive = quizData ? (!isUpcoming && !isEnded) : false;
+
     // -------------------------------------------------------------
     // RENDER: VIEW 1 - GATEKEEPER & ATTENDEE FORM
     // -------------------------------------------------------------
