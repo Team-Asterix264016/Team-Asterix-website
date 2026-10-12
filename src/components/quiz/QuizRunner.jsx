@@ -91,6 +91,7 @@ export default function QuizRunner({ onBack }) {
     });
     const [gatekeeperError, setGatekeeperError] = useState('');
     const [isStarting, setIsStarting] = useState(false);
+    const [showDescription, setShowDescription] = useState(false);
 
     // Student profile credentials login form state
     const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -785,9 +786,20 @@ export default function QuizRunner({ onBack }) {
                                 {quizData.title}
                             </h1>
                             {quizData.description && (
-                                <p className="text-sm font-medium text-slate-600 sm:text-base">
-                                    {quizData.description}
-                                </p>
+                                <div className="pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDescription((prev) => !prev)}
+                                        className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs font-black text-sky-600 uppercase hover:text-sky-800"
+                                    >
+                                        <span>{showDescription ? '▴ Hide Description' : '▾ Show Description'}</span>
+                                    </button>
+                                    {showDescription && (
+                                        <p className="mt-2 border-l-4 border-sky-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-600 sm:text-base">
+                                            {quizData.description}
+                                        </p>
+                                    )}
+                                </div>
                             )}
                         </div>
 
@@ -984,24 +996,6 @@ export default function QuizRunner({ onBack }) {
                                                 </div>
                                             </div>
 
-                                            {/* Rules notice */}
-                                            <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
-                                                <span className="block font-black text-slate-900 uppercase">
-                                                    Assessment Rules:
-                                                </span>
-                                                <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
-                                                <div>• The quiz will auto-submit when the countdown expires.</div>
-                                                {quizData.instantFeedback ? (
-                                                    <>
-                                                        <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
-                                                        <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
-                                                    </>
-                                                ) : (
-                                                    <div>• Your answers are autosaved as you make your selections.</div>
-                                                )}
-                                                <div>• You can check your evaluated score and class ranking once results are published.</div>
-                                            </div>
-
                                             <button
                                                 type="button"
                                                 onClick={() => startQuizWithStudent(storedStudent)}
@@ -1018,99 +1012,57 @@ export default function QuizRunner({ onBack }) {
                                                 ) : isEnded ? (
                                                     <span>Quiz Concluded</span>
                                                 ) : (
-                                                    <span>🚀 Enter Quiz Answering Page as {storedStudent.name} →</span>
+                                                    <span>🚀 Enter Quiz as {storedStudent.name} →</span>
                                                 )}
                                             </button>
                                         </div>
                                     ) : (
-                                        /* CASE 2: Student needs to sign in with profile credentials */
+                                        /* CASE 2: Student sign-in fields */
                                         <form onSubmit={handleStudentLogin} className="space-y-4 border-2 border-slate-900 bg-white p-5">
-                                            <div className="border-b-2 border-slate-100 pb-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="font-mono text-xs font-black tracking-wider text-sky-600 uppercase">
-                                                        🔒 REGISTERED STUDENT ACCESS
-                                                    </span>
-                                                    {isSwitchingAccount && storedStudent && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setIsSwitchingAccount(false);
-                                                                setGatekeeperError('');
-                                                            }}
-                                                            className="font-mono text-xs font-bold text-slate-500 hover:text-slate-800"
-                                                        >
-                                                            ✕ Cancel
-                                                        </button>
-                                                    )}
+                                            {isSwitchingAccount && storedStudent && (
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsSwitchingAccount(false);
+                                                            setGatekeeperError('');
+                                                        }}
+                                                        className="font-mono text-xs font-bold text-slate-500 hover:text-slate-800"
+                                                    >
+                                                        ✕ Cancel
+                                                    </button>
                                                 </div>
-                                                <h3 className="mt-1 font-mono text-base font-black text-slate-900 uppercase">
-                                                    Sign In With Your Profile Credentials
-                                                </h3>
-                                                <p className="font-mono text-xs text-slate-500">
-                                                    This quiz is restricted to registered workshop students. Enter your credentials to verify your profile and proceed to the answering page.
-                                                </p>
-                                            </div>
+                                            )}
 
                                             <div className="space-y-3 font-mono text-xs">
                                                 <div>
-                                                    <label className="mb-1 block font-bold text-slate-700 uppercase">
-                                                        Mobile Number / Email ID / Roll No <span className="text-rose-600">*</span>
-                                                    </label>
                                                     <input
                                                         type="text"
                                                         required
                                                         value={loginIdentifier}
                                                         onChange={(e) => setLoginIdentifier(e.target.value)}
-                                                        placeholder="e.g. 9876543210, rollno@psgitech.ac.in, or 23L123"
+                                                        placeholder="Mobile or Email or Roll number"
                                                         className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 text-xs focus:border-sky-500 focus:outline-none"
                                                     />
                                                 </div>
 
-                                                <div>
-                                                    <label className="mb-1 block font-bold text-slate-700 uppercase">
-                                                        Profile Password <span className="text-rose-600">*</span>
-                                                    </label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type={showLoginPassword ? 'text' : 'password'}
-                                                            required
-                                                            value={loginPassword}
-                                                            onChange={(e) => setLoginPassword(e.target.value)}
-                                                            placeholder="Enter password (default: asterix)"
-                                                            className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 pr-16 text-xs focus:border-sky-500 focus:outline-none"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShowLoginPassword((prev) => !prev)}
-                                                            className="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer border border-slate-800 bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase hover:bg-slate-200"
-                                                        >
-                                                            {showLoginPassword ? 'Hide' : 'Show'}
-                                                        </button>
-                                                    </div>
-                                                    <span className="mt-1 block text-[10px] text-slate-500">
-                                                        💡 Initial default password for all workshop participants is &quot;asterix&quot;.
-                                                    </span>
+                                                <div className="relative">
+                                                    <input
+                                                        type={showLoginPassword ? 'text' : 'password'}
+                                                        required
+                                                        value={loginPassword}
+                                                        onChange={(e) => setLoginPassword(e.target.value)}
+                                                        placeholder="Password"
+                                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 pr-16 text-xs focus:border-sky-500 focus:outline-none"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowLoginPassword((prev) => !prev)}
+                                                        className="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer border border-slate-800 bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase hover:bg-slate-200"
+                                                    >
+                                                        {showLoginPassword ? 'Hide' : 'Show'}
+                                                    </button>
                                                 </div>
-                                            </div>
-
-                                            {/* Rules notice */}
-                                            <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
-                                                <span className="block font-black text-slate-900 uppercase">
-                                                    Assessment Rules:
-                                                </span>
-                                                <div>• <strong>2 Attempts Granted:</strong> You can take this quiz up to 2 times. If you face issues, you can take a 2nd attempt.</div>
-                                                <div>• <strong>Best Score Counts:</strong> Your highest score out of the 2 attempts will be considered.</div>
-                                                <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
-                                                <div>• The quiz will auto-submit when the countdown expires.</div>
-                                                {quizData.instantFeedback ? (
-                                                    <>
-                                                        <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
-                                                        <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
-                                                    </>
-                                                ) : (
-                                                    <div>• Your answers are autosaved as you make your selections.</div>
-                                                )}
-                                                <div>• You can check your evaluated score and class ranking once results are published.</div>
                                             </div>
 
                                             <button
@@ -1131,76 +1083,75 @@ export default function QuizRunner({ onBack }) {
                                                 ) : isEnded ? (
                                                     <span>Quiz Concluded</span>
                                                 ) : (
-                                                    <span>🔓 Verify Profile & Enter Quiz →</span>
+                                                    <span>Enter Quiz →</span>
                                                 )}
                                             </button>
                                         </form>
                                     )}
+
+                                    {/* Assessment Rules notice (Moved below attend quiz section) */}
+                                    <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
+                                        <span className="block font-black text-slate-900 uppercase">
+                                            Assessment Rules:
+                                        </span>
+                                        <div>• <strong>2 Attempts Granted:</strong> You can take this quiz up to 2 times. If you face issues, you can take a 2nd attempt.</div>
+                                        <div>• <strong>Best Score Counts:</strong> Your highest score out of the 2 attempts will be considered.</div>
+                                        <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
+                                        <div>• The quiz will auto-submit when the countdown expires.</div>
+                                        {quizData.instantFeedback ? (
+                                            <>
+                                                <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
+                                                <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
+                                            </>
+                                        ) : (
+                                            <div>• Your answers are autosaved as you make your selections.</div>
+                                        )}
+                                        <div>• You can check your evaluated score and class ranking once results are published.</div>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {/* TAB 2: LOOKUP / CHECK RESULTS RETURN FLOW */}
                         {gatekeeperTab === 'lookup' && (
-                            <div className="space-y-4">
-                                <div className="border-b-2 border-slate-100 pb-2">
-                                    <h3 className="font-mono text-sm font-black text-slate-900 uppercase">
-                                        Check Your Evaluation Results
-                                    </h3>
-                                    <p className="font-mono text-xs text-slate-500">
-                                        Returning to view your score? Enter the email address you used when
-                                        taking this quiz.
-                                    </p>
-                                </div>
-
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    performLookup(lookupEmail);
+                                }}
+                                className="space-y-3"
+                            >
                                 {lookupError && (
                                     <div className="border-2 border-rose-500 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-700">
                                         ⚠️ {lookupError}
                                     </div>
                                 )}
 
-                                <div>
-                                    <label className="mb-1 block font-mono text-xs font-bold text-slate-700 uppercase">
-                                        Registered Email Address
-                                    </label>
-                                    <div className="flex flex-col gap-2 sm:flex-row">
-                                        <input
-                                            type="email"
-                                            value={lookupEmail}
-                                            onChange={(e) => setLookupEmail(e.target.value)}
-                                            placeholder="Enter your registered email"
-                                            className="flex-1 border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:border-emerald-500 focus:outline-none"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => performLookup(lookupEmail)}
-                                            disabled={isLookingUp}
-                                            className="press shadow-brutal-2 flex shrink-0 cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-emerald-400 px-6 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300 disabled:opacity-50"
-                                        >
-                                            {isLookingUp ? (
-                                                <>
-                                                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
-                                                    <span>Checking...</span>
-                                                </>
-                                            ) : (
-                                                <span>Check Result →</span>
-                                            )}
-                                        </button>
-                                    </div>
+                                <div className="flex flex-col gap-2 sm:flex-row">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={lookupEmail}
+                                        onChange={(e) => setLookupEmail(e.target.value)}
+                                        placeholder="Enter your registered email address"
+                                        className="flex-1 border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:border-emerald-500 focus:outline-none"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isLookingUp}
+                                        className="press shadow-brutal-2 flex shrink-0 cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-emerald-400 px-6 py-2.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300 disabled:opacity-50"
+                                    >
+                                        {isLookingUp ? (
+                                            <>
+                                                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                <span>Checking...</span>
+                                            </>
+                                        ) : (
+                                            <span>Check Result →</span>
+                                        )}
+                                    </button>
                                 </div>
-
-                                <div className="space-y-1.5 border-2 border-slate-900 bg-sky-50 p-4 font-mono text-xs">
-                                    <span className="block font-bold text-sky-900 uppercase">
-                                        💡 How Evaluation Publishing Works:
-                                    </span>
-                                    <p className="text-slate-700">
-                                        All participant submissions are automatically evaluated on the server.
-                                        If the admin has scheduled results for a future date, this page will
-                                        show confirmation of your submission along with a live countdown clock
-                                        to the reveal time!
-                                    </p>
-                                </div>
-                            </div>
+                            </form>
                         )}
                     </div>
                 </main>
