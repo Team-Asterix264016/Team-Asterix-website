@@ -2,18 +2,36 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 
 export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'software' }) {
-    const [track, setTrack] = useState(initialTrack);
-    const [sessionNumber, setSessionNumber] = useState(1);
-    const [sessionDate, setSessionDate] = useState(() => new Date().toISOString().slice(0, 10));
-    const [sessionTopic, setSessionTopic] = useState('');
+    const startTrack = (() => {
+        if (typeof window !== 'undefined' && window.location.hash) {
+            if (window.location.hash.includes('track=powertrain')) return 'powertrain';
+            if (window.location.hash.includes('track=software')) return 'software';
+        }
+        return initialTrack;
+    })();
+
+    const {
+        track,
+        setTrack,
+        sessionNumber,
+        setSessionNumber,
+        sessionDate,
+        setSessionDate,
+        sessionTopic,
+        setSessionTopic,
+        sessionId,
+        scheduleList,
+        currentScheduleMatch,
+        selectScheduleSession
+    } = useAttendanceSession(startTrack);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    // Dynamic QR & Timer state
+    // Dynamic QR state
     const [qrDataUrl, setQrDataUrl] = useState('');
-    const [countdownSeconds, setCountdownSeconds] = useState(12);
-    const [scanUrl, setScanUrl] = useState('');
+    const [, setScanUrl] = useState('');
     const [error, setError] = useState('');
 
     // Live Attendance stream
@@ -25,10 +43,9 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     });
 
     const projectorRef = useRef(null);
-    const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
-    // Fetch token & generate QR
-    const fetchRotatingToken = useCallback(async () => {
+    // Fetch session token & generate permanent static QR
+    const fetchSessionToken = useCallback(async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) {
@@ -44,7 +61,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             });
 
             const res = await fetch(apiUrl(`/api/workshop/attendance/session-token?${query.toString()}`), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
             if (!res.ok) {
@@ -54,9 +71,8 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
-            setCountdownSeconds(12);
 
-            // Generate crisp high-resolution QR Code
+            // Generate crisp high-resolution permanent QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
                 width: 1000,
                 margin: 2,
@@ -69,7 +85,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             setQrDataUrl(url);
             setError('');
         } catch (err) {
-            console.error('Error fetching rotating attendance token:', err);
+            console.error('Error fetching attendance session token:', err);
             setError(err.message);
         }
     }, [track, sessionNumber, sessionDate, sessionTopic]);
@@ -80,9 +96,12 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             if (!token) return;
 
-            const res = await fetch(apiUrl(`/api/workshop/attendance/live-status?sessionId=${encodeURIComponent(sessionId)}`), {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetch(
+                apiUrl(`/api/workshop/attendance/live-status?sessionId=${encodeURIComponent(sessionId)}`),
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
 
             if (res.ok) {
                 const data = await res.json();
@@ -98,30 +117,17 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         }
     }, [sessionId]);
 
-    // 12-second countdown and rotation timer
+    // Fetch permanent session QR token on mount or parameter changes
     useEffect(() => {
-        fetchRotatingToken();
+        fetchSessionToken();
+    }, [fetchSessionToken]);
+
+    // 3-second live status polling
+    useEffect(() => {
         fetchLiveStatus();
-
-        // 1-second interval to update countdown number
-        const countdownTimer = setInterval(() => {
-            setCountdownSeconds((prev) => {
-                if (prev <= 1) {
-                    fetchRotatingToken();
-                    return 12;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        // 3-second live status refresh
         const pollTimer = setInterval(fetchLiveStatus, 3000);
-
-        return () => {
-            clearInterval(countdownTimer);
-            clearInterval(pollTimer);
-        };
-    }, [fetchRotatingToken, fetchLiveStatus]);
+        return () => clearInterval(pollTimer);
+    }, [fetchLiveStatus]);
 
     // Fullscreen toggle handler
     const toggleFullscreen = () => {
@@ -137,65 +143,57 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
     return (
         <div
             ref={projectorRef}
-            className="h-screen max-h-screen w-screen bg-slate-950 text-white font-mono p-3 sm:p-5 lg:p-6 select-none flex flex-col justify-center overflow-hidden"
+            className="flex min-h-[100dvh] w-full flex-col justify-center bg-slate-950 p-3 font-mono text-white select-none sm:p-5 lg:h-screen lg:max-h-screen lg:overflow-hidden lg:p-6"
         >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-center max-w-[1700px] w-full mx-auto h-full max-h-full overflow-hidden">
-                
-                {/* LEFT: ONLY THE QR CODE (Fitted to 100% screen height) */}
-                <div className="lg:col-span-7 xl:col-span-8 h-full flex flex-col items-center justify-center py-1 overflow-hidden">
+            <div className="mx-auto grid w-full max-w-[1700px] grid-cols-1 items-center gap-4 lg:h-full lg:max-h-full lg:grid-cols-12 lg:gap-8 lg:overflow-hidden">
+                {/* LEFT: ONLY THE QR CODE (Fitted to screen height) */}
+                <div className="flex flex-col items-center justify-center py-1 lg:col-span-7 lg:h-full lg:overflow-hidden xl:col-span-8">
                     {/* Dynamic QR Container */}
-                    <div className="p-3 sm:p-5 lg:p-6 bg-white border-4 border-slate-900 shadow-[10px_10px_0px_#38bdf8] flex flex-col items-center justify-center max-w-full max-h-[calc(100vh-80px)] shrink-0">
+                    <div className="shadow-brutal-10-light flex max-h-[calc(100vh-80px)] max-w-full shrink-0 flex-col items-center justify-center border-4 border-slate-900 bg-white p-3 sm:p-5 lg:p-6">
                         {qrDataUrl ? (
                             <img
                                 src={qrDataUrl}
                                 alt="Live Attendance QR Code"
-                                className="max-h-[54vh] sm:max-h-[60vh] lg:max-h-[66vh] xl:max-h-[70vh] w-auto aspect-square object-contain transition-opacity duration-200"
+                                className="aspect-square max-h-[65vh] w-auto object-contain transition-opacity duration-200 sm:max-h-[72vh] lg:max-h-[78vh] xl:max-h-[82vh]"
                             />
                         ) : (
-                            <div className="w-[260px] h-[260px] sm:w-[380px] sm:h-[380px] flex items-center justify-center text-slate-400 font-bold text-sm">
+                            <div className="flex h-[260px] w-[260px] items-center justify-center text-sm font-bold text-slate-400 sm:h-[380px] sm:w-[380px]">
                                 Generating QR Code...
                             </div>
                         )}
-
-                        {/* Clean 12-Second Countdown Timer */}
-                        <div className="mt-3 flex items-center gap-2 font-mono text-xs sm:text-sm font-black text-slate-800 bg-slate-100 px-3.5 py-1 border border-slate-400 shrink-0">
-                            <span>⏱ Code refreshes in:</span>
-                            <span className="text-rose-600 text-base sm:text-lg font-black w-8 text-center">
-                                {countdownSeconds}s
-                            </span>
+                        {/* Permanent Session Badge */}
+                        <div className="mt-3 flex shrink-0 items-center gap-2 border border-emerald-600 bg-emerald-50 px-3.5 py-1.5 font-mono text-xs font-black text-emerald-950 sm:text-sm">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-600"></span>
+                            <span>Permanent Session QR</span>
                         </div>
                     </div>
 
-                    <div className="text-center text-xs text-slate-400 mt-2 space-y-0.5 shrink-0">
-                        <p className="font-bold text-slate-200 text-xs sm:text-sm">
+                    <div className="mt-2 shrink-0 space-y-0.5 text-center text-xs text-slate-400">
+                        <p className="text-xs font-bold text-slate-200 sm:text-sm">
                             Scan with your mobile camera to check in
-                        </p>
-                        <p className="text-[11px] text-slate-400">
-                            Enter your Roll Number and College Email to record attendance
                         </p>
                     </div>
 
                     {error && (
-                        <div className="mt-2 px-3 py-1 bg-rose-950 border border-rose-600 text-rose-300 text-xs font-bold shrink-0">
+                        <div className="mt-2 shrink-0 border border-rose-600 bg-rose-950 px-3 py-1 text-xs font-bold text-rose-300">
                             ⚠️ {error}
                         </div>
                     )}
                 </div>
 
                 {/* RIGHT: ALL HEADERS, CONTROLS, AND STATS (Strictly within height) */}
-                <div className="lg:col-span-5 xl:col-span-4 h-full flex flex-col justify-between gap-2.5 overflow-hidden py-1">
-                    
+                <div className="flex flex-col justify-between gap-2.5 py-1 lg:col-span-5 lg:h-full lg:overflow-hidden xl:col-span-4">
                     {/* Header Block (All headers moved here) */}
-                    <div className="space-y-2 bg-slate-900/80 p-3 border-2 border-slate-800 shadow-[4px_4px_0px_#0f172a] shrink-0">
+                    <div className="shadow-brutal-4 shrink-0 space-y-2 border-2 border-slate-800 bg-slate-900/80 p-3">
                         {/* Top Title & Controls */}
                         <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-2">
                             <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                                <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-emerald-400"></span>
                                 <div>
-                                    <h1 className="text-sm sm:text-base font-black uppercase tracking-wider text-white leading-tight">
+                                    <h1 className="text-sm leading-tight font-black tracking-wider text-white uppercase sm:text-base">
                                         Team Asterix
                                     </h1>
-                                    <p className="text-[10px] text-slate-400 font-bold">
+                                    <p className="text-[10px] font-bold text-slate-400">
                                         Workshop Attendance Projector
                                     </p>
                                 </div>
@@ -205,7 +203,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 <button
                                     type="button"
                                     onClick={toggleFullscreen}
-                                    className="press px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-black uppercase text-[10px] cursor-pointer"
+                                    className="press cursor-pointer border border-slate-600 bg-slate-800 px-2 py-0.5 text-[10px] font-black text-white uppercase hover:bg-slate-700"
                                     title="Toggle Fullscreen"
                                 >
                                     {isFullscreen ? 'Exit ↙' : 'Full ↗'}
@@ -214,7 +212,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                     <button
                                         type="button"
                                         onClick={onExit}
-                                        className="press px-2 py-0.5 bg-rose-600 hover:bg-rose-500 border border-slate-600 text-white font-black uppercase text-[10px] cursor-pointer"
+                                        className="press cursor-pointer border border-slate-600 bg-rose-600 px-2 py-0.5 text-[10px] font-black text-white uppercase hover:bg-rose-500"
                                         title="Close Projector"
                                     >
                                         ✕
@@ -226,12 +224,14 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                         {/* Controls: Track Toggle & Session Selectors */}
                         <div className="flex flex-wrap items-center gap-1.5 text-xs">
                             {/* Track Toggle */}
-                            <div className="inline-flex border-2 border-slate-700 bg-slate-900 p-0.5 font-black uppercase text-[11px]">
+                            <div className="inline-flex border-2 border-slate-700 bg-slate-900 p-0.5 text-[11px] font-black uppercase">
                                 <button
                                     type="button"
                                     onClick={() => setTrack('software')}
-                                    className={`px-2.5 py-1 cursor-pointer transition-colors ${
-                                        track === 'software' ? 'bg-sky-400 text-slate-950 shadow-[1px_1px_0px_#ffffff]' : 'text-slate-400 hover:text-white'
+                                    className={`cursor-pointer px-2.5 py-1 transition-colors ${
+                                        track === 'software'
+                                            ? 'shadow-brutal-1-white bg-sky-400 text-slate-950'
+                                            : 'text-slate-400 hover:text-slate-950'
                                     }`}
                                 >
                                     Software
@@ -239,94 +239,122 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 <button
                                     type="button"
                                     onClick={() => setTrack('powertrain')}
-                                    className={`px-2.5 py-1 cursor-pointer transition-colors ${
-                                        track === 'powertrain' ? 'bg-amber-400 text-slate-950 shadow-[1px_1px_0px_#ffffff]' : 'text-slate-400 hover:text-white'
+                                    className={`cursor-pointer px-2.5 py-1 transition-colors ${
+                                        track === 'powertrain'
+                                            ? 'shadow-brutal-1-white bg-amber-400 text-slate-950'
+                                            : 'text-slate-400 hover:text-white'
                                     }`}
                                 >
                                     Powertrain
                                 </button>
                             </div>
 
+                            {/* Schedule Selector */}
+                            {scheduleList && scheduleList.length > 0 && (
+                                <select
+                                    value={currentScheduleMatch?.id || ''}
+                                    onChange={(e) => {
+                                        const s = scheduleList.find((item) => item.id === e.target.value);
+                                        if (s) selectScheduleSession(s);
+                                    }}
+                                    className="min-w-0 max-w-full border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                >
+                                    <option value="">-- {track.toUpperCase()} Schedule --</option>
+                                    {scheduleList.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.label} ({s.dateStr}) — {s.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+
                             {/* Session Number */}
-                            <div className="flex items-center gap-1 bg-slate-900 border-2 border-slate-700 px-2 py-0.5">
-                                <span className="text-[10px] text-slate-400 uppercase font-bold">Session:</span>
+                            <div className="flex items-center gap-1 border-2 border-slate-700 bg-slate-900 px-2 py-0.5">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">
+                                    Session:
+                                </span>
                                 <input
                                     type="number"
                                     min="1"
                                     max="20"
                                     value={sessionNumber}
-                                    onChange={(e) => setSessionNumber(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                                    className="w-8 bg-transparent text-white font-black text-center focus:outline-none text-xs"
+                                    onChange={(e) => setSessionNumber(e.target.value)}
+                                    className="w-8 bg-transparent text-center text-xs font-black text-white focus:outline-none"
                                 />
                             </div>
 
                             {/* Session Date */}
-                            <div className="flex items-center gap-1 bg-slate-900 border-2 border-slate-700 px-2 py-0.5">
-                                <span className="text-[10px] text-slate-400 uppercase font-bold">Date:</span>
+                            <div className="flex items-center gap-1 border-2 border-slate-700 bg-slate-900 px-2 py-0.5">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Date:</span>
                                 <input
                                     type="date"
                                     value={sessionDate}
                                     onChange={(e) => setSessionDate(e.target.value)}
-                                    className="bg-transparent text-white font-mono text-[11px] focus:outline-none cursor-pointer"
+                                    className="cursor-pointer bg-transparent font-mono text-[11px] text-white focus:outline-none"
                                 />
                             </div>
 
                             {/* Session Topic */}
-                            <div className="flex items-center gap-1 bg-slate-900 border-2 border-slate-700 px-2 py-0.5 flex-1 min-w-[100px]">
-                                <span className="text-[10px] text-slate-400 uppercase font-bold">Topic:</span>
+                            <div className="flex min-w-[100px] flex-1 items-center gap-1 border-2 border-slate-700 bg-slate-900 px-2 py-0.5">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">Topic:</span>
                                 <input
                                     type="text"
                                     value={sessionTopic}
                                     placeholder="Optional topic..."
                                     onChange={(e) => setSessionTopic(e.target.value)}
-                                    className="bg-transparent text-white font-mono text-[11px] focus:outline-none w-full"
+                                    className="w-full bg-transparent font-mono text-[11px] text-white focus:outline-none"
                                 />
                             </div>
                         </div>
 
                         {/* Track & Session Header Banner */}
-                        <div className={`px-2.5 py-1 border-2 border-slate-900 font-black text-xs uppercase tracking-wider text-center ${
-                            track === 'software' ? 'bg-sky-400 text-slate-950' : 'bg-amber-400 text-slate-950'
-                        }`}>
-                            {track === 'software' ? 'Software & Perception Workshop' : 'Electronics & Powertrain Workshop'} · Session {String(sessionNumber).padStart(2, '0')}
+                        <div
+                            className={`border-2 border-slate-900 px-2.5 py-1 text-center text-xs font-black tracking-wider uppercase ${
+                                track === 'software'
+                                    ? 'bg-sky-400 text-slate-950'
+                                    : 'bg-amber-400 text-slate-950'
+                            }`}
+                        >
+                            {track === 'software'
+                                ? 'Software & Perception Workshop'
+                                : 'Electronics & Powertrain Workshop'}{' '}
+                            · Session {String(sessionNumber).padStart(2, '0')}
                         </div>
                     </div>
 
                     {/* Live Metric Cards */}
-                    <div className="grid grid-cols-2 gap-2.5 shrink-0">
-                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-[3px_3px_0px_#0284c7]">
-                            <span className="text-[10px] uppercase tracking-wider text-sky-400 font-black block">
+                    <div className="grid shrink-0 grid-cols-2 gap-2.5">
+                        <div className="shadow-brutal-3-brand border-2 border-slate-800 bg-slate-900 p-3">
+                            <span className="block text-[10px] font-black tracking-wider text-sky-400 uppercase">
                                 Present In Class
                             </span>
-                            <span className="text-2xl sm:text-3xl font-black text-white">
+                            <span className="text-2xl font-black text-white sm:text-3xl">
                                 {liveStats.totalPresent}
                             </span>
-                            <span className="text-[10px] text-slate-400 block mt-0.5">
+                            <span className="mt-0.5 block text-[10px] text-slate-400">
                                 of {liveStats.totalEligible} enrolled
                             </span>
                         </div>
 
-                        <div className="p-3 bg-slate-900 border-2 border-slate-800 shadow-[3px_3px_0px_#10b981]">
-                            <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-black block">
+                        <div className="shadow-brutal-3-go-bright border-2 border-slate-800 bg-slate-900 p-3">
+                            <span className="block text-[10px] font-black tracking-wider text-emerald-400 uppercase">
                                 Attendance Rate
                             </span>
-                            <span className="text-2xl sm:text-3xl font-black text-emerald-400">
+                            <span className="text-2xl font-black text-emerald-400 sm:text-3xl">
                                 {liveStats.percentage}%
                             </span>
-                            <span className="text-[10px] text-slate-400 block mt-0.5">
-                                quorum progress
-                            </span>
+                            <span className="mt-0.5 block text-[10px] text-slate-400">quorum progress</span>
                         </div>
                     </div>
 
                     {/* Live Attendance Stream / Ticker - Flex-1 with internal scroll */}
-                    <div className="flex-1 min-h-0 bg-slate-900 border-2 border-slate-800 shadow-[4px_4px_0px_#0f172a] p-3 flex flex-col space-y-2 overflow-hidden">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 shrink-0">
-                            <span className="text-xs font-black uppercase text-slate-300 flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <div className="shadow-brutal-4 flex min-h-0 flex-1 flex-col space-y-2 overflow-hidden border-2 border-slate-800 bg-slate-900 p-3">
+                        <div className="flex shrink-0 items-center justify-between border-b border-slate-800 pb-1.5">
+                            <span className="flex items-center gap-1.5 text-xs font-black text-slate-300 uppercase">
+                                <span className="h-2 w-2 animate-ping rounded-full bg-emerald-400"></span>
                                 Live Check-In Ticker
                             </span>
-                            <span className="text-[10px] text-slate-500 font-bold">
+                            <span className="text-[10px] font-bold text-slate-500">
                                 {liveStats.recentCheckins.length} recent
                             </span>
                         </div>
@@ -336,18 +364,18 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 Awaiting student scans...
                             </div>
                         ) : (
-                            <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1.5">
+                            <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
                                 {liveStats.recentCheckins.map((item, idx) => (
                                     <div
                                         key={item.rollNo || idx}
-                                        className="p-1.5 bg-slate-950 border border-slate-800 flex items-center justify-between text-xs"
+                                        className="flex items-center justify-between border border-slate-800 bg-slate-950 p-1.5 text-xs"
                                     >
                                         <div className="flex items-center gap-2 truncate pr-2">
-                                            <span className="px-1.5 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-700 text-[10px] font-black">
+                                            <span className="border border-emerald-700 bg-emerald-950 px-1.5 py-0.5 text-[10px] font-black text-emerald-400">
                                                 ✓
                                             </span>
                                             <div className="truncate">
-                                                <div className="font-black text-white truncate text-[11px]">
+                                                <div className="truncate text-[11px] font-black text-white">
                                                     {item.name}
                                                 </div>
                                                 <div className="text-[9px] text-slate-400">
@@ -356,8 +384,15 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                             </div>
                                         </div>
 
-                                        <span className="text-[9px] text-slate-500 shrink-0 font-mono">
-                                            {item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : ''}
+                                        <span className="shrink-0 font-mono text-[9px] text-slate-500">
+                                            {item.checkedInAt
+                                                ? new Date(item.checkedInAt).toLocaleTimeString('en-IN', {
+                                                      hour: '2-digit',
+                                                      minute: '2-digit',
+                                                      second: '2-digit',
+                                                      hour12: false
+                                                  })
+                                                : ''}
                                         </span>
                                     </div>
                                 ))}
@@ -366,13 +401,11 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                     </div>
 
                     {/* Bottom Status within right panel */}
-                    <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 font-bold border-t border-slate-800 shrink-0">
+                    <div className="flex shrink-0 items-center justify-between border-t border-slate-800 pt-1 text-[10px] font-bold text-slate-500">
                         <div>
-                            Session: <strong className="text-slate-300 font-mono">{sessionId}</strong>
+                            Session: <strong className="font-mono text-slate-300">{sessionId}</strong>
                         </div>
-                        <div>
-                            Indian Standard Time (IST)
-                        </div>
+                        <div>Indian Standard Time (IST)</div>
                     </div>
                 </div>
             </div>

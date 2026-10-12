@@ -1,29 +1,33 @@
-import { useState, useEffect, lazy, Suspense } from "react";
-import Lenis from "lenis";
-import useScrollAssembly from "./hooks/useScrollAssembly";
-import useParallax from "./hooks/useParallax";
-import CyberNavbar from "./components/CyberNavbar";
-import IntroScrollSequence from "./components/IntroScrollSequence";
-import CyberHero from "./components/CyberHero";
-import MarqueeTicker from "./components/MarqueeTicker";
-import TheSquad from "./components/TheSquad";
-import TeamGallery from "./components/TeamGallery";
-import TeamUpdates from "./components/TeamUpdates";
-import OurStoryCurvedWave from "./components/OurStoryCurvedWave";
-import CyberNewsletterCTA from "./components/CyberNewsletterCTA";
-import CyberFooter from "./components/CyberFooter";
-import SubsystemDetail from "./components/SubsystemDetail";
-import FloatingBackground from "./components/FloatingBackground";
-import WorkshopPopup from "./components/WorkshopPopup";
-import { WebsiteDataProvider } from "./context/WebsiteDataContext";
+import { useState, useEffect, lazy, Suspense } from 'react';
+import Lenis from 'lenis';
+import useScrollAssembly from './hooks/useScrollAssembly';
+import useParallax from './hooks/useParallax';
+import CyberNavbar from './components/CyberNavbar';
+import IntroScrollSequence from './components/IntroScrollSequence';
+import CyberHero from './components/CyberHero';
+import MarqueeTicker from './components/MarqueeTicker';
+import TheSquad from './components/TheSquad';
+import CyberNewsletterCTA from './components/CyberNewsletterCTA';
+import TeamGallery from './components/TeamGallery';
+import OurStoryCurvedWave from './components/OurStoryCurvedWave';
+import HomeBlogStrip from './components/community/HomeBlogStrip';
+import CyberFooter from './components/CyberFooter';
+import SubsystemDetail from './components/SubsystemDetail';
+import FloatingBackground from './components/FloatingBackground';
+import { WebsiteDataProvider } from './context/WebsiteDataContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
-const BajaModelPage = lazy(() => import("./components/BajaModelPage"));
-const AdminDashboard = lazy(() => import("./components/admin/AdminDashboard"));
-const SponsorPage = lazy(() => import("./components/SponsorPage"));
-const WorkshopPage = lazy(() => import("./components/WorkshopPage"));
-const WorkshopAttendanceProjector = lazy(() => import("./components/admin/WorkshopAttendanceProjector"));
-const WorkshopAttendanceCheckin = lazy(() => import("./components/WorkshopAttendanceCheckin"));
-const QuizRunner = lazy(() => import("./components/quiz/QuizRunner"));
+const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
+const SponsorPage = lazy(() => import('./components/SponsorPage'));
+const WorkshopPage = lazy(() => import('./components/WorkshopPage'));
+const WorkshopAttendanceProjector = lazy(() => import('./components/admin/WorkshopAttendanceProjector'));
+const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttendanceCheckin'));
+const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
+const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
+const QuizLeaderboardProjector = lazy(() => import('./components/admin/QuizLeaderboardProjector'));
+const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
+const CommunityPage = lazy(() => import('./components/community/CommunityPage'));
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
@@ -31,9 +35,32 @@ function MainApp() {
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
-    const [isAttendancePage, setIsAttendancePage] = useState(() => window.location.hash.startsWith('#attendance') && !window.location.hash.startsWith('#attendance-projector'));
-    const [isProjectorPage, setIsProjectorPage] = useState(() => window.location.hash.startsWith('#attendance-projector'));
-    const [isQuizPage, setIsQuizPage] = useState(() => window.location.hash.startsWith('#quiz'));
+    const [isProfilePage, setIsProfilePage] = useState(
+        () =>
+            window.location.hash === '#workshop-profile' ||
+            window.location.hash === '#profile' ||
+            window.location.pathname.startsWith('/workshop/profile')
+    );
+    const [isCommunityPage, setIsCommunityPage] = useState(() =>
+        window.location.hash.startsWith('#community')
+    );
+    const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
+        () => window.location.hash === '#workshop-project-submit'
+    );
+    const [isAttendancePage, setIsAttendancePage] = useState(
+        () =>
+            window.location.hash.startsWith('#attendance') &&
+            !window.location.hash.startsWith('#attendance-projector')
+    );
+    const [isProjectorPage, setIsProjectorPage] = useState(() =>
+        window.location.hash.startsWith('#attendance-projector')
+    );
+    const [isQuizProjectorPage, setIsQuizProjectorPage] = useState(() =>
+        window.location.hash.startsWith('#quiz-projector')
+    );
+    const [isQuizPage, setIsQuizPage] = useState(
+        () => window.location.hash.startsWith('#quiz') && !window.location.hash.startsWith('#quiz-projector')
+    );
     const [lenisInstance, setLenisInstance] = useState(null);
 
     const scrollToTop = () => {
@@ -47,23 +74,40 @@ function MainApp() {
         const handleHashChange = () => {
             const hash = window.location.hash;
             // Clear retired recruitment, freshers and submission hashes to prevent broken landing
-            if (['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(hash) || hash.startsWith('#submit') || hash.startsWith('#recruitment-submit')) {
+            if (
+                ['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(hash) ||
+                hash.startsWith('#submit') ||
+                hash.startsWith('#recruitment-submit')
+            ) {
                 window.history.replaceState(null, '', window.location.pathname);
                 scrollToTop();
                 return;
             }
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
-            setIsWorkshopPage(hash === '#workshop');
+            setIsWorkshopPage(false);
+            setIsProfilePage(
+                hash === '#workshop-profile' ||
+                    hash === '#profile' ||
+                    hash === '#workshop' ||
+                    window.location.pathname.startsWith('/workshop/profile')
+            );
+            setIsCommunityPage(hash.startsWith('#community'));
+            setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
-            setIsQuizPage(hash.startsWith('#quiz'));
+            setIsQuizProjectorPage(hash.startsWith('#quiz-projector'));
+            setIsQuizPage(hash.startsWith('#quiz') && !hash.startsWith('#quiz-projector'));
             if (hash === '#model') setIsModelPage(true);
             scrollToTop();
         };
 
         const initialHash = window.location.hash;
-        if (['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(initialHash) || initialHash.startsWith('#submit') || initialHash.startsWith('#recruitment-submit')) {
+        if (
+            ['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(initialHash) ||
+            initialHash.startsWith('#submit') ||
+            initialHash.startsWith('#recruitment-submit')
+        ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
 
@@ -73,7 +117,20 @@ function MainApp() {
 
     useEffect(() => {
         scrollToTop();
-    }, [isSponsorPage, isWorkshopPage, isAttendancePage, isProjectorPage, isQuizPage, selectedSubsystem, isModelPage, isAdminOpen]);
+    }, [
+        isSponsorPage,
+        isWorkshopPage,
+        isProfilePage,
+        isCommunityPage,
+        isWorkshopProjectPage,
+        isAttendancePage,
+        isProjectorPage,
+        isQuizProjectorPage,
+        isQuizPage,
+        selectedSubsystem,
+        isModelPage,
+        isAdminOpen
+    ]);
 
     useEffect(() => {
         // Readers who ask for reduced motion get the browser's native scroll.
@@ -89,7 +146,7 @@ function MainApp() {
             gestureOrientation: 'vertical',
             smoothWheel: true,
             wheelMultiplier: 0.9,
-            touchMultiplier: 1.5,
+            touchMultiplier: 1.5
         });
 
         // eslint-disable-next-line react/set-state-in-effect
@@ -131,6 +188,9 @@ function MainApp() {
         setIsAdminOpen(false);
         setIsSponsorPage(false);
         setIsWorkshopPage(false);
+        setIsProfilePage(false);
+        setIsCommunityPage(false);
+        setIsWorkshopProjectPage(false);
     };
 
     const handleSelectSubsystem = (id) => {
@@ -154,8 +214,22 @@ function MainApp() {
 
     const handleOpenWorkshop = () => {
         closeAll();
-        setIsWorkshopPage(true);
-        window.location.hash = '#workshop';
+        setIsProfilePage(true);
+        window.location.hash = '#workshop-profile';
+        scrollToTop();
+    };
+
+    const handleOpenProfile = () => {
+        closeAll();
+        setIsProfilePage(true);
+        window.location.hash = '#workshop-profile';
+        scrollToTop();
+    };
+
+    const handleOpenCommunity = () => {
+        closeAll();
+        setIsCommunityPage(true);
+        window.location.hash = '#community';
         scrollToTop();
     };
 
@@ -169,16 +243,29 @@ function MainApp() {
     const handleBackToHome = () => {
         closeAll();
         const hash = window.location.hash;
-        if (hash.startsWith('#admin') || ['#sponsor', '#workshop', '#model'].includes(hash)) {
+        if (
+            hash.startsWith('#admin') ||
+            hash.startsWith('#community') ||
+            [
+                '#sponsor',
+                '#workshop',
+                '#workshop-profile',
+                '#profile',
+                '#workshop-project-submit',
+                '#model'
+            ].includes(hash)
+        ) {
             window.history.replaceState(null, '', window.location.pathname);
         }
         scrollToTop();
     };
 
     const pageFallback = (
-        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center font-mono text-sky-400 gap-3">
-            <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-black tracking-widest uppercase text-slate-300">LOADING ASTERIX PORTAL...</span>
+        <div className="flex min-h-[100svh] flex-col items-center justify-center gap-3 bg-slate-900 font-mono text-sky-400">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-sky-400 border-t-transparent"></div>
+            <span className="text-xs font-black tracking-widest text-slate-300 uppercase">
+                LOADING ASTERIX PORTAL...
+            </span>
         </div>
     );
 
@@ -191,10 +278,34 @@ function MainApp() {
         );
     }
 
+    if (isProfilePage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <ParticipantProfilePage onBack={handleBackToHome} onSelectSubsystem={handleSelectSubsystem} />
+            </Suspense>
+        );
+    }
+
     if (isWorkshopPage) {
         return (
             <Suspense fallback={pageFallback}>
                 <WorkshopPage onBack={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isCommunityPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <CommunityPage onBack={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isWorkshopProjectPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <WorkshopProjectSubmissionPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
@@ -215,6 +326,14 @@ function MainApp() {
         );
     }
 
+    if (isQuizProjectorPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <QuizLeaderboardProjector onExit={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
     if (isQuizPage) {
         return (
             <Suspense fallback={pageFallback}>
@@ -223,14 +342,15 @@ function MainApp() {
         );
     }
 
-    const isDetailPage = Boolean(
-        selectedSubsystem || isSponsorPage || isModelPage
-    );
+    const isDetailPage = Boolean(selectedSubsystem || isSponsorPage || isModelPage);
 
-    const currentPage =
-        isSponsorPage ? 'sponsor' :
-        isModelPage ? 'model' :
-        selectedSubsystem ? 'subsystem' : 'home';
+    const currentPage = isSponsorPage
+        ? 'sponsor'
+        : isModelPage
+          ? 'model'
+          : selectedSubsystem
+            ? 'subsystem'
+            : 'home';
 
     // Dedicated Full-Screen Sponsorship & Pitch Deck Portal
     if (isSponsorPage) {
@@ -242,24 +362,21 @@ function MainApp() {
     }
 
     return (
-        <div className="relative min-h-screen bg-white text-slate-900 selection:bg-sky-500 selection:text-white overflow-x-clip font-sans">
-            
+        <div className="relative min-h-screen overflow-x-clip bg-white font-sans text-slate-900 selection:bg-sky-500 selection:text-white">
             {/* Photorealistic 3D Floating Baja Buggy Canvas & Swimming Goldfish */}
             <FloatingBackground />
-
-            {/* Workshop Popup Announcement on Landing Page */}
-            <WorkshopPopup onOpenWorkshop={handleOpenWorkshop} />
 
             {/* Main Content Layer */}
             <div className="relative z-10">
                 {/* Cyberbites Chunky Brutalist Navigation */}
-                <CyberNavbar 
+                <CyberNavbar
                     onSelectSubsystem={handleSelectSubsystem}
                     isDetailPage={isDetailPage}
                     currentPage={currentPage}
                     onBackToHome={handleBackToHome}
                     onOpenSponsor={handleOpenSponsor}
-                    onOpenWorkshop={handleOpenWorkshop}
+                    onOpenCommunity={handleOpenCommunity}
+                    onOpenProfile={handleOpenProfile}
                 />
 
                 {isModelPage ? (
@@ -272,16 +389,26 @@ function MainApp() {
                     </Suspense>
                 ) : selectedSubsystem ? (
                     /* Dedicated Subsystem Detail Page (Shows all team members, CAD methodology, specs) */
-                    <main className="relative z-10 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)] border-b-4 border-slate-900">
-                        <SubsystemDetail 
+                    <main className="relative z-10 border-b-4 border-slate-900 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
+                        <SubsystemDetail
                             subsystemId={selectedSubsystem}
                             onBack={handleBackToHome}
                             onSelectSubsystem={handleSelectSubsystem}
                         />
                     </main>
                 ) : (
-                    /* Main Landing Page Curtain */
-                    <main className="relative z-10 bg-white shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)] border-b-4 border-slate-900">
+                    /* Main Landing Page Curtain.
+
+                       Deliberately no `bg-white`. This element is z-10 over the
+                       fixed FloatingBackground at z-0, so an opaque fill here
+                       painted over the ambient layer -- the light blooms, the dot
+                       grid, the drifting grit and the 3D buggy -- across the
+                       whole landing page, including the two sections written to
+                       be transparent for it (#intro and #hero). The white comes
+                       from FloatingBackground's own gradient instead, and every
+                       section that should stay solid still carries its own
+                       background (the marquee, gallery, story, CTA and footer). */
+                    <main className="relative z-10 border-b-4 border-slate-900 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.4)]">
                         {/* 115-Frame Pre-Rendered Cinema Intro Scroll Sequence */}
                         <IntroScrollSequence />
 
@@ -297,36 +424,41 @@ function MainApp() {
                         {/* "OUR GALLERY" - Interactive 3D DriftWall Photo Archive */}
                         <TeamGallery />
 
-                        {/* "TEAM UPDATES" - Integrated with React Bits <FlyingPosters /> Component */}
-                        <TeamUpdates />
-
                         {/* "OUR STORY" - Animated Sinusoidal Wave SVG Curved Text */}
                         <OurStoryCurvedWave onOpenSponsor={handleOpenSponsor} />
+
+                        {/* Latest Horizon posts; renders nothing until one is published */}
+                        <HomeBlogStrip />
 
                         {/* "JOIN THE ALLIANCE" - Brutalist Sponsor / Newsletter Form */}
                         <CyberNewsletterCTA onOpenSponsor={handleOpenSponsor} />
 
                         {/* Sentinel element to detect when main page finishes scrolling and footer is reached */}
-                        <div id="footer-sentinel" className="h-2 w-full pointer-events-none opacity-0" aria-hidden="true" />
+                        <div
+                            id="footer-sentinel"
+                            className="pointer-events-none h-2 w-full opacity-0"
+                            aria-hidden="true"
+                        />
                     </main>
                 )}
 
                 {/* 4-Column Cyberbites Brutalist Footer */}
-                <CyberFooter 
+                <CyberFooter
                     onOpenAdmin={handleOpenAdmin}
                     onOpenSponsor={handleOpenSponsor}
                     onOpenWorkshop={handleOpenWorkshop}
                 />
             </div>
-
         </div>
     );
 }
 
 export default function App() {
     return (
-        <WebsiteDataProvider>
-            <MainApp />
-        </WebsiteDataProvider>
+        <ErrorBoundary>
+            <WebsiteDataProvider>
+                <MainApp />
+            </WebsiteDataProvider>
+        </ErrorBoundary>
     );
 }

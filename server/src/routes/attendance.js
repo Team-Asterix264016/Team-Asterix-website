@@ -1,8 +1,15 @@
 import { Router } from 'express';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
-import { authenticateToken } from '../middleware/auth.js';
+import WorkshopResource from '../models/WorkshopResource.js';
+import SiteConfig from '../models/SiteConfig.js';
+import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../config/workshopPackages.js';
+import { sessionIsoDate } from '../config/sessionDates.js';
+import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
+import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
 
 const router = Router();
 
@@ -24,8 +31,7 @@ function signToken(track, sessionId, timeVal) {
 }
 
 /**
- * Validates a rotating attendance token
- * Allows up to 25 seconds from generation/scan time
+ * Validates an attendance token (supports static non-expiring tokens as well as timestamped tokens)
  */
 function verifyToken(token) {
     if (!token || typeof token !== 'string') return null;
@@ -33,37 +39,29 @@ function verifyToken(token) {
     if (parts.length !== 4) return null;
 
     const [track, sessionId, timeValStr, signature] = parts;
+
+    // Support static token format
+    if (timeValStr === 'static' || timeValStr === '0') {
+        const expectedSig = signToken(track, sessionId, 'static');
+        if (signature === expectedSig) {
+            return { track, sessionId, timeVal: 0 };
+        }
+    }
+
     const timeVal = parseInt(timeValStr, 10);
-    if (isNaN(timeVal)) return null;
-
-    const now = Date.now();
-    let isValidTime = false;
-
-    if (timeVal > 1000000000000) {
-        // Full millisecond timestamp: valid for 25 seconds
-        const ageMs = now - timeVal;
-        isValidTime = (ageMs >= -5000 && ageMs <= TOKEN_EXPIRY_MS);
-    } else {
-        // Bucket format: allows current + previous 2 buckets (~25s)
-        const currentBucket = Math.floor(now / ROTATION_INTERVAL_MS);
-        isValidTime = (timeVal === currentBucket || timeVal === currentBucket - 1 || timeVal === currentBucket - 2);
+    if (!isNaN(timeVal)) {
+        const expectedSig = signToken(track, sessionId, timeVal);
+        if (signature === expectedSig) {
+            return { track, sessionId, timeVal };
+        }
     }
 
-    if (!isValidTime) {
-        return null;
-    }
-
-    const expectedSig = signToken(track, sessionId, timeVal);
-    if (signature !== expectedSig) {
-        return null;
-    }
-
-    return { track, sessionId, timeVal };
+    return null;
 }
 
 /**
  * GET /api/workshop/attendance/session-token
- * Admin only: Generates current rotating token for projector display
+ * Admin only: Generates current static token for projector display
  */
 router.get('/session-token', authenticateToken, async (req, res) => {
     try {
@@ -77,9 +75,10 @@ router.get('/session-token', authenticateToken, async (req, res) => {
         }
 
         const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
-        const now = Date.now();
-        const signature = signToken(track, sessionId, now);
-        const token = `${track}.${sessionId}.${now}.${signature}`;
+
+        const tokenTimeVal = 'static';
+        const signature = signToken(track, sessionId, tokenTimeVal);
+        const token = `${track}.${sessionId}.${tokenTimeVal}.${signature}`;
 
         // Construct scan URL for the student
         const hostUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;
@@ -105,7 +104,7 @@ router.get('/session-token', authenticateToken, async (req, res) => {
 
 /**
  * POST /api/workshop/attendance/checkin
- * Public endpoint: Student submits roll number, email, and device ID
+ * Public endpoint: Student submits roll number, email and device ID
  */
 router.post('/checkin', async (req, res) => {
     try {
@@ -201,13 +200,12 @@ router.post('/checkin', async (req, res) => {
         }
 
         // Parse session metadata
-        // sessionId format: "software-s01-2026-10-06"
         const sessionParts = sessionId.split('-');
         const sessionNumStr = sessionParts[1] ? sessionParts[1].replace('s', '') : '1';
         const sessionNumber = parseInt(sessionNumStr, 10) || 1;
         const sessionDate = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
 
-        // 7. Record Attendance
+        // 7. Record attendance
         const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
         const userAgent = req.headers['user-agent'] || '';
 
@@ -231,6 +229,7 @@ router.post('/checkin', async (req, res) => {
             checkedInAt: new Date()
         });
 
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
         return res.status(201).json({
             success: true,
             message: 'Attendance confirmed successfully!',
@@ -421,6 +420,7 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
             checkedInAt: new Date()
         });
 
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
         return res.json({
             success: true,
             message: `✓ Manually marked ${registration.name} (${cleanRoll}) as present.`,
@@ -429,6 +429,176 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error('Error manually marking attendance:', err);
         return res.status(500).json({ error: 'Failed to manually mark attendance' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/barcode-scan
+ * Admin only: Process barcode scan input (Register Number / Roll Number) to mark student attendance
+ */
+router.post('/barcode-scan', authenticateToken, async (req, res) => {
+    try {
+        const { barcode, track: inputTrack, sessionId: inputSessionId, sessionTopic, sessionNumber, sessionDate } = req.body || {};
+
+        if (!barcode || typeof barcode !== 'string' || !barcode.trim()) {
+            return res.status(400).json({ error: 'Barcode or register number is required.' });
+        }
+
+        // Clean raw barcode input (handles scanner carriage returns, spaces, or prefixed URLs)
+        let cleanInput = barcode.trim();
+        // If scanner reads a URL like http://...#rollNo=21EC001 or similar
+        if (cleanInput.includes('rollNo=')) {
+            const match = cleanInput.match(/rollNo=([^&]+)/i);
+            if (match) cleanInput = match[1];
+        } else if (cleanInput.includes(':')) {
+            const parts = cleanInput.split(':');
+            cleanInput = parts[parts.length - 1];
+        }
+
+        const cleanBarcode = cleanInput.trim();
+        const upperBarcode = cleanBarcode.toUpperCase();
+
+        // Target track & session ID resolution
+        const track = (inputTrack || 'software').toLowerCase().trim();
+        const targetSessionId = inputSessionId
+            ? String(inputSessionId).trim()
+            : `${track}-s${String(sessionNumber || 1).padStart(2, '0')}-${sessionDate || new Date().toISOString().slice(0, 10)}`;
+
+        // 1. Search candidate by register number (rollNo), email, phone, or receipt number
+        const searchConditions = [
+            { rollNo: upperBarcode },
+            { rollNo: new RegExp(`^${cleanBarcode}$`, 'i') },
+            { email: cleanBarcode.toLowerCase() },
+            { receiptNo: upperBarcode }
+        ];
+
+        const digits = cleanBarcode.replace(/\D/g, '');
+        if (digits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${digits.slice(-10)}$`) });
+        }
+
+        const registration = await WorkshopRegistration.findOne({ $or: searchConditions });
+
+        if (!registration) {
+            return res.status(404).json({
+                error: `No candidate registration found matching register number / barcode "${cleanBarcode}".`,
+                scannedBarcode: cleanBarcode
+            });
+        }
+
+        // 2. Check payment status
+        if (registration.status !== 'paid') {
+            return res.status(403).json({
+                error: `Candidate "${registration.name}" (${registration.rollNo}) registration status is "${registration.status}". Attendance can only be recorded for confirmed paid candidates.`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    status: registration.status,
+                    department: registration.department,
+                    year: registration.year
+                }
+            });
+        }
+
+        // 3. Verify track eligibility
+        const isTrackEnrolled = (registration.tracksEnrolled || []).includes(track) || registration.package === 'combo';
+        if (!isTrackEnrolled) {
+            const registeredTracks = (registration.tracksEnrolled || []).join(' & ') || registration.package;
+            return res.status(403).json({
+                error: `Candidate "${registration.name}" is enrolled in [${registeredTracks.toUpperCase()}], but current session is for [${track.toUpperCase()}].`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    tracksEnrolled: registration.tracksEnrolled,
+                    package: registration.package
+                }
+            });
+        }
+
+        // 4. Check if already marked present
+        const existing = await WorkshopAttendance.findOne({
+            rollNo: registration.rollNo,
+            sessionId: targetSessionId
+        });
+
+        if (existing) {
+            const checkinTimeFormatted = new Date(existing.checkedInAt).toLocaleTimeString('en-IN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            });
+
+            return res.json({
+                success: true,
+                alreadyRecorded: true,
+                message: `Already Checked-In: ${registration.name} (${registration.rollNo}) was marked present at ${checkinTimeFormatted}.`,
+                candidate: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    email: registration.email,
+                    department: registration.department,
+                    year: registration.year,
+                    package: registration.package,
+                    receiptNo: registration.receiptNo,
+                    checkedInAt: existing.checkedInAt,
+                    verifiedBy: existing.verifiedBy
+                }
+            });
+        }
+
+        // 5. Create new attendance record
+        const sessionParts = targetSessionId.split('-');
+        const sessionNumVal = parseInt(sessionParts[1] ? sessionParts[1].replace('s', '') : '1', 10) || 1;
+        const sessionDateVal = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
+
+        const newAttendance = await WorkshopAttendance.create({
+            registrationId: registration._id,
+            rollNo: registration.rollNo,
+            email: registration.email,
+            name: registration.name,
+            department: registration.department,
+            year: registration.year,
+            package: registration.package,
+            track,
+            sessionId: targetSessionId,
+            sessionNumber: sessionNumVal,
+            sessionDate: sessionDateVal,
+            sessionTopic: sessionTopic || '',
+            deviceId: `barcode_scanner_admin_${req.user?.id || 'superadmin'}_${Date.now()}`,
+            ipAddress: req.ip || '',
+            userAgent: 'Barcode Scanner (Admin Portal)',
+            verifiedBy: 'barcode-scanner',
+            checkedInAt: new Date()
+        });
+
+        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
+        return res.status(201).json({
+            success: true,
+            alreadyRecorded: false,
+            message: `✓ Attendance MARKED: ${registration.name} (${registration.rollNo})`,
+            candidate: {
+                name: registration.name,
+                rollNo: registration.rollNo,
+                email: registration.email,
+                department: registration.department,
+                year: registration.year,
+                package: registration.package,
+                receiptNo: registration.receiptNo,
+                checkedInAt: newAttendance.checkedInAt,
+                verifiedBy: 'barcode-scanner'
+            }
+        });
+    } catch (err) {
+        if (err.code === 11000) {
+            return res.json({
+                success: true,
+                alreadyRecorded: true,
+                message: 'Attendance was already recorded for this student for this session.'
+            });
+        }
+        console.error('Error scanning barcode for attendance:', err);
+        return res.status(500).json({ error: 'Server error while processing barcode scan.' });
     }
 });
 
@@ -488,4 +658,773 @@ router.get('/export', authenticateToken, async (req, res) => {
     }
 });
 
+const DEFAULT_WORKSHOP_PASSWORD = 'asterix';
+
+function verifyCandidatePassword(candidate, inputPassword) {
+    const pwd = String(inputPassword || '').trim();
+    if (!pwd) return { isCorrect: false, isDefault: false, empty: true };
+    if (!candidate.passwordHash) {
+        const isCorrect = pwd.toLowerCase() === DEFAULT_WORKSHOP_PASSWORD.toLowerCase();
+        return { isCorrect, isDefault: true };
+    }
+    const isCorrect = bcrypt.compareSync(pwd, candidate.passwordHash);
+    return { isCorrect, isDefault: false };
+}
+
+/**
+ * POST /api/workshop/attendance/profile
+ * Public endpoint: Candidate inputs email ID, phone, or roll number + password to view individual profile.
+ */
+router.post('/profile', async (req, res) => {
+    try {
+        const queryRaw = String(req.body.identifier || req.body.email || req.body.phone || req.body.rollNo || '').trim();
+        const inputPassword = String(req.body.password || '').trim();
+
+        if (!queryRaw) {
+            return res.status(400).json({ error: 'Please enter your Email ID, Phone Number, or Roll Number.' });
+        }
+
+        if (!inputPassword) {
+            return res.status(400).json({ error: 'Please enter your profile password. Initial default password is "asterix".' });
+        }
+
+        const queryLower = queryRaw.toLowerCase();
+        const digits = queryRaw.replace(/\D/g, '');
+        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
+        if (phoneDigits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+        }
+
+        // Only paid registrations get a profile. One person can have several attempts (a failed
+        // payment, then a paid one), so take the most recently paid.
+        const candidate = await WorkshopRegistration.findOne({ $or: searchConditions, status: 'paid' })
+            .sort({ paidAt: -1, createdAt: -1 })
+            .lean();
+
+        if (!candidate) {
+            const unpaid = await WorkshopRegistration.exists({ $or: searchConditions });
+            if (unpaid) {
+                return res.status(403).json({
+                    error: "We found your registration but payment isn't complete yet. Finish the payment or contact the workshop team."
+                });
+            }
+            return res.status(404).json({
+                error: `No candidate registration found matching "${queryRaw}". Please verify your email ID or phone number.`
+            });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, inputPassword);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                error: candidate.passwordHash
+                    ? 'Incorrect password. Please enter the custom password you created for your profile.'
+                    : 'Incorrect password. The initial default password for all participants is "asterix".'
+            });
+        }
+
+        // Record participant login activity permanently in database
+        await WorkshopRegistration.updateOne(
+            { _id: candidate._id },
+            { $set: { lastLoginAt: new Date() }, $inc: { loginCount: 1 } }
+        ).catch((e) => console.error('Failed to update candidate lastLoginAt:', e));
+
+        const tracksEnrolled = Array.isArray(candidate.tracksEnrolled) && candidate.tracksEnrolled.length > 0
+            ? candidate.tracksEnrolled
+            : (candidate.package === 'combo' ? ['software', 'powertrain'] : [candidate.package || 'software']);
+
+        // The schedule admins edit in Workshop Schedule lives in SiteConfig; the config file is the fallback.
+        const siteConfig = await SiteConfig.findOne({ key: 'main' }, { workshop: 1 }).lean();
+        const editedTracks = siteConfig?.workshop?.tracks || {};
+        const tracks = {};
+        tracksEnrolled.forEach((trackId) => {
+            if (WORKSHOP_TRACKS[trackId]) tracks[trackId] = { ...WORKSHOP_TRACKS[trackId], ...editedTracks[trackId] };
+        });
+
+        // Search attendance records for candidate across all identifying fields
+        const candidateOrConditions = [
+            { registrationId: candidate._id }
+        ];
+        if (candidate.rollNo) {
+            candidateOrConditions.push({ rollNo: candidate.rollNo.toUpperCase() });
+            candidateOrConditions.push({ rollNo: candidate.rollNo });
+        }
+        if (candidate.email) {
+            candidateOrConditions.push({ email: candidate.email.toLowerCase() });
+        }
+
+        const [attendanceRecords, conductedSessions] = await Promise.all([
+            WorkshopAttendance.find({ $or: candidateOrConditions }).lean(),
+            WorkshopAttendance.aggregate([
+                { $match: { track: { $in: tracksEnrolled } } },
+                { $group: { _id: { track: '$track', date: '$sessionDate' } } }
+            ])
+        ]);
+
+        const attendanceMap = new Map();
+        attendanceRecords.forEach((att) => {
+            if (att.track && att.sessionDate) {
+                attendanceMap.set(`${att.track}|${att.sessionDate}`, att);
+            }
+            if (att.track && att.sessionId) {
+                attendanceMap.set(`${att.track}|${att.sessionId}`, att);
+            }
+            if (att.track && att.sessionNumber) {
+                attendanceMap.set(`${att.track}|s${att.sessionNumber}`, att);
+                attendanceMap.set(`${att.track}|${att.sessionNumber}`, att);
+            }
+        });
+        const conductedDates = new Set(conductedSessions.map(({ _id }) => `${_id.track}|${_id.date}`));
+
+        // Build session timeline for enrolled track(s)
+        const sessionTimeline = [];
+        let totalConducted = 0;
+        let totalPresent = 0;
+        const matchedAttKeys = new Set();
+
+        Object.entries(tracks).forEach(([trackId, trackConfig]) => {
+            if (!Array.isArray(trackConfig.schedule)) return;
+
+            trackConfig.schedule.forEach((sessionItem) => {
+                const isoDate = sessionIsoDate(sessionItem.date, trackConfig);
+                const dateKey = `${trackId}|${isoDate}`;
+                const idKey = `${trackId}|${sessionItem.id}`;
+                const numKey = `${trackId}|s${sessionItem.id}`;
+
+                const att = attendanceMap.get(idKey) || attendanceMap.get(numKey) || attendanceMap.get(dateKey);
+                const isHoliday = sessionItem.type === 'holiday';
+                // Catch-ups are optional knowledge-sharing sessions: shown, never counted or marked missed.
+                const isOptional = sessionItem.type === 'catchup';
+
+                let status = isOptional ? 'OPTIONAL' : 'UPCOMING';
+                let checkedInAt = null;
+
+                if (!isHoliday && att) {
+                    status = 'PRESENT';
+                    checkedInAt = att.checkedInAt;
+                    if (att._id) matchedAttKeys.add(String(att._id));
+                    if (!isOptional) {
+                        totalPresent += 1;
+                        totalConducted += 1;
+                    }
+                } else if (!isHoliday && !isOptional && conductedDates.has(dateKey)) {
+                    status = 'ABSENT';
+                    totalConducted += 1;
+                }
+
+                sessionTimeline.push({
+                    id: sessionItem.id,
+                    track: trackId,
+                    trackName: trackConfig.name,
+                    label: sessionItem.label,
+                    days: sessionItem.days,
+                    date: sessionItem.date,
+                    title: sessionItem.title,
+                    instructor: sessionItem.instructor || '-',
+                    venue: sessionItem.venue || trackConfig.venue,
+                    type: sessionItem.type || 'lecture',
+                    project: sessionItem.project || null,
+                    subject: sessionItem.subject || null,
+                    status,
+                    checkedInAt,
+                    isoDate
+                });
+            });
+        });
+
+        // Also append any extra session check-ins candidate completed that fall outside static schedule
+        attendanceRecords.forEach((att) => {
+            if (att._id && !matchedAttKeys.has(String(att._id))) {
+                totalPresent += 1;
+                totalConducted += 1;
+                const trackConfig = tracks[att.track] || WORKSHOP_TRACKS[att.track] || {};
+                sessionTimeline.push({
+                    id: att.sessionNumber || att.sessionId,
+                    track: att.track,
+                    trackName: trackConfig.name || (att.track || 'workshop').toUpperCase(),
+                    label: `Session ${att.sessionNumber || ''}`,
+                    days: '',
+                    date: att.sessionDate,
+                    title: att.sessionTopic || `${(att.track || 'workshop').toUpperCase()} Workshop Session`,
+                    instructor: '-',
+                    venue: trackConfig.venue || 'Workshop Lab',
+                    type: 'lecture',
+                    project: null,
+                    subject: null,
+                    status: 'PRESENT',
+                    checkedInAt: att.checkedInAt,
+                    isoDate: att.sessionDate
+                });
+            }
+        });
+
+        // One date-ordered timetable across tracks (combo students otherwise saw every software
+        // session before any powertrain one). Undated sessions sink to the end.
+        sessionTimeline.sort((a, b) => (a.isoDate || '9999').localeCompare(b.isoDate || '9999'));
+
+        const attendancePercentage = totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : 100;
+        const isEligibleForCertificate = attendancePercentage >= 75;
+
+        // Notes are whatever the workshop team has published from the admin portal; nothing is built in.
+        const resources = await WorkshopResource.find({
+            track: { $in: [...tracksEnrolled, 'common'] }
+        }).sort({ sessionNumber: 1, createdAt: 1 }).lean();
+
+        return res.json({
+            ok: true,
+            isDefaultPassword: pwdCheck.isDefault,
+            candidate: {
+                registrationId: candidate.registrationId || candidate._id,
+                name: candidate.name,
+                rollNo: candidate.rollNo,
+                email: candidate.email,
+                phone: candidate.phone,
+                department: candidate.department,
+                year: candidate.year,
+                package: candidate.package,
+                packageName: candidate.packageName || candidate.package,
+                tracksEnrolled,
+                receiptNo: candidate.receiptNo,
+                status: candidate.status,
+                amount: candidate.amount,
+                paidAt: candidate.paidAt
+            },
+            attendanceSummary: {
+                totalConducted,
+                totalPresent,
+                attendancePercentage,
+                isEligibleForCertificate,
+                certificateMessage: isEligibleForCertificate
+                    ? '✓ Certificate Eligible (≥ 75% attendance maintained)'
+                    : `⚠️ ${75 - attendancePercentage}% away from 75% certificate threshold`
+            },
+            sessionTimeline,
+            trackInfo: tracks,
+            resources
+        });
+    } catch (err) {
+        console.error('Error fetching participant profile:', err);
+        return res.status(500).json({ error: 'Failed to load participant profile. Please try again.' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/profile/change-password
+ * Public endpoint: Candidate updates their password using their current password or initial default "asterix".
+ */
+router.post('/profile/change-password', async (req, res) => {
+    try {
+        const { identifier, currentPassword, newPassword } = req.body || {};
+        const queryRaw = String(identifier || '').trim();
+        const curPwd = String(currentPassword || '').trim();
+        const newPwd = String(newPassword || '').trim();
+
+        if (!queryRaw) {
+            return res.status(400).json({ ok: false, error: 'Candidate identifier is required.' });
+        }
+        if (!curPwd) {
+            return res.status(400).json({ ok: false, error: 'Current password is required.' });
+        }
+        if (!newPwd) {
+            return res.status(400).json({ ok: false, error: 'Please enter a new password.' });
+        }
+        if (newPwd.length < 4) {
+            return res.status(400).json({ ok: false, error: 'New password must be at least 4 characters long.' });
+        }
+
+        const queryLower = queryRaw.toLowerCase();
+        const digits = queryRaw.replace(/\D/g, '');
+        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+
+        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
+        if (phoneDigits.length >= 7) {
+            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({ $or: searchConditions, status: 'paid' })
+            .sort({ paidAt: -1, createdAt: -1 });
+
+        if (!candidate) {
+            return res.status(404).json({ ok: false, error: 'Candidate registration profile not found.' });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, curPwd);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                ok: false,
+                error: candidate.passwordHash
+                    ? 'Current password is incorrect.'
+                    : 'Current password is incorrect. Initial default password is "asterix".'
+            });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        candidate.passwordHash = bcrypt.hashSync(newPwd, salt);
+        candidate.passwordUpdatedAt = new Date();
+        await candidate.save();
+
+        return res.json({ ok: true, message: 'Password updated successfully! You can now log in using your new password.' });
+    } catch (err) {
+        console.error('Change password error:', err);
+        return res.status(500).json({ ok: false, error: 'Internal server error while updating password.' });
+    }
+});
+
+const PROFILE_EDIT_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PROFILE_EDIT_YEARS = ['1', '2'];
+// Roll numbers are the attendance key, so self-service corrections are capped;
+// beyond this the workshop team has to make the change.
+const MAX_SELF_ROLL_NO_CHANGES = 3;
+
+// Email / roll no / phone all unlock the same profile, so every lookup matches on all three.
+function candidateSearchConditions(queryRaw) {
+    const digits = queryRaw.replace(/\D/g, '');
+    const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+    const conditions = [{ email: queryRaw.toLowerCase() }, { rollNo: queryRaw.toUpperCase() }];
+    if (phoneDigits.length >= 7) {
+        conditions.push({ phone: new RegExp(`${phoneDigits}$`) });
+    }
+    return conditions;
+}
+
+/**
+ * POST /api/workshop/attendance/profile/update-details
+ * Public endpoint: Candidate corrects their own credentials after re-entering their password.
+ * The roll number is editable because plenty of registrations were typed wrong, and a wrong
+ * roll number is what breaks attendance matching. A correction therefore also rewrites the
+ * roll number stored on that participant's attendance, project and quiz records, which are
+ * matched on registrationId so the history follows the person rather than the old roll number.
+ * Track, amount and receipt number stay locked.
+ */
+router.post('/profile/update-details', async (req, res) => {
+    try {
+        const { identifier, password } = req.body || {};
+        const queryRaw = String(identifier || '').trim();
+        const pwd = String(password || '').trim();
+
+        if (!queryRaw) {
+            return res.status(400).json({ ok: false, error: 'Candidate identifier is required.' });
+        }
+        if (!pwd) {
+            return res.status(400).json({ ok: false, error: 'Please confirm your profile password to save changes.' });
+        }
+
+        const trim = (value, max) => String(value ?? '').trim().slice(0, max);
+        const updates = {
+            name: trim(req.body.name, 100),
+            email: trim(req.body.email, 254).toLowerCase(),
+            phone: trim(req.body.phone, 20).replace(/\D/g, '').slice(-10),
+            department: trim(req.body.department, 100),
+            year: trim(req.body.year, 2),
+            rollNo: normalizeRollNo(trim(req.body.rollNo, 40))
+        };
+
+        const fieldErrors = {};
+        if (updates.name.length < 2) fieldErrors.name = 'Enter your full name.';
+        if (!PROFILE_EDIT_EMAIL_RE.test(updates.email)) {
+            fieldErrors.email = 'Enter a valid email address.';
+        } else if (!updates.email.endsWith('@psgitech.ac.in')) {
+            fieldErrors.email = 'Please use your college email address (@psgitech.ac.in).';
+        }
+        if (updates.phone.length !== 10) fieldErrors.phone = 'Enter a valid 10-digit phone number.';
+        if (!WORKSHOP_DEPARTMENTS.includes(updates.department)) fieldErrors.department = 'Select your department.';
+        if (!PROFILE_EDIT_YEARS.includes(updates.year)) fieldErrors.year = 'Select 1st or 2nd year.';
+        if (!ROLL_NO_RE.test(updates.rollNo)) {
+            fieldErrors.rollNo = 'Enter your registered number as printed on your ID (letters and digits, e.g. 26M125).';
+        }
+
+        if (Object.keys(fieldErrors).length > 0) {
+            return res.status(400).json({
+                ok: false,
+                error: Object.values(fieldErrors)[0],
+                fieldErrors
+            });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({
+            $or: candidateSearchConditions(queryRaw),
+            status: 'paid'
+        }).sort({ paidAt: -1, createdAt: -1 });
+
+        if (!candidate) {
+            return res.status(404).json({ ok: false, error: 'Candidate registration profile not found.' });
+        }
+
+        const pwdCheck = verifyCandidatePassword(candidate, pwd);
+        if (!pwdCheck.isCorrect) {
+            return res.status(401).json({
+                ok: false,
+                error: candidate.passwordHash
+                    ? 'Password is incorrect. Re-enter your profile password to save these changes.'
+                    : 'Password is incorrect. The initial default password for all participants is "asterix".'
+            });
+        }
+
+        const previousRollNo = candidate.rollNo || '';
+        const previousEmail = candidate.email || '';
+        const rollNoChanged = normalizeRollNo(previousRollNo) !== updates.rollNo;
+
+        // The email and phone both unlock a profile, so they can't be pointed at someone else's.
+        if (updates.email !== previousEmail || updates.phone !== candidate.phone) {
+            const clash = await WorkshopRegistration.findOne({
+                _id: { $ne: candidate._id },
+                status: 'paid',
+                $or: [{ email: updates.email }, { phone: updates.phone }]
+            }).lean();
+
+            if (clash) {
+                return res.status(409).json({
+                    ok: false,
+                    error: clash.email === updates.email
+                        ? 'That email address is already used by another registered participant.'
+                        : 'That phone number is already used by another registered participant.',
+                    fieldErrors: clash.email === updates.email
+                        ? { email: 'Already in use by another participant.' }
+                        : { phone: 'Already in use by another participant.' }
+                });
+            }
+        }
+
+        if (rollNoChanged) {
+            const changeCount = Array.isArray(candidate.rollNoHistory) ? candidate.rollNoHistory.length : 0;
+            if (changeCount >= MAX_SELF_ROLL_NO_CHANGES) {
+                return res.status(429).json({
+                    ok: false,
+                    error: `Your registered number has already been corrected ${changeCount} times. Please contact the workshop team on +91 86089 44644 for any further change.`,
+                    fieldErrors: { rollNo: 'Change limit reached — contact the workshop team.' }
+                });
+            }
+
+            const rollClash = await WorkshopRegistration.findOne({
+                _id: { $ne: candidate._id },
+                rollNo: new RegExp(`^${updates.rollNo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+            }).lean();
+
+            if (rollClash) {
+                return res.status(409).json({
+                    ok: false,
+                    error: 'That registered number belongs to another registration. Please check it against your ID card, or contact the workshop team if it is really yours.',
+                    fieldErrors: { rollNo: 'Already used by another registration.' }
+                });
+            }
+
+            // Attendance enforces one check-in per roll number per session, so attendance rows
+            // already sitting under the new roll number (a manual admin entry, say) would make
+            // the migration collide.
+            const strayAttendance = await WorkshopAttendance.exists({
+                rollNo: updates.rollNo,
+                registrationId: { $ne: candidate._id }
+            });
+
+            if (strayAttendance) {
+                return res.status(409).json({
+                    ok: false,
+                    error: 'Attendance has already been recorded under that registered number for another participant. Please contact the workshop team on +91 86089 44644 so they can merge the records.',
+                    fieldErrors: { rollNo: 'Attendance already recorded under this number.' }
+                });
+            }
+        }
+
+        candidate.name = updates.name;
+        candidate.email = updates.email;
+        candidate.phone = updates.phone;
+        candidate.department = updates.department;
+        candidate.year = updates.year;
+        candidate.rollNo = updates.rollNo;
+        candidate.detailsUpdatedAt = new Date();
+        if (rollNoChanged) {
+            candidate.rollNoHistory = [
+                ...(candidate.rollNoHistory || []),
+                { from: previousRollNo, to: updates.rollNo, changedAt: new Date(), changedBy: 'participant' }
+            ];
+        }
+        await candidate.save();
+
+        // Keep the denormalized copies in step, or the corrected roll number would read as a
+        // mismatch everywhere the old one was stored.
+        let synced = null;
+        try {
+            synced = await syncParticipantIdentity(candidate, { previousEmail });
+        } catch (syncErr) {
+            console.error('Participant identity sync failed after self-edit:', syncErr);
+        }
+
+        return res.json({
+            ok: true,
+            message: rollNoChanged
+                ? `Details updated. Your registered number is now ${updates.rollNo} and your attendance records have been moved across.`
+                : 'Profile details updated successfully!',
+            rollNoChanged,
+            syncedRecords: synced,
+            candidate: {
+                name: candidate.name,
+                email: candidate.email,
+                phone: candidate.phone,
+                department: candidate.department,
+                year: candidate.year,
+                rollNo: candidate.rollNo
+            }
+        });
+    } catch (err) {
+        console.error('Update profile details error:', err);
+        return res.status(500).json({ ok: false, error: 'Internal server error while updating profile details.' });
+    }
+});
+
+const RESOURCE_TRACKS = ['software', 'powertrain', 'common'];
+
+// Links end up in participants' hrefs, so only http(s) and same-site paths are accepted;
+// anything else (javascript:, data:, protocol-relative //host) is rejected.
+function isSafeResourceUrl(url) {
+    if (url.startsWith('/')) return !url.startsWith('//');
+    try {
+        const { protocol } = new URL(url);
+        return protocol === 'https:' || protocol === 'http:';
+    } catch {
+        return false;
+    }
+}
+
+function parseResourceBody(body) {
+    const track = String(body.track || '').trim().toLowerCase();
+    const title = String(body.title || '').trim();
+    if (!RESOURCE_TRACKS.includes(track)) return { error: `track must be one of: ${RESOURCE_TRACKS.join(', ')}` };
+    if (!title) return { error: 'title is required' };
+
+    const links = [];
+    for (const link of Array.isArray(body.resources) ? body.resources : []) {
+        const label = String(link?.label || '').trim();
+        const url = String(link?.url || '').trim();
+        if (!label && !url) continue;
+        if (!label || !url) return { error: 'Every link needs both a label and a URL' };
+        if (!isSafeResourceUrl(url)) return { error: `Link "${label}" must be an http(s) URL or a site path starting with /` };
+        links.push({ label, url, type: String(link?.type || 'link').trim().toLowerCase() || 'link' });
+    }
+
+    // Accepts an array or one-per-line text, so the admin form can send a plain textarea.
+    const rawTakeaways = Array.isArray(body.takeaways) ? body.takeaways : String(body.takeaways || '').split('\n');
+    const takeaways = rawTakeaways.map((t) => String(t).trim()).filter(Boolean).slice(0, 20);
+
+    const sessionNumber = Number(body.sessionNumber);
+    return {
+        doc: {
+            track,
+            module: String(body.module || '').trim(),
+            sessionId: String(body.sessionId || '').trim(),
+            sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : 1,
+            title,
+            description: String(body.description || '').trim(),
+            takeaways,
+            resources: links
+        }
+    };
+}
+
+/**
+ * /api/workshop/attendance/resources
+ * Workshop notes, slides and links. Reads are public; writes need an admin token.
+ */
+router.get('/resources', async (req, res) => {
+    try {
+        const track = req.query.track ? String(req.query.track).toLowerCase() : null;
+        const query = track ? { track: { $in: [track, 'common'] } } : {};
+        const resources = await WorkshopResource.find(query).sort({ sessionNumber: 1, createdAt: 1 }).lean();
+        return res.json({ resources });
+    } catch (err) {
+        return res.status(500).json({ error: 'Failed to fetch workshop resources' });
+    }
+});
+
+router.post('/resources', authenticateToken, async (req, res) => {
+    try {
+        const { doc, error } = parseResourceBody(req.body || {});
+        if (error) return res.status(400).json({ error });
+
+        const newResource = await WorkshopResource.create(doc);
+        return res.status(201).json({ success: true, resource: newResource });
+    } catch (err) {
+        console.error('Error creating resource:', err);
+        return res.status(500).json({ error: 'Failed to create workshop resource' });
+    }
+});
+
+router.put('/resources/:id', authenticateToken, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Note not found' });
+        const { doc, error } = parseResourceBody(req.body || {});
+        if (error) return res.status(400).json({ error });
+
+        const updated = await WorkshopResource.findByIdAndUpdate(req.params.id, doc, { new: true, runValidators: true });
+        if (!updated) return res.status(404).json({ error: 'Note not found' });
+        return res.json({ success: true, resource: updated });
+    } catch (err) {
+        console.error('Error updating resource:', err);
+        return res.status(500).json({ error: 'Failed to update workshop resource' });
+    }
+});
+
+router.delete('/resources/:id', authenticateToken, async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ error: 'Note not found' });
+        const deleted = await WorkshopResource.findByIdAndDelete(req.params.id);
+        if (!deleted) return res.status(404).json({ error: 'Note not found' });
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting resource:', err);
+        return res.status(500).json({ error: 'Failed to delete workshop resource' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/clear-all
+ * Endpoint to clear all present/absent activity from database
+ */
+router.post('/clear-all', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+        const { isMongoConnected } = await import('../db/mongodb.js');
+        if (!isMongoConnected()) {
+            return res.json({ success: true, message: 'Database offline or disconnected. No records stored.' });
+        }
+        const result = await WorkshopAttendance.deleteMany({});
+        console.log(`[ATTENDANCE CLEARED] Deleted ${result.deletedCount} attendance record(s).`);
+        return res.json({
+            success: true,
+            message: `Cleared all ${result.deletedCount} attendance activity records from database.`
+        });
+    } catch (err) {
+        console.error('Error clearing attendance activity:', err);
+        return res.status(500).json({ error: 'Failed to clear attendance activity' });
+    }
+});
+
+/**
+ * GET /api/workshop/attendance/export-csv
+ * Download session attendance log as a CSV file.
+ */
+router.get('/export-csv', authenticateToken, async (req, res) => {
+    try {
+        const { track = 'software', sessionNumber } = req.query;
+        const filter = { track: String(track).toLowerCase() };
+        if (sessionNumber) {
+            filter.sessionNumber = Number(sessionNumber);
+        }
+
+        const records = await WorkshopAttendance.find(filter).sort({ sessionNumber: 1, checkedInAt: -1 }).lean();
+        const rollNumbers = Array.from(new Set(records.map(r => r.rollNo).filter(Boolean)));
+
+        const registrations = await WorkshopRegistration.find({ rollNo: { $in: rollNumbers } }).lean();
+        const regMap = new Map();
+        registrations.forEach(r => regMap.set(r.rollNo?.toLowerCase()?.trim(), r));
+
+        const csvHeaders = ['Roll No', 'Name', 'Department', 'Year', 'Track', 'Session Number', 'Session Topic', 'Status', 'Check-in Method', 'Check-in Time'];
+        const csvRows = [csvHeaders.join(',')];
+
+        records.forEach(r => {
+            const reg = regMap.get(r.rollNo?.toLowerCase()?.trim()) || {};
+            const row = [
+                `"${r.rollNo || ''}"`,
+                `"${(reg.name || r.name || '').replace(/"/g, '""')}"`,
+                `"${(reg.department || '').replace(/"/g, '""')}"`,
+                `"${reg.year || ''}"`,
+                `"${r.track || ''}"`,
+                `"${r.sessionNumber || 1}"`,
+                `"${(r.sessionTopic || '').replace(/"/g, '""')}"`,
+                `"${r.status || 'present'}"`,
+                `"${r.scanMethod || 'barcode'}"`,
+                `"${r.checkedInAt ? new Date(r.checkedInAt).toLocaleString('en-IN') : ''}"`
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const filename = `attendance_${track}_session_${sessionNumber || 'all'}_${Date.now()}.csv`;
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        return res.status(200).send(csvContent);
+    } catch (err) {
+        console.error('Error exporting attendance CSV:', err);
+        return res.status(500).json({ error: 'Failed to export attendance CSV' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/bulk-reconcile
+ * Bulk import offline scanned roll numbers from CSV / text list.
+ */
+router.post('/bulk-reconcile', authenticateToken, async (req, res) => {
+    try {
+        const { track = 'software', sessionNumber = 1, sessionDate, sessionTopic, rollNumbers = [] } = req.body;
+        if (!Array.isArray(rollNumbers) || rollNumbers.length === 0) {
+            return res.status(400).json({ error: 'No roll numbers provided for bulk reconcile' });
+        }
+
+        const normalizedRolls = rollNumbers.map(r => normalizeRollNo(r)).filter(Boolean);
+        const uniqueRolls = Array.from(new Set(normalizedRolls));
+
+        const matchedRegs = await WorkshopRegistration.find({
+            rollNo: { $in: uniqueRolls.map(r => new RegExp(`^${r}$`, 'i')) },
+            status: 'paid'
+        }).lean();
+
+        const regMap = new Map();
+        matchedRegs.forEach(reg => regMap.set(normalizeRollNo(reg.rollNo), reg));
+
+        let createdCount = 0;
+        let skippedCount = 0;
+        const details = [];
+
+        for (const roll of uniqueRolls) {
+            const reg = regMap.get(roll);
+            if (!reg) {
+                skippedCount++;
+                details.push({ rollNo: roll, status: 'SKIPPED_UNREGISTERED' });
+                continue;
+            }
+
+            const existing = await WorkshopAttendance.findOne({
+                rollNo: reg.rollNo,
+                track: String(track).toLowerCase(),
+                sessionNumber: Number(sessionNumber)
+            });
+
+            if (existing) {
+                skippedCount++;
+                details.push({ rollNo: reg.rollNo, status: 'SKIPPED_ALREADY_PRESENT' });
+            } else {
+                await WorkshopAttendance.create({
+                    registrationId: reg.registrationId,
+                    rollNo: reg.rollNo,
+                    name: reg.name,
+                    email: reg.email,
+                    phone: reg.phone,
+                    track: String(track).toLowerCase(),
+                    sessionNumber: Number(sessionNumber),
+                    sessionDate: sessionDate || new Date().toISOString().split('T')[0],
+                    sessionTopic: sessionTopic || `Session ${sessionNumber}`,
+                    status: 'present',
+                    scanMethod: 'offline_csv_reconcile',
+                    checkedInAt: new Date()
+                });
+                createdCount++;
+                details.push({ rollNo: reg.rollNo, name: reg.name, status: 'CHECKED_IN' });
+            }
+        }
+
+        return res.json({
+            success: true,
+            createdCount,
+            skippedCount,
+            totalProcessed: uniqueRolls.length,
+            details
+        });
+    } catch (err) {
+        console.error('Error performing bulk attendance reconcile:', err);
+        return res.status(500).json({ error: 'Failed to bulk reconcile attendance' });
+    }
+});
+
 export default router;
+
+

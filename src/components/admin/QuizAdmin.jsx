@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
+import { QUIZ_PRESETS } from '../../data/quizPresets';
 
 function formatDateTimeInput(dateVal) {
     if (!dateVal) return '';
@@ -15,6 +17,7 @@ export default function QuizAdmin({ showStatus }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [creatingPresetId, setCreatingPresetId] = useState('');
 
     // Modal states
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -29,6 +32,10 @@ export default function QuizAdmin({ showStatus }) {
     const [resettingEmail, setResettingEmail] = useState(null);
     const [userToReset, setUserToReset] = useState(null);
 
+    const submissionsModalRef = useModalBehavior(Boolean(selectedQuizForSubmissions), () =>
+        setSelectedQuizForSubmissions(null)
+    );
+
     // Fetch all quizzes
     const fetchQuizzes = useCallback(async () => {
         setIsLoading(true);
@@ -36,7 +43,7 @@ export default function QuizAdmin({ showStatus }) {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             const res = await fetch(apiUrl('/api/quiz/admin/list'), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to load quizzes');
@@ -58,13 +65,16 @@ export default function QuizAdmin({ showStatus }) {
         const identifier = quiz.slug || quiz._id;
         const origin = window.location.origin;
         const link = `${origin}/#quiz/${identifier}`;
-        navigator.clipboard.writeText(link).then(() => {
-            setCopiedId(quiz._id);
-            if (showStatus) showStatus(`✓ Quiz link copied: ${link}`);
-            setTimeout(() => setCopiedId(null), 2500);
-        }).catch(() => {
-            prompt('Copy quiz link:', link);
-        });
+        navigator.clipboard
+            .writeText(link)
+            .then(() => {
+                setCopiedId(quiz._id);
+                if (showStatus) showStatus(`✓ Quiz link copied: ${link}`);
+                setTimeout(() => setCopiedId(null), 2500);
+            })
+            .catch(() => {
+                prompt('Copy quiz link:', link);
+            });
     };
 
     // Toggle manual results release
@@ -73,7 +83,7 @@ export default function QuizAdmin({ showStatus }) {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             const res = await fetch(apiUrl(`/api/quiz/admin/${quiz._id}/release-results`), {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to update results release');
@@ -86,14 +96,18 @@ export default function QuizAdmin({ showStatus }) {
 
     // Delete quiz
     const handleDeleteQuiz = async (quiz) => {
-        if (!window.confirm(`Are you sure you want to delete "${quiz.title}" and all its participant submissions? This cannot be undone.`)) {
+        if (
+            !window.confirm(
+                `Are you sure you want to delete "${quiz.title}" and all its participant submissions? This cannot be undone.`
+            )
+        ) {
             return;
         }
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             const res = await fetch(apiUrl(`/api/quiz/admin/${quiz._id}`), {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to delete quiz');
@@ -111,7 +125,7 @@ export default function QuizAdmin({ showStatus }) {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             const res = await fetch(apiUrl(`/api/quiz/admin/${quiz._id}/submissions`), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to fetch submissions');
@@ -150,17 +164,105 @@ export default function QuizAdmin({ showStatus }) {
         }
     };
 
+    // One-click build of a ready paper: no form, no typing. The quiz lands as a
+    // DRAFT with a placeholder schedule, so it cannot be taken by anyone until
+    // the organiser sets the real times and publishes it.
+    const handleCreateFromPreset = async (preset) => {
+        // Two copies of the same paper would split the leaderboard, so say so
+        // before building a second one.
+        const existing = quizzes.find(
+            (q) => q.title === preset.title || (preset.slug && q.slug === preset.slug)
+        );
+        if (
+            existing &&
+            !window.confirm(
+                `"${preset.title}" already exists in the list (${existing.submissionCount} participants so far).\n\nBuilding it again creates a SECOND, separate quiz with its own link and its own leaderboard. Continue anyway?`
+            )
+        ) {
+            return;
+        }
+
+        if (
+            !window.confirm(
+                `Create "${preset.title}" with all ${preset.questions.length} questions?\n\nIt is saved as a DRAFT with placeholder times — nobody can open it until you set your own exam times and switch it to Published.`
+            )
+        ) {
+            return;
+        }
+
+        setCreatingPresetId(preset.presetId);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+
+            // Placeholder window: tomorrow morning. Deliberately a placeholder —
+            // the draft status is what keeps it shut until the times are set.
+            const start = new Date();
+            start.setDate(start.getDate() + 1);
+            start.setHours(9, 0, 0, 0);
+            const end = new Date(start);
+            end.setHours(10, 0, 0, 0);
+
+            const res = await fetch(apiUrl('/api/quiz/admin/create'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: preset.title,
+                    description: preset.description,
+                    slug: preset.slug,
+                    durationMinutes: preset.durationMinutes,
+                    passingPercentage: preset.passingPercentage,
+                    startTime: start.toISOString(),
+                    endTime: end.toISOString(),
+                    resultsPublishTime: end.toISOString(),
+                    showExplanations: preset.showExplanations !== false,
+                    shuffleQuestions: Boolean(preset.shuffleQuestions),
+                    instantFeedback: Boolean(preset.instantFeedback),
+                    questions: preset.questions,
+                    status: 'draft'
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to create the quiz');
+
+            await fetchQuizzes();
+            if (showStatus) {
+                showStatus(
+                    `✓ "${preset.title}" created as a draft. Hit Edit to set your exam times, then switch it to Published.`
+                );
+            }
+        } catch (err) {
+            alert('Could not create the quiz: ' + err.message);
+        } finally {
+            setCreatingPresetId('');
+        }
+    };
+
+    // Open the big-screen live leaderboard in its own tab, so the admin panel
+    // stays usable on the operator's laptop while the projector shows the board.
+    const handleOpenProjector = (quiz) => {
+        const url = `${window.location.origin}${window.location.pathname}#quiz-projector/${quiz._id}`;
+        const opened = window.open(url, '_blank', 'noopener');
+        if (!opened) {
+            // Popup blocked — fall back to this tab.
+            window.location.hash = `#quiz-projector/${quiz._id}`;
+        }
+    };
+
     // Export CSV
     const handleExportCsv = (quizId) => {
         const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
         const url = apiUrl(`/api/quiz/admin/${quizId}/export`);
-        
+
         fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-            .then(res => {
+            .then((res) => {
                 if (!res.ok) throw new Error('Export request rejected');
                 return res.blob();
             })
-            .then(blob => {
+            .then((blob) => {
                 const downloadUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
@@ -169,21 +271,22 @@ export default function QuizAdmin({ showStatus }) {
                 a.click();
                 a.remove();
             })
-            .catch(err => alert('CSV Export failed: ' + err.message));
+            .catch((err) => alert('CSV Export failed: ' + err.message));
     };
 
     // Filtered submissions
     const filteredSubmissions = useMemo(() => {
-        return submissionsData.filter(s => {
+        return submissionsData.filter((s) => {
             if (submissionFilter === 'active' && s.isArchived) return false;
             if (submissionFilter === 'archived' && !s.isArchived) return false;
             if (submissionFilter === 'passed' && (!s.passed || s.isArchived)) return false;
             if (submissionFilter === 'failed' && (s.passed || s.isArchived)) return false;
             if (submissionSearch.trim()) {
                 const q = submissionSearch.toLowerCase().trim();
-                const match = (s.userName || '').toLowerCase().includes(q)
-                    || (s.userEmail || '').toLowerCase().includes(q)
-                    || (s.rollNo || '').toLowerCase().includes(q);
+                const match =
+                    (s.userName || '').toLowerCase().includes(q) ||
+                    (s.userEmail || '').toLowerCase().includes(q) ||
+                    (s.rollNo || '').toLowerCase().includes(q);
                 if (!match) return false;
             }
             return true;
@@ -193,25 +296,26 @@ export default function QuizAdmin({ showStatus }) {
     return (
         <div className="space-y-6">
             {/* Header & Quick Stats */}
-            <div className="flex flex-wrap items-center justify-between gap-4 border-4 border-slate-900 bg-white p-5 shadow-[6px_6px_0px_#0f172a]">
+            <div className="shadow-brutal-6 flex flex-wrap items-center justify-between gap-4 border-4 border-slate-900 bg-white p-5">
                 <div>
                     <div className="flex items-center gap-2">
                         <span className="text-2xl sm:text-3xl">📝</span>
-                        <h2 className="text-xl sm:text-2xl font-black uppercase text-slate-900 leading-tight">
+                        <h2 className="text-xl leading-tight font-black text-slate-900 uppercase sm:text-2xl">
                             MCQ Quiz Engine
                         </h2>
                     </div>
                     <p className="mt-1 font-mono text-xs font-bold text-slate-600">
-                        Create timed MCQ examinations, distribute join links, schedule result publication, and track evaluations.
+                        Create timed MCQ examinations, distribute join links, schedule result publication, and
+                        track evaluations.
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2.5">
                     <button
                         type="button"
                         onClick={fetchQuizzes}
                         disabled={isLoading}
-                        className="press px-3.5 py-2 bg-white hover:bg-slate-50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-3.5 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-50"
                         title="Reload quiz list"
                     >
                         {isLoading ? '⟳ Refreshing...' : '⟳ Refresh'}
@@ -222,7 +326,7 @@ export default function QuizAdmin({ showStatus }) {
                             setEditingQuiz(null);
                             setIsEditorOpen(true);
                         }}
-                        className="press px-4 py-2 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer flex items-center gap-1.5"
+                        className="press shadow-brutal-3 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-amber-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-300"
                     >
                         <span>+</span>
                         <span>Create New Quiz</span>
@@ -236,15 +340,87 @@ export default function QuizAdmin({ showStatus }) {
                 </div>
             )}
 
+            {/* Ready-made papers: build one with a single click, no form filling */}
+            {QUIZ_PRESETS.length > 0 && (
+                <div className="shadow-brutal-6 space-y-3 border-4 border-slate-900 bg-violet-50 p-5">
+                    <div>
+                        <h3 className="flex items-center gap-1.5 font-mono text-sm font-black text-slate-900 uppercase">
+                            <span>⚡</span>
+                            <span>Ready-Made Papers</span>
+                        </h3>
+                        <p className="mt-0.5 font-mono text-[11px] font-bold text-slate-600">
+                            Prepared question sets with their answer keys. One click builds the whole quiz —
+                            it is saved as a draft, so nobody can open it until you set your exam times and
+                            publish it.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        {QUIZ_PRESETS.map((preset) => {
+                            const isBuilding = creatingPresetId === preset.presetId;
+                            return (
+                                <div
+                                    key={preset.presetId}
+                                    className="flex flex-wrap items-center justify-between gap-3 border-2 border-slate-900 bg-white p-3.5"
+                                >
+                                    <div className="min-w-[14rem] flex-1">
+                                        <strong className="block text-sm font-black text-slate-900 uppercase">
+                                            {preset.title}
+                                        </strong>
+                                        <span className="mt-0.5 block font-mono text-[11px] font-bold text-slate-600">
+                                            {preset.summary}
+                                        </span>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold text-slate-500">
+                                            <span>{preset.questions.length} MCQs</span>
+                                            <span>•</span>
+                                            <span>{preset.durationMinutes} mins</span>
+                                            {preset.instantFeedback && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span className="border border-amber-600 bg-amber-200 px-1.5 py-0.5 text-amber-950 uppercase">
+                                                        ⚡ Answers on the spot
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCreateFromPreset(preset)}
+                                        disabled={Boolean(creatingPresetId)}
+                                        className="press shadow-brutal-3 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-violet-300 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        {isBuilding ? (
+                                            <>
+                                                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                <span>Building...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>⚡</span>
+                                                <span>Create This Quiz</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Quiz List */}
             {isLoading && quizzes.length === 0 ? (
-                <div className="border-4 border-slate-900 bg-white p-12 text-center font-mono font-black uppercase text-slate-500 shadow-[6px_6px_0px_#0f172a]">
+                <div className="shadow-brutal-6 border-4 border-slate-900 bg-white p-12 text-center font-mono font-black text-slate-500 uppercase">
                     Loading quizzes...
                 </div>
             ) : quizzes.length === 0 ? (
-                <div className="border-4 border-slate-900 bg-white p-12 text-center shadow-[6px_6px_0px_#0f172a]">
+                <div className="shadow-brutal-6 border-4 border-slate-900 bg-white p-12 text-center">
                     <span className="text-4xl">📋</span>
-                    <h3 className="mt-3 text-lg font-black uppercase text-slate-900">No Quizzes Created Yet</h3>
+                    <h3 className="mt-3 text-lg font-black text-slate-900 uppercase">
+                        No Quizzes Created Yet
+                    </h3>
                     <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                         Click "Create New Quiz" to add your first timed MCQ evaluation test.
                     </p>
@@ -254,53 +430,90 @@ export default function QuizAdmin({ showStatus }) {
                     {quizzes.map((quiz) => {
                         const isLive = quiz.liveState === 'active';
                         const isUpcoming = quiz.liveState === 'upcoming';
-                        const isEnded = quiz.liveState === 'ended';
 
                         return (
                             <div
                                 key={quiz._id}
-                                className="border-4 border-slate-900 bg-white p-5 sm:p-6 shadow-[6px_6px_0px_#0f172a] flex flex-col gap-4"
+                                className="shadow-brutal-6 flex flex-col gap-4 border-4 border-slate-900 bg-white p-5 sm:p-6"
                             >
                                 <div className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-slate-900/15 pb-4">
                                     <div className="space-y-1">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <h3 className="text-lg sm:text-xl font-black uppercase text-slate-900">
+                                            <h3 className="text-lg font-black text-slate-900 uppercase sm:text-xl">
                                                 {quiz.title}
                                             </h3>
                                             {/* Live Status Badge */}
-                                            <span className={`px-2 py-0.5 border font-mono text-[10px] font-black uppercase flex items-center gap-1 ${
-                                                isLive
-                                                    ? 'bg-emerald-300 text-slate-950 border-emerald-600 animate-pulse'
-                                                    : isUpcoming
-                                                    ? 'bg-amber-300 text-slate-950 border-amber-600'
-                                                    : 'bg-slate-200 text-slate-700 border-slate-400'
-                                            }`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-800' : isUpcoming ? 'bg-amber-800' : 'bg-slate-500'}`} />
-                                                <span>{isLive ? 'Live Examination' : isUpcoming ? 'Upcoming' : 'Exam Ended'}</span>
+                                            <span
+                                                className={`flex items-center gap-1 border px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
+                                                    isLive
+                                                        ? 'animate-pulse border-emerald-600 bg-emerald-300 text-slate-950'
+                                                        : isUpcoming
+                                                          ? 'border-amber-600 bg-amber-300 text-slate-950'
+                                                          : 'border-slate-400 bg-slate-200 text-slate-700'
+                                                }`}
+                                            >
+                                                <span
+                                                    className={`h-1.5 w-1.5 rounded-full ${isLive ? 'bg-emerald-800' : isUpcoming ? 'bg-amber-800' : 'bg-slate-500'}`}
+                                                />
+                                                <span>
+                                                    {isLive
+                                                        ? 'Live Examination'
+                                                        : isUpcoming
+                                                          ? 'Upcoming'
+                                                          : 'Exam Ended'}
+                                                </span>
                                             </span>
 
                                             {/* Results Status Badge */}
-                                            <span className={`px-2 py-0.5 border font-mono text-[10px] font-black uppercase ${
-                                                quiz.resultsPublished
-                                                    ? 'bg-green-100 text-green-900 border-green-500'
-                                                    : 'bg-sky-100 text-sky-900 border-sky-400'
-                                            }`}>
-                                                {quiz.resultsPublished ? '✓ Results Published' : '⏳ Results Scheduled'}
+                                            <span
+                                                className={`border px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
+                                                    quiz.resultsPublished
+                                                        ? 'border-green-500 bg-green-100 text-green-900'
+                                                        : 'border-sky-400 bg-sky-100 text-sky-900'
+                                                }`}
+                                            >
+                                                {quiz.resultsPublished
+                                                    ? '✓ Results Published'
+                                                    : '⏳ Results Scheduled'}
                                             </span>
+
+                                            {quiz.instantFeedback && (
+                                                <span className="border border-amber-600 bg-amber-200 px-2 py-0.5 font-mono text-[10px] font-black text-amber-950 uppercase">
+                                                    ⚡ Answers On The Spot
+                                                </span>
+                                            )}
+
+                                            {quiz.status !== 'published' && (
+                                                <span className="border border-slate-900 bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">
+                                                    {quiz.status === 'draft'
+                                                        ? '✎ Draft — not open yet'
+                                                        : '🗄 Archived'}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {quiz.description && (
-                                            <p className="text-xs font-bold text-slate-600 max-w-3xl">
+                                            <p className="max-w-3xl text-xs font-bold text-slate-600">
                                                 {quiz.description}
                                             </p>
                                         )}
 
-                                        <div className="font-mono text-[11px] font-bold text-slate-500 pt-1 flex items-center gap-2 flex-wrap">
-                                            <span>Link slug: <code className="bg-slate-100 px-1.5 py-0.5 border border-slate-300 text-slate-800 font-bold">{quiz.slug || quiz._id}</code></span>
+                                        <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[11px] font-bold text-slate-500">
+                                            <span>
+                                                Link slug:{' '}
+                                                <code className="border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-bold text-slate-800">
+                                                    {quiz.slug || quiz._id}
+                                                </code>
+                                            </span>
                                             <span>•</span>
-                                            <span>Duration: <strong>{quiz.durationMinutes} mins</strong></span>
+                                            <span>
+                                                Duration: <strong>{quiz.durationMinutes} mins</strong>
+                                            </span>
                                             <span>•</span>
-                                            <span>Questions: <strong>{quiz.totalQuestions} MCQs</strong> ({quiz.totalPoints} pts)</span>
+                                            <span>
+                                                Questions: <strong>{quiz.totalQuestions} MCQs</strong> (
+                                                {quiz.totalPoints} pts)
+                                            </span>
                                         </div>
                                     </div>
 
@@ -309,19 +522,23 @@ export default function QuizAdmin({ showStatus }) {
                                         <button
                                             type="button"
                                             onClick={() => handleCopyLink(quiz)}
-                                            className={`press px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1 ${
-                                                copiedId === quiz._id ? 'bg-emerald-300 text-slate-900' : 'bg-sky-100 hover:bg-sky-200 text-sky-950'
+                                            className={`press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase ${
+                                                copiedId === quiz._id
+                                                    ? 'bg-emerald-300 text-slate-900'
+                                                    : 'bg-sky-100 text-sky-950 hover:bg-sky-200'
                                             }`}
                                             title="Copy participant test join link"
                                         >
                                             <span>{copiedId === quiz._id ? '✓' : '🔗'}</span>
-                                            <span>{copiedId === quiz._id ? 'Copied Link!' : 'Copy Link'}</span>
+                                            <span>
+                                                {copiedId === quiz._id ? 'Copied Link!' : 'Copy Link'}
+                                            </span>
                                         </button>
 
                                         <button
                                             type="button"
                                             onClick={() => handleOpenSubmissions(quiz)}
-                                            className="press px-3 py-1.5 bg-amber-300 hover:bg-amber-200 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1"
+                                            className="press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-amber-300 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-200"
                                             title="View student results and leaderboard"
                                         >
                                             <span>📊</span>
@@ -330,11 +547,21 @@ export default function QuizAdmin({ showStatus }) {
 
                                         <button
                                             type="button"
+                                            onClick={() => handleOpenProjector(quiz)}
+                                            className="press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-violet-300 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200"
+                                            title="Open projector mode with live QR code & student entry portal"
+                                        >
+                                            <span>📺</span>
+                                            <span>Projector</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
                                             onClick={() => {
                                                 setEditingQuiz(quiz);
                                                 setIsEditorOpen(true);
                                             }}
-                                            className="press px-3 py-1.5 bg-white hover:bg-slate-100 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100"
                                             title="Edit quiz questions or timing"
                                         >
                                             Edit
@@ -343,7 +570,7 @@ export default function QuizAdmin({ showStatus }) {
                                         <button
                                             type="button"
                                             onClick={() => handleDeleteQuiz(quiz)}
-                                            className="press px-3 py-1.5 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-1.5 font-mono text-xs font-black text-rose-900 uppercase hover:bg-rose-200"
                                             title="Delete quiz"
                                         >
                                             Delete
@@ -352,39 +579,64 @@ export default function QuizAdmin({ showStatus }) {
                                 </div>
 
                                 {/* Schedule & Results Details Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 border-2 border-slate-900/20 p-3 font-mono text-xs">
+                                <div className="grid grid-cols-1 gap-3 border-2 border-slate-900/20 bg-slate-50 p-3 font-mono text-xs sm:grid-cols-2 md:grid-cols-4">
                                     <div>
-                                        <span className="text-[10px] text-slate-500 font-black uppercase block">Exam Start Time</span>
-                                        <strong className="text-slate-900 text-[11px]">
-                                            {new Date(quiz.startTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                                        <span className="block text-[10px] font-black text-slate-500 uppercase">
+                                            Exam Start Time
+                                        </span>
+                                        <strong className="text-[11px] text-slate-900">
+                                            {new Date(quiz.startTime).toLocaleString('en-IN', {
+                                                dateStyle: 'short',
+                                                timeStyle: 'short'
+                                            })}
                                         </strong>
                                     </div>
                                     <div>
-                                        <span className="text-[10px] text-slate-500 font-black uppercase block">Exam End Time</span>
-                                        <strong className="text-slate-900 text-[11px]">
-                                            {new Date(quiz.endTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                                        <span className="block text-[10px] font-black text-slate-500 uppercase">
+                                            Exam End Time
+                                        </span>
+                                        <strong className="text-[11px] text-slate-900">
+                                            {new Date(quiz.endTime).toLocaleString('en-IN', {
+                                                dateStyle: 'short',
+                                                timeStyle: 'short'
+                                            })}
                                         </strong>
                                     </div>
                                     <div>
-                                        <span className="text-[10px] text-slate-500 font-black uppercase block">Results Release Time</span>
-                                        <strong className="text-slate-900 text-[11px]">
-                                            {quiz.resultsPublishTime ? new Date(quiz.resultsPublishTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'Immediate'}
+                                        <span className="block text-[10px] font-black text-slate-500 uppercase">
+                                            Results Release Time
+                                        </span>
+                                        <strong className="text-[11px] text-slate-900">
+                                            {quiz.resultsPublishTime
+                                                ? new Date(quiz.resultsPublishTime).toLocaleString('en-IN', {
+                                                      dateStyle: 'short',
+                                                      timeStyle: 'short'
+                                                  })
+                                                : 'Immediate'}
                                         </strong>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-[10px] text-slate-500 font-black uppercase block">Participants</span>
-                                            <strong className="text-slate-900 text-[11px]">{quiz.submissionCount} attended</strong>
+                                            <span className="block text-[10px] font-black text-slate-500 uppercase">
+                                                Participants
+                                            </span>
+                                            <strong className="text-[11px] text-slate-900">
+                                                {quiz.submissionCount} attended
+                                            </strong>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => handleToggleRelease(quiz)}
-                                            className={`press px-2 py-1 border text-[10px] font-black uppercase cursor-pointer ${
+                                            className={`press cursor-pointer border px-2 py-1 text-[10px] font-black uppercase ${
                                                 quiz.resultsPublished
-                                                    ? 'bg-slate-200 hover:bg-slate-300 text-slate-800 border-slate-600'
-                                                    : 'bg-emerald-300 hover:bg-emerald-400 text-slate-950 border-emerald-700'
+                                                    ? 'border-slate-600 bg-slate-200 text-slate-800 hover:bg-slate-300'
+                                                    : 'border-emerald-700 bg-emerald-300 text-slate-950 hover:bg-emerald-400'
                                             }`}
-                                            title={quiz.resultsPublished ? 'Lock results back to scheduled time' : 'Force release results immediately'}
+                                            title={
+                                                quiz.resultsPublished
+                                                    ? 'Lock results back to scheduled time'
+                                                    : 'Force release results immediately'
+                                            }
                                         >
                                             {quiz.resultsPublished ? 'Lock Results' : 'Release Now'}
                                         </button>
@@ -398,15 +650,30 @@ export default function QuizAdmin({ showStatus }) {
 
             {/* Submissions & Leaderboard Drawer Modal */}
             {selectedQuizForSubmissions && (
-                <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-5xl w-full max-h-[90vh] flex flex-col anim-pop">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-xs sm:p-6"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setSelectedQuizForSubmissions(null);
+                    }}
+                >
+                    <div
+                        ref={submissionsModalRef}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="quiz-submissions-modal-title"
+                        tabIndex={-1}
+                        className="shadow-brutal-8 anim-pop flex max-h-[90dvh] w-full max-w-5xl flex-col border-4 border-slate-900 bg-white"
+                    >
                         {/* Header */}
-                        <div className="p-4 sm:p-5 border-b-4 border-slate-900 bg-amber-300 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b-4 border-slate-900 bg-amber-300 p-4 sm:p-5">
                             <div>
-                                <span className="font-mono text-[10px] font-black uppercase tracking-wider text-slate-900 bg-white px-2 py-0.5 border border-slate-900">
+                                <span className="border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black tracking-wider text-slate-900 uppercase">
                                     QUIZ RESULTS & LEADERBOARD
                                 </span>
-                                <h3 className="text-lg sm:text-xl font-black uppercase text-slate-950 mt-1">
+                                <h3
+                                    id="quiz-submissions-modal-title"
+                                    className="mt-1 text-lg font-black text-slate-950 uppercase sm:text-xl"
+                                >
                                     {selectedQuizForSubmissions.title}
                                 </h3>
                             </div>
@@ -414,14 +681,14 @@ export default function QuizAdmin({ showStatus }) {
                                 <button
                                     type="button"
                                     onClick={() => handleExportCsv(selectedQuizForSubmissions._id)}
-                                    className="press px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-slate-900 px-3 py-1.5 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                                 >
                                     📥 Export CSV
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setSelectedQuizForSubmissions(null)}
-                                    className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100"
                                 >
                                     ✕ Close
                                 </button>
@@ -429,23 +696,25 @@ export default function QuizAdmin({ showStatus }) {
                         </div>
 
                         {/* Search & Filter Bar */}
-                        <div className="p-4 border-b-2 border-slate-900/15 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-slate-900/15 bg-slate-50 p-4">
                             <input
                                 type="text"
                                 value={submissionSearch}
                                 onChange={(e) => setSubmissionSearch(e.target.value)}
                                 placeholder="Search by name, email, roll no..."
-                                className="px-3 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs w-full sm:w-72 focus:outline-none focus:bg-amber-50"
+                                className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs focus:bg-amber-50 focus:outline-none sm:w-72"
                             />
-                            <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
-                                <span className="text-slate-500 font-bold">Filter:</span>
-                                {['all', 'active', 'passed', 'failed', 'archived'].map(f => (
+                            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+                                <span className="font-bold text-slate-500">Filter:</span>
+                                {['all', 'active', 'passed', 'failed', 'archived'].map((f) => (
                                     <button
                                         key={f}
                                         type="button"
                                         onClick={() => setSubmissionFilter(f)}
-                                        className={`px-2.5 py-1 border-2 border-slate-900 font-black uppercase text-[11px] cursor-pointer ${
-                                            submissionFilter === f ? 'bg-sky-400 text-slate-950' : 'bg-white hover:bg-slate-100 text-slate-700'
+                                        className={`cursor-pointer border-2 border-slate-900 px-2.5 py-1 text-[11px] font-black uppercase ${
+                                            submissionFilter === f
+                                                ? 'bg-sky-400 text-slate-950'
+                                                : 'bg-white text-slate-700 hover:bg-slate-100'
                                         }`}
                                     >
                                         {f}
@@ -457,92 +726,98 @@ export default function QuizAdmin({ showStatus }) {
                         {/* Submissions Table */}
                         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                             {isSubmissionsLoading ? (
-                                <div className="text-center p-8 font-mono font-black uppercase text-slate-500">
+                                <div className="p-8 text-center font-mono font-black text-slate-500 uppercase">
                                     Loading participants...
                                 </div>
                             ) : filteredSubmissions.length === 0 ? (
-                                <div className="text-center p-8 font-mono font-bold text-slate-500">
+                                <div className="p-8 text-center font-mono font-bold text-slate-500">
                                     No submissions found matching criteria.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto border-2 border-slate-900">
-                                    <table className="w-full text-left font-mono text-xs border-collapse">
+                                    <table className="w-full border-collapse text-left font-mono text-xs">
                                         <thead>
-                                            <tr className="bg-slate-900 text-white uppercase text-[11px]">
-                                                <th className="p-2.5 border-r border-slate-700 w-12 text-center">Rank</th>
-                                                <th className="p-2.5 border-r border-slate-700">Participant</th>
-                                                <th className="p-2.5 border-r border-slate-700">Roll No</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-center">Attempt</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-center">Score</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-center">%</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-center">Result</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-center">Time</th>
-                                                <th className="p-2.5 border-r border-slate-700 text-right">Submitted At</th>
+                                            <tr className="bg-slate-900 text-[11px] text-white uppercase">
+                                                <th className="w-12 border-r border-slate-700 p-2.5 text-center">Rank</th>
+                                                <th className="border-r border-slate-700 p-2.5">Participant</th>
+                                                <th className="border-r border-slate-700 p-2.5">Roll No</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-center">Attempt</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-center">Score</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-center">%</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-center">Result</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-center">Time</th>
+                                                <th className="border-r border-slate-700 p-2.5 text-right">Submitted At</th>
                                                 <th className="p-2.5 text-center">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y-2 divide-slate-900/10">
                                             {filteredSubmissions.map((s) => (
                                                 <tr key={s._id} className={s.isArchived ? 'bg-slate-100/70 opacity-75' : 'hover:bg-amber-50'}>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center font-black">
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center font-black">
                                                         {s.isArchived ? (
-                                                            <span className="text-slate-400 font-normal">—</span>
+                                                            <span className="font-normal text-slate-400">—</span>
                                                         ) : (
-                                                            <span className={`inline-block w-6 h-6 rounded-full leading-6 text-center ${
-                                                                s.rank === 1 ? 'bg-amber-300 border border-slate-900 font-black' :
-                                                                s.rank === 2 ? 'bg-slate-300 border border-slate-900 font-black' :
-                                                                s.rank === 3 ? 'bg-amber-100 border border-slate-900 font-black' : 'text-slate-600'
+                                                            <span className={`inline-block h-6 w-6 rounded-full text-center leading-6 ${
+                                                                s.rank === 1 ? 'border border-slate-900 bg-amber-300 font-black' :
+                                                                s.rank === 2 ? 'border border-slate-900 bg-slate-300 font-black' :
+                                                                s.rank === 3 ? 'border border-slate-900 bg-amber-100 font-black' : 'text-slate-600'
                                                             }`}>
                                                                 {s.rank}
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10">
-                                                        <div className="font-black text-slate-900 flex items-center gap-1.5">
+                                                    <td className="border-r border-slate-900/10 p-2.5">
+                                                        <div className="flex items-center gap-1.5 font-black text-slate-900">
                                                             <span>{s.userName}</span>
                                                             {s.isArchived && (
-                                                                <span className="px-1.5 py-0.2 bg-slate-200 text-slate-600 text-[9px] font-bold uppercase rounded-xs">
+                                                                <span className="rounded-xs bg-slate-200 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-600">
                                                                     Archived
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-500 font-bold">{s.userEmail}</div>
+                                                        <div className="text-[11px] font-bold text-slate-500">{s.userEmail}</div>
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 font-bold">
+                                                    <td className="border-r border-slate-900/10 p-2.5 font-bold">
                                                         {s.rollNo || 'N/A'}
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center">
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center">
                                                         {s.isArchived ? (
-                                                            <span className="px-2 py-0.5 bg-slate-200 border border-slate-400 text-slate-600 text-[10px] font-black uppercase inline-block">
+                                                            <span className="inline-block border border-slate-400 bg-slate-200 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600">
                                                                 Attempt {s.attemptNumber || 1} (Archived)
                                                             </span>
                                                         ) : (
-                                                            <span className={`px-2 py-0.5 border font-mono font-black text-[10px] uppercase inline-block ${
+                                                            <span className={`inline-block border px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
                                                                 s.attemptNumber === 2
-                                                                    ? 'bg-purple-100 text-purple-900 border-purple-400'
-                                                                    : 'bg-sky-100 text-sky-900 border-sky-400'
+                                                                    ? 'border-purple-400 bg-purple-100 text-purple-900'
+                                                                    : 'border-sky-400 bg-sky-100 text-sky-900'
                                                             }`}>
                                                                 Attempt {s.attemptNumber || 1} of 2
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center font-black text-slate-900">
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center font-black text-slate-900">
                                                         {s.score} / {s.maxScore}
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center font-black">
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center font-black">
                                                         {s.percentage}%
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center">
-                                                        <span className={`px-2 py-0.5 text-[10px] font-black uppercase border ${
-                                                            s.passed ? 'bg-emerald-100 text-emerald-800 border-emerald-400' : 'bg-rose-100 text-rose-800 border-rose-400'
-                                                        }`}>
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center">
+                                                        <span
+                                                            className={`border px-2 py-0.5 text-[10px] font-black uppercase ${
+                                                                s.passed
+                                                                    ? 'border-emerald-400 bg-emerald-100 text-emerald-800'
+                                                                    : 'border-rose-400 bg-rose-100 text-rose-800'
+                                                            }`}
+                                                        >
                                                             {s.passed ? 'Passed' : 'Failed'}
                                                         </span>
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-center font-bold">
-                                                        {Math.round((s.timeSpentSeconds || 0) / 60 * 10) / 10}m
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-center font-bold">
+                                                        {Math.round(((s.timeSpentSeconds || 0) / 60) * 10) /
+                                                            10}
+                                                        m
                                                     </td>
-                                                    <td className="p-2.5 border-r border-slate-900/10 text-right font-bold text-slate-600">
+                                                    <td className="border-r border-slate-900/10 p-2.5 text-right font-bold text-slate-600">
                                                         {s.submittedAt ? new Date(s.submittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                                                     </td>
                                                     <td className="p-2.5 text-center">
@@ -555,7 +830,7 @@ export default function QuizAdmin({ showStatus }) {
                                                                 type="button"
                                                                 onClick={() => setUserToReset(s)}
                                                                 disabled={resettingEmail === s.userEmail}
-                                                                className="press px-2.5 py-1 bg-amber-300 hover:bg-amber-200 border-2 border-slate-900 text-slate-950 font-mono font-black text-[10px] uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1 mx-auto"
+                                                                className="press mx-auto flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-amber-300 px-2.5 py-1 font-mono text-[10px] font-black uppercase text-slate-950 shadow-[2px_2px_0px_#0f172a] hover:bg-amber-200"
                                                                 title="Clear user entry to re-enable quiz (preserves past records in DB)"
                                                             >
                                                                 <span>🔄</span>
@@ -680,7 +955,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
     const [description, setDescription] = useState(initialData?.description || '');
     const [slug, setSlug] = useState(initialData?.slug || '');
     const [durationMinutes, setDurationMinutes] = useState(initialData?.durationMinutes || 20);
-    const [passingPercentage, setPassingPercentage] = useState(initialData?.passingPercentage || 50);
+    const [passingPercentage] = useState(initialData?.passingPercentage || 50);
 
     // Timing
     const [startTime, setStartTime] = useState(() => {
@@ -708,13 +983,21 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
 
     const [showExplanations, setShowExplanations] = useState(initialData?.showExplanations !== false);
     const [shuffleQuestions, setShuffleQuestions] = useState(Boolean(initialData?.shuffleQuestions));
+    const [instantFeedback, setInstantFeedback] = useState(Boolean(initialData?.instantFeedback));
+    const [status, setStatus] = useState(initialData?.status || 'published');
+
+    // Ready-made papers from src/data/quizPresets.js
+    const [selectedPresetId, setSelectedPresetId] = useState('');
 
     // Questions state
     const [questions, setQuestions] = useState(() => {
         if (Array.isArray(initialData?.questions) && initialData.questions.length > 0) {
-            return initialData.questions.map(q => ({
+            return initialData.questions.map((q) => ({
                 questionText: q.questionText || '',
-                options: Array.isArray(q.options) && q.options.length >= 2 ? [...q.options] : ['Option A', 'Option B', 'Option C', 'Option D'],
+                options:
+                    Array.isArray(q.options) && q.options.length >= 2
+                        ? [...q.options]
+                        : ['Option A', 'Option B', 'Option C', 'Option D'],
                 correctOptionIndex: Number(q.correctOptionIndex) || 0,
                 points: Number(q.points) || 1,
                 explanation: q.explanation || ''
@@ -731,6 +1014,8 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
         ];
     });
 
+    const editorModalRef = useModalBehavior(true, onClose);
+
     // Preset helper for results publish time
     const handleSetPublishPreset = (type) => {
         if (!endTime) return;
@@ -746,9 +1031,49 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
         }
     };
 
+    // Load a ready-made paper from src/data/quizPresets.js. Fills in everything
+    // except the schedule — exam start, exam end and results release stay
+    // exactly as the organiser set them.
+    const handleLoadPreset = () => {
+        const preset = QUIZ_PRESETS.find((p) => p.presetId === selectedPresetId);
+        if (!preset) {
+            setFormError('Pick a ready paper to load first.');
+            return;
+        }
+
+        const hasTypedQuestions = questions.some((q) => q.questionText.trim() || q.explanation.trim());
+        if (
+            (hasTypedQuestions || title.trim()) &&
+            !window.confirm(
+                `Load "${preset.label}"? This replaces the title, description, duration and all ${preset.questions.length} questions currently in this form. Your exam and results times are left untouched.`
+            )
+        ) {
+            return;
+        }
+
+        setTitle(preset.title);
+        setSlug(preset.slug || '');
+        setDescription(preset.description || '');
+        setDurationMinutes(preset.durationMinutes || 20);
+        setShowExplanations(preset.showExplanations !== false);
+        setShuffleQuestions(Boolean(preset.shuffleQuestions));
+        setInstantFeedback(Boolean(preset.instantFeedback));
+        setQuestions(
+            preset.questions.map((q) => ({
+                questionText: q.questionText,
+                options: [...q.options],
+                correctOptionIndex: Number(q.correctOptionIndex) || 0,
+                points: Number(q.points) || 1,
+                explanation: q.explanation || ''
+            }))
+        );
+        setFormError('');
+        setActiveTab('questions');
+    };
+
     // Question operations
     const handleAddQuestion = () => {
-        setQuestions(prev => [
+        setQuestions((prev) => [
             ...prev,
             {
                 questionText: '',
@@ -765,42 +1090,51 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
             alert('A quiz must have at least one question.');
             return;
         }
-        setQuestions(prev => prev.filter((_, i) => i !== idx));
+        setQuestions((prev) => prev.filter((_, i) => i !== idx));
     };
 
     const handleUpdateQuestion = (idx, field, val) => {
-        setQuestions(prev => prev.map((q, i) => i === idx ? { ...q, [field]: val } : q));
+        setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, [field]: val } : q)));
     };
 
     const handleOptionChange = (qIdx, optIdx, val) => {
-        setQuestions(prev => prev.map((q, i) => {
-            if (i !== qIdx) return q;
-            const updatedOpts = [...q.options];
-            updatedOpts[optIdx] = val;
-            return { ...q, options: updatedOpts };
-        }));
+        setQuestions((prev) =>
+            prev.map((q, i) => {
+                if (i !== qIdx) return q;
+                const updatedOpts = [...q.options];
+                updatedOpts[optIdx] = val;
+                return { ...q, options: updatedOpts };
+            })
+        );
     };
 
     const handleAddOption = (qIdx) => {
-        setQuestions(prev => prev.map((q, i) => {
-            if (i !== qIdx) return q;
-            return { ...q, options: [...q.options, `Option ${String.fromCharCode(65 + q.options.length)}`] };
-        }));
+        setQuestions((prev) =>
+            prev.map((q, i) => {
+                if (i !== qIdx) return q;
+                return {
+                    ...q,
+                    options: [...q.options, `Option ${String.fromCharCode(65 + q.options.length)}`]
+                };
+            })
+        );
     };
 
     const handleRemoveOption = (qIdx, optIdx) => {
-        setQuestions(prev => prev.map((q, i) => {
-            if (i !== qIdx) return q;
-            if (q.options.length <= 2) {
-                alert('At least 2 options are required for an MCQ question.');
-                return q;
-            }
-            const updatedOpts = q.options.filter((_, oi) => oi !== optIdx);
-            let correct = q.correctOptionIndex;
-            if (correct === optIdx) correct = 0;
-            else if (correct > optIdx) correct -= 1;
-            return { ...q, options: updatedOpts, correctOptionIndex: correct };
-        }));
+        setQuestions((prev) =>
+            prev.map((q, i) => {
+                if (i !== qIdx) return q;
+                if (q.options.length <= 2) {
+                    alert('At least 2 options are required for an MCQ question.');
+                    return q;
+                }
+                const updatedOpts = q.options.filter((_, oi) => oi !== optIdx);
+                let correct = q.correctOptionIndex;
+                if (correct === optIdx) correct = 0;
+                else if (correct > optIdx) correct -= 1;
+                return { ...q, options: updatedOpts, correctOptionIndex: correct };
+            })
+        );
     };
 
     // Submit save
@@ -836,7 +1170,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 setActiveTab('questions');
                 return;
             }
-            if (q.options.some(opt => !String(opt).trim())) {
+            if (q.options.some((opt) => !String(opt).trim())) {
                 setFormError(`Question #${i + 1} has one or more empty options.`);
                 setActiveTab('questions');
                 return;
@@ -857,17 +1191,21 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 resultsPublishTime: new Date(resultsPublishTime).toISOString(),
                 showExplanations,
                 shuffleQuestions,
+                instantFeedback,
+                status,
                 questions
             };
 
-            const url = isEdit ? apiUrl(`/api/quiz/admin/${initialData._id}`) : apiUrl('/api/quiz/admin/create');
+            const url = isEdit
+                ? apiUrl(`/api/quiz/admin/${initialData._id}`)
+                : apiUrl('/api/quiz/admin/create');
             const method = isEdit ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
@@ -885,22 +1223,37 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-            <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-4xl w-full max-h-[92vh] flex flex-col anim-pop">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/75 p-3 backdrop-blur-xs sm:p-6"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+            <div
+                ref={editorModalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="quiz-editor-modal-title"
+                tabIndex={-1}
+                className="shadow-brutal-8 anim-pop flex max-h-[92dvh] w-full max-w-4xl flex-col border-4 border-slate-900 bg-white"
+            >
                 {/* Modal Header */}
-                <div className="p-4 sm:p-5 border-b-4 border-slate-900 bg-sky-300 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 border-b-4 border-slate-900 bg-sky-300 p-4 sm:p-5">
                     <div>
-                        <span className="font-mono text-[10px] font-black uppercase tracking-wider text-slate-900 bg-white px-2 py-0.5 border border-slate-900">
+                        <span className="border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black tracking-wider text-slate-900 uppercase">
                             {isEdit ? 'EDIT QUIZ' : 'CREATE NEW QUIZ'}
                         </span>
-                        <h3 className="text-xl font-black uppercase text-slate-950 mt-1">
+                        <h3
+                            id="quiz-editor-modal-title"
+                            className="mt-1 text-xl font-black text-slate-950 uppercase"
+                        >
                             {title.trim() || 'Untitled Quiz'}
                         </h3>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="press px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-900 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100"
                     >
                         ✕ Close
                     </button>
@@ -911,8 +1264,10 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                     <button
                         type="button"
                         onClick={() => setActiveTab('settings')}
-                        className={`flex-1 py-3 px-4 font-mono font-black text-xs uppercase border-r-2 border-slate-900 cursor-pointer flex items-center justify-center gap-1.5 ${
-                            activeTab === 'settings' ? 'bg-white text-slate-900 shadow-inner' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-r-2 border-slate-900 px-4 py-3 font-mono text-xs font-black uppercase ${
+                            activeTab === 'settings'
+                                ? 'bg-white text-slate-900 shadow-inner'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                     >
                         <span>⚙</span>
@@ -921,8 +1276,10 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                     <button
                         type="button"
                         onClick={() => setActiveTab('questions')}
-                        className={`flex-1 py-3 px-4 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-center gap-1.5 ${
-                            activeTab === 'questions' ? 'bg-white text-slate-900 shadow-inner' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-4 py-3 font-mono text-xs font-black uppercase ${
+                            activeTab === 'questions'
+                                ? 'bg-white text-slate-900 shadow-inner'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                     >
                         <span>📝</span>
@@ -938,13 +1295,58 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 )}
 
                 {/* Tab Content */}
-                <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+                <div className="flex-1 space-y-6 overflow-y-auto p-5 sm:p-6">
                     {activeTab === 'settings' ? (
                         <div className="space-y-5">
+                            {/* Ready-made papers kept in code (src/data/quizPresets.js) */}
+                            {QUIZ_PRESETS.length > 0 && (
+                                <div className="shadow-brutal-4 space-y-2.5 border-3 border-slate-900 bg-violet-50 p-4">
+                                    <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
+                                        <span>⚡</span>
+                                        <span>Load a Ready Paper (no retyping)</span>
+                                    </h4>
+                                    <div className="flex flex-col gap-2 sm:flex-row">
+                                        <select
+                                            value={selectedPresetId}
+                                            onChange={(e) => setSelectedPresetId(e.target.value)}
+                                            className="flex-1 cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-bold"
+                                        >
+                                            <option value="">— Select a prepared question paper —</option>
+                                            {QUIZ_PRESETS.map((preset) => (
+                                                <option key={preset.presetId} value={preset.presetId}>
+                                                    {preset.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            type="button"
+                                            onClick={handleLoadPreset}
+                                            disabled={!selectedPresetId}
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-violet-300 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            Load Paper →
+                                        </button>
+                                    </div>
+                                    {selectedPresetId && (
+                                        <p className="font-mono text-[11px] font-bold text-slate-600">
+                                            {
+                                                QUIZ_PRESETS.find((p) => p.presetId === selectedPresetId)
+                                                    ?.summary
+                                            }
+                                        </p>
+                                    )}
+                                    <p className="font-mono text-[10px] font-bold text-violet-900">
+                                        Fills in the title, description, duration, answer-on-the-spot setting
+                                        and every question with its answer key. Your exam start, exam end and
+                                        results release times are never changed — set those yourself below.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Title & Slug */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                                 <div className="sm:col-span-2">
-                                    <label className="block font-mono text-xs font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         Quiz Title *
                                     </label>
                                     <input
@@ -952,11 +1354,11 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="e.g. Software Track Week 1: ROS & System Design Quiz"
-                                        className="w-full px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none focus:bg-amber-50"
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:bg-amber-50 focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block font-mono text-xs font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         URL Code / Slug (optional)
                                     </label>
                                     <input
@@ -964,14 +1366,14 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                         value={slug}
                                         onChange={(e) => setSlug(e.target.value)}
                                         placeholder="e.g. sw-week-1"
-                                        className="w-full px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none focus:bg-amber-50"
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:bg-amber-50 focus:outline-none"
                                     />
                                 </div>
                             </div>
 
                             {/* Description */}
                             <div>
-                                <label className="block font-mono text-xs font-black uppercase text-slate-700 mb-1">
+                                <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                     Brief Description / Instructions for Participants
                                 </label>
                                 <textarea
@@ -979,41 +1381,68 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                     onChange={(e) => setDescription(e.target.value)}
                                     rows={2}
                                     placeholder="Enter topics covered, instructions on calculator / notes, passing marks, etc."
-                                    className="w-full px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none focus:bg-amber-50"
+                                    className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:bg-amber-50 focus:outline-none"
                                 />
                             </div>
 
                             {/* Exam Schedule Window */}
-                            <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
-                                <h4 className="font-mono text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
-                                    <span>⏳</span>
-                                    <span>Exam Examination Window (When students can join)</span>
-                                </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="shadow-brutal-4 space-y-3 border-3 border-slate-900 bg-amber-50 p-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
+                                        <span>⏳</span>
+                                        <span>Exam Examination Window (When students can join)</span>
+                                    </h4>
+                                    <label className="flex items-center gap-2 font-mono text-[11px] font-black text-slate-700 uppercase">
+                                        <span>Status</span>
+                                        <select
+                                            value={status}
+                                            onChange={(e) => setStatus(e.target.value)}
+                                            className={`cursor-pointer border-2 border-slate-900 px-2 py-1 font-mono text-[11px] font-black uppercase ${
+                                                status === 'published'
+                                                    ? 'bg-emerald-300 text-slate-950'
+                                                    : 'bg-slate-800 text-white'
+                                            }`}
+                                        >
+                                            <option value="draft">Draft — nobody can open it</option>
+                                            <option value="published">
+                                                Published — open to participants
+                                            </option>
+                                            <option value="archived">Archived — retired</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                {status === 'draft' && (
+                                    <p className="border-2 border-slate-900 bg-slate-100 p-2.5 font-mono text-[11px] font-bold text-slate-700">
+                                        This quiz is a draft: its link will not open for anyone. Set your exam
+                                        times below, then switch Status to <strong>Published</strong> to let
+                                        participants in.
+                                    </p>
+                                )}
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <div>
-                                        <label className="block font-mono text-[11px] font-bold text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-[11px] font-bold text-slate-700">
                                             Exam Start Date & Time *
                                         </label>
                                         <input
                                             type="datetime-local"
                                             value={startTime}
                                             onChange={(e) => setStartTime(e.target.value)}
-                                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-mono text-[11px] font-bold text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-[11px] font-bold text-slate-700">
                                             Exam End Date & Time *
                                         </label>
                                         <input
                                             type="datetime-local"
                                             value={endTime}
                                             onChange={(e) => setEndTime(e.target.value)}
-                                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block font-mono text-[11px] font-bold text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-[11px] font-bold text-slate-700">
                                             Duration per Participant (Mins) *
                                         </label>
                                         <input
@@ -1022,72 +1451,79 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                             max="300"
                                             value={durationMinutes}
                                             onChange={(e) => setDurationMinutes(e.target.value)}
-                                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Results Publishing Time */}
-                            <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-[4px_4px_0px_#0f172a] space-y-3">
+                            <div className="shadow-brutal-4 space-y-3 border-3 border-slate-900 bg-sky-50 p-4">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <h4 className="font-mono text-xs font-black uppercase text-slate-900 flex items-center gap-1.5">
+                                    <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
                                         <span>📢</span>
-                                        <span>Results Release Date & Time (When students can check back)</span>
+                                        <span>
+                                            Results Release Date & Time (When students can check back)
+                                        </span>
                                     </h4>
                                     <div className="flex items-center gap-1.5">
-                                        <span className="font-mono text-[10px] text-slate-500 font-bold">Presets:</span>
+                                        <span className="font-mono text-[10px] font-bold text-slate-500">
+                                            Presets:
+                                        </span>
                                         <button
                                             type="button"
                                             onClick={() => handleSetPublishPreset('end')}
-                                            className="px-2 py-0.5 bg-white border border-slate-900 font-mono text-[10px] font-black uppercase hover:bg-sky-100 cursor-pointer"
+                                            className="cursor-pointer border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black uppercase hover:bg-sky-100"
                                         >
                                             At Exam End
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleSetPublishPreset('1hr')}
-                                            className="px-2 py-0.5 bg-white border border-slate-900 font-mono text-[10px] font-black uppercase hover:bg-sky-100 cursor-pointer"
+                                            className="cursor-pointer border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black uppercase hover:bg-sky-100"
                                         >
                                             +1 Hour
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => handleSetPublishPreset('24hr')}
-                                            className="px-2 py-0.5 bg-white border border-slate-900 font-mono text-[10px] font-black uppercase hover:bg-sky-100 cursor-pointer"
+                                            className="cursor-pointer border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black uppercase hover:bg-sky-100"
                                         >
                                             +24 Hours
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
-                                        <label className="block font-mono text-[11px] font-bold text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-[11px] font-bold text-slate-700">
                                             Exact Release Timestamp *
                                         </label>
                                         <input
                                             type="datetime-local"
                                             value={resultsPublishTime}
                                             onChange={(e) => setResultsPublishTime(e.target.value)}
-                                            className="w-full px-2.5 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 font-mono text-xs"
                                         />
-                                        <span className="text-[10px] font-mono text-slate-500 block mt-1">
-                                            Prior to this time, participants will see an acknowledgment informing them to return at this exact moment.
+                                        <span className="mt-1 block font-mono text-[10px] text-slate-500">
+                                            Prior to this time, participants will see an acknowledgment
+                                            informing them to return at this exact moment.
                                         </span>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="flex items-center gap-2 cursor-pointer font-mono text-xs font-bold text-slate-800">
+                                        <label className="flex cursor-pointer items-center gap-2 font-mono text-xs font-bold text-slate-800">
                                             <input
                                                 type="checkbox"
                                                 checked={showExplanations}
                                                 onChange={(e) => setShowExplanations(e.target.checked)}
                                                 className="h-4 w-4 accent-slate-900"
                                             />
-                                            <span>Show correct answers & explanations on results release</span>
+                                            <span>
+                                                Show correct answers & explanations on results release
+                                            </span>
                                         </label>
-                                        <label className="flex items-center gap-2 cursor-pointer font-mono text-xs font-bold text-slate-800">
+                                        <label className="flex cursor-pointer items-center gap-2 font-mono text-xs font-bold text-slate-800">
                                             <input
                                                 type="checkbox"
                                                 checked={shuffleQuestions}
@@ -1095,6 +1531,25 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                                 className="h-4 w-4 accent-slate-900"
                                             />
                                             <span>Shuffle question order for each participant</span>
+                                        </label>
+                                        <label className="flex cursor-pointer items-start gap-2 border-2 border-slate-900 bg-amber-100 p-2.5 font-mono text-xs font-bold text-slate-800">
+                                            <input
+                                                type="checkbox"
+                                                checked={instantFeedback}
+                                                onChange={(e) => setInstantFeedback(e.target.checked)}
+                                                className="mt-0.5 h-4 w-4 accent-slate-900"
+                                            />
+                                            <span>
+                                                <strong className="block uppercase">
+                                                    Answer on the spot
+                                                </strong>
+                                                <span className="font-normal text-slate-600">
+                                                    Mark each answer the instant it is picked and show the
+                                                    participant whether they got it right. Choices become
+                                                    final once answered, and the projector leaderboard scores
+                                                    people live as they play.
+                                                </span>
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
@@ -1105,17 +1560,18 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between gap-3 border-b-2 border-slate-900/10 pb-3">
                                 <div>
-                                    <h4 className="font-mono text-xs font-black uppercase text-slate-900">
+                                    <h4 className="font-mono text-xs font-black text-slate-900 uppercase">
                                         Quiz Questions List ({questions.length} MCQs)
                                     </h4>
                                     <span className="font-mono text-[11px] font-bold text-slate-500">
-                                        Total Marks: {questions.reduce((sum, q) => sum + (Number(q.points) || 1), 0)} pts
+                                        Total Marks:{' '}
+                                        {questions.reduce((sum, q) => sum + (Number(q.points) || 1), 0)} pts
                                     </span>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={handleAddQuestion}
-                                    className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-950 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1"
+                                    className="press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-emerald-400 px-3.5 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-emerald-300"
                                 >
                                     <span>+</span>
                                     <span>Add Question</span>
@@ -1126,28 +1582,36 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                 {questions.map((q, qIdx) => (
                                     <div
                                         key={qIdx}
-                                        className="border-3 border-slate-900 bg-white p-4 sm:p-5 shadow-[4px_4px_0px_#0f172a] space-y-3"
+                                        className="shadow-brutal-4 space-y-3 border-3 border-slate-900 bg-white p-4 sm:p-5"
                                     >
                                         <div className="flex items-center justify-between gap-3 border-b-2 border-slate-900/10 pb-2">
                                             <div className="flex items-center gap-2">
-                                                <span className="font-mono text-xs font-black bg-slate-900 text-amber-300 px-2 py-0.5 border border-slate-900">
+                                                <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-xs font-black text-amber-300">
                                                     Q{qIdx + 1}
                                                 </span>
-                                                <span className="font-mono text-xs font-bold text-slate-600">Points:</span>
+                                                <span className="font-mono text-xs font-bold text-slate-600">
+                                                    Points:
+                                                </span>
                                                 <input
                                                     type="number"
                                                     min="1"
                                                     max="50"
                                                     value={q.points}
-                                                    onChange={(e) => handleUpdateQuestion(qIdx, 'points', Number(e.target.value) || 1)}
-                                                    className="w-16 px-1.5 py-0.5 border-2 border-slate-900 font-mono text-xs text-center"
+                                                    onChange={(e) =>
+                                                        handleUpdateQuestion(
+                                                            qIdx,
+                                                            'points',
+                                                            Number(e.target.value) || 1
+                                                        )
+                                                    }
+                                                    className="w-16 border-2 border-slate-900 px-1.5 py-0.5 text-center font-mono text-xs"
                                                 />
                                             </div>
 
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveQuestion(qIdx)}
-                                                className="press px-2 py-0.5 bg-rose-100 hover:bg-rose-200 border border-slate-900 font-mono text-[10px] font-black uppercase text-rose-800 cursor-pointer"
+                                                className="press cursor-pointer border border-slate-900 bg-rose-100 px-2 py-0.5 font-mono text-[10px] font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Delete this question"
                                             >
                                                 Delete Q{qIdx + 1}
@@ -1156,34 +1620,36 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
 
                                         {/* Question Text */}
                                         <div>
-                                            <label className="block font-mono text-[11px] font-black uppercase text-slate-700 mb-1">
+                                            <label className="mb-1 block font-mono text-[11px] font-black text-slate-700 uppercase">
                                                 Question Text *
                                             </label>
                                             <textarea
                                                 rows={2}
                                                 value={q.questionText}
-                                                onChange={(e) => handleUpdateQuestion(qIdx, 'questionText', e.target.value)}
+                                                onChange={(e) =>
+                                                    handleUpdateQuestion(qIdx, 'questionText', e.target.value)
+                                                }
                                                 placeholder="Enter question statement here..."
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none focus:bg-amber-50"
+                                                className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs focus:bg-amber-50 focus:outline-none"
                                             />
                                         </div>
 
                                         {/* Options */}
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <span className="font-mono text-[11px] font-black uppercase text-slate-700">
+                                                <span className="font-mono text-[11px] font-black text-slate-700 uppercase">
                                                     Answer Choices (Select radio button for correct answer) *
                                                 </span>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleAddOption(qIdx)}
-                                                    className="font-mono text-[10px] font-black uppercase text-sky-700 hover:underline cursor-pointer"
+                                                    className="cursor-pointer font-mono text-[10px] font-black text-sky-700 uppercase hover:underline"
                                                 >
                                                     + Add Option
                                                 </button>
                                             </div>
 
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                                                 {q.options.map((opt, optIdx) => {
                                                     const isCorrect = q.correctOptionIndex === optIdx;
                                                     const labelLetter = String.fromCharCode(65 + optIdx);
@@ -1192,32 +1658,48 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                                                         <div
                                                             key={optIdx}
                                                             className={`flex items-center gap-2 border-2 p-2 ${
-                                                                isCorrect ? 'border-emerald-600 bg-emerald-50' : 'border-slate-900 bg-slate-50'
+                                                                isCorrect
+                                                                    ? 'border-emerald-600 bg-emerald-50'
+                                                                    : 'border-slate-900 bg-slate-50'
                                                             }`}
                                                         >
                                                             <input
                                                                 type="radio"
                                                                 name={`correct-key-${qIdx}`}
                                                                 checked={isCorrect}
-                                                                onChange={() => handleUpdateQuestion(qIdx, 'correctOptionIndex', optIdx)}
-                                                                className="h-4 w-4 accent-emerald-600 cursor-pointer"
+                                                                onChange={() =>
+                                                                    handleUpdateQuestion(
+                                                                        qIdx,
+                                                                        'correctOptionIndex',
+                                                                        optIdx
+                                                                    )
+                                                                }
+                                                                className="h-4 w-4 cursor-pointer accent-emerald-600"
                                                                 title="Mark as correct answer"
                                                             />
-                                                            <span className="font-mono text-xs font-black text-slate-700 w-4">
+                                                            <span className="w-4 font-mono text-xs font-black text-slate-700">
                                                                 {labelLetter}.
                                                             </span>
                                                             <input
                                                                 type="text"
                                                                 value={opt}
-                                                                onChange={(e) => handleOptionChange(qIdx, optIdx, e.target.value)}
+                                                                onChange={(e) =>
+                                                                    handleOptionChange(
+                                                                        qIdx,
+                                                                        optIdx,
+                                                                        e.target.value
+                                                                    )
+                                                                }
                                                                 placeholder={`Choice ${labelLetter}`}
-                                                                className="flex-1 px-2 py-1 border border-slate-900/30 bg-white font-mono text-xs focus:outline-none"
+                                                                className="flex-1 border border-slate-900/30 bg-white px-2 py-1 font-mono text-xs focus:outline-none"
                                                             />
                                                             {q.options.length > 2 && (
                                                                 <button
                                                                     type="button"
-                                                                    onClick={() => handleRemoveOption(qIdx, optIdx)}
-                                                                    className="text-slate-400 hover:text-rose-600 font-bold px-1"
+                                                                    onClick={() =>
+                                                                        handleRemoveOption(qIdx, optIdx)
+                                                                    }
+                                                                    className="px-1 font-bold text-slate-500 hover:text-rose-600"
                                                                     title="Remove choice"
                                                                 >
                                                                     ✕
@@ -1231,15 +1713,18 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
 
                                         {/* Explanation */}
                                         <div>
-                                            <label className="block font-mono text-[10px] font-bold text-slate-500 mb-0.5">
-                                                Explanation (Shown to students only after results are published)
+                                            <label className="mb-0.5 block font-mono text-[10px] font-bold text-slate-500">
+                                                Explanation (Shown to students only after results are
+                                                published)
                                             </label>
                                             <input
                                                 type="text"
                                                 value={q.explanation}
-                                                onChange={(e) => handleUpdateQuestion(qIdx, 'explanation', e.target.value)}
+                                                onChange={(e) =>
+                                                    handleUpdateQuestion(qIdx, 'explanation', e.target.value)
+                                                }
                                                 placeholder="Explain why this choice is correct..."
-                                                className="w-full px-2.5 py-1 border border-slate-900/30 bg-slate-50 font-mono text-xs"
+                                                className="w-full border border-slate-900/30 bg-slate-50 px-2.5 py-1 font-mono text-xs"
                                             />
                                         </div>
                                     </div>
@@ -1250,15 +1735,16 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-4 border-t-4 border-slate-900 bg-slate-100 flex items-center justify-between gap-3">
-                    <div className="font-mono text-xs text-slate-600 font-bold">
-                        {questions.length} Question(s) • Total {questions.reduce((sum, q) => sum + (Number(q.points) || 1), 0)} pts
+                <div className="flex items-center justify-between gap-3 border-t-4 border-slate-900 bg-slate-100 p-4">
+                    <div className="font-mono text-xs font-bold text-slate-600">
+                        {questions.length} Question(s) • Total{' '}
+                        {questions.reduce((sum, q) => sum + (Number(q.points) || 1), 0)} pts
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="press px-4 py-2 bg-white hover:bg-slate-200 border-2 border-slate-900 font-mono font-black text-xs uppercase cursor-pointer"
+                            className="press cursor-pointer border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black uppercase hover:bg-slate-200"
                         >
                             Cancel
                         </button>
@@ -1266,7 +1752,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                             type="button"
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="press px-5 py-2 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 font-mono font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer"
+                            className="press shadow-brutal-3 cursor-pointer border-2 border-slate-900 bg-emerald-400 px-5 py-2 font-mono text-xs font-black uppercase hover:bg-emerald-300"
                         >
                             {isSaving ? 'Saving Quiz...' : isEdit ? 'Update Quiz' : 'Save & Publish Quiz'}
                         </button>

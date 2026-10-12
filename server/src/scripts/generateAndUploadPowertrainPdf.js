@@ -102,7 +102,7 @@ function generatePdfBuffer() {
             autoFirstPage: true,
             info: {
                 Title: 'Team Asterix Powertrain Recruitment Duo Teams',
-                Author: 'Team Asterix aBAJA SAEINDIA',
+                Author: 'Team Asterix Autonomous Mobility',
                 Subject: 'Powertrain Subsystem Recruitment Challenge Duo Team Allocations'
             }
         });
@@ -125,7 +125,7 @@ function generatePdfBuffer() {
 
         // Title Text
         doc.fillColor('#ffffff').fontSize(16).font('Helvetica-Bold')
-            .text('TEAM ASTERIX  •  aBAJA SAEINDIA', margin + 16, margin + 14);
+            .text('TEAM ASTERIX  •  AUTONOMOUS MOBILITY', margin + 16, margin + 14);
 
         doc.fillColor('#38bdf8').fontSize(10).font('Helvetica-Bold')
             .text('POWERTRAIN SUBSYSTEM RECRUITMENT CHALLENGE 2026', margin + 16, margin + 34);

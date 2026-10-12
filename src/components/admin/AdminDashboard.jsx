@@ -5,8 +5,16 @@ import Icon from '../Icon';
 import ImageField from './ImageField';
 import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
+import WorkshopAttendeeDetailsAdmin from './WorkshopAttendeeDetailsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
+import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
+import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
+import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
+import ParticipantPasswordsAdmin from './ParticipantPasswordsAdmin';
+import CommunityBlogAdmin from './CommunityBlogAdmin';
+import BlogCommentsAdmin from './BlogCommentsAdmin';
+import MailClusterAdmin from './MailClusterAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 export default function AdminDashboard({ onExit }) {
@@ -59,6 +67,64 @@ export default function AdminDashboard({ onExit }) {
         }
     });
     const [statusMessage, setStatusMessage] = useState('');
+    // Sidebar groups start expanded; a group id maps to false once collapsed.
+    const [openGroups, setOpenGroups] = useState({});
+
+    // Live Connector Health Monitor
+    const [liveHealth, setLiveHealth] = useState({
+        apiConnected: false,
+        apiLatencyMs: null,
+        dbConnected: false,
+        dbProvider: 'Checking...',
+        lastChecked: null,
+        isChecking: false
+    });
+
+    const checkLiveConnectors = useCallback(async () => {
+        setLiveHealth((prev) => ({ ...prev, isChecking: true }));
+        const startTime = performance.now();
+        try {
+            const res = await fetch(apiUrl('/api/health'), { cache: 'no-store' });
+            const endTime = performance.now();
+            const latency = Math.round(endTime - startTime);
+
+            if (res.ok) {
+                const data = await res.json();
+                setLiveHealth({
+                    apiConnected: true,
+                    apiLatencyMs: latency,
+                    dbConnected: Boolean(data.database?.connected),
+                    dbProvider: data.database?.provider || 'MongoDB Atlas',
+                    lastChecked: new Date(),
+                    isChecking: false
+                });
+            } else {
+                setLiveHealth({
+                    apiConnected: false,
+                    apiLatencyMs: latency,
+                    dbConnected: false,
+                    dbProvider: 'HTTP Error ' + res.status,
+                    lastChecked: new Date(),
+                    isChecking: false
+                });
+            }
+        } catch {
+            setLiveHealth({
+                apiConnected: false,
+                apiLatencyMs: null,
+                dbConnected: false,
+                dbProvider: 'API Server Offline',
+                lastChecked: new Date(),
+                isChecking: false
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        checkLiveConnectors();
+        const timer = setInterval(checkLiveConnectors, 10000);
+        return () => clearInterval(timer);
+    }, [checkLiveConnectors]);
 
     useEffect(() => {
         try {
@@ -69,22 +135,59 @@ export default function AdminDashboard({ onExit }) {
     }, [activeTab]);
 
     // Active subsystem selection for squad editor
-    const [selectedSubsystemId, setSelectedSubsystemId] = useState(siteData.subsystems[0]?.id || 'software-perception');
-    const currentSubsystem = (siteData.subsystems && siteData.subsystems.find(s => s.id === selectedSubsystemId)) || siteData.subsystems?.[0] || {
-        id: 'software-perception',
-        name: 'Software & Perception',
-        badge: 'AI & AUTONOMY',
-        tagline: 'Perception, Path Planning & Control Systems',
-        fullDesc: '',
-        contactEmail: '',
-        teamMembers: []
-    };
+    const [selectedSubsystemId, setSelectedSubsystemId] = useState(
+        siteData.subsystems[0]?.id || 'software-perception'
+    );
+    const currentSubsystem = (siteData.subsystems &&
+        siteData.subsystems.find((s) => s.id === selectedSubsystemId)) ||
+        siteData.subsystems?.[0] || {
+            id: 'software-perception',
+            name: 'Software & Perception',
+            badge: 'AI & AUTONOMY',
+            tagline: 'Perception, Path Planning & Control Systems',
+            fullDesc: '',
+            contactEmail: '',
+            teamMembers: []
+        };
 
     // Forms state
-    const [newMember, setNewMember] = useState({ name: '', role: '', phone: '', initials: '', bio: '', badge: 'SPECIALIST', photo: '', photoFit: 'cover', photoPosition: '50% 50%', status: 'Active Member' });
-    const [newGallery, setNewGallery] = useState({ title: '', category: 'PIT LANE', year: '2026', src: '', desc: '', fit: 'cover', position: '50% 50%' });
-    const [newUpdateItem, setNewUpdateItem] = useState({ label: '', tag: 'PROVING GROUNDS', image: '', link: '#', fit: 'cover', position: '50% 50%' });
-    const [newAccount, setNewAccount] = useState({ username: '', password: '', name: '', phone: '', role: 'Team Member', accessLevel: 'Lead' });
+    const [newMember, setNewMember] = useState({
+        name: '',
+        role: '',
+        phone: '',
+        initials: '',
+        bio: '',
+        badge: 'SPECIALIST',
+        photo: '',
+        photoFit: 'cover',
+        photoPosition: '50% 50%',
+        status: 'Active Member'
+    });
+    const [newGallery, setNewGallery] = useState({
+        title: '',
+        category: 'PIT LANE',
+        year: '2026',
+        src: '',
+        desc: '',
+        fit: 'cover',
+        position: '50% 50%'
+    });
+    const [newUpdateItem, setNewUpdateItem] = useState({
+        label: '',
+        tag: 'PROVING GROUNDS',
+        image: '',
+        link: '#',
+        fit: 'cover',
+        position: '50% 50%'
+    });
+    const [newAccount, setNewAccount] = useState({
+        username: '',
+        password: '',
+        name: '',
+        phone: '',
+        role: 'Team Member',
+        accessLevel: 'Lead'
+    });
 
     // Alliance Leads, Sponsor Inquiries & Database Accounts State
     const [subscribers, setSubscribers] = useState([]);
@@ -141,7 +244,9 @@ export default function AdminDashboard({ onExit }) {
             fetchFromDatabase?.();
         } catch (err) {
             console.error('[Admin Auth] Network / Connection error:', err);
-            setLoginError(`Could not reach backend at ${targetUrl}. If the server is on Render free tier, it may be waking up from sleep (wait ~30-60s and try again) or verify VITE_API_URL in your hosting settings.`);
+            setLoginError(
+                `Could not reach backend at ${targetUrl}. If the server is on Render free tier, it may be waking up from sleep (wait ~30-60s and try again) or verify VITE_API_URL in your hosting settings.`
+            );
         } finally {
             setIsLoggingIn(false);
         }
@@ -188,8 +293,12 @@ export default function AdminDashboard({ onExit }) {
 
                 if (customName && customName.trim()) {
                     const extMatch = file.name.match(/\.[a-zA-Z0-9]+$/);
-                    const ext = extMatch ? extMatch[0] : (isPdf ? '.pdf' : '.jpg');
-                    const cleanName = customName.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '');
+                    const ext = extMatch ? extMatch[0] : isPdf ? '.pdf' : '.jpg';
+                    const cleanName = customName
+                        .trim()
+                        .toLowerCase()
+                        .replace(/[^a-z0-9_-]+/g, '_')
+                        .replace(/^_+|_+$/g, '');
                     if (cleanName) {
                         formData.append('fileName', `${cleanName}${ext}`);
                     }
@@ -197,7 +306,7 @@ export default function AdminDashboard({ onExit }) {
 
                 const res = await fetch(apiUrl('/api/upload'), {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${token}` },
                     body: formData
                 });
 
@@ -230,10 +339,14 @@ export default function AdminDashboard({ onExit }) {
 
     // Export complete data snapshot as JSON
     const handleDownloadBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(siteData, null, 2));
+        const dataStr =
+            'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(siteData, null, 2));
         const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `asterix_backup_${new Date().toISOString().slice(0, 10)}.json`);
+        downloadAnchor.setAttribute('href', dataStr);
+        downloadAnchor.setAttribute(
+            'download',
+            `asterix_backup_${new Date().toISOString().slice(0, 10)}.json`
+        );
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
@@ -250,6 +363,14 @@ export default function AdminDashboard({ onExit }) {
             try {
                 const parsed = JSON.parse(event.target.result);
                 if (parsed && typeof parsed === 'object') {
+                    if (
+                        !window.confirm(
+                            'Restore this backup? It replaces ALL current site content (hero, subsystems, team, workshop schedule, etc.) and cannot be undone.'
+                        )
+                    ) {
+                        e.target.value = '';
+                        return;
+                    }
                     loadFromBackup(parsed);
                     showStatus('Backup restored successfully! ✓');
                 } else {
@@ -270,7 +391,7 @@ export default function AdminDashboard({ onExit }) {
         if (!isSilent) setIsLoadingSubscribers(true);
         try {
             const res = await fetch(apiUrl('/api/subscribers'), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const list = await res.json();
@@ -291,10 +412,10 @@ export default function AdminDashboard({ onExit }) {
         try {
             const res = await fetch(apiUrl(`/api/subscribers/${id}`), {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                setSubscribers(prev => prev.filter(s => s.id !== id));
+                setSubscribers((prev) => prev.filter((s) => s.id !== id));
                 showStatus('Subscriber removed.');
             }
         } catch (err) {
@@ -305,8 +426,16 @@ export default function AdminDashboard({ onExit }) {
     // Export subscribers as CSV
     const handleExportSubscribersCSV = () => {
         if (!subscribers.length) return;
-        const header = ['Email', 'Phone', 'Joined Date'].join(',');
-        const rows = subscribers.map(s => `"${s.email}","${s.phone || ''}","${s.created_at || ''}"`);
+        // Subscriber emails are public input: quote every cell and defuse spreadsheet formulas.
+        const cell = (value) => {
+            let text = value == null ? '' : String(value);
+            if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+        const header = ['Email', 'Phone', 'Source', 'Joined Date', 'Unsubscribed'].join(',');
+        const rows = subscribers.map((s) =>
+            [s.email, s.phone, s.source || 'home', s.created_at, s.unsubscribed_at || ''].map(cell).join(',')
+        );
         const csvContent = 'data:text/csv;charset=utf-8,' + [header, ...rows].join('\n');
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement('a');
@@ -326,7 +455,7 @@ export default function AdminDashboard({ onExit }) {
         if (!isSilent) setIsLoadingInquiries(true);
         try {
             const res = await fetch(apiUrl('/api/sponsor-inquiries'), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const list = await res.json();
@@ -348,12 +477,14 @@ export default function AdminDashboard({ onExit }) {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({ status })
             });
             if (res.ok) {
-                setSponsorInquiries(prev => prev.map(item => item.id === id ? { ...item, status } : item));
+                setSponsorInquiries((prev) =>
+                    prev.map((item) => (item.id === id ? { ...item, status } : item))
+                );
                 showStatus(`Inquiry marked as ${status}`);
             }
         } catch (err) {
@@ -368,10 +499,10 @@ export default function AdminDashboard({ onExit }) {
         try {
             const res = await fetch(apiUrl(`/api/sponsor-inquiries/${id}`), {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
-                setSponsorInquiries(prev => prev.filter(i => i.id !== id));
+                setSponsorInquiries((prev) => prev.filter((i) => i.id !== id));
                 showStatus('Inquiry removed.');
             }
         } catch (err) {
@@ -386,7 +517,7 @@ export default function AdminDashboard({ onExit }) {
 
         try {
             const res = await fetch(apiUrl('/api/auth/accounts'), {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 const list = await res.json();
@@ -434,52 +565,52 @@ export default function AdminDashboard({ onExit }) {
     // If not authenticated, render Login Screen
     if (!currentUser) {
         return (
-            <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 selection:bg-sky-500 selection:text-white">
-                <div className="w-full max-w-md bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-8">
-                    <div className="text-center mb-6">
-                        <span className="text-[11px] font-mono font-black text-sky-600 tracking-wider uppercase block mb-1">
+            <div className="flex min-h-screen items-center justify-center bg-slate-100 p-4 selection:bg-sky-500 selection:text-white">
+                <div className="shadow-brutal-8 w-full max-w-md border-4 border-slate-900 bg-white p-8">
+                    <div className="mb-6 text-center">
+                        <span className="mb-1 block font-mono text-[11px] font-black tracking-wider text-sky-700 uppercase">
                             RESTRICTED ACCESS
                         </span>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase">
+                        <h1 className="text-2xl font-black text-slate-900 uppercase sm:text-3xl">
                             ASTERIX ADMIN PORTAL
                         </h1>
-                        <p className="text-xs font-bold text-slate-500 mt-1">
+                        <p className="mt-1 text-xs font-bold text-slate-500">
                             Sign in to manage website content, media & team accounts.
                         </p>
                     </div>
 
                     {loginError && (
-                        <div className="mb-4 p-3 bg-rose-50 border-2 border-rose-600 text-rose-700 text-xs font-bold font-mono">
+                        <div className="mb-4 border-2 border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-700">
                             {loginError}
                         </div>
                     )}
 
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                 Username
                             </label>
                             <input
                                 type="text"
                                 value={loginForm.username}
-                                onChange={e => setLoginForm({ ...loginForm, username: e.target.value })}
+                                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
                                 placeholder="e.g. admin"
                                 required
-                                className="w-full px-3 py-2 border-2 border-slate-900 bg-slate-50 text-slate-900 font-mono text-sm focus:bg-white focus:outline-none"
+                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900 focus:bg-white focus:outline-none"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                            <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                 Password
                             </label>
                             <input
                                 type="password"
                                 value={loginForm.password}
-                                onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                 placeholder="••••••••"
                                 required
-                                className="w-full px-3 py-2 border-2 border-slate-900 bg-slate-50 text-slate-900 font-mono text-sm focus:bg-white focus:outline-none"
+                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900 focus:bg-white focus:outline-none"
                             />
                         </div>
 
@@ -487,17 +618,17 @@ export default function AdminDashboard({ onExit }) {
                             <button
                                 type="submit"
                                 disabled={isLoggingIn}
-                                className="press w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                className="press shadow-brutal-3 hover:shadow-brutal-5 w-full cursor-pointer border-2 border-slate-900 bg-sky-500 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:translate-x-[-1px] hover:translate-y-[-1px] hover:bg-sky-400 disabled:opacity-50"
                             >
                                 {isLoggingIn ? 'Verifying Credentials...' : 'Login to Dashboard →'}
                             </button>
                         </div>
                     </form>
 
-                    <div className="mt-6 pt-4 border-t-2 border-slate-200 flex items-center justify-between text-[11px] font-mono font-bold text-slate-500">
+                    <div className="mt-6 flex items-center justify-between border-t-2 border-slate-200 pt-4 font-mono text-[11px] font-bold text-slate-500">
                         <button
                             onClick={onExit}
-                            className="press press-flat text-sky-600 hover:text-slate-900 underline cursor-pointer"
+                            className="press press-flat cursor-pointer text-sky-700 underline hover:text-slate-900"
                         >
                             ← Back to Website
                         </button>
@@ -507,76 +638,136 @@ export default function AdminDashboard({ onExit }) {
         );
     }
 
-    const isAdmin = currentUser && (
-        currentUser.accessLevel === 'Admin' ||
-        currentUser.accessLevel === 'SuperAdmin' ||
-        currentUser.role === 'Admin' ||
-        currentUser.role === 'SuperAdmin'
-    );
+    const isAdmin =
+        currentUser &&
+        (currentUser.accessLevel === 'Admin' ||
+            currentUser.accessLevel === 'SuperAdmin' ||
+            currentUser.role === 'Admin' ||
+            currentUser.role === 'SuperAdmin');
+    // Matches the server's requireSuperAdmin, which reads accessLevel only.
+    const isSuperAdmin = currentUser?.accessLevel === 'SuperAdmin';
 
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: 'overview' },
-        { id: 'hero', label: 'Hero & Branding', icon: 'edit' },
-        { id: 'story', label: 'Our Story', icon: 'book' },
-        { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
-        { id: 'sponsorship', label: 'Sponsorship Portal', icon: 'folder' },
-        { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
-        { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
-        { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
-        { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
-        { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
-        { id: 'updates', label: 'Team Updates', icon: 'megaphone' },
-        { id: 'subscribers', label: 'Alliance Leads', icon: 'inbox' },
-        { id: 'accounts', label: 'Team Accounts', icon: 'users' },
-        { id: 'settings', label: 'Settings & Backup', icon: 'settings' },
+        {
+            id: 'website-content-group',
+            label: 'WEBSITE CONTENT CMS',
+            isGroup: true,
+            icon: 'edit',
+            children: [
+                { id: 'overview', label: 'Overview', icon: 'overview' },
+                { id: 'hero', label: 'Hero & Branding', icon: 'edit' },
+                { id: 'story', label: 'Our Story', icon: 'book' },
+                { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
+                { id: 'sponsorship', label: 'Sponsorship Portal', icon: 'folder' },
+                { id: 'gallery', label: 'Media Gallery', icon: 'camera' },
+                { id: 'updates', label: 'Team Updates', icon: 'megaphone' }
+            ]
+        },
+        {
+            id: 'workshop-group',
+            label: 'WORKSHOP MANAGEMENT',
+            isGroup: true,
+            icon: 'calendar',
+            children: [
+                { id: 'workshop-schedule', label: 'Workshop Schedule', icon: 'calendar' },
+                { id: 'workshop-attendee-details', label: 'Workshop Attendee Details 👤', icon: 'users' },
+                { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
+                { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+                { id: 'barcode-attendance', label: 'Barcode Attendance Scanner ⚡', icon: 'camera' },
+                { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
+                { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
+                { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
+                ...(isSuperAdmin
+                    ? [{ id: 'participant-passwords', label: 'Participant Passwords & Logins 🔐', icon: 'users' }]
+                    : [])
+            ]
+        },
+        {
+            id: 'community-group',
+            label: 'COMMUNITY',
+            isGroup: true,
+            icon: 'megaphone',
+            children: [
+                { id: 'community-blog', label: 'Horizon Blog Posts', icon: 'book' },
+                { id: 'blog-comments', label: 'Blog Comments', icon: 'edit' },
+                { id: 'subscribers', label: 'Newsletter Subscribers', icon: 'inbox' },
+                { id: 'mail-cluster', label: 'Mail Cluster', icon: 'users' }
+            ]
+        },
+        {
+            id: 'dev-group',
+            label: 'For the DEV 🛠️',
+            isGroup: true,
+            icon: 'settings',
+            children: [
+                { id: 'accounts', label: 'Team Accounts', icon: 'users' },
+                { id: 'settings', label: 'Settings & Backup', icon: 'settings' }
+            ]
+        }
     ];
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col selection:bg-sky-500 selection:text-white select-text">
-
+        <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 select-text selection:bg-sky-500 selection:text-white">
             {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-40 bg-white border-b-4 border-slate-900 px-4 sm:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+            <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b-4 border-slate-900 bg-white px-4 py-3 sm:px-8">
+                <div className="flex min-w-0 items-center gap-3">
                     <button
                         onClick={onExit}
-                        className="press press-flat flex items-center group cursor-pointer text-left focus:outline-none flex-shrink-0"
+                        className="press press-flat group flex flex-shrink-0 cursor-pointer items-center text-left focus:outline-none"
                         title="Return to Live Website Homepage"
                     >
                         <img
+                            loading="lazy"
+                            decoding="async"
                             src={teamLogo}
                             alt="Team Asterix"
-                            className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                            className="h-6 w-auto object-contain transition-transform group-hover:scale-105 sm:h-8"
                         />
                     </button>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-base sm:text-lg font-black uppercase text-slate-900 leading-none">
+                    <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <h1 className="text-base leading-none font-black break-words text-slate-900 uppercase sm:text-lg">
                                 ASTERIX MANAGEMENT CONSOLE
                             </h1>
-                            <span className={`px-2 py-0.5 text-[9px] font-mono font-black border border-slate-900 uppercase ${syncState === 'synced' ? 'bg-emerald-300 text-slate-900' :
-                                syncState === 'saving' ? 'bg-sky-300 text-slate-900 animate-pulse' :
-                                    syncState === 'error' ? 'bg-amber-300 text-slate-900' :
-                                        isServerConnected ? 'bg-emerald-300 text-slate-900' : 'bg-slate-200 text-slate-700'
-                                }`} title={syncError || 'Data synced with cloud database'}>
-                                {syncState === 'saving' ? '⟳ Saving to Cloud...' :
-                                    syncState === 'synced' ? '● Cloud Synced' :
-                                        syncState === 'error' ? '⚠️ Local (Cloud Quota Exceeded)' :
-                                            isServerConnected ? '● Online' : '○ Local Cache'}
+                            <span
+                                className={`border border-slate-900 px-2 py-0.5 font-mono text-[9px] font-black uppercase ${
+                                    syncState === 'synced'
+                                        ? 'bg-emerald-300 text-slate-900'
+                                        : syncState === 'saving'
+                                          ? 'animate-pulse bg-sky-300 text-slate-900'
+                                          : syncState === 'error'
+                                            ? 'bg-amber-300 text-slate-900'
+                                            : isServerConnected
+                                              ? 'bg-emerald-300 text-slate-900'
+                                              : 'bg-slate-200 text-slate-700'
+                                }`}
+                                title={syncError || 'Data synced with cloud database'}
+                            >
+                                {syncState === 'saving'
+                                    ? '⟳ Saving to Cloud...'
+                                    : syncState === 'synced'
+                                      ? '● Cloud Synced'
+                                      : syncState === 'error'
+                                        ? '⚠️ Local (Cloud Quota Exceeded)'
+                                        : isServerConnected
+                                          ? '● Online'
+                                          : '○ Local Cache'}
                             </span>
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-400 font-mono text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="flex items-center gap-1.5 border border-emerald-400 bg-emerald-50 px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider text-emerald-800 uppercase">
+                                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
                                 LIVE REFRESH ACTIVE
                             </span>
                         </div>
-                        <span className="text-[10px] font-mono font-bold text-slate-500">
-                            Logged in as: <strong className="text-slate-900">{currentUser.name}</strong> ({currentUser.accessLevel})
+                        <span className="font-mono text-[10px] font-bold text-slate-500">
+                            Logged in as: <strong className="text-slate-900">{currentUser.name}</strong> (
+                            {currentUser.accessLevel})
                         </span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {statusMessage && (
-                        <span className="hidden sm:inline-block px-3 py-1 bg-emerald-100 border border-emerald-600 text-emerald-800 text-xs font-mono font-bold">
+                        <span className="hidden border border-emerald-600 bg-emerald-100 px-3 py-1 font-mono text-xs font-bold text-emerald-800 sm:inline-block">
                             ✓ {statusMessage}
                         </span>
                     )}
@@ -589,10 +780,13 @@ export default function AdminDashboard({ onExit }) {
                             if (ok) {
                                 showStatus('All changes synced to Cloud Database! ✓');
                             } else {
-                                showStatus(syncError || 'Could not save to Cloud. Edits are preserved safely in browser.');
+                                showStatus(
+                                    syncError ||
+                                        'Could not save to Cloud. Edits are preserved safely in browser.'
+                                );
                             }
                         }}
-                        className="press px-3.5 py-1.5 bg-emerald-400 hover:bg-emerald-300 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-emerald-400 px-3.5 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-emerald-300"
                         title="Push current modifications to Cloud Database"
                     >
                         ☁ Sync Cloud
@@ -600,14 +794,14 @@ export default function AdminDashboard({ onExit }) {
 
                     <button
                         onClick={onExit}
-                        className="press px-3.5 py-1.5 bg-amber-300 hover:bg-amber-400 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-amber-300 px-3.5 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
                     >
                         View Live Site ↗
                     </button>
 
                     <button
                         onClick={handleLogout}
-                        className="press px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-900 font-mono font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-slate-100 px-3.5 py-1.5 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-200"
                     >
                         Log Out
                     </button>
@@ -615,31 +809,143 @@ export default function AdminDashboard({ onExit }) {
             </header>
 
             {/* Main Workspace Layout */}
-            <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-
+            <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-4">
                 {/* Sidebar Navigation */}
-                <aside className="md:col-span-1 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-4 h-fit flex flex-col gap-1.5">
-                    <span className="text-[10px] font-mono font-black text-sky-600 uppercase tracking-widest block mb-2 px-2">
+                <aside className="shadow-brutal-6 flex h-fit flex-col gap-1.5 border-4 border-slate-900 bg-white p-4 md:col-span-1">
+                    <span className="mb-2 block px-2 font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                         // NAVIGATION
                     </span>
-                    {tabs.map(tab => {
+                    {tabs.map((tab) => {
+                        if (tab.isGroup) {
+                            const isAnyChildActive = tab.children.some((c) => c.id === activeTab);
+                            const isExpanded = openGroups[tab.id] !== false;
+
+                            const groupStyles = {
+                                'website-content-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-sky-500 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-sky-400/80 bg-sky-50/90 text-sky-950 font-bold hover:bg-sky-100 hover:border-sky-600',
+                                    badgeActive: 'border border-slate-900 bg-sky-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-sky-400 bg-sky-200 text-sky-950 font-bold',
+                                    borderLeft: 'border-l-2 border-sky-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-sky-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-sky-300 hover:bg-sky-50'
+                                },
+                                'workshop-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-amber-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-amber-400/80 bg-amber-50/90 text-amber-950 font-bold hover:bg-amber-100 hover:border-amber-600',
+                                    badgeActive: 'border border-slate-900 bg-amber-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-amber-400 bg-amber-200 text-amber-950 font-bold',
+                                    borderLeft: 'border-l-2 border-amber-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-amber-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-amber-300 hover:bg-amber-50'
+                                },
+                                'community-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-violet-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-violet-400/80 bg-violet-50/90 text-violet-950 font-bold hover:bg-violet-100 hover:border-violet-600',
+                                    badgeActive: 'border border-slate-900 bg-violet-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-violet-400 bg-violet-200 text-violet-950 font-bold',
+                                    borderLeft: 'border-l-2 border-violet-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-violet-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-violet-300 hover:bg-violet-50'
+                                },
+                                'dev-group': {
+                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-emerald-400 text-slate-950 font-black',
+                                    inactiveHeader: 'border-2 border-emerald-400/80 bg-emerald-50/90 text-emerald-950 font-bold hover:bg-emerald-100 hover:border-emerald-600',
+                                    badgeActive: 'border border-slate-900 bg-emerald-300 text-slate-950 font-bold',
+                                    badgeInactive: 'border border-emerald-400 bg-emerald-200 text-emerald-950 font-bold',
+                                    borderLeft: 'border-l-2 border-emerald-400 pl-2',
+                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-emerald-400 font-black text-slate-950',
+                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-emerald-300 hover:bg-emerald-50'
+                                }
+                            };
+                            const currentStyle = groupStyles[tab.id] || groupStyles['website-content-group'];
+
+                            return (
+                                <div key={tab.id} className="my-0.5 flex flex-col gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const next = !isExpanded;
+                                            setOpenGroups((prev) => ({ ...prev, [tab.id]: next }));
+                                            if (next && !isAnyChildActive) setActiveTab(tab.children[0].id);
+                                        }}
+                                        className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs uppercase transition-all ${
+                                            isAnyChildActive ? currentStyle.activeHeader : currentStyle.inactiveHeader
+                                        }`}
+                                        aria-expanded={isExpanded}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <Icon name={tab.icon} className="h-4 w-4" />
+                                            <span>{tab.label}</span>
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span
+                                                className={`px-1.5 py-0.5 font-mono text-[9px] ${
+                                                    isAnyChildActive ? currentStyle.badgeActive : currentStyle.badgeInactive
+                                                }`}
+                                            >
+                                                {tab.children.length}
+                                            </span>
+                                            <span className="text-[10px] leading-none font-black">
+                                                {isExpanded ? '▲' : '▼'}
+                                            </span>
+                                        </span>
+                                    </button>
+
+                                    {isExpanded && (
+                                        <div className={`my-1 ml-1 flex flex-col gap-1 ${currentStyle.borderLeft}`}>
+                                            {tab.children.map((child) => {
+                                                const isTabRestricted = child.adminOnly && !isAdmin;
+                                                const isActive = activeTab === child.id;
+                                                return (
+                                                    <button
+                                                        key={child.id}
+                                                        onClick={() => setActiveTab(child.id)}
+                                                        className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3 py-2 text-left font-mono text-[11px] uppercase transition-all ${
+                                                            isActive ? currentStyle.activeChild : currentStyle.inactiveChild
+                                                        }`}
+                                                        aria-current={isActive ? 'page' : undefined}
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <Icon name={child.icon} className="h-3.5 w-3.5" />
+                                                            <span>{child.label}</span>
+                                                        </span>
+                                                        {isTabRestricted ? (
+                                                            <span className="border border-amber-400 bg-amber-100 px-1 py-0.5 font-mono text-[8px] font-black text-amber-700">
+                                                                ADMIN
+                                                            </span>
+                                                        ) : (
+                                                            <span aria-hidden="true" className="text-xs">
+                                                                →
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         const isTabRestricted = tab.adminOnly && !isAdmin;
                         return (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`press press-flat w-full text-left px-3.5 py-2.5 border-2 font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-between gap-2 ${activeTab === tab.id
-                                    ? 'bg-sky-500 text-white border-slate-900 shadow-[2px_2px_0px_#0f172a] translate-x-1'
-                                    : 'bg-white hover:bg-sky-50 text-slate-800 border-transparent hover:border-slate-300'
-                                    }`}
+                                className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs font-black uppercase ${
+                                    activeTab === tab.id
+                                        ? 'shadow-brutal-2 translate-x-1 border-slate-900 bg-sky-500 text-slate-950'
+                                        : 'border-transparent bg-white text-slate-800 hover:border-slate-300 hover:bg-sky-50'
+                                }`}
                                 aria-current={activeTab === tab.id ? 'page' : undefined}
                             >
                                 <span className="flex items-center gap-2">
-                                    <Icon name={tab.icon} className="w-4 h-4" />
+                                    <Icon name={tab.icon} className="h-4 w-4" />
                                     <span>{tab.label}</span>
                                 </span>
                                 {isTabRestricted ? (
-                                    <span className="text-[8px] font-mono font-black text-amber-700 bg-amber-100 border border-amber-400 px-1 py-0.5">
+                                    <span className="border border-amber-400 bg-amber-100 px-1 py-0.5 font-mono text-[8px] font-black text-amber-700">
                                         ADMIN
                                     </span>
                                 ) : (
@@ -649,9 +955,64 @@ export default function AdminDashboard({ onExit }) {
                         );
                     })}
 
-                    <div className="mt-6 pt-4 border-t-2 border-slate-200">
-                        <div className="text-[10px] font-mono text-slate-500 space-y-1">
-                            <div>• {isServerConnected ? '✓ Database connected (MongoDB Atlas)' : '• Local browser cache'}</div>
+                    {/* Live Health & Real-time Connectors Status Monitor */}
+                    <div className="mt-6 border-t-2 border-slate-200 pt-4">
+                        <div className="shadow-brutal-2 border-2 border-slate-900 bg-slate-900 p-3 text-white font-mono text-xs">
+                            <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2.5">
+                                <span className="text-[10px] font-black tracking-widest text-sky-400 uppercase flex items-center gap-1.5">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    LIVE CONNECTORS
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={checkLiveConnectors}
+                                    disabled={liveHealth.isChecking}
+                                    className="text-[9px] font-bold uppercase text-slate-400 hover:text-white underline cursor-pointer disabled:opacity-50"
+                                    title="Ping API and Database now"
+                                >
+                                    {liveHealth.isChecking ? 'Pinging...' : 'Ping Now ⚡'}
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 text-[11px]">
+                                {/* 1. Frontend -> Backend API Connector */}
+                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.apiConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'}`}></span>
+                                        <div className="min-w-0 truncate">
+                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Frontend ↔ Backend API</span>
+                                            <span className="block text-[9px] text-slate-400 truncate">
+                                                {liveHealth.apiConnected ? `REST Engine (${liveHealth.apiLatencyMs}ms)` : 'API Offline'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.apiConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-rose-500 bg-rose-950 text-rose-300'}`}>
+                                        {liveHealth.apiConnected ? `${liveHealth.apiLatencyMs}ms` : 'OFFLINE'}
+                                    </span>
+                                </div>
+
+                                {/* 2. Backend -> Database Connector */}
+                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.dbConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-500'}`}></span>
+                                        <div className="min-w-0 truncate">
+                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Backend ↔ Database</span>
+                                            <span className="block text-[9px] text-slate-400 truncate">
+                                                {liveHealth.dbConnected ? liveHealth.dbProvider : 'DB Disconnected'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.dbConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-amber-500 bg-amber-950 text-amber-300'}`}>
+                                        {liveHealth.dbConnected ? 'CONNECTED' : 'OFFLINE'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 space-y-1 font-mono text-[10px] text-slate-500">
                             <div>• {siteData.subsystems.length} Subsystems active</div>
                             <div>• {siteData.gallery.length} Gallery items</div>
                             <div>• {subscribers.length} Alliance leads captured</div>
@@ -660,81 +1021,103 @@ export default function AdminDashboard({ onExit }) {
                 </aside>
 
                 {/* Content Workspace Area */}
-                <main className="md:col-span-3 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] p-6 sm:p-8">
-
+                <main className="shadow-brutal-6 border-4 border-slate-900 bg-white p-6 sm:p-8 md:col-span-3">
                     {/* TAB 1: OVERVIEW */}
                     {activeTab === 'overview' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Website Overview</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Website Overview
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                                     Last synchronized: {new Date(siteData.lastModified).toLocaleString()}
                                 </p>
                             </div>
 
                             {/* Key Stats Cards */}
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                <div className="p-4 bg-sky-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-sky-600 uppercase block">Subsystems</span>
-                                    <span className="text-3xl font-black text-slate-900">{siteData.subsystems.length}</span>
-                                </div>
-                                <div className="p-4 bg-amber-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-amber-600 uppercase block">Specialists</span>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                                <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-4">
+                                    <span className="block font-mono text-[10px] font-black text-sky-700 uppercase">
+                                        Subsystems
+                                    </span>
                                     <span className="text-3xl font-black text-slate-900">
-                                        {siteData.subsystems.reduce((sum, s) => sum + (s.teamMembers?.length || 0), 0)}
+                                        {siteData.subsystems.length}
                                     </span>
                                 </div>
-                                <div className="p-4 bg-emerald-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-emerald-600 uppercase block">Gallery</span>
-                                    <span className="text-3xl font-black text-slate-900">{siteData.gallery.length}</span>
+                                <div className="shadow-brutal-3 border-2 border-slate-900 bg-amber-50 p-4">
+                                    <span className="block font-mono text-[10px] font-black text-amber-600 uppercase">
+                                        Specialists
+                                    </span>
+                                    <span className="text-3xl font-black text-slate-900">
+                                        {siteData.subsystems.reduce(
+                                            (sum, s) => sum + (s.teamMembers?.length || 0),
+                                            0
+                                        )}
+                                    </span>
                                 </div>
-                                <div className="p-4 bg-rose-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-rose-600 uppercase block">Updates</span>
-                                    <span className="text-3xl font-black text-slate-900">{siteData.updates.length}</span>
+                                <div className="shadow-brutal-3 border-2 border-slate-900 bg-emerald-50 p-4">
+                                    <span className="block font-mono text-[10px] font-black text-emerald-600 uppercase">
+                                        Gallery
+                                    </span>
+                                    <span className="text-3xl font-black text-slate-900">
+                                        {siteData.gallery.length}
+                                    </span>
                                 </div>
-                                <div className="p-4 bg-indigo-50 border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                                    <span className="text-[10px] font-mono font-black text-indigo-600 uppercase block">Leads</span>
-                                    <span className="text-3xl font-black text-slate-900">{subscribers.length}</span>
+                                <div className="shadow-brutal-3 border-2 border-slate-900 bg-rose-50 p-4">
+                                    <span className="block font-mono text-[10px] font-black text-rose-600 uppercase">
+                                        Updates
+                                    </span>
+                                    <span className="text-3xl font-black text-slate-900">
+                                        {siteData.updates.length}
+                                    </span>
+                                </div>
+                                <div className="shadow-brutal-3 border-2 border-slate-900 bg-indigo-50 p-4">
+                                    <span className="block font-mono text-[10px] font-black text-indigo-600 uppercase">
+                                        Leads
+                                    </span>
+                                    <span className="text-3xl font-black text-slate-900">
+                                        {subscribers.length}
+                                    </span>
                                 </div>
                             </div>
 
                             {/* Quick Action Shortcuts */}
                             <div className="mt-8 space-y-3">
-                                <span className="text-xs font-mono font-black uppercase text-slate-900 block">
+                                <span className="block font-mono text-xs font-black text-slate-900 uppercase">
                                     Quick Shortcuts:
                                 </span>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <button
                                         onClick={() => setActiveTab('hero')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Edit Hero Headline & Badges</span>
                                         <span>→</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('subsystems')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Add / Edit Squad Members</span>
                                         <span>→</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('subscribers')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>View Alliance Newsletter Leads ({subscribers.length})</span>
                                         <span>→</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('gallery')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Add New Photo to DriftWall Gallery</span>
                                         <span>→</span>
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('sponsorship')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Manage Sponsorship Documents & Inquiries</span>
                                         <span>→</span>
@@ -742,7 +1125,7 @@ export default function AdminDashboard({ onExit }) {
 
                                     <button
                                         onClick={() => setActiveTab('workshop-schedule')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Manage Workshop Details, Timings & Venue</span>
                                         <span>→</span>
@@ -750,7 +1133,7 @@ export default function AdminDashboard({ onExit }) {
 
                                     <button
                                         onClick={() => setActiveTab('quiz-manager')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-emerald-50 hover:bg-emerald-100 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-emerald-50 p-3 text-left font-mono text-xs font-bold hover:bg-emerald-100"
                                     >
                                         <span>Manage MCQ Quizzes, Questions & Leaderboards</span>
                                         <span>→</span>
@@ -758,7 +1141,7 @@ export default function AdminDashboard({ onExit }) {
 
                                     <button
                                         onClick={() => setActiveTab('accounts')}
-                                        className="press press-flat p-3 border-2 border-slate-900 bg-slate-50 hover:bg-sky-50 text-left font-mono font-bold text-xs flex items-center justify-between cursor-pointer"
+                                        className="press press-flat flex cursor-pointer items-center justify-between border-2 border-slate-900 bg-slate-50 p-3 text-left font-mono text-xs font-bold hover:bg-sky-50"
                                     >
                                         <span>Manage Member Login Credentials</span>
                                         <span>→</span>
@@ -772,69 +1155,77 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'hero' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Hero Section & Branding</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Hero Section & Branding
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                                     Modify the landing title, tagline, ranking badges, and links.
                                 </p>
                             </div>
 
                             <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                             Top Title Line
                                         </label>
                                         <input
                                             type="text"
                                             value={siteData.hero.teamTitle}
-                                            onChange={e => updateHero({ teamTitle: e.target.value })}
-                                            className="w-full px-3 py-2 border-2 border-slate-900 bg-slate-50 font-bold text-sm"
+                                            onChange={(e) => updateHero({ teamTitle: e.target.value })}
+                                            className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 text-sm font-bold"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                             Main Brand Name
                                         </label>
                                         <input
                                             type="text"
                                             value={siteData.hero.teamName}
-                                            onChange={e => updateHero({ teamName: e.target.value })}
-                                            className="w-full px-3 py-2 border-2 border-slate-900 bg-slate-50 font-bold text-sm"
+                                            onChange={(e) => updateHero({ teamName: e.target.value })}
+                                            className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 text-sm font-bold"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         Hero Tagline / Subtitle
                                     </label>
                                     <input
                                         type="text"
                                         value={siteData.hero.tagline}
-                                        onChange={e => updateHero({ tagline: e.target.value })}
-                                        className="w-full px-3 py-2 border-2 border-slate-900 bg-slate-50 font-bold text-sm"
+                                        onChange={(e) => updateHero({ tagline: e.target.value })}
+                                        className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 text-sm font-bold"
                                     />
                                 </div>
 
-                                <div className="pt-4 border-t-2 border-slate-200">
-                                    <span className="block text-xs font-mono font-black uppercase text-slate-900 mb-2">
+                                <div className="border-t-2 border-slate-200 pt-4">
+                                    <span className="mb-2 block font-mono text-xs font-black text-slate-900 uppercase">
                                         Hero Ranking Badges:
                                     </span>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                         {siteData.hero.badges.map((badge, idx) => (
-                                            <div key={idx} className="p-3 border-2 border-slate-900 bg-slate-50">
-                                                <span className="text-[10px] font-mono text-slate-500 uppercase block mb-1">
+                                            <div
+                                                key={idx}
+                                                className="border-2 border-slate-900 bg-slate-50 p-3"
+                                            >
+                                                <span className="mb-1 block font-mono text-[10px] text-slate-500 uppercase">
                                                     Badge #{idx + 1}
                                                 </span>
                                                 <input
                                                     type="text"
                                                     value={badge.label}
-                                                    onChange={e => {
+                                                    onChange={(e) => {
                                                         const updated = [...siteData.hero.badges];
-                                                        updated[idx] = { ...updated[idx], label: e.target.value };
+                                                        updated[idx] = {
+                                                            ...updated[idx],
+                                                            label: e.target.value
+                                                        };
                                                         updateHero({ badges: updated });
                                                     }}
-                                                    className="w-full px-2 py-1 border border-slate-900 bg-white font-mono font-bold text-xs"
+                                                    className="w-full border border-slate-900 bg-white px-2 py-1 font-mono text-xs font-bold"
                                                 />
                                             </div>
                                         ))}
@@ -842,64 +1233,80 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
 
                                 {/* Contact Information */}
-                                <div className="pt-6 border-t-2 border-slate-200 space-y-3">
-                                    <h3 className="text-sm font-mono font-black uppercase text-slate-900">
+                                <div className="space-y-3 border-t-2 border-slate-200 pt-6">
+                                    <h3 className="font-mono text-sm font-black text-slate-900 uppercase">
                                         Official Contact & Social Channels
                                     </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">Email</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                Email
+                                            </label>
                                             <input
                                                 type="email"
                                                 value={siteData.contact.email}
-                                                onChange={e => updateContact({ email: e.target.value })}
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                onChange={(e) => updateContact({ email: e.target.value })}
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">Official Phone / Helpline</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                Official Phone / Helpline
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={siteData.contact.phone || ''}
-                                                onChange={e => updateContact({ phone: e.target.value })}
+                                                onChange={(e) => updateContact({ phone: e.target.value })}
                                                 placeholder="+91 86089 44644"
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">Campus Location</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                Campus Location
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={siteData.contact.address}
-                                                onChange={e => updateContact({ address: e.target.value })}
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                onChange={(e) => updateContact({ address: e.target.value })}
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">Instagram URL</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                Instagram URL
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={siteData.contact.instagramUrl}
-                                                onChange={e => updateContact({ instagramUrl: e.target.value })}
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                onChange={(e) =>
+                                                    updateContact({ instagramUrl: e.target.value })
+                                                }
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">LinkedIn URL</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                LinkedIn URL
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={siteData.contact.linkedinUrl}
-                                                onChange={e => updateContact({ linkedinUrl: e.target.value })}
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                onChange={(e) =>
+                                                    updateContact({ linkedinUrl: e.target.value })
+                                                }
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-mono font-bold text-slate-600 mb-1">GitHub URL</label>
+                                            <label className="mb-1 block font-mono text-[11px] font-bold text-slate-600">
+                                                GitHub URL
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={siteData.contact.githubUrl}
-                                                onChange={e => updateContact({ githubUrl: e.target.value })}
-                                                className="w-full px-3 py-1.5 border-2 border-slate-900 bg-slate-50 font-mono text-xs"
+                                                onChange={(e) => updateContact({ githubUrl: e.target.value })}
+                                                className="w-full border-2 border-slate-900 bg-slate-50 px-3 py-1.5 font-mono text-xs"
                                             />
                                         </div>
                                     </div>
@@ -912,24 +1319,30 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'story' && (
                         <div className="space-y-4">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Our Story Narrative</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Edit the origin essay displayed on the landing page. (Supports paragraphs).
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Our Story Narrative
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Edit the origin essay displayed on the landing page. (Supports
+                                    paragraphs).
                                 </p>
                             </div>
 
                             <textarea
                                 value={siteData.story}
-                                onChange={e => updateStory(e.target.value)}
+                                onChange={(e) => updateStory(e.target.value)}
                                 rows={18}
-                                className="w-full p-4 border-2 border-slate-900 bg-slate-50 font-mono text-xs leading-relaxed focus:bg-white focus:outline-none"
+                                className="w-full border-2 border-slate-900 bg-slate-50 p-4 font-mono text-xs leading-relaxed focus:bg-white focus:outline-none"
                             />
 
-                            <div className="flex items-center justify-between text-xs font-mono font-bold text-slate-500">
-                                <span>{siteData.story.length} Characters • ~{siteData.story.split(/\s+/).filter(Boolean).length} Words</span>
+                            <div className="flex items-center justify-between font-mono text-xs font-bold text-slate-500">
+                                <span>
+                                    {siteData.story.length} Characters • ~
+                                    {siteData.story.split(/\s+/).filter(Boolean).length} Words
+                                </span>
                                 <button
                                     onClick={() => showStatus('Story updated and saved!')}
-                                    className="press px-4 py-2 bg-sky-500 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                    className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-500 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase"
                                 >
                                     Save Story Changes
                                 </button>
@@ -941,23 +1354,27 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'subsystems' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Subsystem & Squad Roster</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Manage technical specs, subsystem descriptions, specialist tags and portraits.
-                                    Each member's downloadable badge is generated from these fields.
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Subsystem & Squad Roster
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Manage technical specs, subsystem descriptions, specialist tags and
+                                    portraits. Each member's downloadable badge is generated from these
+                                    fields.
                                 </p>
                             </div>
 
                             {/* Subsystem Selector Pills */}
                             <div className="flex flex-wrap gap-2">
-                                {siteData.subsystems.map(s => (
+                                {siteData.subsystems.map((s) => (
                                     <button
                                         key={s.id}
                                         onClick={() => setSelectedSubsystemId(s.id)}
-                                        className={`px-3 py-1.5 border-2 border-slate-900 font-mono font-black text-xs uppercase transition-all cursor-pointer ${selectedSubsystemId === s.id
-                                            ? 'bg-slate-900 text-white shadow-[2px_2px_0px_#0ea5e9]'
-                                            : 'bg-white hover:bg-slate-100 text-slate-800'
-                                            }`}
+                                        className={`cursor-pointer border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
+                                            selectedSubsystemId === s.id
+                                                ? 'shadow-brutal-2-bright bg-slate-900 text-white'
+                                                : 'bg-white text-slate-800 hover:bg-slate-100'
+                                        }`}
                                     >
                                         {s.name}
                                     </button>
@@ -965,53 +1382,63 @@ export default function AdminDashboard({ onExit }) {
                             </div>
 
                             {/* Active Subsystem Fields */}
-                            <div className="p-4 border-2 border-slate-900 bg-slate-50 space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-4 border-2 border-slate-900 bg-slate-50 p-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                             Subsystem Title
                                         </label>
                                         <input
                                             type="text"
                                             value={currentSubsystem.name}
-                                            onChange={e => updateSubsystem(currentSubsystem.id, { name: e.target.value })}
-                                            className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white font-bold text-sm"
+                                            onChange={(e) =>
+                                                updateSubsystem(currentSubsystem.id, { name: e.target.value })
+                                            }
+                                            className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 text-sm font-bold"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                        <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                             Category Badge
                                         </label>
                                         <input
                                             type="text"
                                             value={currentSubsystem.badge}
-                                            onChange={e => updateSubsystem(currentSubsystem.id, { badge: e.target.value })}
-                                            className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                            onChange={(e) =>
+                                                updateSubsystem(currentSubsystem.id, {
+                                                    badge: e.target.value
+                                                })
+                                            }
+                                            className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         Short Pitch / Tagline
                                     </label>
                                     <input
                                         type="text"
                                         value={currentSubsystem.tagline}
-                                        onChange={e => updateSubsystem(currentSubsystem.id, { tagline: e.target.value })}
-                                        className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white font-bold text-xs"
+                                        onChange={(e) =>
+                                            updateSubsystem(currentSubsystem.id, { tagline: e.target.value })
+                                        }
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         Technical Description
                                     </label>
                                     <textarea
                                         value={currentSubsystem.fullDesc}
-                                        onChange={e => updateSubsystem(currentSubsystem.id, { fullDesc: e.target.value })}
+                                        onChange={(e) =>
+                                            updateSubsystem(currentSubsystem.id, { fullDesc: e.target.value })
+                                        }
                                         rows={4}
-                                        className="w-full p-3 border-2 border-slate-900 bg-white font-mono text-xs leading-relaxed"
+                                        className="w-full border-2 border-slate-900 bg-white p-3 font-mono text-xs leading-relaxed"
                                     />
                                 </div>
 
@@ -1020,19 +1447,24 @@ export default function AdminDashboard({ onExit }) {
                                     that nobody reads; it now shows whatever is typed here, and
                                     shows nothing at all while this is blank. */}
                                 <div>
-                                    <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+                                    <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
                                         Mailing Address for {currentSubsystem.name} Enquiries
                                     </label>
                                     <input
                                         type="email"
                                         value={currentSubsystem.contactEmail || ''}
-                                        onChange={e => updateSubsystem(currentSubsystem.id, { contactEmail: e.target.value })}
+                                        onChange={(e) =>
+                                            updateSubsystem(currentSubsystem.id, {
+                                                contactEmail: e.target.value
+                                            })
+                                        }
                                         placeholder="e.g. software.asterix@psgitech.ac.in — leave blank to hide the contact line entirely"
-                                        className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs"
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
-                                    <p className="text-[10px] font-mono font-bold text-slate-500 mt-1">
-                                        Shown on the public {currentSubsystem.name} page as a mail link for this
-                                        subsystem&apos;s engineers. Blank means no contact line is rendered.
+                                    <p className="mt-1 font-mono text-[10px] font-bold text-slate-500">
+                                        Shown on the public {currentSubsystem.name} page as a mail link for
+                                        this subsystem&apos;s engineers. Blank means no contact line is
+                                        rendered.
                                     </p>
                                 </div>
                             </div>
@@ -1040,51 +1472,82 @@ export default function AdminDashboard({ onExit }) {
                             {/* Suggestions only. The tag stays free text so a new
                                 discipline does not need a code change to be named. */}
                             <datalist id="asterix-specialist-tags">
-                                {[...new Set([
-                                    'SUBSYSTEM LEAD', 'SPECIALIST', 'PERCEPTION', 'CONTROLS', 'EMBEDDED',
-                                    'POWERTRAIN', 'CHASSIS', 'SUSPENSION', 'MANUFACTURING', 'ALUMNI LEAD',
-                                    ...siteData.subsystems.flatMap(s => (s.teamMembers || []).map(m => m.badge).filter(Boolean))
-                                ])].map(tag => <option key={tag} value={tag} />)}
+                                {[
+                                    ...new Set([
+                                        'SUBSYSTEM LEAD',
+                                        'SPECIALIST',
+                                        'PERCEPTION',
+                                        'CONTROLS',
+                                        'EMBEDDED',
+                                        'POWERTRAIN',
+                                        'CHASSIS',
+                                        'SUSPENSION',
+                                        'MANUFACTURING',
+                                        'ALUMNI LEAD',
+                                        ...siteData.subsystems.flatMap((s) =>
+                                            (s.teamMembers || []).map((m) => m.badge).filter(Boolean)
+                                        )
+                                    ])
+                                ].map((tag) => (
+                                    <option key={tag} value={tag} />
+                                ))}
                             </datalist>
 
                             {/* Team Members List in this Subsystem */}
-                            <div className="space-y-4 pt-4 border-t-2 border-slate-200">
+                            <div className="space-y-4 border-t-2 border-slate-200 pt-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-mono font-black uppercase text-slate-900">
-                                        Specialists in {currentSubsystem.name} ({currentSubsystem.teamMembers?.length || 0})
+                                    <h3 className="font-mono text-sm font-black text-slate-900 uppercase">
+                                        Specialists in {currentSubsystem.name} (
+                                        {currentSubsystem.teamMembers?.length || 0})
                                     </h3>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     {(currentSubsystem.teamMembers || []).map((m, idx) => (
-                                        <div key={idx} className="p-3.5 bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] relative flex flex-col justify-between">
-                                            <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200">
-                                                <span className="font-mono text-[10px] font-black text-sky-600 uppercase">
+                                        <div
+                                            key={idx}
+                                            className="shadow-brutal-3 relative flex flex-col justify-between border-2 border-slate-900 bg-white p-3.5"
+                                        >
+                                            <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                                                <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
                                                     # Pos {idx + 1} of {currentSubsystem.teamMembers.length}
                                                 </span>
                                                 <div className="flex items-center gap-1">
                                                     <button
                                                         type="button"
                                                         disabled={idx === 0}
-                                                        onClick={() => moveTeamMember(currentSubsystem.id, idx, idx - 1)}
-                                                        className="press px-2 py-0.5 bg-slate-100 hover:bg-sky-100 disabled:opacity-30 border border-slate-900 font-mono text-[10px] font-black cursor-pointer uppercase"
+                                                        onClick={() =>
+                                                            moveTeamMember(currentSubsystem.id, idx, idx - 1)
+                                                        }
+                                                        className="press cursor-pointer border border-slate-900 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-black uppercase hover:bg-sky-100 disabled:opacity-30"
                                                         title="Move Up in UI"
                                                     >
                                                         ▲ Up
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        disabled={idx === currentSubsystem.teamMembers.length - 1}
-                                                        onClick={() => moveTeamMember(currentSubsystem.id, idx, idx + 1)}
-                                                        className="press px-2 py-0.5 bg-slate-100 hover:bg-sky-100 disabled:opacity-30 border border-slate-900 font-mono text-[10px] font-black cursor-pointer uppercase"
+                                                        disabled={
+                                                            idx === currentSubsystem.teamMembers.length - 1
+                                                        }
+                                                        onClick={() =>
+                                                            moveTeamMember(currentSubsystem.id, idx, idx + 1)
+                                                        }
+                                                        className="press cursor-pointer border border-slate-900 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-black uppercase hover:bg-sky-100 disabled:opacity-30"
                                                         title="Move Down in UI"
                                                     >
                                                         ▼ Down
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => deleteTeamMember(currentSubsystem.id, idx)}
-                                                        className="press px-2 py-0.5 bg-rose-50 hover:bg-rose-100 border border-slate-900 text-rose-600 font-mono text-[10px] font-black cursor-pointer uppercase"
+                                                        onClick={() => {
+                                                            if (
+                                                                window.confirm(
+                                                                    `Remove ${m.name || 'this member'} from ${currentSubsystem.name || 'this subsystem'}?`
+                                                                )
+                                                            )
+                                                                deleteTeamMember(currentSubsystem.id, idx);
+                                                        }}
+                                                        className="press cursor-pointer border border-slate-900 bg-rose-50 px-2 py-0.5 font-mono text-[10px] font-black text-rose-600 uppercase hover:bg-rose-100"
                                                         title="Delete Member"
                                                     >
                                                         ✕
@@ -1101,74 +1564,122 @@ export default function AdminDashboard({ onExit }) {
                                                     position={m.photoPosition}
                                                     frames="member"
                                                     folder="/asterix/squad"
-                                                    onUpload={(e, cb, f) => handleImageUpload(e, cb, f, m.name || 'specialist')}
-                                                    onChange={(fields) => updateTeamMember(currentSubsystem.id, idx, {
-                                                        ...(fields.url !== undefined ? { photo: fields.url } : {}),
-                                                        ...(fields.fit !== undefined ? { photoFit: fields.fit } : {}),
-                                                        ...(fields.position !== undefined ? { photoPosition: fields.position } : {})
-                                                    })}
+                                                    onUpload={(e, cb, f) =>
+                                                        handleImageUpload(e, cb, f, m.name || 'specialist')
+                                                    }
+                                                    onChange={(fields) =>
+                                                        updateTeamMember(currentSubsystem.id, idx, {
+                                                            ...(fields.url !== undefined
+                                                                ? { photo: fields.url }
+                                                                : {}),
+                                                            ...(fields.fit !== undefined
+                                                                ? { photoFit: fields.fit }
+                                                                : {}),
+                                                            ...(fields.position !== undefined
+                                                                ? { photoPosition: fields.position }
+                                                                : {})
+                                                        })
+                                                    }
                                                 />
 
                                                 <input
                                                     type="text"
                                                     value={m.name}
-                                                    onChange={e => updateTeamMember(currentSubsystem.id, idx, { name: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(currentSubsystem.id, idx, {
+                                                            name: e.target.value
+                                                        })
+                                                    }
                                                     placeholder="Member Name"
-                                                    className="w-full font-black text-sm border-b border-slate-300 pb-0.5 focus:border-slate-900 focus:outline-none"
+                                                    className="w-full border-b border-slate-300 pb-0.5 text-sm font-black focus:border-slate-900 focus:outline-none"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={m.role}
-                                                    onChange={e => updateTeamMember(currentSubsystem.id, idx, { role: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(currentSubsystem.id, idx, {
+                                                            role: e.target.value
+                                                        })
+                                                    }
                                                     placeholder="Role Title"
-                                                    className="w-full font-mono text-xs text-sky-600 font-bold border-b border-slate-200 pb-0.5 focus:border-slate-900 focus:outline-none"
+                                                    className="w-full border-b border-slate-200 pb-0.5 font-mono text-xs font-bold text-sky-700 focus:border-slate-900 focus:outline-none"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={m.phone || ''}
-                                                    onChange={e => updateTeamMember(currentSubsystem.id, idx, { phone: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(currentSubsystem.id, idx, {
+                                                            phone: e.target.value
+                                                        })
+                                                    }
                                                     placeholder="Phone / Mobile (e.g. +91 98765 43210)"
-                                                    className="w-full font-mono text-xs text-slate-700 font-bold border-b border-slate-200 pb-0.5 focus:border-slate-900 focus:outline-none"
+                                                    className="w-full border-b border-slate-200 pb-0.5 font-mono text-xs font-bold text-slate-700 focus:border-slate-900 focus:outline-none"
                                                 />
 
                                                 {/* The corner tag on the public member card. It was
                                                     settable when adding a specialist and then frozen
                                                     forever, so a promotion could not be reflected. */}
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-mono font-black uppercase text-slate-500 shrink-0">Tag:</span>
+                                                    <span className="shrink-0 font-mono text-[10px] font-black text-slate-500 uppercase">
+                                                        Tag:
+                                                    </span>
                                                     <input
                                                         type="text"
                                                         list="asterix-specialist-tags"
                                                         value={m.badge || ''}
-                                                        onChange={e => updateTeamMember(currentSubsystem.id, idx, { badge: e.target.value.toUpperCase() })}
+                                                        onChange={(e) =>
+                                                            updateTeamMember(currentSubsystem.id, idx, {
+                                                                badge: e.target.value.toUpperCase()
+                                                            })
+                                                        }
                                                         placeholder="SPECIALIST"
-                                                        className="flex-1 min-w-0 font-mono text-[11px] font-black uppercase border-2 border-slate-900 px-2 py-0.5 bg-sky-50 focus:outline-none"
+                                                        className="min-w-0 flex-1 border-2 border-slate-900 bg-sky-50 px-2 py-0.5 font-mono text-[11px] font-black uppercase focus:outline-none"
                                                     />
                                                 </div>
-                                                <div className="flex items-center justify-between gap-2 pt-1">
+                                                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                                                     <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] font-mono font-black uppercase text-slate-500">Status:</span>
+                                                        <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
+                                                            Status:
+                                                        </span>
                                                         <select
                                                             value={m.status || 'Active Member'}
-                                                            onChange={e => updateTeamMember(currentSubsystem.id, idx, { status: e.target.value })}
-                                                            className={`font-mono text-[10px] font-black border border-slate-900 px-2 py-0.5 cursor-pointer ${m.status === 'Alumni' ? 'bg-amber-100 text-amber-900' : 'bg-sky-100 text-sky-900'
-                                                                }`}
+                                                            onChange={(e) =>
+                                                                updateTeamMember(currentSubsystem.id, idx, {
+                                                                    status: e.target.value
+                                                                })
+                                                            }
+                                                            className={`cursor-pointer border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black ${
+                                                                m.status === 'Alumni'
+                                                                    ? 'bg-amber-100 text-amber-900'
+                                                                    : 'bg-sky-100 text-sky-900'
+                                                            }`}
                                                         >
-                                                            <option value="Active Member">Active Member</option>
+                                                            <option value="Active Member">
+                                                                Active Member
+                                                            </option>
                                                             <option value="Alumni">Alumni</option>
                                                         </select>
                                                     </div>
-                                                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border border-slate-900 ${m.status === 'Alumni' ? 'bg-amber-300 text-amber-950' : 'bg-sky-300 text-sky-950'
-                                                        }`}>
+                                                    <span
+                                                        className={`border border-slate-900 px-1.5 py-0.5 font-mono text-[9px] font-bold ${
+                                                            m.status === 'Alumni'
+                                                                ? 'bg-amber-300 text-amber-950'
+                                                                : 'bg-sky-300 text-sky-950'
+                                                        }`}
+                                                    >
                                                         {m.status === 'Alumni' ? '★ ALUMNI' : '● ACTIVE'}
                                                     </span>
                                                 </div>
                                                 <textarea
                                                     value={m.bio}
-                                                    onChange={e => updateTeamMember(currentSubsystem.id, idx, { bio: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateTeamMember(currentSubsystem.id, idx, {
+                                                            bio: e.target.value
+                                                        })
+                                                    }
                                                     placeholder="Bio / Responsibilities"
                                                     rows={2}
-                                                    className="w-full font-mono text-[11px] text-slate-600 border border-slate-200 p-1.5"
+                                                    className="w-full border border-slate-200 p-1.5 font-mono text-[11px] text-slate-600"
                                                 />
                                             </div>
                                         </div>
@@ -1176,43 +1687,53 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
 
                                 {/* Add New Member Form */}
-                                <div className="p-4 bg-sky-50 border-2 border-slate-900 space-y-3">
-                                    <span className="text-xs font-mono font-black uppercase text-slate-900 block">
+                                <div className="space-y-3 border-2 border-slate-900 bg-sky-50 p-4">
+                                    <span className="block font-mono text-xs font-black text-slate-900 uppercase">
                                         + Add New Specialist to {currentSubsystem.name}
                                     </span>
-                                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-5">
                                         <input
                                             type="text"
                                             value={newMember.name}
-                                            onChange={e => setNewMember({ ...newMember, name: e.target.value })}
+                                            onChange={(e) =>
+                                                setNewMember({ ...newMember, name: e.target.value })
+                                            }
                                             placeholder="Specialist Full Name"
-                                            className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold"
+                                            className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                         />
                                         <input
                                             type="text"
                                             value={newMember.role}
-                                            onChange={e => setNewMember({ ...newMember, role: e.target.value })}
+                                            onChange={(e) =>
+                                                setNewMember({ ...newMember, role: e.target.value })
+                                            }
                                             placeholder="Role / Title"
-                                            className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold"
+                                            className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                         />
                                         <input
                                             type="text"
                                             value={newMember.phone || ''}
-                                            onChange={e => setNewMember({ ...newMember, phone: e.target.value })}
+                                            onChange={(e) =>
+                                                setNewMember({ ...newMember, phone: e.target.value })
+                                            }
                                             placeholder="Phone Number"
-                                            className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                            className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                         />
                                         <input
                                             type="text"
                                             value={newMember.badge}
-                                            onChange={e => setNewMember({ ...newMember, badge: e.target.value })}
+                                            onChange={(e) =>
+                                                setNewMember({ ...newMember, badge: e.target.value })
+                                            }
                                             placeholder="Badge (e.g. SPECIALIST)"
-                                            className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                            className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                         />
                                         <select
                                             value={newMember.status || 'Active Member'}
-                                            onChange={e => setNewMember({ ...newMember, status: e.target.value })}
-                                            className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono font-bold cursor-pointer"
+                                            onChange={(e) =>
+                                                setNewMember({ ...newMember, status: e.target.value })
+                                            }
+                                            className="cursor-pointer border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs font-bold"
                                         >
                                             <option value="Active Member">Active Member</option>
                                             <option value="Alumni">Alumni</option>
@@ -1227,31 +1748,55 @@ export default function AdminDashboard({ onExit }) {
                                         position={newMember.photoPosition}
                                         frames="member"
                                         folder="/asterix/squad"
-                                        onUpload={(e, cb, f) => handleImageUpload(e, cb, f, newMember.name || 'specialist')}
-                                        onChange={(fields) => setNewMember(prev => ({
-                                            ...prev,
-                                            ...(fields.url !== undefined ? { photo: fields.url } : {}),
-                                            ...(fields.fit !== undefined ? { photoFit: fields.fit } : {}),
-                                            ...(fields.position !== undefined ? { photoPosition: fields.position } : {})
-                                        }))}
+                                        onUpload={(e, cb, f) =>
+                                            handleImageUpload(e, cb, f, newMember.name || 'specialist')
+                                        }
+                                        onChange={(fields) =>
+                                            setNewMember((prev) => ({
+                                                ...prev,
+                                                ...(fields.url !== undefined ? { photo: fields.url } : {}),
+                                                ...(fields.fit !== undefined ? { photoFit: fields.fit } : {}),
+                                                ...(fields.position !== undefined
+                                                    ? { photoPosition: fields.position }
+                                                    : {})
+                                            }))
+                                        }
                                     />
 
                                     <textarea
                                         value={newMember.bio}
-                                        onChange={e => setNewMember({ ...newMember, bio: e.target.value })}
+                                        onChange={(e) => setNewMember({ ...newMember, bio: e.target.value })}
                                         placeholder="Engineering focus & responsibilities..."
                                         rows={2}
-                                        className="w-full p-2 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="w-full border-2 border-slate-900 bg-white p-2 font-mono text-xs"
                                     />
                                     <button
                                         onClick={() => {
-                                            if (!newMember.name.trim()) return alert('Please enter specialist name');
-                                            const initials = newMember.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'TM';
+                                            if (!newMember.name.trim())
+                                                return alert('Please enter specialist name');
+                                            const initials =
+                                                newMember.name
+                                                    .split(' ')
+                                                    .map((n) => n[0])
+                                                    .join('')
+                                                    .slice(0, 2)
+                                                    .toUpperCase() || 'TM';
                                             addTeamMember(currentSubsystem.id, { ...newMember, initials });
-                                            setNewMember({ name: '', role: '', phone: '', initials: '', bio: '', badge: 'SPECIALIST', photo: '', photoFit: 'cover', photoPosition: '50% 50%', status: 'Active Member' });
+                                            setNewMember({
+                                                name: '',
+                                                role: '',
+                                                phone: '',
+                                                initials: '',
+                                                bio: '',
+                                                badge: 'SPECIALIST',
+                                                photo: '',
+                                                photoFit: 'cover',
+                                                photoPosition: '50% 50%',
+                                                status: 'Active Member'
+                                            });
                                             showStatus('New specialist added with photo & status!');
                                         }}
-                                        className="press press-flat px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer"
+                                        className="press press-flat cursor-pointer bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                                     >
                                         Add Specialist →
                                     </button>
@@ -1264,17 +1809,20 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'sponsorship' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Sponsorship Portal & Deck Files</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Configure downloadable pitch files, brochures, and partnership documents displayed on #sponsor.
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Sponsorship Portal & Deck Files
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Configure downloadable pitch files, brochures, and partnership documents
+                                    displayed on #sponsor.
                                 </p>
                             </div>
 
-                            <div className="p-6 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] space-y-6">
+                            <div className="shadow-brutal-6 space-y-6 border-4 border-slate-900 bg-white p-6">
                                 {/* 1. Brochure */}
-                                <div className="p-4 bg-slate-50 border-2 border-slate-900 space-y-2">
+                                <div className="space-y-2 border-2 border-slate-900 bg-slate-50 p-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-800">
+                                        <label className="block font-mono text-xs font-black text-slate-800 uppercase">
                                             1. Official Sponsorship Proposal Brochure (PDF)
                                         </label>
                                         {siteData.sponsorship?.brochureUrl && (
@@ -1282,34 +1830,50 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.brochureUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="font-mono text-[11px] font-black text-sky-700 underline hover:text-sky-800"
                                             >
                                                 Preview Document ↗
                                             </a>
                                         )}
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
                                         <input
                                             type="text"
                                             value={siteData.sponsorship?.brochureUrl || ''}
-                                            onChange={e => updateSponsorship({ brochureUrl: e.target.value })}
+                                            onChange={(e) =>
+                                                updateSponsorship({ brochureUrl: e.target.value })
+                                            }
                                             placeholder="Paste document URL, or upload below (blank uses default auto-generator)"
-                                            className="flex-1 px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none"
+                                            className="flex-1 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:outline-none"
                                         />
-                                        <label className="press px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-center shrink-0">
+                                        <label className="press flex shrink-0 cursor-pointer items-center justify-center bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800">
                                             <span>Upload PDF ↑</span>
                                             <input
                                                 type="file"
                                                 accept=".pdf,.png,.jpg,.jpeg,.webp"
-                                                onChange={e => handleImageUpload(e, url => updateSponsorship({ brochureUrl: url }), '/asterix/docs', 'sponsorship_brochure')}
+                                                onChange={(e) =>
+                                                    handleImageUpload(
+                                                        e,
+                                                        (url) => updateSponsorship({ brochureUrl: url }),
+                                                        '/asterix/docs',
+                                                        'sponsorship_brochure'
+                                                    )
+                                                }
                                                 className="hidden"
                                             />
                                         </label>
                                         {siteData.sponsorship?.brochureUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ brochureUrl: '' })}
-                                                className="press px-3 py-2 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-800 font-mono font-black text-xs uppercase cursor-pointer shrink-0"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the brochure link and fall back to the default document?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ brochureUrl: '' });
+                                                }}
+                                                className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default auto-generated document"
                                             >
                                                 Reset
@@ -1319,9 +1883,9 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
 
                                 {/* 2. Pitch Deck */}
-                                <div className="p-4 bg-slate-50 border-2 border-slate-900 space-y-2">
+                                <div className="space-y-2 border-2 border-slate-900 bg-slate-50 p-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-800">
+                                        <label className="block font-mono text-xs font-black text-slate-800 uppercase">
                                             2. Vehicle Technical Architecture Pitch Deck (PDF / Presentation)
                                         </label>
                                         {siteData.sponsorship?.deckUrl && (
@@ -1329,34 +1893,48 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.deckUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="font-mono text-[11px] font-black text-sky-700 underline hover:text-sky-800"
                                             >
                                                 Preview Document ↗
                                             </a>
                                         )}
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
                                         <input
                                             type="text"
                                             value={siteData.sponsorship?.deckUrl || ''}
-                                            onChange={e => updateSponsorship({ deckUrl: e.target.value })}
+                                            onChange={(e) => updateSponsorship({ deckUrl: e.target.value })}
                                             placeholder="Paste deck URL, or upload file below (blank uses default tech brief)"
-                                            className="flex-1 px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none"
+                                            className="flex-1 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:outline-none"
                                         />
-                                        <label className="press px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-center shrink-0">
+                                        <label className="press flex shrink-0 cursor-pointer items-center justify-center bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800">
                                             <span>Upload Deck ↑</span>
                                             <input
                                                 type="file"
                                                 accept=".pdf,.png,.jpg,.jpeg,.webp"
-                                                onChange={e => handleImageUpload(e, url => updateSponsorship({ deckUrl: url }), '/asterix/docs', 'technical_pitch_deck')}
+                                                onChange={(e) =>
+                                                    handleImageUpload(
+                                                        e,
+                                                        (url) => updateSponsorship({ deckUrl: url }),
+                                                        '/asterix/docs',
+                                                        'technical_pitch_deck'
+                                                    )
+                                                }
                                                 className="hidden"
                                             />
                                         </label>
                                         {siteData.sponsorship?.deckUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ deckUrl: '' })}
-                                                className="press px-3 py-2 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-800 font-mono font-black text-xs uppercase cursor-pointer shrink-0"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the pitch deck link and fall back to the default tech brief?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ deckUrl: '' });
+                                                }}
+                                                className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default tech brief"
                                             >
                                                 Reset
@@ -1366,9 +1944,9 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
 
                                 {/* 3. Endorsement Letter */}
-                                <div className="p-4 bg-slate-50 border-2 border-slate-900 space-y-2">
+                                <div className="space-y-2 border-2 border-slate-900 bg-slate-50 p-4">
                                     <div className="flex items-center justify-between">
-                                        <label className="block text-xs font-mono font-black uppercase text-slate-800">
+                                        <label className="block font-mono text-xs font-black text-slate-800 uppercase">
                                             3. Formal Institution Endorsement & Credential Letter (PDF)
                                         </label>
                                         {siteData.sponsorship?.letterUrl && (
@@ -1376,34 +1954,48 @@ export default function AdminDashboard({ onExit }) {
                                                 href={siteData.sponsorship.letterUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="text-[11px] font-mono font-black text-sky-600 hover:text-sky-800 underline"
+                                                className="font-mono text-[11px] font-black text-sky-700 underline hover:text-sky-800"
                                             >
                                                 Preview Document ↗
                                             </a>
                                         )}
                                     </div>
-                                    <div className="flex flex-col sm:flex-row gap-2">
+                                    <div className="flex flex-col gap-2 sm:flex-row">
                                         <input
                                             type="text"
                                             value={siteData.sponsorship?.letterUrl || ''}
-                                            onChange={e => updateSponsorship({ letterUrl: e.target.value })}
+                                            onChange={(e) => updateSponsorship({ letterUrl: e.target.value })}
                                             placeholder="Paste endorsement letter URL, or upload file below"
-                                            className="flex-1 px-3 py-2 border-2 border-slate-900 bg-white font-mono text-xs focus:outline-none"
+                                            className="flex-1 border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs focus:outline-none"
                                         />
-                                        <label className="press px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer flex items-center justify-center shrink-0">
+                                        <label className="press flex shrink-0 cursor-pointer items-center justify-center bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800">
                                             <span>Upload Letter ↑</span>
                                             <input
                                                 type="file"
                                                 accept=".pdf,.png,.jpg,.jpeg,.webp"
-                                                onChange={e => handleImageUpload(e, url => updateSponsorship({ letterUrl: url }), '/asterix/docs', 'institution_endorsement_letter')}
+                                                onChange={(e) =>
+                                                    handleImageUpload(
+                                                        e,
+                                                        (url) => updateSponsorship({ letterUrl: url }),
+                                                        '/asterix/docs',
+                                                        'institution_endorsement_letter'
+                                                    )
+                                                }
                                                 className="hidden"
                                             />
                                         </label>
                                         {siteData.sponsorship?.letterUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => updateSponsorship({ letterUrl: '' })}
-                                                className="press px-3 py-2 bg-rose-100 hover:bg-rose-200 border-2 border-slate-900 text-rose-800 font-mono font-black text-xs uppercase cursor-pointer shrink-0"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Clear the endorsement letter link and fall back to the default document?'
+                                                        )
+                                                    )
+                                                        updateSponsorship({ letterUrl: '' });
+                                                }}
+                                                className="press shrink-0 cursor-pointer border-2 border-slate-900 bg-rose-100 px-3 py-2 font-mono text-xs font-black text-rose-800 uppercase hover:bg-rose-200"
                                                 title="Reset to default credential document"
                                             >
                                                 Reset
@@ -1414,39 +2006,40 @@ export default function AdminDashboard({ onExit }) {
                             </div>
 
                             {/* Incoming Corporate Sponsor Inquiries */}
-                            <div className="border-t-4 border-slate-900 pt-6 space-y-4">
+                            <div className="space-y-4 border-t-4 border-slate-900 pt-6">
                                 <div className="flex flex-wrap items-center justify-between gap-4">
                                     <div>
-                                        <h3 className="text-lg font-black uppercase text-slate-900 flex items-center gap-2">
+                                        <h3 className="flex items-center gap-2 text-lg font-black text-slate-900 uppercase">
                                             <span>Corporate Sponsor Inquiries</span>
-                                            <span className="text-xs px-2 py-0.5 bg-sky-500 text-white font-mono font-bold">
+                                            <span className="bg-sky-500 px-2 py-0.5 font-mono text-xs font-bold text-slate-950">
                                                 {sponsorInquiries.length}
                                             </span>
                                         </h3>
-                                        <p className="text-xs font-bold text-slate-500 font-mono">
+                                        <p className="font-mono text-xs font-bold text-slate-500">
                                             Inquiries submitted via the partnership proposal form on #sponsor.
                                         </p>
                                     </div>
                                     <button
                                         onClick={fetchInquiries}
-                                        className="press press-flat px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-xs font-mono font-bold cursor-pointer"
+                                        className="press press-flat cursor-pointer border-2 border-slate-900 bg-slate-100 px-3 py-1.5 font-mono text-xs font-bold hover:bg-slate-200"
                                     >
                                         ↻ Refresh Inquiries
                                     </button>
                                 </div>
 
                                 {isLoadingInquiries ? (
-                                    <div className="p-8 text-center font-mono text-sm text-slate-500 bg-white border-2 border-slate-900">
+                                    <div className="border-2 border-slate-900 bg-white p-8 text-center font-mono text-sm text-slate-500">
                                         Loading inquiries from MongoDB Atlas...
                                     </div>
                                 ) : sponsorInquiries.length === 0 ? (
-                                    <div className="p-8 text-center border-2 border-dashed border-slate-300 font-mono text-xs text-slate-500 bg-white">
-                                        No sponsor inquiries recorded yet. Submissions from the Sponsorship form will appear here.
+                                    <div className="border-2 border-dashed border-slate-300 bg-white p-8 text-center font-mono text-xs text-slate-500">
+                                        No sponsor inquiries recorded yet. Submissions from the Sponsorship
+                                        form will appear here.
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto border-2 border-slate-900 bg-white shadow-[4px_4px_0px_#0f172a]">
+                                    <div className="shadow-brutal-4 overflow-x-auto border-2 border-slate-900 bg-white">
                                         <table className="w-full text-left font-mono text-xs">
-                                            <thead className="bg-slate-900 text-white font-black uppercase text-[10px]">
+                                            <thead className="bg-slate-900 text-[10px] font-black text-white uppercase">
                                                 <tr>
                                                     <th className="p-2.5">Company & Contact</th>
                                                     <th className="p-2.5">Email / Phone</th>
@@ -1457,29 +2050,43 @@ export default function AdminDashboard({ onExit }) {
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-200">
-                                                {sponsorInquiries.map(inq => (
+                                                {sponsorInquiries.map((inq) => (
                                                     <tr key={inq.id} className="hover:bg-slate-50">
                                                         <td className="p-2.5">
-                                                            <div className="font-bold text-slate-900">{inq.companyName}</div>
-                                                            <div className="text-[11px] text-slate-500">{inq.contactPerson || '—'}</div>
+                                                            <div className="font-bold text-slate-900">
+                                                                {inq.companyName}
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-500">
+                                                                {inq.contactPerson || '—'}
+                                                            </div>
                                                         </td>
                                                         <td className="p-2.5">
                                                             <div className="text-slate-800">{inq.email}</div>
-                                                            <div className="text-[11px] text-slate-500">{inq.phone || '—'}</div>
+                                                            <div className="text-[11px] text-slate-500">
+                                                                {inq.phone || '—'}
+                                                            </div>
                                                         </td>
                                                         <td className="p-2.5">
-                                                            <span className="px-2 py-0.5 border border-slate-900 text-[10px] font-bold bg-amber-200 text-slate-900">
+                                                            <span className="border border-slate-900 bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-slate-900">
                                                                 {inq.tier}
                                                             </span>
                                                         </td>
-                                                        <td className="p-2.5 max-w-xs text-slate-600 truncate" title={inq.message}>
+                                                        <td
+                                                            className="max-w-xs truncate p-2.5 text-slate-600"
+                                                            title={inq.message}
+                                                        >
                                                             {inq.message || '—'}
                                                         </td>
                                                         <td className="p-2.5">
                                                             <select
                                                                 value={inq.status}
-                                                                onChange={e => handleUpdateInquiryStatus(inq.id, e.target.value)}
-                                                                className="px-1.5 py-0.5 border border-slate-900 text-[10px] font-bold bg-white focus:outline-none"
+                                                                onChange={(e) =>
+                                                                    handleUpdateInquiryStatus(
+                                                                        inq.id,
+                                                                        e.target.value
+                                                                    )
+                                                                }
+                                                                className="border border-slate-900 bg-white px-1.5 py-0.5 text-[10px] font-bold focus:outline-none"
                                                             >
                                                                 <option value="NEW">NEW</option>
                                                                 <option value="REVIEWED">REVIEWED</option>
@@ -1489,8 +2096,15 @@ export default function AdminDashboard({ onExit }) {
                                                         </td>
                                                         <td className="p-2.5 text-right">
                                                             <button
-                                                                onClick={() => handleDeleteInquiry(inq.id)}
-                                                                className="press press-flat text-rose-600 hover:text-rose-900 font-black cursor-pointer text-xs"
+                                                                onClick={() => {
+                                                                    if (
+                                                                        window.confirm(
+                                                                            `Delete the sponsor inquiry from ${inq.companyName || 'this company'}? This cannot be undone.`
+                                                                        )
+                                                                    )
+                                                                        handleDeleteInquiry(inq.id);
+                                                                }}
+                                                                className="press press-flat cursor-pointer text-xs font-black text-rose-600 hover:text-rose-900"
                                                             >
                                                                 Delete ✕
                                                             </button>
@@ -1505,10 +2119,6 @@ export default function AdminDashboard({ onExit }) {
                         </div>
                     )}
 
-
-
-
-
                     {activeTab === 'workshop-schedule' && (
                         <WorkshopScheduleAdmin
                             currentUser={currentUser}
@@ -1516,6 +2126,10 @@ export default function AdminDashboard({ onExit }) {
                             showStatus={showStatus}
                             onImageUpload={handleImageUpload}
                         />
+                    )}
+
+                    {activeTab === 'workshop-attendee-details' && (
+                        <WorkshopAttendeeDetailsAdmin showStatus={showStatus} />
                     )}
 
                     {activeTab === 'workshop-registrations' && (
@@ -1531,46 +2145,80 @@ export default function AdminDashboard({ onExit }) {
                         />
                     )}
 
-                    {activeTab === 'quiz-manager' && (
-                        <QuizAdmin showStatus={showStatus} />
+                    {activeTab === 'barcode-attendance' && (
+                        <BarcodeAttendanceAdmin showStatus={showStatus} />
                     )}
+
+                    {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}
+
+                    {activeTab === 'workshop-project-submissions' && (
+                        <WorkshopProjectSubmissionsAdmin showStatus={showStatus} />
+                    )}
+
+                    {activeTab === 'quiz-manager' && <QuizAdmin showStatus={showStatus} />}
+
+                    {activeTab === 'participant-passwords' && isSuperAdmin && (
+                        <ParticipantPasswordsAdmin showStatus={showStatus} />
+                    )}
+
+                    {activeTab === 'community-blog' && (
+                        <CommunityBlogAdmin
+                            showStatus={showStatus}
+                            onUploadImage={handleImageUpload}
+                            defaultAuthor={currentUser?.name}
+                            onOpenComments={() => setActiveTab('blog-comments')}
+                        />
+                    )}
+
+                    {activeTab === 'blog-comments' && <BlogCommentsAdmin showStatus={showStatus} />}
+
+                    {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
 
                     {/* TAB 5: GALLERY & MEDIA */}
                     {activeTab === 'gallery' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">DriftWall Media Gallery</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Add, update, or remove track and workshop photos in the 3D gallery archive.
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    DriftWall Media Gallery
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Add, update, or remove track and workshop photos in the 3D gallery
+                                    archive.
                                 </p>
                             </div>
 
                             {/* Add Photo Form */}
-                            <div className="p-4 bg-sky-50 border-2 border-slate-900 space-y-3">
-                                <span className="text-xs font-mono font-black uppercase text-slate-900 block">
+                            <div className="space-y-3 border-2 border-slate-900 bg-sky-50 p-4">
+                                <span className="block font-mono text-xs font-black text-slate-900 uppercase">
                                     + Add New Image to Gallery
                                 </span>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <input
                                         type="text"
                                         value={newGallery.title}
-                                        onChange={e => setNewGallery({ ...newGallery, title: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewGallery({ ...newGallery, title: e.target.value })
+                                        }
                                         placeholder="Photo Title"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                     />
                                     <input
                                         type="text"
                                         value={newGallery.category}
-                                        onChange={e => setNewGallery({ ...newGallery, category: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewGallery({ ...newGallery, category: e.target.value })
+                                        }
                                         placeholder="Tag (e.g. WORKSHOP • FAB)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                     <input
                                         type="text"
                                         value={newGallery.year}
-                                        onChange={e => setNewGallery({ ...newGallery, year: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewGallery({ ...newGallery, year: e.target.value })
+                                        }
                                         placeholder="Year (e.g. 2026)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                 </div>
 
@@ -1581,40 +2229,58 @@ export default function AdminDashboard({ onExit }) {
                                     position={newGallery.position}
                                     frames="gallery"
                                     folder="/asterix/gallery"
-                                    onUpload={(e, cb, f) => handleImageUpload(e, cb, f, newGallery.title || 'gallery_photo')}
-                                    onChange={(fields) => setNewGallery(prev => ({
-                                        ...prev,
-                                        ...(fields.url !== undefined ? { src: fields.url } : {}),
-                                        ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
-                                        ...(fields.position !== undefined ? { position: fields.position } : {})
-                                    }))}
+                                    onUpload={(e, cb, f) =>
+                                        handleImageUpload(e, cb, f, newGallery.title || 'gallery_photo')
+                                    }
+                                    onChange={(fields) =>
+                                        setNewGallery((prev) => ({
+                                            ...prev,
+                                            ...(fields.url !== undefined ? { src: fields.url } : {}),
+                                            ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
+                                            ...(fields.position !== undefined
+                                                ? { position: fields.position }
+                                                : {})
+                                        }))
+                                    }
                                 />
 
                                 <input
                                     type="text"
                                     value={newGallery.desc}
-                                    onChange={e => setNewGallery({ ...newGallery, desc: e.target.value })}
+                                    onChange={(e) => setNewGallery({ ...newGallery, desc: e.target.value })}
                                     placeholder="Photo description / technical context"
-                                    className="w-full px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                    className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                 />
 
                                 <button
                                     onClick={() => {
-                                        if (!newGallery.title || !newGallery.src) return alert('Please provide photo title and image URL/file');
+                                        if (!newGallery.title || !newGallery.src)
+                                            return alert('Please provide photo title and image URL/file');
                                         addGalleryItem({ ...newGallery, id: `gal-${Date.now()}` });
-                                        setNewGallery({ title: '', category: 'PIT LANE', year: '2026', src: '', desc: '', fit: 'cover', position: '50% 50%' });
+                                        setNewGallery({
+                                            title: '',
+                                            category: 'PIT LANE',
+                                            year: '2026',
+                                            src: '',
+                                            desc: '',
+                                            fit: 'cover',
+                                            position: '50% 50%'
+                                        });
                                         showStatus('New photo added to gallery!');
                                     }}
-                                    className="press press-flat px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer"
+                                    className="press press-flat cursor-pointer bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                                 >
                                     Publish Photo to Gallery →
                                 </button>
                             </div>
 
                             {/* Gallery List */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {siteData.gallery.map(item => (
-                                    <div key={item.id} className="bg-white border-2 border-slate-900 shadow-[3px_3px_0px_#0f172a] p-3 flex flex-col justify-between">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {siteData.gallery.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="shadow-brutal-3 flex flex-col justify-between border-2 border-slate-900 bg-white p-3"
+                                    >
                                         <div>
                                             <div className="mb-2">
                                                 <ImageField
@@ -1624,31 +2290,51 @@ export default function AdminDashboard({ onExit }) {
                                                     position={item.position}
                                                     frames="gallery"
                                                     folder="/asterix/gallery"
-                                                    onUpload={(e, cb, f) => handleImageUpload(e, cb, f, item.title || 'gallery_photo')}
-                                                    onChange={(fields) => updateGalleryItem(item.id, {
-                                                        ...(fields.url !== undefined ? { src: fields.url } : {}),
-                                                        ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
-                                                        ...(fields.position !== undefined ? { position: fields.position } : {})
-                                                    })}
+                                                    onUpload={(e, cb, f) =>
+                                                        handleImageUpload(
+                                                            e,
+                                                            cb,
+                                                            f,
+                                                            item.title || 'gallery_photo'
+                                                        )
+                                                    }
+                                                    onChange={(fields) =>
+                                                        updateGalleryItem(item.id, {
+                                                            ...(fields.url !== undefined
+                                                                ? { src: fields.url }
+                                                                : {}),
+                                                            ...(fields.fit !== undefined
+                                                                ? { fit: fields.fit }
+                                                                : {}),
+                                                            ...(fields.position !== undefined
+                                                                ? { position: fields.position }
+                                                                : {})
+                                                        })
+                                                    }
                                                 />
                                             </div>
                                             <input
                                                 type="text"
                                                 value={item.title}
-                                                onChange={e => updateGalleryItem(item.id, { title: e.target.value })}
-                                                className="font-black text-xs border-b border-slate-300 pb-0.5 w-full focus:outline-none"
+                                                onChange={(e) =>
+                                                    updateGalleryItem(item.id, { title: e.target.value })
+                                                }
+                                                className="w-full border-b border-slate-300 pb-0.5 text-xs font-black focus:outline-none"
                                             />
-                                            <span className="text-[10px] font-mono text-sky-600 block mt-1">
+                                            <span className="mt-1 block font-mono text-[10px] text-sky-700">
                                                 {item.category} • {item.year}
                                             </span>
-                                            <p className="text-[11px] font-mono text-slate-600 mt-1 line-clamp-2">
+                                            <p className="mt-1 line-clamp-2 font-mono text-[11px] text-slate-600">
                                                 {item.desc}
                                             </p>
                                         </div>
-                                        <div className="pt-2 mt-2 border-t border-slate-200 flex justify-end">
+                                        <div className="mt-2 flex justify-end border-t border-slate-200 pt-2">
                                             <button
-                                                onClick={() => deleteGalleryItem(item.id)}
-                                                className="press press-flat text-rose-600 hover:text-rose-800 font-mono text-xs font-black cursor-pointer"
+                                                onClick={() => {
+                                                    if (window.confirm('Delete this gallery photo?'))
+                                                        deleteGalleryItem(item.id);
+                                                }}
+                                                className="press press-flat cursor-pointer font-mono text-xs font-black text-rose-600 hover:text-rose-800"
                                             >
                                                 Delete Photo ✕
                                             </button>
@@ -1663,31 +2349,37 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'updates' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Proving Grounds Team Updates</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Proving Grounds Team Updates
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                                     Manage cards in the accordion updates feed.
                                 </p>
                             </div>
 
                             {/* Add Update Form */}
-                            <div className="p-4 bg-sky-50 border-2 border-slate-900 space-y-3">
-                                <span className="text-xs font-mono font-black uppercase text-slate-900 block">
+                            <div className="space-y-3 border-2 border-slate-900 bg-sky-50 p-4">
+                                <span className="block font-mono text-xs font-black text-slate-900 uppercase">
                                     + Add New Team Update
                                 </span>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <input
                                         type="text"
                                         value={newUpdateItem.label}
-                                        onChange={e => setNewUpdateItem({ ...newUpdateItem, label: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewUpdateItem({ ...newUpdateItem, label: e.target.value })
+                                        }
                                         placeholder="Update Title / Milestone"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                     />
                                     <input
                                         type="text"
                                         value={newUpdateItem.tag}
-                                        onChange={e => setNewUpdateItem({ ...newUpdateItem, tag: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewUpdateItem({ ...newUpdateItem, tag: e.target.value })
+                                        }
                                         placeholder="Tag (e.g. FEB 2026 • PIT LANE)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                 </div>
                                 <ImageField
@@ -1697,22 +2389,36 @@ export default function AdminDashboard({ onExit }) {
                                     position={newUpdateItem.position}
                                     frames="update"
                                     folder="/asterix/updates"
-                                    onUpload={(e, cb, f) => handleImageUpload(e, cb, f, newUpdateItem.label || 'team_update')}
-                                    onChange={(fields) => setNewUpdateItem(prev => ({
-                                        ...prev,
-                                        ...(fields.url !== undefined ? { image: fields.url } : {}),
-                                        ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
-                                        ...(fields.position !== undefined ? { position: fields.position } : {})
-                                    }))}
+                                    onUpload={(e, cb, f) =>
+                                        handleImageUpload(e, cb, f, newUpdateItem.label || 'team_update')
+                                    }
+                                    onChange={(fields) =>
+                                        setNewUpdateItem((prev) => ({
+                                            ...prev,
+                                            ...(fields.url !== undefined ? { image: fields.url } : {}),
+                                            ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
+                                            ...(fields.position !== undefined
+                                                ? { position: fields.position }
+                                                : {})
+                                        }))
+                                    }
                                 />
                                 <button
                                     onClick={() => {
-                                        if (!newUpdateItem.label) return alert('Please provide an update title');
+                                        if (!newUpdateItem.label)
+                                            return alert('Please provide an update title');
                                         addUpdate({ ...newUpdateItem, id: `upd-${Date.now()}` });
-                                        setNewUpdateItem({ label: '', tag: 'PROVING GROUNDS', image: '', link: '#', fit: 'cover', position: '50% 50%' });
+                                        setNewUpdateItem({
+                                            label: '',
+                                            tag: 'PROVING GROUNDS',
+                                            image: '',
+                                            link: '#',
+                                            fit: 'cover',
+                                            position: '50% 50%'
+                                        });
                                         showStatus('Team update published!');
                                     }}
-                                    className="press press-flat px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer"
+                                    className="press press-flat cursor-pointer bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                                 >
                                     Publish Update →
                                 </button>
@@ -1720,27 +2426,43 @@ export default function AdminDashboard({ onExit }) {
 
                             {/* Updates List */}
                             <div className="space-y-3">
-                                {siteData.updates.map(upd => (
-                                    <div key={upd.id} className="p-3 bg-white border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] space-y-2">
+                                {siteData.updates.map((upd) => (
+                                    <div
+                                        key={upd.id}
+                                        className="shadow-brutal-2 space-y-2 border-2 border-slate-900 bg-white p-3"
+                                    >
                                         <div className="flex items-start justify-between gap-4">
                                             <div className="min-w-0 flex-1">
                                                 <input
                                                     type="text"
                                                     value={upd.label}
-                                                    onChange={e => updateUpdate(upd.id, { label: e.target.value })}
-                                                    className="w-full font-bold text-xs border-b border-slate-300 focus:outline-none"
+                                                    onChange={(e) =>
+                                                        updateUpdate(upd.id, { label: e.target.value })
+                                                    }
+                                                    className="w-full border-b border-slate-300 text-xs font-bold focus:outline-none"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={upd.tag || ''}
-                                                    onChange={e => updateUpdate(upd.id, { tag: e.target.value })}
+                                                    onChange={(e) =>
+                                                        updateUpdate(upd.id, { tag: e.target.value })
+                                                    }
                                                     placeholder="Tag (e.g. FEB 2026 • PIT LANE)"
-                                                    className="w-full text-[10px] font-mono text-sky-600 border-b border-slate-200 focus:outline-none mt-1"
+                                                    className="mt-1 w-full border-b border-slate-200 font-mono text-[10px] text-sky-700 focus:outline-none"
                                                 />
                                             </div>
                                             <button
-                                                onClick={() => deleteUpdate(upd.id)}
-                                                className="press press-flat text-rose-600 hover:text-rose-800 font-mono text-xs font-black cursor-pointer shrink-0"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            upd.label
+                                                                ? `Delete the update "${upd.label}"?`
+                                                                : 'Delete this update?'
+                                                        )
+                                                    )
+                                                        deleteUpdate(upd.id);
+                                                }}
+                                                className="press press-flat shrink-0 cursor-pointer font-mono text-xs font-black text-rose-600 hover:text-rose-800"
                                             >
                                                 Delete ✕
                                             </button>
@@ -1752,12 +2474,20 @@ export default function AdminDashboard({ onExit }) {
                                             position={upd.position}
                                             frames="update"
                                             folder="/asterix/updates"
-                                            onUpload={(e, cb, f) => handleImageUpload(e, cb, f, upd.label || 'team_update')}
-                                            onChange={(fields) => updateUpdate(upd.id, {
-                                                ...(fields.url !== undefined ? { image: fields.url } : {}),
-                                                ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
-                                                ...(fields.position !== undefined ? { position: fields.position } : {})
-                                            })}
+                                            onUpload={(e, cb, f) =>
+                                                handleImageUpload(e, cb, f, upd.label || 'team_update')
+                                            }
+                                            onChange={(fields) =>
+                                                updateUpdate(upd.id, {
+                                                    ...(fields.url !== undefined
+                                                        ? { image: fields.url }
+                                                        : {}),
+                                                    ...(fields.fit !== undefined ? { fit: fields.fit } : {}),
+                                                    ...(fields.position !== undefined
+                                                        ? { position: fields.position }
+                                                        : {})
+                                                })
+                                            }
                                         />
                                     </div>
                                 ))}
@@ -1768,24 +2498,27 @@ export default function AdminDashboard({ onExit }) {
                     {/* TAB: ALLIANCE LEADS / SUBSCRIBERS */}
                     {activeTab === 'subscribers' && (
                         <div className="space-y-6">
-                            <div className="border-b-2 border-slate-200 pb-4 flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-200 pb-4">
                                 <div>
-                                    <h2 className="text-2xl font-black uppercase text-slate-900">Alliance Leads & Subscribers</h2>
-                                    <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                        Submissions from the "Join the Alliance" newsletter form, stored securely in MongoDB Atlas.
+                                    <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                        Newsletter Subscribers
+                                    </h2>
+                                    <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                        Signups from the home page "Join the Alliance" form, the community
+                                        page and Horizon blog posts.
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={fetchSubscribers}
-                                        className="press press-flat px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-xs font-mono font-bold cursor-pointer"
+                                        className="press press-flat cursor-pointer border-2 border-slate-900 bg-slate-100 px-3 py-1.5 font-mono text-xs font-bold hover:bg-slate-200"
                                     >
                                         ↻ Refresh
                                     </button>
                                     <button
                                         onClick={handleExportSubscribersCSV}
                                         disabled={subscribers.length === 0}
-                                        className="press px-3 py-1.5 bg-sky-500 hover:bg-sky-400 text-white border-2 border-slate-900 text-xs font-mono font-black uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer disabled:opacity-50"
+                                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-500 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-400 disabled:opacity-50"
                                     >
                                         Export CSV ↓
                                     </button>
@@ -1797,32 +2530,61 @@ export default function AdminDashboard({ onExit }) {
                                     Loading subscribers from database...
                                 </div>
                             ) : subscribers.length === 0 ? (
-                                <div className="p-8 text-center border-2 border-dashed border-slate-300 font-mono text-xs text-slate-500">
-                                    No alliance leads recorded yet. Submissions from the website newsletter section will appear here automatically.
+                                <div className="border-2 border-dashed border-slate-300 p-8 text-center font-mono text-xs text-slate-500">
+                                    No subscribers yet. Signups from the home page, community page and blog
+                                    posts appear here automatically.
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto border-2 border-slate-900">
                                     <table className="w-full text-left font-mono text-xs">
-                                        <thead className="bg-slate-900 text-white font-black uppercase text-[10px]">
+                                        <thead className="bg-slate-900 text-[10px] font-black text-white uppercase">
                                             <tr>
                                                 <th className="p-2.5">Email</th>
                                                 <th className="p-2.5">Phone</th>
+                                                <th className="p-2.5">Source</th>
+                                                <th className="p-2.5">Status</th>
                                                 <th className="p-2.5">Joined Date</th>
                                                 <th className="p-2.5 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200">
-                                            {subscribers.map(sub => (
+                                            {subscribers.map((sub) => (
                                                 <tr key={sub.id} className="hover:bg-slate-50">
-                                                    <td className="p-2.5 font-bold text-slate-900">{sub.email}</td>
-                                                    <td className="p-2.5 text-slate-600">{sub.phone || '—'}</td>
-                                                    <td className="p-2.5 text-slate-500 text-[11px]">
-                                                        {sub.created_at ? new Date(sub.created_at).toLocaleString() : 'Recent'}
+                                                    <td className="p-2.5 font-bold text-slate-900">
+                                                        {sub.email}
+                                                    </td>
+                                                    <td className="p-2.5 text-slate-600">
+                                                        {sub.phone || '—'}
+                                                    </td>
+                                                    <td className="p-2.5 text-[11px] text-slate-600 uppercase">
+                                                        {sub.source || 'home'}
+                                                    </td>
+                                                    <td className="p-2.5 text-[11px]">
+                                                        {sub.unsubscribed_at ? (
+                                                            <span className="font-bold text-rose-700">
+                                                                Unsubscribed{' '}
+                                                                {new Date(sub.unsubscribed_at).toLocaleDateString()}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="font-bold text-emerald-700">Active</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-2.5 text-[11px] text-slate-500">
+                                                        {sub.created_at
+                                                            ? new Date(sub.created_at).toLocaleString()
+                                                            : 'Recent'}
                                                     </td>
                                                     <td className="p-2.5 text-right">
                                                         <button
-                                                            onClick={() => handleDeleteSubscriber(sub.id)}
-                                                            className="press press-flat text-rose-600 hover:text-rose-900 font-black cursor-pointer"
+                                                            onClick={() => {
+                                                                if (
+                                                                    window.confirm(
+                                                                        `Delete ${sub.email || 'this subscriber'} from the subscriber list? This cannot be undone.`
+                                                                    )
+                                                                )
+                                                                    handleDeleteSubscriber(sub.id);
+                                                            }}
+                                                            className="press press-flat cursor-pointer font-black text-rose-600 hover:text-rose-900"
                                                         >
                                                             Delete ✕
                                                         </button>
@@ -1840,99 +2602,129 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'accounts' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">Team Member Logins & Access</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Manage usernames, passwords, and permissions for members authorized to edit the site.
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    Team Member Logins & Access
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Manage usernames, passwords, and permissions for members authorized to
+                                    edit the site.
                                 </p>
                             </div>
 
                             {/* Add Account Form */}
-                            <div className="p-4 bg-sky-50 border-2 border-slate-900 space-y-3">
-                                <span className="text-xs font-mono font-black uppercase text-slate-900 block">
+                            <div className="space-y-3 border-2 border-slate-900 bg-sky-50 p-4">
+                                <span className="block font-mono text-xs font-black text-slate-900 uppercase">
                                     + Add New Team Member Login
                                 </span>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                     <input
                                         type="text"
                                         value={newAccount.username}
-                                        onChange={e => setNewAccount({ ...newAccount, username: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewAccount({ ...newAccount, username: e.target.value })
+                                        }
                                         placeholder="Username (e.g. software_lead)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                     <input
                                         type="password"
                                         value={newAccount.password}
-                                        onChange={e => setNewAccount({ ...newAccount, password: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewAccount({ ...newAccount, password: e.target.value })
+                                        }
                                         placeholder="Password"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                     <input
                                         type="text"
                                         value={newAccount.name}
-                                        onChange={e => setNewAccount({ ...newAccount, name: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewAccount({ ...newAccount, name: e.target.value })
+                                        }
                                         placeholder="Full Name"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold"
                                     />
                                     <input
                                         type="text"
                                         value={newAccount.phone || ''}
-                                        onChange={e => setNewAccount({ ...newAccount, phone: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewAccount({ ...newAccount, phone: e.target.value })
+                                        }
                                         placeholder="Phone Number (e.g. +91 98765 43210)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-mono"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                     <input
                                         type="text"
                                         value={newAccount.role}
-                                        onChange={e => setNewAccount({ ...newAccount, role: e.target.value })}
+                                        onChange={(e) =>
+                                            setNewAccount({ ...newAccount, role: e.target.value })
+                                        }
                                         placeholder="Team Role (e.g. Powertrain Lead)"
-                                        className="px-3 py-1.5 border-2 border-slate-900 bg-white text-xs font-bold sm:col-span-2 lg:col-span-1"
+                                        className="border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-bold sm:col-span-2 lg:col-span-1"
                                     />
                                 </div>
                                 <button
-                                onClick={async () => {
-                                    if (!newAccount.username || !newAccount.password) return alert('Username and password are required');
-                                    const cleanUsername = newAccount.username.trim();
-                                    const cleanPassword = newAccount.password.trim();
-                                    const createdAccount = {
-                                        id: `acc-${Date.now()}`,
-                                        username: cleanUsername,
-                                        password: cleanPassword,
-                                        name: newAccount.name.trim() || cleanUsername,
-                                        phone: (newAccount.phone || '').trim(),
-                                        role: newAccount.role || 'Team Member',
-                                        accessLevel: newAccount.accessLevel || 'Lead'
-                                    };
+                                    onClick={async () => {
+                                        if (!newAccount.username || !newAccount.password)
+                                            return alert('Username and password are required');
+                                        const cleanUsername = newAccount.username.trim();
+                                        const cleanPassword = newAccount.password.trim();
+                                        const createdAccount = {
+                                            id: `acc-${Date.now()}`,
+                                            username: cleanUsername,
+                                            password: cleanPassword,
+                                            name: newAccount.name.trim() || cleanUsername,
+                                            phone: (newAccount.phone || '').trim(),
+                                            role: newAccount.role || 'Team Member',
+                                            accessLevel: newAccount.accessLevel || 'Lead'
+                                        };
 
-                                    // 1. Add to siteData accounts array immediately (persists in localStorage, Firestore, and MongoDB)
-                                    addAccount(createdAccount);
+                                        // 1. Add to siteData accounts array immediately
+                                        addAccount(createdAccount);
 
-                                    // 2. Register in backend DB if token is available
-                                    const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-                                    if (token) {
-                                        try {
-                                            const res = await fetch(apiUrl('/api/auth/accounts'), {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    'Authorization': `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify(createdAccount)
-                                            });
-                                            if (res.ok) {
-                                                const data = await res.json();
-                                                if (data.account) {
-                                                    setDbAccounts(prev => [...prev.filter(a => a.username !== cleanUsername), data.account]);
+                                        // 2. Register in backend DB if token is available
+                                        const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+                                        if (token) {
+                                            try {
+                                                const res = await fetch(apiUrl('/api/auth/accounts'), {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        Authorization: `Bearer ${token}`
+                                                    },
+                                                    body: JSON.stringify(createdAccount)
+                                                });
+                                                if (res.ok) {
+                                                    const data = await res.json();
+                                                    if (data.account) {
+                                                        setDbAccounts((prev) => [
+                                                            ...prev.filter(
+                                                                (a) => a.username !== cleanUsername && a.id !== createdAccount.id
+                                                            ),
+                                                            data.account
+                                                        ]);
+                                                    }
+                                                    fetchAccounts();
+                                                } else {
+                                                    const errData = await res.json().catch(() => ({}));
+                                                    return alert(`⚠️ Failed to create member account: ${errData.error || 'Server error'}`);
                                                 }
+                                            } catch (err) {
+                                                console.warn('Backend API account notice:', err);
                                             }
-                                        } catch (err) {
-                                            console.warn('Backend API account notice:', err);
                                         }
-                                    }
 
-                                    setNewAccount({ username: '', password: '', name: '', phone: '', role: 'Team Member', accessLevel: 'Lead' });
-                                    showStatus(`New login created for ${createdAccount.name}! ✓`);
-                                }}
-                                    className="press press-flat px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-mono font-black text-xs uppercase cursor-pointer"
+                                        setNewAccount({
+                                            username: '',
+                                            password: '',
+                                            name: '',
+                                            phone: '',
+                                            role: 'Team Member',
+                                            accessLevel: 'Lead'
+                                        });
+                                        showStatus(`New login created for ${createdAccount.name}! ✓`);
+                                    }}
+                                    className="press press-flat cursor-pointer bg-slate-900 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-slate-800"
                                 >
                                     Create Member Login →
                                 </button>
@@ -1941,7 +2733,7 @@ export default function AdminDashboard({ onExit }) {
                             {/* Accounts Table */}
                             <div className="overflow-x-auto border-2 border-slate-900">
                                 <table className="w-full text-left font-mono text-xs">
-                                    <thead className="bg-slate-900 text-white font-black uppercase text-[10px]">
+                                    <thead className="bg-slate-900 text-[10px] font-black text-white uppercase">
                                         <tr>
                                             <th className="p-2.5">User</th>
                                             <th className="p-2.5">Username</th>
@@ -1952,50 +2744,80 @@ export default function AdminDashboard({ onExit }) {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-200">
-                                        {(dbAccounts.length > 0 ? dbAccounts : siteData.accounts).map(acc => (
-                                            <tr key={acc.id} className="hover:bg-slate-50">
-                                                <td className="p-2.5 font-bold">{acc.name}</td>
-                                                <td className="p-2.5 text-sky-600 font-bold">{acc.username}</td>
-                                                <td className="p-2.5 text-slate-700 font-bold">{acc.phone || '—'}</td>
-                                                <td className="p-2.5">{acc.role}</td>
-                                                <td className="p-2.5">
-                                                    <span className="px-2 py-0.5 bg-slate-100 border border-slate-400 text-[10px]">
-                                                        {acc.accessLevel}
-                                                    </span>
-                                                </td>
-                                                <td className="p-2.5 text-right">
-                                                    {acc.username !== 'admin' && (
-                                                        <button
-                                                            onClick={async () => {
-                                                                if (!confirm(`Delete account for ${acc.name}?`)) return;
-                                                                const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
-                                                                if (token) {
-                                                                    try {
-                                                                        const res = await fetch(apiUrl(`/api/auth/accounts/${acc.id}`), {
-                                                                            method: 'DELETE',
-                                                                            headers: { 'Authorization': `Bearer ${token}` }
-                                                                        });
-                                                                        if (res.ok) {
-                                                                            setDbAccounts(prev => prev.filter(a => a.id !== acc.id));
-                                                                            deleteAccount(acc.id);
-                                                                            showStatus('Account removed from database!');
-                                                                            return;
+                                        {(dbAccounts.length > 0 ? dbAccounts : siteData.accounts).map(
+                                            (acc) => (
+                                                <tr key={acc.id} className="hover:bg-slate-50">
+                                                    <td className="p-2.5 font-bold">{acc.name}</td>
+                                                    <td className="p-2.5 font-bold text-sky-700">
+                                                        {acc.username}
+                                                    </td>
+                                                    <td className="p-2.5 font-bold text-slate-700">
+                                                        {acc.phone || '—'}
+                                                    </td>
+                                                    <td className="p-2.5">{acc.role}</td>
+                                                    <td className="p-2.5">
+                                                        <span className="border border-slate-400 bg-slate-100 px-2 py-0.5 text-[10px]">
+                                                            {acc.accessLevel}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-2.5 text-right">
+                                                        {acc.accessLevel !== 'SuperAdmin' && String(acc.username || '').toLowerCase() !== 'admin1' && (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (
+                                                                        !confirm(
+                                                                            `Delete account for ${acc.name}?`
+                                                                        )
+                                                                    )
+                                                                        return;
+                                                                    const token =
+                                                                        sessionStorage.getItem(
+                                                                            AUTH_TOKEN_KEY
+                                                                        );
+                                                                    if (token) {
+                                                                        try {
+                                                                            const res = await fetch(
+                                                                                apiUrl(
+                                                                                    `/api/auth/accounts/${acc.id}`
+                                                                                ),
+                                                                                {
+                                                                                    method: 'DELETE',
+                                                                                    headers: {
+                                                                                        Authorization: `Bearer ${token}`
+                                                                                    }
+                                                                                }
+                                                                            );
+                                                                            if (res.ok) {
+                                                                                setDbAccounts((prev) =>
+                                                                                    prev.filter(
+                                                                                        (a) => a.id !== acc.id
+                                                                                    )
+                                                                                );
+                                                                                deleteAccount(acc.id);
+                                                                                showStatus(
+                                                                                    'Account removed from database!'
+                                                                                );
+                                                                                return;
+                                                                            }
+                                                                        } catch (err) {
+                                                                            console.warn(
+                                                                                'Backend delete failed:',
+                                                                                err
+                                                                            );
                                                                         }
-                                                                    } catch (err) {
-                                                                        console.warn('Backend delete failed:', err);
                                                                     }
-                                                                }
-                                                                deleteAccount(acc.id);
-                                                                showStatus('Account removed.');
-                                                            }}
-                                                            className="press press-flat text-rose-600 hover:text-rose-900 font-black cursor-pointer"
-                                                        >
-                                                            Delete ✕
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                                    deleteAccount(acc.id);
+                                                                    showStatus('Account removed.');
+                                                                }}
+                                                                className="press press-flat cursor-pointer font-black text-rose-600 hover:text-rose-900"
+                                                            >
+                                                                Delete ✕
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -2006,73 +2828,82 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'settings' && (
                         <div className="space-y-6">
                             <div className="border-b-2 border-slate-200 pb-4">
-                                <h2 className="text-2xl font-black uppercase text-slate-900">System Backup & Maintenance</h2>
-                                <p className="text-xs font-bold text-slate-500 font-mono mt-1">
-                                    Download all edits as JSON, restore from existing files, or reset to original defaults.
+                                <h2 className="text-2xl font-black text-slate-900 uppercase">
+                                    System Backup & Maintenance
+                                </h2>
+                                <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                                    Download all edits as JSON, restore from existing files, or reset to
+                                    original defaults.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 border-2 border-slate-900 bg-slate-50 space-y-3">
-                                    <h3 className="font-mono font-black text-xs uppercase text-slate-900">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className="space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
+                                    <h3 className="font-mono text-xs font-black text-slate-900 uppercase">
                                         Export Data Backup
                                     </h3>
                                     <p className="text-xs text-slate-600">
-                                        Downloads a complete JSON snapshot containing all text content, media links, squad members, and accounts.
+                                        Downloads a complete JSON snapshot containing all text content, media
+                                        links, squad members, and accounts.
                                     </p>
                                     <button
                                         onClick={handleDownloadBackup}
-                                        className="press px-4 py-2 bg-sky-500 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
+                                        className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-500 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase"
                                     >
                                         Download Backup JSON ↓
                                     </button>
                                 </div>
 
-                                <div className="p-4 border-2 border-slate-900 bg-slate-50 space-y-3">
-                                    <h3 className="font-mono font-black text-xs uppercase text-slate-900">
+                                <div className="space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
+                                    <h3 className="font-mono text-xs font-black text-slate-900 uppercase">
                                         Restore from Backup
                                     </h3>
                                     <p className="text-xs text-slate-600">
-                                        Upload a previously exported JSON backup file to instantly populate the site with your saved data.
+                                        Upload a previously exported JSON backup file to instantly populate
+                                        the site with your saved data.
                                     </p>
                                     <input
                                         type="file"
                                         accept=".json"
                                         onChange={handleRestoreBackup}
-                                        className="text-xs font-mono"
+                                        className="w-full max-w-full font-mono text-xs"
                                     />
                                 </div>
                             </div>
 
-                            {/* Reset Section */}
-                            <div className="pt-6 border-t-2 border-slate-200">
-                                <div className="p-4 border-2 border-rose-600 bg-rose-50 space-y-2">
-                                    <h3 className="font-mono font-black text-xs uppercase text-rose-700">
-                                        Reset to Factory Defaults
-                                    </h3>
-                                    <p className="text-xs text-rose-800">
-                                        Clears all customized edits in local storage and restores the initial original Team Asterix data.
-                                    </p>
-                                    <button
-                                        onClick={() => {
-                                            if (window.confirm('Are you sure you want to reset all content to default settings?')) {
-                                                resetToDefaults();
-                                                showStatus('Reset completed successfully!');
-                                            }
-                                        }}
-                                        className="press px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-mono font-black text-xs uppercase border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a] cursor-pointer"
-                                    >
-                                        Reset All Content
-                                    </button>
+                            {/* Reset Section: wipes all site content, so SuperAdmin only */}
+                            {isSuperAdmin && (
+                                <div className="border-t-2 border-slate-200 pt-6">
+                                    <div className="space-y-2 border-2 border-rose-600 bg-rose-50 p-4">
+                                        <h3 className="font-mono text-xs font-black text-rose-700 uppercase">
+                                            Reset to Factory Defaults
+                                        </h3>
+                                        <p className="text-xs text-rose-800">
+                                            Clears all customized edits in local storage and restores the
+                                            initial original Team Asterix data.
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                if (
+                                                    window.confirm(
+                                                        'Are you sure you want to reset all content to default settings?'
+                                                    )
+                                                ) {
+                                                    resetToDefaults();
+                                                    showStatus('Reset completed successfully!');
+                                                }
+                                            }}
+                                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-rose-600 px-4 py-2 font-mono text-xs font-black text-white uppercase hover:bg-rose-700"
+                                        >
+                                            Reset All Content
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
-
                 </main>
-
             </div>
-
         </div>
     );
 }

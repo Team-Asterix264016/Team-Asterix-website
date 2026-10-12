@@ -18,8 +18,7 @@ const ENTER_START = 'top 85%';
 const MANAGED = '[data-assemble], [data-assemble-section]';
 
 const prefersReducedMotion = () =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function useScrollAssembly(lenis, dependency) {
     useEffect(() => {
@@ -93,7 +92,7 @@ export default function useScrollAssembly(lenis, dependency) {
                         stagger: stagger,
                         paused: true,
                         onStart: () => list.forEach((el) => el.classList.remove('reveal-init')),
-                        onComplete: () => gsap.set(list, { clearProps: 'transform,willChange' }),
+                        onComplete: () => gsap.set(list, { clearProps: 'transform,willChange' })
                     }
                 );
 
@@ -104,7 +103,7 @@ export default function useScrollAssembly(lenis, dependency) {
                     start: ENTER_START,
                     once: true,
                     invalidateOnRefresh: true,
-                    onEnter: () => tween.play(),
+                    onEnter: () => tween.play()
                 });
                 ownedTriggers.push(st);
                 return tween;
@@ -118,12 +117,17 @@ export default function useScrollAssembly(lenis, dependency) {
 
                 // CyberHero entrance
                 if (isHero) {
-                    const heroBadges = Array.from(section.querySelectorAll('[data-assemble="pop"], .border-3'));
+                    const heroBadges = Array.from(
+                        section.querySelectorAll('[data-assemble="pop"], .border-3')
+                    );
                     const heroHeadings = Array.from(section.querySelectorAll('[data-assemble="left"], h1'));
-                    const heroBody = Array.from(section.querySelectorAll('[data-assemble="up"], p, .cyber-button, a'));
+                    const heroBody = Array.from(
+                        section.querySelectorAll('[data-assemble="up"], p, .cyber-button, a')
+                    );
                     const heroFooter = Array.from(section.querySelectorAll('[data-assemble="down"]'));
 
-                    if (heroBadges.length) revealOnce(heroBadges, heroBadges[0], { y: 20, scale: 0.85 }, 0.05);
+                    if (heroBadges.length)
+                        revealOnce(heroBadges, heroBadges[0], { y: 20, scale: 0.85 }, 0.05);
                     if (heroHeadings.length) revealOnce(heroHeadings, heroHeadings[0], { x: -48 }, 0.1);
                     if (heroBody.length) revealOnce(heroBody, heroBody[0], { y: 36 }, 0.08);
                     if (heroFooter.length) revealOnce(heroFooter, heroFooter[0], { y: 20 }, 0.05);
@@ -155,9 +159,13 @@ export default function useScrollAssembly(lenis, dependency) {
                 const headers = Array.from(section.querySelectorAll('[data-assemble="header"]'));
                 const leftElements = Array.from(section.querySelectorAll('[data-assemble="left"]'));
                 const rightElements = Array.from(section.querySelectorAll('[data-assemble="right"]'));
-                const cards = Array.from(section.querySelectorAll('[data-assemble="card"], [data-assemble="up"]'));
+                const cards = Array.from(
+                    section.querySelectorAll('[data-assemble="card"], [data-assemble="up"]')
+                );
                 const downElements = Array.from(section.querySelectorAll('[data-assemble="down"]'));
-                const popElements = Array.from(section.querySelectorAll('[data-assemble="pop"], [data-assemble="badge"]'));
+                const popElements = Array.from(
+                    section.querySelectorAll('[data-assemble="pop"], [data-assemble="badge"]')
+                );
                 const staggerContainers = Array.from(section.querySelectorAll('[data-assemble="stagger"]'));
 
                 headers.forEach((h) => revealOnce([h], h, { y: -36 }));

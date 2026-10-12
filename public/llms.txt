@@ -1,0 +1,31 @@
+# Team Asterix - Official Website & Engineering Console
+
+> Team Asterix is a pioneering student autonomous mobility & off-road robotics team from PSG iTech, engineering next-generation autonomous vehicles for SAE BAJA.
+
+## Summary & Core Mission
+Team Asterix designs, fabricates, and tests fully autonomous off-road vehicles. The team conducts intensive technical workshops, open-source robotics research, and community knowledge sharing.
+
+## Core Subsystems
+- **Software & Perception**: ROS2, LiDAR point cloud registration, YOLOv8 object detection, CUDA zero-copy pipelines, and TEB path planning.
+- **Powertrain & Electronics**: High-voltage battery isolation, dual CAN bus communication (STM32), drive-by-wire steering, and pneumatic fail-safe braking.
+- **Chassis & Mechanical**: AISI 4130 chromoly spaceframe roll cage, 7075-T6 CNC pedal assembly, suspension geometry, and FEA stress analysis.
+- **Management & Leads**: Sponsorship relations, event logistics, and technical publications.
+
+## Workshops & Education
+Team Asterix offers hands-on curriculum tracks in Autonomous Software, Perception, Powertrain, and Chassis Engineering.
+- **Workshop Registration & Schedule**: https://asterix-website.vercel.app/#workshop
+- **Workshop Project Submissions**: https://asterix-website.vercel.app/#workshop-project-submit
+
+## Community & Horizon Tech Hub
+- **Trending Discussions**: Q&A on ROS2, CAD design, CAN bus telemetry, and workshop projects.
+- **Project Showcase**: Open-source student hardware & software builds.
+- **Resource Vault**: Downloadable ROS2 cheatsheets, STEP CAD templates, and firmware code.
+- **Horizon Tech Blog**: In-depth technical articles written by Team Asterix R&D leads.
+- **Community URL**: https://asterix-website.vercel.app/#community
+
+## Contact & Socials
+- **Email**: asterix.psgitech@gmail.com
+- **Phone**: +91 86089 44644
+- **Instagram**: https://www.instagram.com/asterix_itech/
+- **LinkedIn**: https://www.linkedin.com/company/teamasterix/
+- **GitHub**: https://github.com/Team-Asterix264016/

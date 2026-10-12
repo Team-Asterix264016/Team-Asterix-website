@@ -84,6 +84,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
+        res.locals.whatsappActivity = { name: user.name || user.username };
         res.json({
             success: true,
             token,
@@ -146,15 +147,32 @@ router.get('/accounts', authenticateToken, async (req, res) => {
     }
 });
 
+const ACCESS_RANK = { Member: 1, Lead: 2, SuperAdmin: 3 };
+
 // POST /api/auth/accounts (Protected - Admin/Lead)
+// Anyone signed in may add teammates, but never above their own access level, and only a
+// SuperAdmin can hand out admin roles; otherwise any account could mint a SuperAdmin.
 router.post('/accounts', authenticateToken, async (req, res) => {
     try {
         const { username, password, name, phone, role, accessLevel } = req.body;
         if (!username || !password || !name) {
             return res.status(400).json({ error: 'Username, password, and name are required.' });
         }
-        if (String(password).length < 8) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+        if (!password || String(password).trim().length < 4) {
+            return res.status(400).json({ error: 'Password must be at least 4 characters.' });
+        }
+
+        const requestedLevel = accessLevel || 'Lead';
+        const requestedRole = String(role || 'Team Member').trim();
+        if (!ACCESS_RANK[requestedLevel]) {
+            return res.status(400).json({ error: `accessLevel must be one of: ${Object.keys(ACCESS_RANK).join(', ')}.` });
+        }
+        const isSuperAdmin = req.user.accessLevel === 'SuperAdmin';
+        if (ACCESS_RANK[requestedLevel] > (ACCESS_RANK[req.user.accessLevel] || 0)) {
+            return res.status(403).json({ error: 'You can only create accounts at or below your own access level.' });
+        }
+        if (!isSuperAdmin && /^(super\s*admin|admin)$/i.test(requestedRole)) {
+            return res.status(403).json({ error: 'Only a SuperAdmin can create admin accounts.' });
         }
 
         const cleanUsername = username.trim().toLowerCase();
@@ -169,8 +187,8 @@ router.post('/accounts', authenticateToken, async (req, res) => {
             passwordHash,
             name: name.trim(),
             phone: (phone || '').trim(),
-            role: role || 'Team Member',
-            accessLevel: accessLevel || 'Lead'
+            role: requestedRole,
+            accessLevel: requestedLevel
         });
 
         res.status(201).json({
@@ -230,12 +248,18 @@ router.put('/accounts/:id', authenticateToken, async (req, res) => {
 router.delete('/accounts/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const targetId = req.params.id;
-        if (targetId === req.user.id || targetId === req.user.username) {
-            return res.status(400).json({ error: 'You cannot delete your own active SuperAdmin account.' });
+        const filter = User.base.isValidObjectId(targetId) ? { _id: targetId } : { username: targetId.toLowerCase() };
+        const targetUser = await User.findOne(filter);
+
+        if (!targetUser) {
+            return res.status(404).json({ error: 'Account not found.' });
         }
 
-        const filter = User.base.isValidObjectId(targetId) ? { _id: targetId } : { username: targetId.toLowerCase() };
-        await User.findOneAndDelete(filter);
+        if (targetUser.accessLevel === 'SuperAdmin' || targetUser.username === 'admin1') {
+            return res.status(403).json({ error: 'SuperAdmin accounts cannot be deleted.' });
+        }
+
+        await User.deleteOne({ _id: targetUser._id });
         res.json({ success: true, message: 'Account removed successfully.' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete account', details: err.message });

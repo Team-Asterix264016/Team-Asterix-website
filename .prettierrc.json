@@ -1,0 +1,15 @@
+{
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tabWidth": 4,
+  "useTabs": false,
+  "singleQuote": true,
+  "semi": true,
+  "printWidth": 110,
+  "jsxSingleQuote": false,
+  "trailingComma": "none",
+  "arrowParens": "always",
+  "endOfLine": "auto",
+  "overrides": [
+    { "files": ["*.json", "*.yml", "*.yaml", "*.css"], "options": { "tabWidth": 2 } }
+  ]
+}

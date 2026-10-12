@@ -1,0 +1,8 @@
+dist
+node_modules
+server/uploads
+server/data
+package-lock.json
+*.glb
+.mcp.json
+.claude

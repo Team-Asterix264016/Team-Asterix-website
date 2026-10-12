@@ -1,9 +1,13 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import WorkshopRegistration, { withoutSecrets } from '../models/WorkshopRegistration.js';
+import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
+import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
 import {
     WORKSHOP_PACKAGES,
     WORKSHOP_TRACKS,
@@ -430,6 +434,7 @@ router.post('/register', requireDb, async (req, res) => {
         registration.razorpayOrderId = order.id;
         await registration.save();
 
+        res.locals.whatsappActivity = { type: 'registration', name: data.name };
         res.status(201).json({
             success: true,
             registrationId: registration._id.toString(),
@@ -861,6 +866,91 @@ function csvCell(value) {
 }
 
 /**
+ * GET /api/workshop/registrations/superadmin-security
+ * Strictly Protected: SuperAdmin only.
+ * Returns participant login history and whether each participant has set their
+ * own password. Passwords are stored only as bcrypt hashes and are never returned.
+ */
+router.get('/registrations/superadmin-security', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+    try {
+        const registrations = await WorkshopRegistration.find({ status: 'paid' })
+            .sort({ lastLoginAt: -1, passwordUpdatedAt: -1, receiptNo: -1, createdAt: -1 })
+            .lean();
+
+        const auditList = registrations.map((r) => {
+            const isCustomPassword = Boolean(r.passwordHash);
+
+            return {
+                id: r._id,
+                name: r.name,
+                email: r.email,
+                phone: r.phone,
+                rollNo: r.rollNo,
+                department: r.department,
+                year: r.year,
+                package: r.package,
+                packageName: r.packageName || r.package,
+                receiptNo: r.receiptNo,
+                status: r.status,
+                lastLoginAt: r.lastLoginAt || null,
+                loginCount: r.loginCount || 0,
+                isCustomPassword,
+                passwordUpdatedAt: r.passwordUpdatedAt || null,
+                paidAt: r.paidAt
+            };
+        });
+
+        const summary = {
+            totalPaid: registrations.length,
+            hasLoggedIn: registrations.filter((r) => r.lastLoginAt || r.loginCount > 0).length,
+            customPasswordSet: registrations.filter((r) => r.passwordHash).length,
+            usingDefaultPassword: registrations.filter((r) => !r.passwordHash).length
+        };
+
+        return res.json({
+            ok: true,
+            auditList,
+            summary
+        });
+    } catch (err) {
+        console.error('Error fetching SuperAdmin security audit:', err);
+        return res.status(500).json({ error: 'Failed to fetch SuperAdmin security audit' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/:id/reset-password
+ * SuperAdmin only: puts a participant who has forgotten their password back on
+ * the default one. Only the hash is stored, so there is nothing to read back.
+ */
+router.post('/registrations/:id/reset-password', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const registration = await WorkshopRegistration.findByIdAndUpdate(
+            id,
+            { $set: { passwordHash: '', passwordUpdatedAt: new Date() } },
+            { new: true }
+        );
+        if (!registration) {
+            return res.status(404).json({ error: 'Registration record not found.' });
+        }
+
+        console.log(`[ADMIN PASSWORD RESET] ${req.user.username} reset ${registration.rollNo} to the default password`);
+        return res.json({
+            success: true,
+            message: `${registration.name} (${registration.rollNo}) can now sign in with the default password "asterix".`
+        });
+    } catch (err) {
+        console.error('Error resetting participant password:', err);
+        return res.status(500).json({ error: 'Failed to reset the password.' });
+    }
+});
+
+/**
  * GET /api/workshop/registrations?package=&track=&status=&format=csv
  * Protected: SuperAdmins, Leads, and Members.
  */
@@ -906,7 +996,7 @@ router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, a
                 (r.phone && paidCandidateKeys.has(normalizePhone(r.phone)))
             );
             return {
-                ...r,
+                ...withoutSecrets(r),
                 isSuperseded: Boolean(candidatePaid)
             };
         });
@@ -983,12 +1073,259 @@ router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, a
     }
 });
 
+router.put('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const body = req.body || {};
+        const studentFields = {
+            name: String(body.name || '').trim(),
+            email: String(body.email || '').trim().toLowerCase(),
+            phone: String(body.phone || '').trim(),
+            college: String(body.college || '').trim(),
+            year: String(body.year || '').trim(),
+            department: String(body.department || '').trim(),
+            rollNo: String(body.rollNo || '').trim()
+        };
+        if (Object.values(studentFields).some((value, index) => index !== 3 && !value)) {
+            return res.status(400).json({ error: 'Name, email, phone, year, department, and registered number are required.' });
+        }
+        if (!EMAIL_RE.test(studentFields.email)) {
+            return res.status(400).json({ error: 'Enter a valid email address.' });
+        }
+        if (normalizePhone(studentFields.phone).length !== 10) {
+            return res.status(400).json({ error: 'Enter a valid 10-digit phone number.' });
+        }
+
+        const existing = await WorkshopRegistration.findById(id, { rollNo: 1, email: 1, rollNoHistory: 1 }).lean();
+        if (!existing) return res.status(404).json({ error: 'Workshop registration not found.' });
+
+        studentFields.rollNo = normalizeRollNo(studentFields.rollNo);
+        if (!ROLL_NO_RE.test(studentFields.rollNo)) {
+            return res.status(400).json({ error: 'Enter a valid registered number (letters and digits, e.g. 26M125).' });
+        }
+
+        const rollNoChanged = normalizeRollNo(existing.rollNo) !== studentFields.rollNo;
+        if (rollNoChanged) {
+            // Attendance allows one check-in per roll number per session, so rows already filed
+            // under the new number would collide when this registration's records are moved.
+            const strayAttendance = await WorkshopAttendance.exists({
+                rollNo: studentFields.rollNo,
+                registrationId: { $ne: existing._id }
+            });
+            if (strayAttendance) {
+                return res.status(409).json({
+                    error: `Attendance is already recorded under ${studentFields.rollNo} for a different registration. Merge those records before reassigning this roll number.`
+                });
+            }
+            studentFields.rollNoHistory = [
+                ...(existing.rollNoHistory || []),
+                { from: existing.rollNo || '', to: studentFields.rollNo, changedAt: new Date(), changedBy: req.user?.name || req.user?.email || 'admin' }
+            ];
+        }
+
+        const registration = await WorkshopRegistration.findByIdAndUpdate(
+            id,
+            { $set: studentFields },
+            { new: true, runValidators: true }
+        );
+        if (!registration) return res.status(404).json({ error: 'Workshop registration not found.' });
+
+        // Attendance, project and quiz records keep their own copy of these fields, so an edit
+        // that is not pushed through to them is what shows up later as a roll number mismatch.
+        let syncedRecords = null;
+        try {
+            syncedRecords = await syncParticipantIdentity(registration, { previousEmail: existing.email });
+        } catch (syncErr) {
+            console.error('Participant identity sync failed after admin edit:', syncErr);
+        }
+
+        res.json({ success: true, registration, rollNoChanged, syncedRecords });
+    } catch (err) {
+        console.error('Error updating workshop student details:', err);
+        res.status(500).json({ error: 'Could not update the student record.' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/manual-add
+ * Admin endpoint: Manually add a participant (reflected in profile creation & attendance).
+ */
+router.post('/registrations/manual-add', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const name = String(body.name || '').trim();
+        const email = String(body.email || '').trim().toLowerCase();
+        const phone = normalizePhone(body.phone);
+        const college = String(body.college || 'PSG iTech').trim();
+        const year = String(body.year || '1').trim();
+        const department = String(body.department || '').trim();
+        const rollNo = String(body.rollNo || '').trim().toUpperCase();
+        const pkgId = String(body.package || 'software').toLowerCase().trim();
+        const status = String(body.status || 'paid').toLowerCase().trim();
+
+        if (!name || name.length < 2) {
+            return res.status(400).json({ error: 'Full name is required.' });
+        }
+        if (!EMAIL_RE.test(email)) {
+            return res.status(400).json({ error: 'Enter a valid email address.' });
+        }
+        if (phone.length !== 10) {
+            return res.status(400).json({ error: 'Enter a valid 10-digit phone number.' });
+        }
+        if (!rollNo) {
+            return res.status(400).json({ error: 'Roll / Register number is required.' });
+        }
+        if (!WORKSHOP_DEPARTMENTS.includes(department)) {
+            return res.status(400).json({ error: 'Select a valid department.' });
+        }
+        if (!VALID_YEARS.includes(year)) {
+            return res.status(400).json({ error: 'Select 1st or 2nd year.' });
+        }
+
+        const pkg = getWorkshopPackage(pkgId);
+        if (!pkg) {
+            return res.status(400).json({ error: 'Select a valid workshop package.' });
+        }
+
+        // Check if candidate already registered
+        const existing = await WorkshopRegistration.findOne({
+            $or: [
+                { rollNo },
+                { email },
+                { phone }
+            ]
+        });
+
+        if (existing) {
+            if (existing.status === 'paid') {
+                return res.status(409).json({
+                    error: `Candidate already registered and confirmed as paid (${existing.receiptNo || 'paid'}). Name: ${existing.name}, Roll: ${existing.rollNo}`
+                });
+            } else {
+                // Reuse existing pending registration record
+                existing.name = name;
+                existing.email = email;
+                existing.phone = phone;
+                existing.college = college;
+                existing.year = year;
+                existing.department = department;
+                existing.rollNo = rollNo;
+                existing.package = pkg.id;
+                existing.tracksEnrolled = pkg.tracksIncluded;
+                existing.amount = body.amount ? Number(body.amount) : pkg.price;
+                existing.status = status;
+                if (status === 'paid') {
+                    existing.paidAt = new Date();
+                    if (!existing.receiptNo) {
+                        existing.receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+                    }
+                }
+                await existing.save();
+                return res.status(200).json({
+                    success: true,
+                    message: `Updated existing candidate record to ${status.toUpperCase()}! Receipt: ${existing.receiptNo || 'Pending'}`,
+                    registration: existing
+                });
+            }
+        }
+
+        const tracksEnrolled = pkg.tracksIncluded;
+        const amount = body.amount ? Number(body.amount) : pkg.price;
+
+        let receiptNo = undefined;
+        let paidAt = null;
+
+        if (status === 'paid') {
+            receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+            paidAt = new Date();
+        }
+
+        const registration = await WorkshopRegistration.create({
+            name,
+            email,
+            phone,
+            college,
+            year,
+            department,
+            rollNo,
+            package: pkg.id,
+            tracksEnrolled,
+            amount,
+            currency: WORKSHOP_CURRENCY,
+            status,
+            receiptNo,
+            paidAt
+        });
+
+        console.log(`[ADMIN MANUAL ADD] Added participant ${name} (${rollNo}) - Package: ${pkg.id}, Status: ${status}, Receipt: ${receiptNo || 'none'}`);
+
+        return res.status(201).json({
+            success: true,
+            message: `Participant ${name} added successfully! ${receiptNo ? `Receipt: ${receiptNo}` : ''}`,
+            registration
+        });
+    } catch (err) {
+        console.error('Error adding participant manually:', err);
+        return res.status(500).json({ error: err.message || 'Failed to add participant.' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/:id/upgrade-combo
+ * Admin endpoint: Directly upgrade a candidate's registration to Combo package.
+ */
+router.post('/registrations/:id/upgrade-combo', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid registration ID.' });
+        }
+
+        const registration = await WorkshopRegistration.findById(id);
+        if (!registration) {
+            return res.status(404).json({ error: 'Registration record not found.' });
+        }
+
+        if (registration.package === 'combo' && registration.tracksEnrolled?.length >= 2) {
+            return res.status(400).json({ error: `${registration.name} is already enrolled in the Combo package.` });
+        }
+
+        registration.package = 'combo';
+        registration.tracksEnrolled = ['software', 'powertrain'];
+        registration.amount = 1750;
+        if (registration.status !== 'paid') {
+            registration.status = 'paid';
+            registration.paidAt = registration.paidAt || new Date();
+            if (!registration.receiptNo) {
+                registration.receiptNo = formatReceiptNo(await nextSequence('workshopReceipt'));
+            }
+        }
+        await registration.save();
+
+        console.log(`[ADMIN UPGRADE COMBO] Upgraded registration ${id} (${registration.name}, ${registration.rollNo}) to COMBO`);
+
+        return res.json({
+            success: true,
+            message: `✓ Upgraded ${registration.name} (${registration.rollNo}) to Dual-Track Combo package!`,
+            registration
+        });
+    } catch (err) {
+        console.error('Error upgrading registration to combo:', err);
+        return res.status(500).json({ error: 'Failed to upgrade registration to combo.' });
+    }
+});
+
 /**
  * POST /api/workshop/registrations/:id/verify-razorpay
  * Protected: SuperAdmins, Leads, and Members.
  * Strictly verifies payment with Razorpay API.
  * Refuses to mark paid unless Razorpay API explicitly confirms status === 'captured'.
  */
+
 router.post('/registrations/:id/verify-razorpay', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
         const { id } = req.params;
@@ -1103,20 +1440,198 @@ router.delete('/registrations/:id', authenticateToken, requireLeadOrAdmin, requi
 
         const reg = await WorkshopRegistration.findById(id);
         if (!reg) {
-            return res.status(404).json({ error: 'Registration not found.' });
+            return res.status(404).json({ error: 'Registration record not found.' });
         }
 
-        if (reg.status === 'paid') {
-            return res.status(403).json({ error: 'Cannot delete a confirmed paid registration.' });
-        }
+        // Delete associated attendance records for clean removal
+        await WorkshopAttendance.deleteMany({
+            $or: [
+                { registrationId: reg._id },
+                { rollNo: reg.rollNo },
+                { email: reg.email }
+            ]
+        });
 
         await WorkshopRegistration.findByIdAndDelete(id);
-        console.log(`[ADMIN] Deleted duplicate pending registration ${id} (${reg.name})`);
-        res.json({ success: true, message: 'Registration record removed successfully.' });
+        console.log(`[ADMIN DELETE] Removed registration record ${id} (${reg.name}, ${reg.rollNo})`);
+        res.json({ success: true, message: `✓ Registration record for ${reg.name} (${reg.rollNo}) removed successfully.` });
     } catch (err) {
         console.error('Error deleting registration:', err);
         res.status(500).json({ error: 'Failed to delete registration.' });
     }
 });
 
+/**
+ * POST /api/workshop/login
+ * Public endpoint: Paid student logins with Mobile Number or Email ID.
+ * Issues a JWT token valid for 30 days if a paid registration exists.
+ */
+router.post('/login', async (req, res) => {
+    try {
+        const { identifier, phone, email } = req.body || {};
+        const input = String(identifier || phone || email || '').trim();
+
+        if (!input) {
+            return res.status(400).json({ error: 'Mobile number or Email ID is required.' });
+        }
+
+        const cleanEmail = input.toLowerCase();
+        const cleanPhone = normalizePhone(input);
+        const upperInput = input.toUpperCase();
+
+        const searchConditions = [
+            { email: cleanEmail },
+            { rollNo: upperInput },
+            { rollNo: input }
+        ];
+
+        if (cleanPhone.length >= 7) {
+            searchConditions.push({ phone: cleanPhone });
+            searchConditions.push({ phone: new RegExp(`${cleanPhone}$`) });
+        }
+
+        const query = { $or: searchConditions };
+
+        if (!isMongoConnected()) {
+            return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
+        }
+
+        // Search registration in database
+        const registration = await WorkshopRegistration.findOne(query);
+
+        if (!registration) {
+            return res.status(404).json({
+                error: `No workshop registration found for "${input}". Please enter the Mobile Number or Email ID used during registration.`
+            });
+        }
+
+        if (registration.status !== 'paid') {
+            return res.status(403).json({
+                error: `Your registration status is "${registration.status}". Workshop access is restricted to confirmed paid candidates only.`,
+                status: registration.status
+            });
+        }
+
+        const inputPassword = String(req.body.password || '').trim();
+        if (!inputPassword) {
+            return res.status(400).json({ error: 'Password is required. (Initial default password is "asterix")' });
+        }
+
+        let isPwdCorrect = false;
+        let isDefaultPwd = false;
+        if (!registration.passwordHash) {
+            isPwdCorrect = inputPassword.toLowerCase() === 'asterix';
+            isDefaultPwd = true;
+        } else {
+            isPwdCorrect = bcrypt.compareSync(inputPassword, registration.passwordHash);
+            isDefaultPwd = false;
+        }
+
+        if (!isPwdCorrect) {
+            return res.status(401).json({
+                error: registration.passwordHash
+                    ? 'Incorrect password. Please enter your profile password.'
+                    : 'Incorrect password. Initial default password for all participants is "asterix".'
+            });
+        }
+
+        // Record participant login activity permanently in database
+        registration.lastLoginAt = new Date();
+        registration.loginCount = (registration.loginCount || 0) + 1;
+        await registration.save().catch((err) => console.error('Failed to save candidate login timestamp:', err));
+
+        // Create JWT token for paid student
+        const tokenPayload = {
+            registrationId: registration._id.toString(),
+            name: registration.name,
+            rollNo: registration.rollNo,
+            email: registration.email,
+            phone: registration.phone,
+            package: registration.package,
+            tracksEnrolled: registration.tracksEnrolled || (registration.package === 'combo' ? ['software', 'powertrain'] : [registration.package]),
+            status: registration.status,
+            receiptNo: registration.receiptNo,
+            type: 'workshop_student'
+        };
+
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '30d' });
+
+        return res.json({
+            success: true,
+            token,
+            isDefaultPassword: isDefaultPwd,
+            student: tokenPayload
+        });
+    } catch (err) {
+        console.error('Workshop student login error:', err);
+        return res.status(500).json({ error: 'Failed to process workshop login', details: err.message });
+    }
+});
+
+/**
+ * GET /api/workshop/student-status
+ * Authenticated / Public query: Retrieves student registration and attendance records.
+ */
+router.get('/student-status', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        let decodedStudent = null;
+
+        if (token) {
+            try {
+                decodedStudent = jwt.verify(token, JWT_SECRET);
+            } catch (err) {
+                // Invalid or expired token
+            }
+        }
+
+        const rollNo = String(req.query.rollNo || decodedStudent?.rollNo || '').trim().toUpperCase();
+        const email = String(req.query.email || decodedStudent?.email || '').trim().toLowerCase();
+
+        if (!rollNo && !email && !decodedStudent) {
+            return res.status(400).json({ error: 'Roll number, email, or token required.' });
+        }
+
+        let attendanceRecords = [];
+        let registration = null;
+
+        if (isMongoConnected()) {
+            if (decodedStudent?.registrationId) {
+                registration = await WorkshopRegistration.findById(decodedStudent.registrationId);
+            }
+            if (!registration && (rollNo || email)) {
+                registration = await WorkshopRegistration.findOne({
+                    $or: [
+                        { rollNo: rollNo || '___none___' },
+                        { email: email || '___none___' }
+                    ]
+                });
+            }
+
+            const searchRoll = registration?.rollNo || rollNo;
+            const searchEmail = registration?.email || email;
+
+            if (searchRoll || searchEmail) {
+                attendanceRecords = await WorkshopAttendance.find({
+                    $or: [
+                        { rollNo: searchRoll || '___none___' },
+                        { email: searchEmail || '___none___' }
+                    ]
+                }).select('sessionId sessionNumber sessionDate sessionTopic checkedInAt verifiedBy track');
+            }
+        }
+
+        return res.json({
+            success: true,
+            student: decodedStudent || (registration ? publicView(registration) : null),
+            attendance: attendanceRecords
+        });
+    } catch (err) {
+        console.error('Error in student-status:', err);
+        return res.status(500).json({ error: 'Failed to fetch student status', details: err.message });
+    }
+});
+
 export default router;
+

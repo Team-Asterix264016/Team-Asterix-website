@@ -25,6 +25,10 @@ const QuizSchema = new mongoose.Schema({
     resultsPublishTime: { type: Date, required: true },
     manualResultsRelease: { type: Boolean, default: false },
     showExplanations: { type: Boolean, default: true },
+
+    // Answer-on-the-spot: mark each answer the moment it is locked in and show
+    // the participant whether they got it right, instead of waiting for submit.
+    instantFeedback: { type: Boolean, default: false },
     
     // Questions & Scoring
     questions: [QuestionSchema],

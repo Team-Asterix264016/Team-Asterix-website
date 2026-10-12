@@ -41,18 +41,36 @@ export function authenticateToken(req, res, next) {
         return res.status(401).json({ error: 'Access denied. No authorization token provided.' });
     }
 
+    let decoded;
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
-        next();
+        decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
         return res.status(403).json({ error: 'Invalid or expired token.', details: err.message });
     }
+
+    /* Workshop participants get a token signed with the same key from
+       /api/workshop/login, and every participant starts on the published
+       default password. Only admin-account tokens (which always carry a
+       username) may pass this gate. */
+    if (decoded.type === 'workshop_student' || !decoded.username) {
+        return res.status(403).json({ error: 'Forbidden: admin account required.' });
+    }
+
+    req.user = decoded;
+    next();
 }
 
 export function requireSuperAdmin(req, res, next) {
     if (!req.user || req.user.accessLevel !== 'SuperAdmin') {
         return res.status(403).json({ error: 'Forbidden: SuperAdmin privileges required.' });
+    }
+    next();
+}
+
+export function requireLeadOrAdmin(req, res, next) {
+    const level = req.user?.accessLevel || req.user?.role;
+    if (!req.user || !['SuperAdmin', 'Lead', 'Member', 'Admin'].includes(level)) {
+        return res.status(403).json({ error: 'Forbidden: Admin privileges required.' });
     }
     next();
 }

@@ -21,7 +21,7 @@ export const introHandoff = {
     progress: 1,
 
     /** False until the intro mounts, so pages without it behave normally. */
-    active: false,
+    active: false
 };
 
 export const resetIntroHandoff = () => {

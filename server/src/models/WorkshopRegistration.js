@@ -34,7 +34,25 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
     // from abandoned checkouts. Sparse so the many pending rows without one
     // do not collide on the unique index.
     receiptNo: { type: String, unique: true, sparse: true },
-    paidAt: { type: Date, default: null }
+    paidAt: { type: Date, default: null },
+    // bcrypt hash only; empty means the participant still uses the default password.
+    passwordHash: { type: String, default: '', trim: true },
+    lastLoginAt: { type: Date, default: null },
+    loginCount: { type: Number, default: 0 },
+    passwordUpdatedAt: { type: Date, default: null },
+    // Set when a participant edits their own contact details from the profile portal.
+    detailsUpdatedAt: { type: Date, default: null },
+    // Audit trail for roll number corrections, which also move attendance records.
+    rollNoHistory: {
+        type: [{
+            from: { type: String, default: '', trim: true },
+            to: { type: String, default: '', trim: true },
+            changedAt: { type: Date, default: Date.now },
+            changedBy: { type: String, default: 'participant', trim: true },
+            _id: false
+        }],
+        default: []
+    }
 }, {
     timestamps: true
 });
@@ -42,6 +60,15 @@ const WorkshopRegistrationSchema = new mongoose.Schema({
 WorkshopRegistrationSchema.index({ razorpayOrderId: 1 });
 WorkshopRegistrationSchema.index({ email: 1, status: 1 });
 WorkshopRegistrationSchema.index({ package: 1, status: 1, createdAt: -1 });
+
+/* Password material never leaves the server. customPasswordText is a retired
+   plaintext copy that older documents may still carry until the startup purge
+   (db/mongodb.js) clears it. */
+export function withoutSecrets({ passwordHash: _hash, customPasswordText: _plain, ...rest }) {
+    return rest;
+}
+
+WorkshopRegistrationSchema.set('toJSON', { transform: (_doc, ret) => withoutSecrets(ret) });
 
 export default mongoose.models.WorkshopRegistration
     || mongoose.model('WorkshopRegistration', WorkshopRegistrationSchema);

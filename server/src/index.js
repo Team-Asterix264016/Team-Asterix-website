@@ -24,7 +24,13 @@ import submissionRoutes from './routes/submissions.js';
 import workshopRoutes from './routes/workshop.js';
 import attendanceRoutes from './routes/attendance.js';
 import quizRoutes from './routes/quiz.js';
+import workshopProjectRoutes from './routes/workshopProjects.js';
+import blogRoutes from './routes/blog.js';
+import blogEngagementRoutes from './routes/blogEngagement.js';
+import communityRoutes from './routes/community.js';
 import { describeRazorpayStatus } from './lib/razorpay.js';
+import { isWhatsAppConfigured } from './lib/whatsapp.js';
+import { whatsappActivityMiddleware } from './middleware/whatsappActivity.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +71,8 @@ const uploadsPath = process.env.UPLOADS_DIR
     : path.resolve(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
+app.use('/api', whatsappActivityMiddleware);
+
 /* Local disk only survives a redeploy when the host mounts a persistent volume
    at UPLOADS_DIR. On a plain container (Render's free tier, for one) the
    directory is wiped on every deploy, so anything written there becomes a dead
@@ -94,6 +102,9 @@ app.get('/api/health', (req, res) => {
             provider: imagekitOk ? 'imagekit' : (persistentUploads ? 'local-disk' : 'none'),
             persistent: imagekitOk || persistentUploads
         },
+        notifications: {
+            whatsappConfigured: isWhatsAppConfigured()
+        },
         timestamp: new Date().toISOString()
     });
 });
@@ -110,8 +121,13 @@ app.use('/api/sponsor-inquiries', sponsorInquiryRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/workshop', workshopRoutes);
+app.use('/api/workshop/projects', workshopProjectRoutes);
 app.use('/api/workshop/attendance', attendanceRoutes);
 app.use('/api/quiz', quizRoutes);
+// Engagement first: its /admin/comments and /admin/analytics routes must win over /admin/:id.
+app.use('/api/blog', blogEngagementRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/community', communityRoutes);
 
 // Global error handler
 app.use((err, req, res, _next) => {
