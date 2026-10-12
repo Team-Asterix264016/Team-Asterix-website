@@ -17,6 +17,7 @@ export default function QuizAdmin({ showStatus }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [creatingPresetId, setCreatingPresetId] = useState('');
 
     // Modal states
     const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -134,6 +135,83 @@ export default function QuizAdmin({ showStatus }) {
         }
     };
 
+    // One-click build of a ready paper: no form, no typing. The quiz lands as a
+    // DRAFT with a placeholder schedule, so it cannot be taken by anyone until
+    // the organiser sets the real times and publishes it.
+    const handleCreateFromPreset = async (preset) => {
+        // Two copies of the same paper would split the leaderboard, so say so
+        // before building a second one.
+        const existing = quizzes.find(
+            (q) => q.title === preset.title || (preset.slug && q.slug === preset.slug)
+        );
+        if (
+            existing &&
+            !window.confirm(
+                `"${preset.title}" already exists in the list (${existing.submissionCount} participants so far).\n\nBuilding it again creates a SECOND, separate quiz with its own link and its own leaderboard. Continue anyway?`
+            )
+        ) {
+            return;
+        }
+
+        if (
+            !window.confirm(
+                `Create "${preset.title}" with all ${preset.questions.length} questions?\n\nIt is saved as a DRAFT with placeholder times — nobody can open it until you set your own exam times and switch it to Published.`
+            )
+        ) {
+            return;
+        }
+
+        setCreatingPresetId(preset.presetId);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+
+            // Placeholder window: tomorrow morning. Deliberately a placeholder —
+            // the draft status is what keeps it shut until the times are set.
+            const start = new Date();
+            start.setDate(start.getDate() + 1);
+            start.setHours(9, 0, 0, 0);
+            const end = new Date(start);
+            end.setHours(10, 0, 0, 0);
+
+            const res = await fetch(apiUrl('/api/quiz/admin/create'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: preset.title,
+                    description: preset.description,
+                    slug: preset.slug,
+                    durationMinutes: preset.durationMinutes,
+                    passingPercentage: preset.passingPercentage,
+                    startTime: start.toISOString(),
+                    endTime: end.toISOString(),
+                    resultsPublishTime: end.toISOString(),
+                    showExplanations: preset.showExplanations !== false,
+                    shuffleQuestions: Boolean(preset.shuffleQuestions),
+                    instantFeedback: Boolean(preset.instantFeedback),
+                    questions: preset.questions,
+                    status: 'draft'
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to create the quiz');
+
+            await fetchQuizzes();
+            if (showStatus) {
+                showStatus(
+                    `✓ "${preset.title}" created as a draft. Hit Edit to set your exam times, then switch it to Published.`
+                );
+            }
+        } catch (err) {
+            alert('Could not create the quiz: ' + err.message);
+        } finally {
+            setCreatingPresetId('');
+        }
+    };
+
     // Open the big-screen live leaderboard in its own tab, so the admin panel
     // stays usable on the operator's laptop while the projector shows the board.
     const handleOpenProjector = (quiz) => {
@@ -231,6 +309,76 @@ export default function QuizAdmin({ showStatus }) {
                 </div>
             )}
 
+            {/* Ready-made papers: build one with a single click, no form filling */}
+            {QUIZ_PRESETS.length > 0 && (
+                <div className="shadow-brutal-6 space-y-3 border-4 border-slate-900 bg-violet-50 p-5">
+                    <div>
+                        <h3 className="flex items-center gap-1.5 font-mono text-sm font-black text-slate-900 uppercase">
+                            <span>⚡</span>
+                            <span>Ready-Made Papers</span>
+                        </h3>
+                        <p className="mt-0.5 font-mono text-[11px] font-bold text-slate-600">
+                            Prepared question sets with their answer keys. One click builds the whole quiz —
+                            it is saved as a draft, so nobody can open it until you set your exam times and
+                            publish it.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        {QUIZ_PRESETS.map((preset) => {
+                            const isBuilding = creatingPresetId === preset.presetId;
+                            return (
+                                <div
+                                    key={preset.presetId}
+                                    className="flex flex-wrap items-center justify-between gap-3 border-2 border-slate-900 bg-white p-3.5"
+                                >
+                                    <div className="min-w-[14rem] flex-1">
+                                        <strong className="block text-sm font-black text-slate-900 uppercase">
+                                            {preset.title}
+                                        </strong>
+                                        <span className="mt-0.5 block font-mono text-[11px] font-bold text-slate-600">
+                                            {preset.summary}
+                                        </span>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px] font-bold text-slate-500">
+                                            <span>{preset.questions.length} MCQs</span>
+                                            <span>•</span>
+                                            <span>{preset.durationMinutes} mins</span>
+                                            {preset.instantFeedback && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span className="border border-amber-600 bg-amber-200 px-1.5 py-0.5 text-amber-950 uppercase">
+                                                        ⚡ Answers on the spot
+                                                    </span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleCreateFromPreset(preset)}
+                                        disabled={Boolean(creatingPresetId)}
+                                        className="press shadow-brutal-3 flex cursor-pointer items-center gap-1.5 border-2 border-slate-900 bg-violet-300 px-4 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+                                    >
+                                        {isBuilding ? (
+                                            <>
+                                                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                <span>Building...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>⚡</span>
+                                                <span>Create This Quiz</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Quiz List */}
             {isLoading && quizzes.length === 0 ? (
                 <div className="shadow-brutal-6 border-4 border-slate-900 bg-white p-12 text-center font-mono font-black text-slate-500 uppercase">
@@ -301,6 +449,14 @@ export default function QuizAdmin({ showStatus }) {
                                             {quiz.instantFeedback && (
                                                 <span className="border border-amber-600 bg-amber-200 px-2 py-0.5 font-mono text-[10px] font-black text-amber-950 uppercase">
                                                     ⚡ Answers On The Spot
+                                                </span>
+                                            )}
+
+                                            {quiz.status !== 'published' && (
+                                                <span className="border border-slate-900 bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">
+                                                    {quiz.status === 'draft'
+                                                        ? '✎ Draft — not open yet'
+                                                        : '🗄 Archived'}
                                                 </span>
                                             )}
                                         </div>
@@ -703,6 +859,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
     const [showExplanations, setShowExplanations] = useState(initialData?.showExplanations !== false);
     const [shuffleQuestions, setShuffleQuestions] = useState(Boolean(initialData?.shuffleQuestions));
     const [instantFeedback, setInstantFeedback] = useState(Boolean(initialData?.instantFeedback));
+    const [status, setStatus] = useState(initialData?.status || 'published');
 
     // Ready-made papers from src/data/quizPresets.js
     const [selectedPresetId, setSelectedPresetId] = useState('');
@@ -910,6 +1067,7 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
                 showExplanations,
                 shuffleQuestions,
                 instantFeedback,
+                status,
                 questions
             };
 
@@ -1104,10 +1262,37 @@ function QuizEditorModal({ initialData, onClose, onSaved }) {
 
                             {/* Exam Schedule Window */}
                             <div className="shadow-brutal-4 space-y-3 border-3 border-slate-900 bg-amber-50 p-4">
-                                <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
-                                    <span>⏳</span>
-                                    <span>Exam Examination Window (When students can join)</span>
-                                </h4>
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <h4 className="flex items-center gap-1.5 font-mono text-xs font-black text-slate-900 uppercase">
+                                        <span>⏳</span>
+                                        <span>Exam Examination Window (When students can join)</span>
+                                    </h4>
+                                    <label className="flex items-center gap-2 font-mono text-[11px] font-black text-slate-700 uppercase">
+                                        <span>Status</span>
+                                        <select
+                                            value={status}
+                                            onChange={(e) => setStatus(e.target.value)}
+                                            className={`cursor-pointer border-2 border-slate-900 px-2 py-1 font-mono text-[11px] font-black uppercase ${
+                                                status === 'published'
+                                                    ? 'bg-emerald-300 text-slate-950'
+                                                    : 'bg-slate-800 text-white'
+                                            }`}
+                                        >
+                                            <option value="draft">Draft — nobody can open it</option>
+                                            <option value="published">
+                                                Published — open to participants
+                                            </option>
+                                            <option value="archived">Archived — retired</option>
+                                        </select>
+                                    </label>
+                                </div>
+                                {status === 'draft' && (
+                                    <p className="border-2 border-slate-900 bg-slate-100 p-2.5 font-mono text-[11px] font-bold text-slate-700">
+                                        This quiz is a draft: its link will not open for anyone. Set your exam
+                                        times below, then switch Status to <strong>Published</strong> to let
+                                        participants in.
+                                    </p>
+                                )}
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                     <div>
                                         <label className="mb-1 block font-mono text-[11px] font-bold text-slate-700">
