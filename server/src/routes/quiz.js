@@ -124,6 +124,7 @@ router.post('/admin/create', authenticateToken, requireDb, async (req, res) => {
             resultsPublishTime,
             manualResultsRelease,
             showExplanations,
+            instantFeedback,
             questions,
             passingPercentage,
             shuffleQuestions,
@@ -177,6 +178,7 @@ router.post('/admin/create', authenticateToken, requireDb, async (req, res) => {
             resultsPublishTime: resultsPublishTime ? new Date(resultsPublishTime) : new Date(endTime),
             manualResultsRelease: Boolean(manualResultsRelease),
             showExplanations: showExplanations !== false,
+            instantFeedback: Boolean(instantFeedback),
             questions: questions.map(q => ({
                 questionText: q.questionText.trim(),
                 options: q.options.map(opt => String(opt).trim()),
@@ -223,6 +225,7 @@ router.put('/admin/:id', authenticateToken, requireDb, async (req, res) => {
             resultsPublishTime,
             manualResultsRelease,
             showExplanations,
+            instantFeedback,
             questions,
             passingPercentage,
             shuffleQuestions,
@@ -238,6 +241,7 @@ router.put('/admin/:id', authenticateToken, requireDb, async (req, res) => {
         if (resultsPublishTime) quiz.resultsPublishTime = new Date(resultsPublishTime);
         if (manualResultsRelease !== undefined) quiz.manualResultsRelease = Boolean(manualResultsRelease);
         if (showExplanations !== undefined) quiz.showExplanations = Boolean(showExplanations);
+        if (instantFeedback !== undefined) quiz.instantFeedback = Boolean(instantFeedback);
         if (passingPercentage !== undefined) quiz.passingPercentage = Number(passingPercentage);
         if (shuffleQuestions !== undefined) quiz.shuffleQuestions = Boolean(shuffleQuestions);
         if (shuffleOptions !== undefined) quiz.shuffleOptions = Boolean(shuffleOptions);
@@ -345,6 +349,120 @@ router.get('/admin/:id/submissions', authenticateToken, requireDb, async (req, r
 });
 
 /**
+ * GET /api/quiz/admin/:id/leaderboard
+ * Compact live feed for the projector screen. Polled every few seconds, so it
+ * returns only what the big screen draws — the ranked names, the headline
+ * counters and per-question accuracy — never the answer sheets themselves.
+ *
+ * Query: ?limit=10 (how many ranks to return, 1–50).
+ */
+router.get('/admin/:id/leaderboard', authenticateToken, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid quiz ID.' });
+        }
+
+        const quiz = await Quiz.findById(id).lean();
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found.' });
+
+        const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+        const submissions = await QuizSubmission.find({ quizId: id })
+            .select('userName rollNo userEmail score maxScore percentage passed timeSpentSeconds status submittedAt answers')
+            .sort({ score: -1, timeSpentSeconds: 1, submittedAt: 1 })
+            .lean();
+
+        const finished = submissions.filter(s => s.status === 'completed' || s.status === 'timed-out');
+        const inProgress = submissions.filter(s => s.status === 'in-progress');
+
+        // Answer-on-the-spot papers are scored as they go, so people still
+        // writing already have a live score worth showing on the board.
+        const board = quiz.instantFeedback ? submissions : finished;
+        const ranked = [...board]
+            .sort((a, b) => {
+                if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+                return (a.timeSpentSeconds || 0) - (b.timeSpentSeconds || 0);
+            })
+            .slice(0, limit)
+            .map((s, idx) => ({
+                rank: idx + 1,
+                name: s.userName,
+                rollNo: s.rollNo || '',
+                score: s.score || 0,
+                maxScore: s.maxScore || quiz.totalPoints || 0,
+                percentage: s.percentage || 0,
+                answered: (s.answers || []).length,
+                passed: Boolean(s.passed),
+                live: s.status === 'in-progress',
+                timeSpentSeconds: s.timeSpentSeconds || 0
+            }));
+
+        // Per-question accuracy, so the room can see which question tripped
+        // everyone up right after it is answered.
+        const questionStats = quiz.questions.map((q, idx) => {
+            let attempts = 0;
+            let correct = 0;
+            submissions.forEach(sub => {
+                const ans = (sub.answers || []).find(
+                    a => String(a.questionId) === String(q._id) && a.selectedOptionIndex >= 0
+                );
+                if (!ans) return;
+                attempts += 1;
+                if (ans.isCorrect) correct += 1;
+            });
+            return {
+                number: idx + 1,
+                questionText: q.questionText,
+                correctOptionIndex: q.correctOptionIndex,
+                options: q.options,
+                attempts,
+                correct,
+                accuracy: attempts ? Math.round((correct / attempts) * 100) : 0
+            };
+        });
+
+        const avgPercentage = finished.length
+            ? Math.round((finished.reduce((sum, s) => sum + (s.percentage || 0), 0) / finished.length) * 10) / 10
+            : 0;
+
+        const now = new Date();
+        let liveState = 'upcoming';
+        if (now >= new Date(quiz.startTime) && now <= new Date(quiz.endTime)) liveState = 'active';
+        else if (now > new Date(quiz.endTime)) liveState = 'ended';
+
+        res.json({
+            success: true,
+            quiz: {
+                id: quiz._id.toString(),
+                title: quiz.title,
+                slug: quiz.slug,
+                totalPoints: quiz.totalPoints,
+                totalQuestions: quiz.questions.length,
+                instantFeedback: Boolean(quiz.instantFeedback),
+                passingPercentage: quiz.passingPercentage,
+                startTime: quiz.startTime,
+                endTime: quiz.endTime,
+                liveState
+            },
+            stats: {
+                started: submissions.length,
+                inProgress: inProgress.length,
+                completed: finished.length,
+                passed: finished.filter(s => s.passed).length,
+                avgPercentage
+            },
+            leaderboard: ranked,
+            questionStats,
+            updatedAt: now.toISOString()
+        });
+    } catch (err) {
+        console.error('Error building quiz leaderboard:', err);
+        res.status(500).json({ error: 'Failed to build leaderboard.' });
+    }
+});
+
+/**
  * GET /api/quiz/admin/:id/export
  * Downloads CSV of all submissions for spreadsheets.
  */
@@ -440,7 +558,8 @@ router.get('/:idOrSlug/info', requireDb, async (req, res) => {
                 stage,
                 questionCount: quiz.questions?.length || 0,
                 totalPoints: quiz.totalPoints,
-                passingPercentage: quiz.passingPercentage
+                passingPercentage: quiz.passingPercentage,
+                instantFeedback: Boolean(quiz.instantFeedback)
             }
         });
     } catch (err) {
@@ -546,6 +665,25 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
             questionsToSend.sort(() => Math.random() - 0.5);
         }
 
+        // In answer-on-the-spot mode every answer is graded and stored as it is
+        // given, so a participant who reloads gets their locked answers back
+        // rather than an empty paper.
+        // Their verdicts come back too: these questions are already answered and
+        // locked, so the key for them is no longer a secret.
+        const lockedAnswers = quiz.instantFeedback
+            ? (submission.answers || []).map(a => {
+                  const q = quiz.questions.id(a.questionId);
+                  return {
+                      questionId: a.questionId.toString(),
+                      selectedOptionIndex: a.selectedOptionIndex,
+                      isCorrect: a.isCorrect,
+                      pointsEarned: a.pointsEarned,
+                      correctOptionIndex: q ? q.correctOptionIndex : undefined,
+                      explanation: quiz.showExplanations && q ? q.explanation || '' : ''
+                  };
+              })
+            : [];
+
         res.json({
             success: true,
             submissionId: submission._id.toString(),
@@ -554,11 +692,114 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
             remainingSeconds,
             questions: questionsToSend,
             totalPoints: quiz.totalPoints,
-            passingPercentage: quiz.passingPercentage
+            passingPercentage: quiz.passingPercentage,
+            instantFeedback: Boolean(quiz.instantFeedback),
+            showExplanations: quiz.showExplanations !== false,
+            lockedAnswers
         });
     } catch (err) {
         console.error('Error starting quiz:', err);
         res.status(500).json({ error: 'Failed to start quiz: ' + err.message });
+    }
+});
+
+/**
+ * POST /api/quiz/:idOrSlug/answer
+ * Answer-on-the-spot. Grades one question the moment the participant locks it
+ * in and hands back the verdict, the right option and the explanation.
+ *
+ * Only available on quizzes with instantFeedback switched on. The answer key
+ * never leaves the server until the question has actually been answered, and
+ * an answered question cannot be changed afterwards — otherwise the verdict
+ * would simply tell everyone what to pick.
+ */
+router.post('/:idOrSlug/answer', requireDb, async (req, res) => {
+    try {
+        const quiz = await findQuizByIdOrSlug(req.params.idOrSlug);
+        if (!quiz || quiz.status !== 'published') {
+            return res.status(404).json({ error: 'This quiz is currently unavailable.' });
+        }
+        if (!quiz.instantFeedback) {
+            return res.status(400).json({ error: 'This quiz does not reveal answers during the paper.' });
+        }
+
+        const { submissionId, questionId, selectedOptionIndex } = req.body || {};
+        if (!submissionId || !mongoose.isValidObjectId(submissionId)) {
+            return res.status(400).json({ error: 'Valid submission ID is required.' });
+        }
+        if (!questionId || !mongoose.isValidObjectId(questionId)) {
+            return res.status(400).json({ error: 'Valid question ID is required.' });
+        }
+
+        const submission = await QuizSubmission.findById(submissionId);
+        if (!submission) return res.status(404).json({ error: 'Submission session not found.' });
+        if (String(submission.quizId) !== String(quiz._id)) {
+            return res.status(400).json({ error: 'This answer does not belong to the quiz.' });
+        }
+        if (submission.status !== 'in-progress') {
+            return res.status(409).json({ error: 'This attempt has already been submitted.' });
+        }
+
+        // Respect the same deadline the runner counts down to.
+        const now = new Date();
+        const deadlineMs = Math.min(
+            new Date(quiz.endTime).getTime(),
+            new Date(submission.startedAt).getTime() + quiz.durationMinutes * 60 * 1000
+        );
+        if (now.getTime() > deadlineMs) {
+            return res.status(403).json({ error: 'Time is up for this attempt.', expired: true });
+        }
+
+        const question = quiz.questions.id(questionId);
+        if (!question) return res.status(404).json({ error: 'Question not found in this quiz.' });
+
+        const alreadyAnswered = (submission.answers || []).find(
+            a => String(a.questionId) === String(questionId)
+        );
+        if (alreadyAnswered) {
+            return res.status(409).json({
+                error: 'You have already answered this question.',
+                alreadyAnswered: true,
+                selectedOptionIndex: alreadyAnswered.selectedOptionIndex,
+                correctOptionIndex: question.correctOptionIndex,
+                isCorrect: alreadyAnswered.isCorrect,
+                pointsEarned: alreadyAnswered.pointsEarned,
+                explanation: quiz.showExplanations ? question.explanation || '' : ''
+            });
+        }
+
+        const selected = Number(selectedOptionIndex);
+        if (!Number.isInteger(selected) || selected < 0 || selected >= question.options.length) {
+            return res.status(400).json({ error: 'Please choose one of the listed options.' });
+        }
+
+        const isCorrect = selected === question.correctOptionIndex;
+        const pointsEarned = isCorrect ? question.points || 1 : 0;
+
+        submission.answers.push({
+            questionId: question._id,
+            selectedOptionIndex: selected,
+            isCorrect,
+            pointsEarned
+        });
+        submission.score = submission.answers.reduce((sum, a) => sum + (a.pointsEarned || 0), 0);
+        submission.maxScore = quiz.totalPoints || submission.maxScore;
+        await submission.save();
+
+        res.json({
+            success: true,
+            isCorrect,
+            correctOptionIndex: question.correctOptionIndex,
+            pointsEarned,
+            explanation: quiz.showExplanations ? question.explanation || '' : '',
+            runningScore: submission.score,
+            answeredCount: submission.answers.length,
+            totalQuestions: quiz.questions.length,
+            maxScore: quiz.totalPoints
+        });
+    } catch (err) {
+        console.error('Error grading instant answer:', err);
+        res.status(500).json({ error: 'Failed to grade this answer: ' + err.message });
     }
 });
 
@@ -596,6 +837,16 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
         if (Array.isArray(answers)) {
             answers.forEach(a => {
                 if (a.questionId) {
+                    userAnswersMap.set(String(a.questionId), Number(a.selectedOptionIndex));
+                }
+            });
+        }
+
+        // Answers locked in during an answer-on-the-spot paper were already
+        // graded on the server, so they win over whatever the client posts.
+        if (quiz.instantFeedback) {
+            (submission.answers || []).forEach(a => {
+                if (a.questionId && a.selectedOptionIndex >= 0) {
                     userAnswersMap.set(String(a.questionId), Number(a.selectedOptionIndex));
                 }
             });

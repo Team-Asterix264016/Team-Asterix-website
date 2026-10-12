@@ -79,8 +79,8 @@ export default function QuizRunner({ onBack }) {
             return { name: '', email: '', rollNo: '' };
         }
     });
-    const [gatekeeperError] = useState('');
-    const [isStarting] = useState(false);
+    const [gatekeeperError, setGatekeeperError] = useState('');
+    const [isStarting, setIsStarting] = useState(false);
 
     // Lookup / Return flow state
     const [lookupEmail, setLookupEmail] = useState('');
@@ -88,11 +88,20 @@ export default function QuizRunner({ onBack }) {
     const [lookupError, setLookupError] = useState('');
 
     // Active Exam state
-    const [submissionId] = useState('');
-    const [questions] = useState([]);
+    const [submissionId, setSubmissionId] = useState('');
+    const [questions, setQuestions] = useState([]);
     const [currentQIndex, setCurrentQIndex] = useState(0);
     const [answers, setAnswers] = useState({}); // { [questionId]: selectedOptionIndex }
-    const [remainingSeconds] = useState(0);
+    const [remainingSeconds, setRemainingSeconds] = useState(0);
+    const [deadline, setDeadline] = useState(null);
+
+    // Answer-on-the-spot state: each answer is graded by the server the moment
+    // it is locked in, and the verdict lands in `feedback` keyed by question.
+    // { [questionId]: { isCorrect, correctOptionIndex, explanation, pointsEarned } }
+    const [instantMode, setInstantMode] = useState(false);
+    const [feedback, setFeedback] = useState({});
+    const [gradingQuestionId, setGradingQuestionId] = useState(null);
+    const [liveScore, setLiveScore] = useState(0);
     const [isSubmittingExam, setIsSubmittingExam] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showPaletteDrawer, setShowPaletteDrawer] = useState(false);
@@ -227,6 +236,109 @@ export default function QuizRunner({ onBack }) {
     );
 
     // -------------------------------------------------------------
+    // 3. Gatekeeper: Open an Exam Session
+    // -------------------------------------------------------------
+    const handleStartQuiz = async (e) => {
+        if (e?.preventDefault) e.preventDefault();
+
+        const email = (participant.email || '').trim().toLowerCase();
+        const name = (participant.name || '').trim();
+
+        if (!email.includes('@')) {
+            setGatekeeperError('Please enter a valid email address.');
+            return;
+        }
+        if (!name) {
+            setGatekeeperError('Please enter your full name.');
+            return;
+        }
+
+        setGatekeeperError('');
+        setIsStarting(true);
+
+        try {
+            const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/start`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name, rollNo: (participant.rollNo || '').trim() })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                // Already written this paper? Jump straight to their scorecard.
+                if (data.alreadySubmitted) {
+                    setGatekeeperTab('lookup');
+                    setLookupEmail(email);
+                    await performLookup(email);
+                    return;
+                }
+                setGatekeeperError(data.error || 'Could not start the quiz.');
+                return;
+            }
+
+            // Remember the candidate so a refresh does not ask again.
+            try {
+                sessionStorage.setItem(
+                    'asterix_quiz_attendee',
+                    JSON.stringify({ name, email, rollNo: (participant.rollNo || '').trim() })
+                );
+            } catch {
+                // ignore
+            }
+            setParticipant((prev) => ({ ...prev, email, name }));
+
+            setSubmissionId(data.submissionId);
+            setQuestions(data.questions || []);
+            setDeadline(data.deadline);
+            setRemainingSeconds(Number(data.remainingSeconds) || 0);
+            setInstantMode(Boolean(data.instantFeedback));
+            setCurrentQIndex(0);
+
+            if (data.instantFeedback) {
+                // Answers already graded on the server (an earlier visit) come
+                // back locked, with their verdicts.
+                const restoredAnswers = {};
+                const restoredFeedback = {};
+                let score = 0;
+                (data.lockedAnswers || []).forEach((a) => {
+                    restoredAnswers[a.questionId] = a.selectedOptionIndex;
+                    restoredFeedback[a.questionId] = {
+                        isCorrect: a.isCorrect,
+                        pointsEarned: a.pointsEarned,
+                        correctOptionIndex: a.correctOptionIndex,
+                        explanation: a.explanation || ''
+                    };
+                    score += a.pointsEarned || 0;
+                });
+                setAnswers(restoredAnswers);
+                setFeedback(restoredFeedback);
+                setLiveScore(score);
+                // Resume at the first unanswered question.
+                const nextIdx = (data.questions || []).findIndex((q) => restoredAnswers[q.id] === undefined);
+                if (nextIdx > 0) setCurrentQIndex(nextIdx);
+            } else {
+                // Restore a local draft from a dropped connection, if any.
+                try {
+                    const draft = JSON.parse(
+                        localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${email}`) || '{}'
+                    );
+                    setAnswers(draft && typeof draft === 'object' ? draft : {});
+                } catch {
+                    setAnswers({});
+                }
+            }
+
+            setViewMode('exam');
+        } catch (err) {
+            console.error('Error starting quiz:', err);
+            setGatekeeperError('Network error while starting the quiz. Please try again.');
+        } finally {
+            setIsStarting(false);
+        }
+    };
+
+    // -------------------------------------------------------------
     // 2. Exam Timer Countdown & Auto-Submit
     // -------------------------------------------------------------
     const answersRef = useRef(answers);
@@ -292,10 +404,99 @@ export default function QuizRunner({ onBack }) {
         [submissionId, quizIdOrSlug, participant.email, quizData, performLookup]
     );
 
+    // Live countdown against the server-issued deadline, with auto-submit when
+    // it runs out. Wall-clock based, so a sleeping tab cannot buy extra time.
+    const submitRef = useRef(submitExamAction);
+    useEffect(() => {
+        submitRef.current = submitExamAction;
+    }, [submitExamAction]);
+
+    useEffect(() => {
+        if (viewMode !== 'exam' || !deadline) return;
+
+        const deadlineMs = new Date(deadline).getTime();
+        let hasAutoSubmitted = false;
+
+        const tick = () => {
+            const left = Math.max(0, Math.floor((deadlineMs - Date.now()) / 1000));
+            setRemainingSeconds(left);
+            if (left <= 0 && !hasAutoSubmitted) {
+                hasAutoSubmitted = true;
+                submitRef.current?.(answersRef.current);
+            }
+        };
+
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, [viewMode, deadline]);
+
     // -------------------------------------------------------------
     // 5. Option Selection & Local Draft Save
     // -------------------------------------------------------------
+
+    // Answer-on-the-spot: send the choice to the server, which grades it and
+    // sends back the verdict. The answer locks once it is in — revealing the
+    // right option would otherwise just hand over the answer key.
+    const submitInstantAnswer = async (questionId, optionIndex) => {
+        if (feedback[questionId] || gradingQuestionId) return;
+
+        setGradingQuestionId(questionId);
+        setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+
+        try {
+            const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/answer`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ submissionId, questionId, selectedOptionIndex: optionIndex })
+            });
+            const data = await res.json();
+
+            if (!res.ok && !data.alreadyAnswered) {
+                // Roll the selection back so they can try again.
+                setAnswers((prev) => {
+                    const updated = { ...prev };
+                    delete updated[questionId];
+                    return updated;
+                });
+                alert(data.error || 'Could not record that answer. Please try again.');
+                return;
+            }
+
+            if (data.alreadyAnswered) {
+                setAnswers((prev) => ({ ...prev, [questionId]: data.selectedOptionIndex }));
+            }
+
+            setFeedback((prev) => ({
+                ...prev,
+                [questionId]: {
+                    isCorrect: Boolean(data.isCorrect),
+                    correctOptionIndex: data.correctOptionIndex,
+                    explanation: data.explanation || '',
+                    pointsEarned: data.pointsEarned || 0
+                }
+            }));
+
+            if (typeof data.runningScore === 'number') setLiveScore(data.runningScore);
+        } catch (err) {
+            console.error('Error grading answer:', err);
+            setAnswers((prev) => {
+                const updated = { ...prev };
+                delete updated[questionId];
+                return updated;
+            });
+            alert('Network error while recording that answer. Please try again.');
+        } finally {
+            setGradingQuestionId(null);
+        }
+    };
+
     const handleSelectOption = (questionId, optionIndex) => {
+        if (instantMode) {
+            submitInstantAnswer(questionId, optionIndex);
+            return;
+        }
+
         setAnswers((prev) => {
             const updated = { ...prev };
             if (updated[questionId] === optionIndex) {
@@ -340,6 +541,8 @@ export default function QuizRunner({ onBack }) {
 
     const totalQuestionsCount = questions.length;
     const currentQ = questions[currentQIndex];
+    const currentQFeedback = currentQ ? feedback[currentQ.id] : null;
+    const isGradingCurrent = Boolean(currentQ && gradingQuestionId === currentQ.id);
 
     const copyJoinLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -679,7 +882,22 @@ export default function QuizRunner({ onBack }) {
                                             will begin.
                                         </div>
                                         <div>• The quiz will auto-submit when the countdown expires.</div>
-                                        <div>• Your answers are autosaved as you make your selections.</div>
+                                        {quizData.instantFeedback ? (
+                                            <>
+                                                <div>
+                                                    • Answers are marked on the spot: you see whether you got
+                                                    it right as soon as you pick.
+                                                </div>
+                                                <div>
+                                                    • Because the answer is revealed, a choice is final — you
+                                                    cannot change it afterwards.
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div>
+                                                • Your answers are autosaved as you make your selections.
+                                            </div>
+                                        )}
                                         <div>
                                             • You can check your evaluated score and class ranking once
                                             results are published.
@@ -813,6 +1031,16 @@ export default function QuizRunner({ onBack }) {
                             <span>{formatTime(remainingSeconds)}</span>
                         </div>
 
+                        {/* Live score (answer-on-the-spot only) */}
+                        {instantMode && (
+                            <div className="shadow-brutal-2 hidden items-center gap-1.5 border-2 border-slate-900 bg-emerald-300 px-2.5 py-1.5 font-mono text-sm font-black text-slate-900 sm:flex sm:px-4 sm:text-base">
+                                <span>★</span>
+                                <span>
+                                    {liveScore}/{quizData.totalPoints || totalQuestionsCount}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Question Palette Drawer toggle */}
                         <button
                             type="button"
@@ -852,6 +1080,19 @@ export default function QuizRunner({ onBack }) {
                             {questions.map((q, idx) => {
                                 const isAnswered = answers[q.id] !== undefined;
                                 const isCurrent = idx === currentQIndex;
+                                const verdict = instantMode ? feedback[q.id] : null;
+
+                                let paletteClass = 'bg-slate-50 text-slate-700 hover:bg-slate-100';
+                                if (isCurrent) {
+                                    paletteClass =
+                                        'shadow-brutal-2 bg-sky-400 text-slate-900 ring-2 ring-sky-500 ring-offset-1';
+                                } else if (verdict) {
+                                    paletteClass = verdict.isCorrect
+                                        ? 'bg-emerald-300 text-slate-900'
+                                        : 'bg-rose-300 text-rose-950';
+                                } else if (isAnswered) {
+                                    paletteClass = 'bg-emerald-300 text-slate-900';
+                                }
 
                                 return (
                                     <button
@@ -861,13 +1102,7 @@ export default function QuizRunner({ onBack }) {
                                             setCurrentQIndex(idx);
                                             setShowPaletteDrawer(false);
                                         }}
-                                        className={`press cursor-pointer border-2 border-slate-900 py-2 text-center font-black transition-all ${
-                                            isCurrent
-                                                ? 'shadow-brutal-2 bg-sky-400 text-slate-900 ring-2 ring-sky-500 ring-offset-1'
-                                                : isAnswered
-                                                  ? 'bg-emerald-300 text-slate-900'
-                                                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                                        }`}
+                                        className={`press cursor-pointer border-2 border-slate-900 py-2 text-center font-black transition-all ${paletteClass}`}
                                     >
                                         {idx + 1}
                                     </button>
@@ -878,8 +1113,14 @@ export default function QuizRunner({ onBack }) {
                         <div className="space-y-1 border-t border-slate-200 pt-2 font-mono text-[10px]">
                             <div className="flex items-center gap-2">
                                 <span className="inline-block h-3 w-3 border border-slate-900 bg-emerald-300"></span>
-                                <span>Answered</span>
+                                <span>{instantMode ? 'Correct' : 'Answered'}</span>
                             </div>
+                            {instantMode && (
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-block h-3 w-3 border border-slate-900 bg-rose-300"></span>
+                                    <span>Wrong</span>
+                                </div>
+                            )}
                             <div className="flex items-center gap-2">
                                 <span className="inline-block h-3 w-3 border border-slate-900 bg-slate-50"></span>
                                 <span>Unanswered</span>
@@ -916,31 +1157,105 @@ export default function QuizRunner({ onBack }) {
                                         const isSelected = answers[currentQ.id] === optIdx;
                                         const optionLetter = String.fromCharCode(65 + optIdx); // A, B, C, D
 
+                                        // Answer-on-the-spot: once graded, the right
+                                        // option turns green and a wrong pick turns red.
+                                        const verdict = instantMode ? currentQFeedback : null;
+                                        const isRightOption =
+                                            verdict && verdict.correctOptionIndex === optIdx;
+                                        const isWrongPick = verdict && isSelected && !verdict.isCorrect;
+                                        const isLocked = Boolean(verdict) || isGradingCurrent;
+
+                                        let optionClass =
+                                            'bg-slate-50 font-bold text-slate-800 hover:bg-sky-50';
+                                        if (isRightOption) {
+                                            optionClass =
+                                                'shadow-brutal-3 bg-emerald-300 font-black text-slate-900';
+                                        } else if (isWrongPick) {
+                                            optionClass =
+                                                'shadow-brutal-3 bg-rose-300 font-black text-rose-950';
+                                        } else if (verdict) {
+                                            optionClass = 'bg-slate-100 font-bold text-slate-500';
+                                        } else if (isSelected) {
+                                            optionClass =
+                                                'shadow-brutal-3 translate-x-1 bg-emerald-300 font-black text-slate-900';
+                                        }
+
+                                        let badgeClass = 'bg-white text-slate-900';
+                                        if (isRightOption) badgeClass = 'bg-emerald-700 text-white';
+                                        else if (isWrongPick) badgeClass = 'bg-rose-700 text-white';
+                                        else if (isSelected) badgeClass = 'bg-slate-900 text-white';
+
                                         return (
                                             <button
                                                 key={optIdx}
                                                 type="button"
+                                                disabled={isLocked}
                                                 onClick={() => handleSelectOption(currentQ.id, optIdx)}
-                                                className={`press flex w-full cursor-pointer items-start gap-3.5 border-2 border-slate-900 p-4 text-left font-mono text-xs transition-all sm:text-sm ${
-                                                    isSelected
-                                                        ? 'shadow-brutal-3 translate-x-1 bg-emerald-300 font-black text-slate-900'
-                                                        : 'bg-slate-50 font-bold text-slate-800 hover:bg-sky-50'
-                                                }`}
+                                                className={`press flex w-full items-start gap-3.5 border-2 border-slate-900 p-4 text-left font-mono text-xs transition-all sm:text-sm ${
+                                                    isLocked ? 'cursor-default' : 'cursor-pointer'
+                                                } ${optionClass}`}
                                             >
                                                 <span
-                                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-slate-900 text-xs font-black ${
-                                                        isSelected
-                                                            ? 'bg-slate-900 text-white'
-                                                            : 'bg-white text-slate-900'
-                                                    }`}
+                                                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-slate-900 text-xs font-black ${badgeClass}`}
                                                 >
                                                     {optionLetter}
                                                 </span>
                                                 <span className="flex-1 pt-0.5 leading-normal">{opt}</span>
+                                                {isRightOption && (
+                                                    <span className="shrink-0 pt-0.5 text-base">✓</span>
+                                                )}
+                                                {isWrongPick && (
+                                                    <span className="shrink-0 pt-0.5 text-base">✕</span>
+                                                )}
                                             </button>
                                         );
                                     })}
                                 </div>
+
+                                {/* Answer-on-the-spot verdict panel */}
+                                {isGradingCurrent && !currentQFeedback && (
+                                    <div className="flex items-center gap-2 border-2 border-slate-900 bg-slate-50 p-3 font-mono text-xs font-bold text-slate-700">
+                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                        <span>Checking your answer...</span>
+                                    </div>
+                                )}
+
+                                {currentQFeedback && (
+                                    <div
+                                        className={`shadow-brutal-3 space-y-2 border-2 border-slate-900 p-4 font-mono text-xs ${
+                                            currentQFeedback.isCorrect
+                                                ? 'bg-emerald-100 text-emerald-950'
+                                                : 'bg-rose-100 text-rose-950'
+                                        }`}
+                                    >
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <span className="text-sm font-black uppercase">
+                                                {currentQFeedback.isCorrect ? '✓ Correct!' : '✕ Not quite'}
+                                            </span>
+                                            <span className="border border-slate-900 bg-white px-2 py-0.5 text-[11px] font-black">
+                                                +{currentQFeedback.pointsEarned || 0} pt
+                                            </span>
+                                        </div>
+
+                                        {!currentQFeedback.isCorrect &&
+                                            currentQFeedback.correctOptionIndex !== undefined && (
+                                                <p className="font-bold">
+                                                    Correct answer:{' '}
+                                                    {String.fromCharCode(
+                                                        65 + currentQFeedback.correctOptionIndex
+                                                    )}
+                                                    {'. '}
+                                                    {currentQ.options?.[currentQFeedback.correctOptionIndex]}
+                                                </p>
+                                            )}
+
+                                        {currentQFeedback.explanation && (
+                                            <p className="leading-relaxed whitespace-pre-wrap">
+                                                {currentQFeedback.explanation}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="p-8 text-center font-mono font-bold text-slate-500">
@@ -959,7 +1274,7 @@ export default function QuizRunner({ onBack }) {
                                 ← Previous
                             </button>
 
-                            {answers[currentQ?.id] !== undefined && (
+                            {!instantMode && answers[currentQ?.id] !== undefined && (
                                 <button
                                     type="button"
                                     onClick={() => handleClearOption(currentQ?.id)}
