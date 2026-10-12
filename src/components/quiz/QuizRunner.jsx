@@ -88,6 +88,8 @@ export default function QuizRunner({ onBack }) {
 
     // Active Exam state
     const [submissionId, setSubmissionId] = useState('');
+    const [attemptNumber, setAttemptNumber] = useState(1);
+    const [promptSecondAttemptModal, setPromptSecondAttemptModal] = useState(null);
     const [questions, setQuestions] = useState([]);
     const [currentQIndex, setCurrentQIndex] = useState(0);
     const [answers, setAnswers] = useState({}); // { [questionId]: selectedOptionIndex }
@@ -219,7 +221,12 @@ export default function QuizRunner({ onBack }) {
                 setResultData({
                     resultsPublished: false,
                     resultsPublishTime: data.resultsPublishTime || quizData?.resultsPublishTime,
-                    message: data.message
+                    message: data.message,
+                    attemptNumber: data.attemptNumber || attemptNumber,
+                    canTakeSecondAttempt: Boolean(data.canTakeSecondAttempt),
+                    remainingAttempts: data.remainingAttempts,
+                    userName: participant.name,
+                    userEmail: participant.email
                 });
                 setViewMode('submitted');
             }
@@ -230,7 +237,7 @@ export default function QuizRunner({ onBack }) {
             setIsSubmittingExam(false);
             setShowConfirmModal(false);
         }
-    }, [submissionId, quizIdOrSlug, participant.email, quizData]);
+    }, [submissionId, quizIdOrSlug, participant.email, participant.name, quizData, attemptNumber]);
 
     useEffect(() => {
         if (viewMode !== 'exam' || remainingSeconds <= 0) return;
@@ -253,8 +260,8 @@ export default function QuizRunner({ onBack }) {
     // -------------------------------------------------------------
     // 3. Gatekeeper: Start Quiz
     // -------------------------------------------------------------
-    const handleStartQuiz = async (e) => {
-        e.preventDefault();
+    const handleStartQuiz = async (e, startAttempt2Flag = false) => {
+        if (e && e.preventDefault) e.preventDefault();
         setGatekeeperError('');
 
         const cleanEmail = (participant.email || '').trim().toLowerCase();
@@ -289,7 +296,8 @@ export default function QuizRunner({ onBack }) {
                 body: JSON.stringify({
                     email: cleanEmail,
                     name: cleanName,
-                    rollNo: cleanRoll
+                    rollNo: cleanRoll,
+                    startAttempt2: Boolean(startAttempt2Flag)
                 })
             });
 
@@ -297,10 +305,10 @@ export default function QuizRunner({ onBack }) {
 
             if (!res.ok) {
                 if (data.alreadySubmitted) {
-                    // Already submitted: Redirect to result lookup!
+                    // All allowed attempts (2 of 2) used: Redirect to result lookup!
                     setLookupEmail(cleanEmail);
                     setGatekeeperTab('lookup');
-                    setGatekeeperError('You have already submitted this quiz! Check your results below.');
+                    setGatekeeperError(data.error || 'You have already completed all attempts (2 of 2) for this quiz. View your results below.');
                     performLookup(cleanEmail);
                     return;
                 }
@@ -308,18 +316,33 @@ export default function QuizRunner({ onBack }) {
                 return;
             }
 
+            if (data.promptAttempt2) {
+                // User has completed Attempt 1: prompt them to choose whether to start Attempt 2
+                setPromptSecondAttemptModal({
+                    ...data,
+                    email: cleanEmail,
+                    name: cleanName,
+                    rollNo: cleanRoll
+                });
+                return;
+            }
+
+            setPromptSecondAttemptModal(null);
             setSubmissionId(data.submissionId);
+            setAttemptNumber(data.attemptNumber || (startAttempt2Flag ? 2 : 1));
             setQuestions(data.questions || []);
             setRemainingSeconds(data.remainingSeconds || 60);
 
             // Restore any draft answers
             try {
-                const saved = localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${cleanEmail}`);
+                const saved = localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${cleanEmail}_att_${data.attemptNumber || 1}`);
                 if (saved) {
                     setAnswers(JSON.parse(saved));
+                } else {
+                    setAnswers({});
                 }
             } catch {
-                // ignore
+                setAnswers({});
             }
 
             setViewMode('exam');
@@ -330,6 +353,11 @@ export default function QuizRunner({ onBack }) {
         } finally {
             setIsStarting(false);
         }
+    };
+
+    const triggerStartAttempt2 = () => {
+        setPromptSecondAttemptModal(null);
+        handleStartQuiz(null, true);
     };
 
     // -------------------------------------------------------------
@@ -364,13 +392,16 @@ export default function QuizRunner({ onBack }) {
                 setResultData({
                     resultsPublished: false,
                     userName: data.userName,
+                    userEmail: data.userEmail || clean,
                     submittedAt: data.submittedAt,
                     resultsPublishTime: data.resultsPublishTime,
-                    message: data.message
+                    message: data.message,
+                    attemptCount: data.attemptCount,
+                    canTakeSecondAttempt: Boolean(data.canTakeSecondAttempt)
                 });
                 setViewMode('submitted');
             } else {
-                // Results released! Show full scorecard and answer review
+                // Results released! Show full scorecard, comparisons and answer review
                 setResultData({
                     resultsPublished: true,
                     ...data
@@ -716,6 +747,8 @@ export default function QuizRunner({ onBack }) {
                                     {/* Rules notice */}
                                     <div className="p-4 bg-slate-50 border-2 border-slate-900 font-mono text-[11px] text-slate-700 space-y-1">
                                         <span className="font-black text-slate-900 uppercase block">Assessment Rules:</span>
+                                        <div>• <strong>2 Attempts Granted:</strong> You can take this quiz up to 2 times. If you face issues, you can take a 2nd attempt.</div>
+                                        <div>• <strong>Best Score Counts:</strong> Your highest score out of the 2 attempts will be considered.</div>
                                         <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
                                         <div>• The quiz will auto-submit when the countdown expires.</div>
                                         <div>• Your answers are autosaved as you make your selections.</div>
@@ -802,6 +835,60 @@ export default function QuizRunner({ onBack }) {
                         )}
                     </div>
                 </main>
+
+                {/* Second Attempt Prompt Modal */}
+                {promptSecondAttemptModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs font-mono">
+                        <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-md w-full p-6 space-y-4 animate-in fade-in">
+                            <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-3">
+                                <span className="text-2xl">📝</span>
+                                <div>
+                                    <h3 className="font-black text-sm uppercase text-slate-900">
+                                        Attempt 1 Completed
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500 font-bold">
+                                        1 Attempt Remaining Out of 2
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p className="text-xs text-slate-700 leading-relaxed font-bold">
+                                You have already taken your first attempt for this quiz. Every participant is granted <strong>2 attempts</strong>.
+                            </p>
+
+                            <div className="p-3 bg-amber-50 border-2 border-slate-900 text-xs space-y-1">
+                                <div className="text-[10px] uppercase font-black text-amber-900">
+                                    Participant: {promptSecondAttemptModal.name} ({promptSecondAttemptModal.email})
+                                </div>
+                                <div className="text-slate-700">
+                                    If you faced network drops, device issues, or want to retake the quiz, you can start Attempt 2 now. Your higher score will count towards your ranking.
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const email = promptSecondAttemptModal.email;
+                                        setPromptSecondAttemptModal(null);
+                                        setGatekeeperTab('lookup');
+                                        performLookup(email);
+                                    }}
+                                    className="press flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-900 font-black text-xs uppercase cursor-pointer"
+                                >
+                                    View Attempt 1 Result
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={triggerStartAttempt2}
+                                    className="press flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                    <span>Start Attempt 2 →</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -816,9 +903,16 @@ export default function QuizRunner({ onBack }) {
             <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans select-none">
                 {/* Floating Top HUD */}
                 <header className="sticky top-0 z-40 bg-white border-b-4 border-slate-900 px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                         <span className="px-2 py-0.5 bg-slate-900 text-white font-mono font-black text-xs uppercase">
                             Q {currentQIndex + 1} / {totalQuestionsCount}
+                        </span>
+                        <span className={`px-2 py-0.5 border font-mono font-black text-xs uppercase shadow-[1px_1px_0px_#0f172a] ${
+                            attemptNumber === 2
+                                ? 'bg-purple-200 text-purple-950 border-purple-900'
+                                : 'bg-amber-200 text-amber-950 border-amber-900'
+                        }`}>
+                            Attempt {attemptNumber} of 2
                         </span>
                         <div className="hidden md:block">
                             <h2 className="font-black text-xs uppercase text-slate-900 truncate max-w-xs">
@@ -1143,6 +1237,38 @@ export default function QuizRunner({ onBack }) {
                             )}
                         </div>
 
+                        {/* Attempts Status & Retake Option */}
+                        <div className="p-5 bg-sky-50 border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] text-left space-y-3 font-mono">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <span className="font-black text-xs uppercase text-slate-900 flex items-center gap-1.5">
+                                    <span>🎯</span>
+                                    <span>Attempt {resultData?.attemptNumber || attemptNumber} of 2 Completed</span>
+                                </span>
+                                <span className={`px-2 py-0.5 border text-[10px] font-black uppercase ${
+                                    resultData?.canTakeSecondAttempt
+                                        ? 'bg-amber-300 text-amber-950 border-amber-900'
+                                        : 'bg-emerald-200 text-emerald-950 border-emerald-900'
+                                }`}>
+                                    {resultData?.canTakeSecondAttempt ? '1 Attempt Remaining' : 'All Attempts Completed (2/2)'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-700 font-bold">
+                                Every participant is granted <strong>2 attempts</strong>. If you experienced network lag, submission issues, or technical glitches during this attempt, you can retake the quiz using your second attempt. Your best score will be recorded.
+                            </p>
+                            {resultData?.canTakeSecondAttempt && (
+                                <div className="pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleStartQuiz(null, true)}
+                                        className="press w-full sm:w-auto px-5 py-2.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2"
+                                    >
+                                        <span>🔄</span>
+                                        <span>Start Attempt 2 Now →</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Instructions to Return Later */}
                         <div className="p-5 bg-sky-50 border-2 border-slate-900 text-left space-y-3 text-xs">
                             <div className="flex items-center gap-2 font-black uppercase text-sky-900">
@@ -1285,6 +1411,81 @@ export default function QuizRunner({ onBack }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Multi-Attempt History Comparison */}
+                    {resultData.attempts && resultData.attempts.length > 1 && (
+                        <div className="p-5 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] font-mono space-y-4">
+                            <div className="flex items-center justify-between flex-wrap gap-2 border-b-2 border-slate-200 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl">📊</span>
+                                    <h3 className="text-sm font-black uppercase text-slate-900">
+                                        Multi-Attempt Comparison
+                                    </h3>
+                                </div>
+                                <span className="px-2 py-0.5 bg-purple-100 border border-purple-400 text-purple-900 text-[10px] font-black uppercase">
+                                    2 of 2 Attempts Completed
+                                </span>
+                            </div>
+
+                            <p className="text-xs text-slate-600 font-bold">
+                                Both of your attempts have been safely recorded in the database. The system automatically awards you your highest score:
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {resultData.attempts.map((att) => (
+                                    <div
+                                        key={att.attemptNumber}
+                                        className={`p-4 border-2 border-slate-900 relative ${
+                                            att.isBest
+                                                ? 'bg-amber-100 shadow-[4px_4px_0px_#0f172a] ring-2 ring-amber-500'
+                                                : 'bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="font-black text-xs uppercase text-slate-900">
+                                                Attempt {att.attemptNumber}
+                                            </span>
+                                            {att.isBest && (
+                                                <span className="px-2 py-0.5 bg-amber-400 border border-slate-900 text-slate-950 text-[10px] font-black uppercase shadow-[1px_1px_0px_#0f172a]">
+                                                    ★ Official Best Score
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="text-2xl font-black text-slate-900">
+                                            {att.score} / {att.maxScore}
+                                            <span className="text-xs text-slate-600 ml-2 font-bold">({att.percentage}%)</span>
+                                        </div>
+                                        <div className="text-[11px] text-slate-500 font-bold mt-2 pt-2 border-t border-slate-900/10 flex justify-between">
+                                            <span>Time: {Math.round((att.timeSpentSeconds || 0) / 60 * 10) / 10}m</span>
+                                            <span>{att.submittedAt ? new Date(att.submittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Second Attempt Available Banner in Results */}
+                    {resultData.canTakeSecondAttempt && (
+                        <div className="p-5 bg-amber-50 border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] font-mono flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="space-y-1 text-left">
+                                <div className="font-black text-xs uppercase text-amber-950 flex items-center gap-1.5">
+                                    <span>💡</span>
+                                    <span>You Have 1 Attempt Remaining</span>
+                                </div>
+                                <p className="text-xs text-amber-900 font-bold">
+                                    Experienced glitches, lags, or want to improve your score? You are eligible to take your second attempt. Your best score will be retained.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => handleStartQuiz(null, true)}
+                                className="press w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer shrink-0"
+                            >
+                                Start Attempt 2 Now →
+                            </button>
+                        </div>
+                    )}
 
                     {/* Question-by-Question Review Breakdown */}
                     <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] p-6 sm:p-8 space-y-6">

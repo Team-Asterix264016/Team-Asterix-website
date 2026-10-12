@@ -13,6 +13,12 @@ const QuizSubmissionSchema = new mongoose.Schema({
     userName: { type: String, required: true, trim: true },
     rollNo: { type: String, default: '', trim: true },
     
+    attemptNumber: { type: Number, default: 1 },
+    isArchived: { type: Boolean, default: false, index: true },
+    archivedAt: { type: Date, default: null },
+    resetByAdmin: { type: Boolean, default: false },
+    resetBy: { type: String, default: '' },
+    
     startedAt: { type: Date, required: true },
     submittedAt: { type: Date, default: null },
     timeSpentSeconds: { type: Number, default: 0 },
@@ -32,7 +38,12 @@ const QuizSubmissionSchema = new mongoose.Schema({
     timestamps: true
 });
 
-QuizSubmissionSchema.index({ quizId: 1, userEmail: 1 }, { unique: true });
+QuizSubmissionSchema.index({ quizId: 1, userEmail: 1, isArchived: 1 });
 QuizSubmissionSchema.index({ quizId: 1, score: -1, timeSpentSeconds: 1 });
 
-export default mongoose.models.QuizSubmission || mongoose.model('QuizSubmission', QuizSubmissionSchema);
+const QuizSubmission = mongoose.models.QuizSubmission || mongoose.model('QuizSubmission', QuizSubmissionSchema);
+
+// Safe index drop in background for existing Mongo collections that had the old unique index
+QuizSubmission.collection?.dropIndex('quizId_1_userEmail_1').catch(() => {});
+
+export default QuizSubmission;

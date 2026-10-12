@@ -42,7 +42,7 @@ router.get('/admin/list', authenticateToken, requireDb, async (req, res) => {
         // Fetch submission counts and average scores in bulk
         const quizIds = quizzes.map(q => q._id);
         const stats = await QuizSubmission.aggregate([
-            { $match: { quizId: { $in: quizIds }, status: { $in: ['completed', 'timed-out'] } } },
+            { $match: { quizId: { $in: quizIds }, status: { $in: ['completed', 'timed-out'] }, isArchived: { $ne: true } } },
             {
                 $group: {
                     _id: '$quizId',
@@ -329,18 +329,84 @@ router.get('/admin/:id/submissions', authenticateToken, requireDb, async (req, r
         if (!quiz) return res.status(404).json({ error: 'Quiz not found.' });
 
         const submissions = await QuizSubmission.find({ quizId: id })
-            .sort({ score: -1, timeSpentSeconds: 1, submittedAt: 1 })
+            .sort({ isArchived: 1, score: -1, timeSpentSeconds: 1, submittedAt: 1 })
             .lean();
 
-        const ranked = submissions.map((s, idx) => ({
-            rank: idx + 1,
-            ...s
-        }));
+        let activeRank = 1;
+        const formatted = submissions.map((s) => {
+            const isArchived = Boolean(s.isArchived);
+            return {
+                ...s,
+                rank: isArchived ? null : activeRank++,
+                attemptNumber: s.attemptNumber || 1,
+                isArchived,
+                resetByAdmin: Boolean(s.resetByAdmin),
+                archivedAt: s.archivedAt || null,
+                resetBy: s.resetBy || ''
+            };
+        });
 
-        res.json({ success: true, quiz, submissions: ranked });
+        res.json({ success: true, quiz, submissions: formatted });
     } catch (err) {
         console.error('Error fetching submissions:', err);
         res.status(500).json({ error: 'Failed to fetch submissions.' });
+    }
+});
+
+/**
+ * POST /api/quiz/admin/:id/reset-user
+ * Soft-resets (archives) active submissions for a specific user to re-enable them to take the quiz again.
+ * CRITICAL: Does NOT delete past DB records! Marks them as isArchived: true, resetByAdmin: true.
+ */
+router.post('/admin/:id/reset-user', authenticateToken, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { email } = req.body || {};
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid quiz ID.' });
+        }
+        if (!email?.trim()) {
+            return res.status(400).json({ error: 'User email is required to re-enable quiz.' });
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
+        const quiz = await Quiz.findById(id);
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found.' });
+
+        const now = new Date();
+        const adminUsername = req.user?.username || 'admin';
+
+        // Archive all active submissions for this user & quiz
+        const updateResult = await QuizSubmission.updateMany(
+            {
+                quizId: id,
+                userEmail: cleanEmail,
+                isArchived: { $ne: true }
+            },
+            {
+                $set: {
+                    isArchived: true,
+                    resetByAdmin: true,
+                    archivedAt: now,
+                    resetBy: adminUsername
+                }
+            }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.status(404).json({
+                error: `No active submissions found for ${cleanEmail} to re-enable.`
+            });
+        }
+
+        res.json({
+            success: true,
+            message: `Quiz re-enabled for ${cleanEmail}! ${updateResult.modifiedCount} previous attempt(s) archived safely. Historical records preserved in DB.`,
+            modifiedCount: updateResult.modifiedCount
+        });
+    } catch (err) {
+        console.error('Error re-enabling user quiz:', err);
+        res.status(500).json({ error: 'Failed to re-enable user: ' + err.message });
     }
 });
 
@@ -355,7 +421,7 @@ router.get('/admin/:id/export', authenticateToken, requireDb, async (req, res) =
         if (!quiz) return res.status(404).send('Quiz not found.');
 
         const submissions = await QuizSubmission.find({ quizId: id })
-            .sort({ score: -1, timeSpentSeconds: 1 })
+            .sort({ isArchived: 1, score: -1, timeSpentSeconds: 1 })
             .lean();
 
         const headers = [
@@ -363,28 +429,37 @@ router.get('/admin/:id/export', authenticateToken, requireDb, async (req, res) =
             'Full Name',
             'Email Address',
             'Roll Number',
+            'Attempt',
             'Score',
             'Max Score',
             'Percentage (%)',
             'Status',
             'Result',
             'Time Spent (mins)',
-            'Submitted At'
+            'Submitted At',
+            'Database Record Status'
         ];
 
-        const rows = submissions.map((s, idx) => [
-            csvCell(idx + 1),
-            csvCell(s.userName),
-            csvCell(s.userEmail),
-            csvCell(s.rollNo || 'N/A'),
-            csvCell(s.score),
-            csvCell(s.maxScore),
-            csvCell(s.percentage + '%'),
-            csvCell(s.status),
-            csvCell(s.passed ? 'PASSED' : 'FAILED'),
-            csvCell(Math.round((s.timeSpentSeconds || 0) / 60 * 10) / 10),
-            csvCell(s.submittedAt ? new Date(s.submittedAt).toLocaleString('en-IN') : 'N/A')
-        ]);
+        let activeRank = 1;
+        const rows = submissions.map((s) => {
+            const isArchived = Boolean(s.isArchived);
+            const rank = isArchived ? 'ARCHIVED' : activeRank++;
+            return [
+                csvCell(rank),
+                csvCell(s.userName),
+                csvCell(s.userEmail),
+                csvCell(s.rollNo || 'N/A'),
+                csvCell(`Attempt ${s.attemptNumber || 1}`),
+                csvCell(s.score),
+                csvCell(s.maxScore),
+                csvCell(s.percentage + '%'),
+                csvCell(s.status),
+                csvCell(s.passed ? 'PASSED' : 'FAILED'),
+                csvCell(Math.round((s.timeSpentSeconds || 0) / 60 * 10) / 10),
+                csvCell(s.submittedAt ? new Date(s.submittedAt).toLocaleString('en-IN') : 'N/A'),
+                csvCell(isArchived ? `Archived/Reset by ${s.resetBy || 'Admin'}` : 'Active')
+            ];
+        });
 
         const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
         const filename = `quiz-${(quiz.slug || quiz._id).toString().slice(0, 16)}-results.csv`;
@@ -450,9 +525,64 @@ router.get('/:idOrSlug/info', requireDb, async (req, res) => {
 });
 
 /**
+ * POST /api/quiz/:idOrSlug/check-status
+ * Checks participant attempt status (0, 1, or 2 active attempts) and whether they can take a quiz or retake.
+ */
+router.post('/:idOrSlug/check-status', requireDb, async (req, res) => {
+    try {
+        const quiz = await findQuizByIdOrSlug(req.params.idOrSlug);
+        if (!quiz || quiz.status !== 'published') {
+            return res.status(404).json({ error: 'Quiz unavailable.' });
+        }
+
+        const { email } = req.body || {};
+        if (!email?.trim()) {
+            return res.status(400).json({ error: 'Email is required.' });
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
+        const activeSubmissions = await QuizSubmission.find({
+            quizId: quiz._id,
+            userEmail: cleanEmail,
+            isArchived: { $ne: true }
+        }).sort({ attemptNumber: 1 }).lean();
+
+        const inProgressSub = activeSubmissions.find(s => s.status === 'in-progress');
+        const completedSubs = activeSubmissions.filter(s => s.status !== 'in-progress');
+
+        const now = new Date();
+        const isLive = now >= new Date(quiz.startTime) && now <= new Date(quiz.endTime);
+
+        res.json({
+            success: true,
+            attemptCount: completedSubs.length + (inProgressSub ? 1 : 0),
+            completedCount: completedSubs.length,
+            totalAttemptsAllowed: 2,
+            hasInProgress: Boolean(inProgressSub),
+            canTakeSecondAttempt: completedSubs.length === 1 && !inProgressSub && isLive,
+            canStart: (completedSubs.length < 2 || inProgressSub) && isLive,
+            resultsPublished: quiz.areResultsPublished(),
+            attempts: activeSubmissions.map(s => ({
+                attemptNumber: s.attemptNumber || 1,
+                status: s.status,
+                score: s.score,
+                maxScore: s.maxScore,
+                percentage: s.percentage,
+                passed: s.passed,
+                submittedAt: s.submittedAt
+            }))
+        });
+    } catch (err) {
+        console.error('Error checking quiz status:', err);
+        res.status(500).json({ error: 'Failed to check status.' });
+    }
+});
+
+/**
  * POST /api/quiz/:idOrSlug/start
  * Gatekeeper: Verifies user details and timing window.
- * Returns sanitized questions (without answer keys) and a session deadline.
+ * Every person is granted 2 attempts to take the quiz.
+ * Returns sanitized questions and session deadline.
  */
 router.post('/:idOrSlug/start', requireDb, async (req, res) => {
     try {
@@ -461,7 +591,7 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
             return res.status(404).json({ error: 'This quiz is currently unavailable.' });
         }
 
-        const { email, name, rollNo } = req.body || {};
+        const { email, name, rollNo, startAttempt2 } = req.body || {};
         if (!email?.trim()) {
             return res.status(400).json({ error: 'Email address is required to attend the quiz.' });
         }
@@ -495,41 +625,112 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
             });
         }
 
-        // Check if user has already submitted
-        const existing = await QuizSubmission.findOne({ quizId: quiz._id, userEmail: cleanEmail });
-        if (existing) {
-            if (existing.status === 'completed' || existing.status === 'timed-out') {
+        const maxDurationMs = quiz.durationMinutes * 60 * 1000;
+        const examEndMs = end.getTime();
+
+        // Find active (non-archived) submissions for this user & quiz
+        const activeSubmissions = await QuizSubmission.find({
+            quizId: quiz._id,
+            userEmail: cleanEmail,
+            isArchived: { $ne: true }
+        }).sort({ attemptNumber: 1 });
+
+        // Check if there is an existing in-progress session
+        let inProgressSub = activeSubmissions.find(s => s.status === 'in-progress');
+
+        if (inProgressSub) {
+            const subStartedAt = new Date(inProgressSub.startedAt);
+            const candidateEndMs = subStartedAt.getTime() + maxDurationMs;
+            const deadlineMs = Math.min(examEndMs, candidateEndMs);
+
+            if (now.getTime() >= deadlineMs) {
+                // In-progress session expired, mark timed-out
+                inProgressSub.status = 'timed-out';
+                inProgressSub.submittedAt = new Date(deadlineMs);
+                inProgressSub.timeSpentSeconds = Math.round((deadlineMs - subStartedAt.getTime()) / 1000);
+                await inProgressSub.save();
+                inProgressSub = null;
+            }
+        }
+
+        let submission = null;
+        let startedAt = now;
+        let attemptNumber = 1;
+
+        if (inProgressSub) {
+            // Resume currently in-progress attempt
+            submission = inProgressSub;
+            startedAt = new Date(submission.startedAt);
+            attemptNumber = submission.attemptNumber || 1;
+        } else {
+            const completedSubs = activeSubmissions.filter(s => s.status !== 'in-progress');
+
+            if (completedSubs.length === 0) {
+                // Fresh Attempt 1
+                submission = new QuizSubmission({
+                    quizId: quiz._id,
+                    userEmail: cleanEmail,
+                    userName: cleanName,
+                    rollNo: cleanRoll,
+                    attemptNumber: 1,
+                    startedAt: now,
+                    maxScore: quiz.totalPoints,
+                    status: 'in-progress'
+                });
+                await submission.save();
+                startedAt = now;
+                attemptNumber = 1;
+            } else if (completedSubs.length === 1) {
+                // Attempt 1 finished. Did participant explicitly request Attempt 2?
+                if (startAttempt2) {
+                    submission = new QuizSubmission({
+                        quizId: quiz._id,
+                        userEmail: cleanEmail,
+                        userName: cleanName,
+                        rollNo: cleanRoll,
+                        attemptNumber: 2,
+                        startedAt: now,
+                        maxScore: quiz.totalPoints,
+                        status: 'in-progress'
+                    });
+                    await submission.save();
+                    startedAt = now;
+                    attemptNumber = 2;
+                } else {
+                    // Prompt user before starting Attempt 2
+                    return res.status(200).json({
+                        success: true,
+                        promptAttempt2: true,
+                        attemptCount: 1,
+                        totalAttemptsAllowed: 2,
+                        canRetake: true,
+                        firstAttempt: {
+                            submissionId: completedSubs[0]._id.toString(),
+                            score: completedSubs[0].score,
+                            maxScore: completedSubs[0].maxScore,
+                            percentage: completedSubs[0].percentage,
+                            passed: completedSubs[0].passed,
+                            submittedAt: completedSubs[0].submittedAt
+                        },
+                        resultsPublished: quiz.areResultsPublished(),
+                        resultsPublishTime: quiz.resultsPublishTime,
+                        message: 'You have completed Attempt 1. Every participant is granted 2 attempts. If you faced issues, you can start your second attempt.'
+                    });
+                }
+            } else {
+                // Both 2 attempts are completed
                 return res.status(409).json({
-                    error: 'You have already completed this quiz.',
+                    error: 'You have completed both attempts (2 of 2) for this quiz. If you need this reset, please contact the quiz administrator.',
                     alreadySubmitted: true,
-                    submissionId: existing._id,
+                    attemptCount: completedSubs.length,
+                    totalAttemptsAllowed: 2,
+                    canRetake: false,
                     resultsPublished: quiz.areResultsPublished(),
                     resultsPublishTime: quiz.resultsPublishTime
                 });
             }
         }
 
-        // Calculate session deadline = min(quiz.endTime, startedAt + durationMinutes)
-        let submission = existing;
-        let startedAt = now;
-
-        if (!submission) {
-            submission = new QuizSubmission({
-                quizId: quiz._id,
-                userEmail: cleanEmail,
-                userName: cleanName,
-                rollNo: cleanRoll,
-                startedAt: now,
-                maxScore: quiz.totalPoints,
-                status: 'in-progress'
-            });
-            await submission.save();
-        } else {
-            startedAt = new Date(submission.startedAt);
-        }
-
-        const maxDurationMs = quiz.durationMinutes * 60 * 1000;
-        const examEndMs = end.getTime();
         const candidateEndMs = startedAt.getTime() + maxDurationMs;
         const deadlineMs = Math.min(examEndMs, candidateEndMs);
         const remainingSeconds = Math.max(0, Math.floor((deadlineMs - now.getTime()) / 1000));
@@ -549,6 +750,8 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
         res.json({
             success: true,
             submissionId: submission._id.toString(),
+            attemptNumber,
+            totalAttemptsAllowed: 2,
             startedAt,
             deadline: new Date(deadlineMs).toISOString(),
             remainingSeconds,
@@ -584,7 +787,9 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
                 success: true,
                 message: 'Quiz was already submitted.',
                 resultsPublished: quiz.areResultsPublished(),
-                resultsPublishTime: quiz.resultsPublishTime
+                resultsPublishTime: quiz.resultsPublishTime,
+                attemptNumber: submission.attemptNumber || 1,
+                totalAttemptsAllowed: 2
             });
         }
 
@@ -633,6 +838,15 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
 
         await submission.save();
 
+        const completedAttemptsCount = await QuizSubmission.countDocuments({
+            quizId: quiz._id,
+            userEmail: submission.userEmail,
+            isArchived: { $ne: true },
+            status: { $in: ['completed', 'timed-out'] }
+        });
+        const remainingAttempts = Math.max(0, 2 - completedAttemptsCount);
+        const canTakeSecondAttempt = remainingAttempts > 0 && (now <= new Date(quiz.endTime));
+
         const areResultsPublished = quiz.areResultsPublished();
 
         if (areResultsPublished) {
@@ -645,6 +859,10 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
                 percentage,
                 passed,
                 timeSpentSeconds,
+                attemptNumber: submission.attemptNumber || 1,
+                totalAttemptsAllowed: 2,
+                remainingAttempts,
+                canTakeSecondAttempt,
                 message: 'Quiz submitted and evaluated successfully!'
             });
         }
@@ -654,6 +872,10 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
             success: true,
             resultsPublished: false,
             resultsPublishTime: quiz.resultsPublishTime,
+            attemptNumber: submission.attemptNumber || 1,
+            totalAttemptsAllowed: 2,
+            remainingAttempts,
+            canTakeSecondAttempt,
             message: `Your responses have been securely recorded! Evaluation results will be published on ${new Date(quiz.resultsPublishTime).toLocaleString('en-IN')}. Check back on this same link then!`
         });
     } catch (err) {
@@ -666,8 +888,7 @@ router.post('/:idOrSlug/submit', requireDb, async (req, res) => {
  * POST /api/quiz/:idOrSlug/lookup-result
  * "Check Back Later" Portal:
  * Participant enters their email to check their result status.
- * If results are NOT yet published, returns confirmation + countdown date.
- * If results ARE published, returns full evaluation, rank, and reviewed answers.
+ * Evaluates best score among attempts, returns rank and attempt breakdown.
  */
 router.post('/:idOrSlug/lookup-result', requireDb, async (req, res) => {
     try {
@@ -680,50 +901,88 @@ router.post('/:idOrSlug/lookup-result', requireDb, async (req, res) => {
         }
 
         const cleanEmail = email.toLowerCase().trim();
-        const submission = await QuizSubmission.findOne({
-            quizId: quiz._id,
-            userEmail: cleanEmail
-        }).lean();
 
-        if (!submission) {
+        // Find active submissions first
+        let submissions = await QuizSubmission.find({
+            quizId: quiz._id,
+            userEmail: cleanEmail,
+            isArchived: { $ne: true }
+        }).sort({ attemptNumber: 1 }).lean();
+
+        let isArchivedOnly = false;
+        if (submissions.length === 0) {
+            submissions = await QuizSubmission.find({
+                quizId: quiz._id,
+                userEmail: cleanEmail
+            }).sort({ createdAt: -1 }).lean();
+            if (submissions.length > 0) {
+                isArchivedOnly = true;
+            }
+        }
+
+        if (submissions.length === 0) {
             return res.status(404).json({
                 error: 'No submission record found for this email address in this quiz.'
             });
         }
 
+        // Determine best submission (highest score, tie-break on lower timeSpentSeconds)
+        let bestSubmission = submissions[0];
+        for (const s of submissions) {
+            if (s.score > bestSubmission.score || (s.score === bestSubmission.score && s.timeSpentSeconds < bestSubmission.timeSpentSeconds)) {
+                bestSubmission = s;
+            }
+        }
+
+        const now = new Date();
         const areResultsPublished = quiz.areResultsPublished();
+        const canTakeSecondAttempt = !isArchivedOnly && submissions.length < 2 && (now <= new Date(quiz.endTime));
 
         if (!areResultsPublished) {
             return res.json({
                 success: true,
                 resultsPublished: false,
-                userName: submission.userName,
-                submittedAt: submission.submittedAt,
+                userName: bestSubmission.userName,
+                userEmail: bestSubmission.userEmail,
+                submittedAt: bestSubmission.submittedAt,
                 resultsPublishTime: quiz.resultsPublishTime,
+                attemptCount: isArchivedOnly ? 0 : submissions.length,
+                totalAttemptsAllowed: 2,
+                canTakeSecondAttempt,
+                isArchivedOnly,
                 message: `Your test was submitted successfully. Evaluation results will be published on ${new Date(quiz.resultsPublishTime).toLocaleString('en-IN')}. Please check back here then!`
             });
         }
 
-        // Results are released! Calculate rank among participants
-        const higherCount = await QuizSubmission.countDocuments({
+        // Results are released! Calculate rank among distinct participants based on their best score
+        const allActive = await QuizSubmission.find({
             quizId: quiz._id,
             status: { $in: ['completed', 'timed-out'] },
-            $or: [
-                { score: { $gt: submission.score } },
-                { score: submission.score, timeSpentSeconds: { $lt: submission.timeSpentSeconds } }
-            ]
-        });
+            isArchived: { $ne: true }
+        }).lean();
 
-        const totalParticipants = await QuizSubmission.countDocuments({
-            quizId: quiz._id,
-            status: { $in: ['completed', 'timed-out'] }
-        });
+        const userBestScores = new Map();
+        for (const sub of allActive) {
+            const existing = userBestScores.get(sub.userEmail);
+            if (!existing || sub.score > existing.score || (sub.score === existing.score && sub.timeSpentSeconds < existing.timeSpentSeconds)) {
+                userBestScores.set(sub.userEmail, sub);
+            }
+        }
 
+        let higherCount = 0;
+        for (const [uEmail, bSub] of userBestScores.entries()) {
+            if (uEmail !== cleanEmail) {
+                if (bSub.score > bestSubmission.score || (bSub.score === bestSubmission.score && bSub.timeSpentSeconds < bestSubmission.timeSpentSeconds)) {
+                    higherCount++;
+                }
+            }
+        }
         const rank = higherCount + 1;
+        const totalParticipants = userBestScores.size || 1;
 
-        // Build question review if explanations/answers are enabled
+        // Build question review for bestSubmission
         const questionMap = new Map(quiz.questions.map(q => [q._id.toString(), q]));
-        const reviewedAnswers = (submission.answers || []).map(ans => {
+        const reviewedAnswers = (bestSubmission.answers || []).map(ans => {
             const q = questionMap.get(ans.questionId?.toString());
             return {
                 questionId: ans.questionId,
@@ -741,17 +1000,33 @@ router.post('/:idOrSlug/lookup-result', requireDb, async (req, res) => {
         res.json({
             success: true,
             resultsPublished: true,
-            userName: submission.userName,
-            userEmail: submission.userEmail,
-            rollNo: submission.rollNo,
-            score: submission.score,
-            maxScore: submission.maxScore,
-            percentage: submission.percentage,
-            passed: submission.passed,
+            userName: bestSubmission.userName,
+            userEmail: bestSubmission.userEmail,
+            rollNo: bestSubmission.rollNo,
+            score: bestSubmission.score,
+            maxScore: bestSubmission.maxScore,
+            percentage: bestSubmission.percentage,
+            passed: bestSubmission.passed,
             rank,
             totalParticipants,
-            timeSpentSeconds: submission.timeSpentSeconds,
-            submittedAt: submission.submittedAt,
+            timeSpentSeconds: bestSubmission.timeSpentSeconds,
+            submittedAt: bestSubmission.submittedAt,
+            bestAttemptNumber: bestSubmission.attemptNumber || 1,
+            attemptCount: isArchivedOnly ? 0 : submissions.length,
+            totalAttemptsAllowed: 2,
+            canTakeSecondAttempt,
+            isArchivedOnly,
+            attempts: submissions.map(s => ({
+                attemptNumber: s.attemptNumber || 1,
+                score: s.score,
+                maxScore: s.maxScore,
+                percentage: s.percentage,
+                passed: s.passed,
+                timeSpentSeconds: s.timeSpentSeconds,
+                submittedAt: s.submittedAt,
+                isBest: s._id.toString() === bestSubmission._id.toString(),
+                isArchived: Boolean(s.isArchived)
+            })),
             answers: reviewedAnswers
         });
     } catch (err) {

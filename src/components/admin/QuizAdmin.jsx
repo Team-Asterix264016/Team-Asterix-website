@@ -26,6 +26,8 @@ export default function QuizAdmin({ showStatus }) {
     const [isSubmissionsLoading, setIsSubmissionsLoading] = useState(false);
     const [submissionFilter, setSubmissionFilter] = useState('all');
     const [submissionSearch, setSubmissionSearch] = useState('');
+    const [resettingEmail, setResettingEmail] = useState(null);
+    const [userToReset, setUserToReset] = useState(null);
 
     // Fetch all quizzes
     const fetchQuizzes = useCallback(async () => {
@@ -121,6 +123,33 @@ export default function QuizAdmin({ showStatus }) {
         }
     };
 
+    // Re-enable / Reset participant quiz attempts without deleting past DB records
+    const handleConfirmResetUser = async () => {
+        if (!userToReset || !selectedQuizForSubmissions) return;
+        setResettingEmail(userToReset.userEmail);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/quiz/admin/${selectedQuizForSubmissions._id}/reset-user`), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ email: userToReset.userEmail })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to re-enable quiz for user');
+
+            if (showStatus) showStatus(`✓ Quiz re-enabled for ${userToReset.userEmail}! Past DB records preserved.`);
+            setUserToReset(null);
+            handleOpenSubmissions(selectedQuizForSubmissions);
+        } catch (err) {
+            alert('Re-enable failed: ' + err.message);
+        } finally {
+            setResettingEmail(null);
+        }
+    };
+
     // Export CSV
     const handleExportCsv = (quizId) => {
         const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
@@ -146,8 +175,10 @@ export default function QuizAdmin({ showStatus }) {
     // Filtered submissions
     const filteredSubmissions = useMemo(() => {
         return submissionsData.filter(s => {
-            if (submissionFilter === 'passed' && !s.passed) return false;
-            if (submissionFilter === 'failed' && s.passed) return false;
+            if (submissionFilter === 'active' && s.isArchived) return false;
+            if (submissionFilter === 'archived' && !s.isArchived) return false;
+            if (submissionFilter === 'passed' && (!s.passed || s.isArchived)) return false;
+            if (submissionFilter === 'failed' && (s.passed || s.isArchived)) return false;
             if (submissionSearch.trim()) {
                 const q = submissionSearch.toLowerCase().trim();
                 const match = (s.userName || '').toLowerCase().includes(q)
@@ -406,9 +437,9 @@ export default function QuizAdmin({ showStatus }) {
                                 placeholder="Search by name, email, roll no..."
                                 className="px-3 py-1.5 border-2 border-slate-900 bg-white font-mono text-xs w-full sm:w-72 focus:outline-none focus:bg-amber-50"
                             />
-                            <div className="flex items-center gap-2 font-mono text-xs">
+                            <div className="flex items-center gap-2 font-mono text-xs flex-wrap">
                                 <span className="text-slate-500 font-bold">Filter:</span>
-                                {['all', 'passed', 'failed'].map(f => (
+                                {['all', 'active', 'passed', 'failed', 'archived'].map(f => (
                                     <button
                                         key={f}
                                         type="button"
@@ -441,31 +472,59 @@ export default function QuizAdmin({ showStatus }) {
                                                 <th className="p-2.5 border-r border-slate-700 w-12 text-center">Rank</th>
                                                 <th className="p-2.5 border-r border-slate-700">Participant</th>
                                                 <th className="p-2.5 border-r border-slate-700">Roll No</th>
+                                                <th className="p-2.5 border-r border-slate-700 text-center">Attempt</th>
                                                 <th className="p-2.5 border-r border-slate-700 text-center">Score</th>
                                                 <th className="p-2.5 border-r border-slate-700 text-center">%</th>
                                                 <th className="p-2.5 border-r border-slate-700 text-center">Result</th>
                                                 <th className="p-2.5 border-r border-slate-700 text-center">Time</th>
-                                                <th className="p-2.5 text-right">Submitted At</th>
+                                                <th className="p-2.5 border-r border-slate-700 text-right">Submitted At</th>
+                                                <th className="p-2.5 text-center">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y-2 divide-slate-900/10">
                                             {filteredSubmissions.map((s) => (
-                                                <tr key={s._id} className="hover:bg-amber-50">
+                                                <tr key={s._id} className={s.isArchived ? 'bg-slate-100/70 opacity-75' : 'hover:bg-amber-50'}>
                                                     <td className="p-2.5 border-r border-slate-900/10 text-center font-black">
-                                                        <span className={`inline-block w-6 h-6 rounded-full leading-6 text-center ${
-                                                            s.rank === 1 ? 'bg-amber-300 border border-slate-900 font-black' :
-                                                            s.rank === 2 ? 'bg-slate-300 border border-slate-900 font-black' :
-                                                            s.rank === 3 ? 'bg-amber-100 border border-slate-900 font-black' : 'text-slate-600'
-                                                        }`}>
-                                                            {s.rank}
-                                                        </span>
+                                                        {s.isArchived ? (
+                                                            <span className="text-slate-400 font-normal">—</span>
+                                                        ) : (
+                                                            <span className={`inline-block w-6 h-6 rounded-full leading-6 text-center ${
+                                                                s.rank === 1 ? 'bg-amber-300 border border-slate-900 font-black' :
+                                                                s.rank === 2 ? 'bg-slate-300 border border-slate-900 font-black' :
+                                                                s.rank === 3 ? 'bg-amber-100 border border-slate-900 font-black' : 'text-slate-600'
+                                                            }`}>
+                                                                {s.rank}
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="p-2.5 border-r border-slate-900/10">
-                                                        <div className="font-black text-slate-900">{s.userName}</div>
+                                                        <div className="font-black text-slate-900 flex items-center gap-1.5">
+                                                            <span>{s.userName}</span>
+                                                            {s.isArchived && (
+                                                                <span className="px-1.5 py-0.2 bg-slate-200 text-slate-600 text-[9px] font-bold uppercase rounded-xs">
+                                                                    Archived
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[11px] text-slate-500 font-bold">{s.userEmail}</div>
                                                     </td>
                                                     <td className="p-2.5 border-r border-slate-900/10 font-bold">
                                                         {s.rollNo || 'N/A'}
+                                                    </td>
+                                                    <td className="p-2.5 border-r border-slate-900/10 text-center">
+                                                        {s.isArchived ? (
+                                                            <span className="px-2 py-0.5 bg-slate-200 border border-slate-400 text-slate-600 text-[10px] font-black uppercase inline-block">
+                                                                Attempt {s.attemptNumber || 1} (Archived)
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`px-2 py-0.5 border font-mono font-black text-[10px] uppercase inline-block ${
+                                                                s.attemptNumber === 2
+                                                                    ? 'bg-purple-100 text-purple-900 border-purple-400'
+                                                                    : 'bg-sky-100 text-sky-900 border-sky-400'
+                                                            }`}>
+                                                                Attempt {s.attemptNumber || 1} of 2
+                                                            </span>
+                                                        )}
                                                     </td>
                                                     <td className="p-2.5 border-r border-slate-900/10 text-center font-black text-slate-900">
                                                         {s.score} / {s.maxScore}
@@ -483,8 +542,26 @@ export default function QuizAdmin({ showStatus }) {
                                                     <td className="p-2.5 border-r border-slate-900/10 text-center font-bold">
                                                         {Math.round((s.timeSpentSeconds || 0) / 60 * 10) / 10}m
                                                     </td>
-                                                    <td className="p-2.5 text-right font-bold text-slate-600">
+                                                    <td className="p-2.5 border-r border-slate-900/10 text-right font-bold text-slate-600">
                                                         {s.submittedAt ? new Date(s.submittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                                    </td>
+                                                    <td className="p-2.5 text-center">
+                                                        {s.isArchived ? (
+                                                            <span className="text-[10px] font-bold text-slate-400 italic">
+                                                                Reset by {s.resetBy || 'Admin'}
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setUserToReset(s)}
+                                                                disabled={resettingEmail === s.userEmail}
+                                                                className="press px-2.5 py-1 bg-amber-300 hover:bg-amber-200 border-2 border-slate-900 text-slate-950 font-mono font-black text-[10px] uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center gap-1 mx-auto"
+                                                                title="Clear user entry to re-enable quiz (preserves past records in DB)"
+                                                            >
+                                                                <span>🔄</span>
+                                                                <span>Re-enable</span>
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -492,6 +569,81 @@ export default function QuizAdmin({ showStatus }) {
                                     </table>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Re-enable Participant Confirmation Modal */}
+            {userToReset && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs font-mono">
+                    <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-lg w-full p-6 space-y-4 animate-in fade-in">
+                        <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-3">
+                            <span className="text-2xl">🔄</span>
+                            <div>
+                                <h3 className="font-black text-sm uppercase text-slate-900">
+                                    Re-enable Quiz for Participant
+                                </h3>
+                                <p className="text-[11px] text-slate-500 font-bold">
+                                    Grant fresh attempts for this particular user alone
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 border-2 border-slate-900 text-xs space-y-1.5">
+                            <div>
+                                <span className="text-slate-500 font-bold">Participant: </span>
+                                <strong className="text-slate-900">{userToReset.userName}</strong>
+                            </div>
+                            <div>
+                                <span className="text-slate-500 font-bold">Email Address: </span>
+                                <strong className="text-slate-900">{userToReset.userEmail}</strong>
+                            </div>
+                            {userToReset.rollNo && (
+                                <div>
+                                    <span className="text-slate-500 font-bold">Roll Number: </span>
+                                    <strong className="text-slate-900">{userToReset.rollNo}</strong>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 bg-emerald-50 border-2 border-emerald-500 text-emerald-950 text-xs space-y-2">
+                            <div className="font-black uppercase flex items-center gap-1.5 text-emerald-900">
+                                <span>🛡️</span>
+                                <span>Database Protection Guarantee:</span>
+                            </div>
+                            <p className="text-[11px] text-emerald-900 font-bold leading-relaxed">
+                                Past submissions are <strong>NOT deleted</strong> from the database. They will be archived and safely kept for official records and history.
+                            </p>
+                            <p className="text-[11px] text-emerald-800">
+                                This user alone will be granted 2 fresh attempts to take this quiz.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setUserToReset(null)}
+                                disabled={Boolean(resettingEmail)}
+                                className="press flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-800 font-black text-xs uppercase cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmResetUser}
+                                disabled={Boolean(resettingEmail)}
+                                className="press flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 border-2 border-slate-900 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                                {resettingEmail ? (
+                                    <>
+                                        <span className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></span>
+                                        <span>Re-enabling...</span>
+                                    </>
+                                ) : (
+                                    <span>Confirm & Re-enable ✓</span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
