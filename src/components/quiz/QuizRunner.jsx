@@ -65,16 +65,26 @@ export default function QuizRunner({ onBack }) {
     const [viewMode, setViewMode] = useState('gatekeeper');
     const [gatekeeperTab, setGatekeeperTab] = useState('enter'); // 'enter' | 'lookup'
 
+    // Registered student profile in localStorage
+    const [storedStudent, setStoredStudent] = useState(() => {
+        try {
+            const raw = localStorage.getItem('workshop_student');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    });
+
     // Gatekeeper attendee form state
     const [participant, setParticipant] = useState(() => {
         try {
-            return (
-                JSON.parse(sessionStorage.getItem('asterix_quiz_attendee')) || {
-                    name: '',
-                    email: '',
-                    rollNo: ''
-                }
-            );
+            const attendee = JSON.parse(sessionStorage.getItem('asterix_quiz_attendee'));
+            if (attendee?.email) return attendee;
+            const student = JSON.parse(localStorage.getItem('workshop_student'));
+            if (student?.email) {
+                return { name: student.name || '', email: student.email || '', rollNo: student.rollNo || '' };
+            }
+            return { name: '', email: '', rollNo: '' };
         } catch {
             return { name: '', email: '', rollNo: '' };
         }
@@ -82,8 +92,15 @@ export default function QuizRunner({ onBack }) {
     const [gatekeeperError, setGatekeeperError] = useState('');
     const [isStarting, setIsStarting] = useState(false);
 
+    // Student profile credentials login form state
+    const [loginIdentifier, setLoginIdentifier] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isSwitchingAccount, setIsSwitchingAccount] = useState(false);
+
     // Lookup / Return flow state
-    const [lookupEmail, setLookupEmail] = useState('');
+    const [lookupEmail, setLookupEmail] = useState(() => storedStudent?.email || '');
     const [isLookingUp, setIsLookingUp] = useState(false);
     const [lookupError, setLookupError] = useState('');
 
@@ -236,20 +253,20 @@ export default function QuizRunner({ onBack }) {
     );
 
     // -------------------------------------------------------------
-    // 3. Gatekeeper: Open an Exam Session
+    // 3. Gatekeeper: Registered Student Profile Login & Start Exam Session
     // -------------------------------------------------------------
-    const handleStartQuiz = async (e) => {
-        if (e?.preventDefault) e.preventDefault();
-
-        const email = (participant.email || '').trim().toLowerCase();
-        const name = (participant.name || '').trim();
+    const startQuizWithStudent = async (studentToUse) => {
+        const student = studentToUse || storedStudent || participant;
+        const email = (student?.email || '').trim().toLowerCase();
+        const name = (student?.name || '').trim();
+        const rollNo = (student?.rollNo || '').trim();
 
         if (!email.includes('@')) {
-            setGatekeeperError('Please enter a valid email address.');
+            setGatekeeperError('Please sign in with a valid registered student profile.');
             return;
         }
         if (!name) {
-            setGatekeeperError('Please enter your full name.');
+            setGatekeeperError('Student name is missing. Please sign in again.');
             return;
         }
 
@@ -257,15 +274,32 @@ export default function QuizRunner({ onBack }) {
         setIsStarting(true);
 
         try {
+            const token = localStorage.getItem('workshop_jwt') || sessionStorage.getItem('admin_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const res = await fetch(apiUrl(`/api/quiz/${quizIdOrSlug}/start`), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, name, rollNo: (participant.rollNo || '').trim() })
+                headers,
+                body: JSON.stringify({ email, name, rollNo })
             });
 
             const data = await res.json();
 
             if (!res.ok || !data.success) {
+                // If quiz hasn't started yet, save attendee for countdown lobby
+                if (data.early) {
+                    setParticipant({ name, email, rollNo });
+                    try {
+                        sessionStorage.setItem(
+                            'asterix_quiz_attendee',
+                            JSON.stringify({ name, email, rollNo })
+                        );
+                    } catch {}
+                    setIsStarting(false);
+                    return;
+                }
+
                 // Already written this paper? Jump straight to their scorecard.
                 if (data.alreadySubmitted) {
                     setGatekeeperTab('lookup');
@@ -281,12 +315,10 @@ export default function QuizRunner({ onBack }) {
             try {
                 sessionStorage.setItem(
                     'asterix_quiz_attendee',
-                    JSON.stringify({ name, email, rollNo: (participant.rollNo || '').trim() })
+                    JSON.stringify({ name, email, rollNo })
                 );
-            } catch {
-                // ignore
-            }
-            setParticipant((prev) => ({ ...prev, email, name }));
+            } catch {}
+            setParticipant({ name, email, rollNo });
 
             setSubmissionId(data.submissionId);
             setQuestions(data.questions || []);
@@ -335,6 +367,59 @@ export default function QuizRunner({ onBack }) {
             setGatekeeperError('Network error while starting the quiz. Please try again.');
         } finally {
             setIsStarting(false);
+        }
+    };
+
+    const handleStudentLogin = async (e) => {
+        if (e?.preventDefault) e.preventDefault();
+        const trimmed = loginIdentifier.trim();
+        const pwd = loginPassword.trim();
+
+        if (!trimmed) {
+            setGatekeeperError('Please enter your Mobile Number, Email ID, or Roll Number.');
+            return;
+        }
+        if (!pwd) {
+            setGatekeeperError('Please enter your profile password. (Initial default password is "asterix")');
+            return;
+        }
+
+        setIsLoggingIn(true);
+        setGatekeeperError('');
+
+        try {
+            const res = await fetch(apiUrl('/api/workshop/login'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: trimmed, password: pwd })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                setGatekeeperError(data.error || 'Authentication failed. Please check your credentials.');
+                setIsLoggingIn(false);
+                return;
+            }
+
+            // Save JWT token & student profile in localStorage
+            localStorage.setItem('workshop_jwt', data.token);
+            localStorage.setItem('workshop_student', JSON.stringify(data.student));
+            setStoredStudent(data.student);
+            setParticipant({
+                name: data.student.name || '',
+                email: data.student.email || '',
+                rollNo: data.student.rollNo || ''
+            });
+            setIsSwitchingAccount(false);
+            setIsLoggingIn(false);
+
+            // Automatically attempt to enter the quiz answering page
+            await startQuizWithStudent(data.student);
+        } catch (err) {
+            console.error('Login error:', err);
+            setGatekeeperError('Server connection error. Please check your network and try again.');
+            setIsLoggingIn(false);
         }
     };
 
@@ -802,127 +887,213 @@ export default function QuizRunner({ onBack }) {
                                     </div>
                                 ) : null}
 
-                                <form onSubmit={handleStartQuiz} className="mt-6 space-y-4">
-                                    <div className="border-b-2 border-slate-100 pb-2">
-                                        <h3 className="font-mono text-sm font-black text-slate-900 uppercase">
-                                            Participant Verification
-                                        </h3>
-                                        <p className="font-mono text-xs text-slate-500">
-                                            Enter your details to track your attendance and calculate your
-                                            score.
-                                        </p>
-                                    </div>
-
+                                <div className="mt-6 space-y-4">
                                     {gatekeeperError && (
                                         <div className="border-2 border-rose-500 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-700">
                                             ⚠️ {gatekeeperError}
                                         </div>
                                     )}
 
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                        <div>
-                                            <label className="mb-1 block font-mono text-xs font-bold text-slate-700 uppercase">
-                                                Email Address <span className="text-rose-600">*</span>
-                                            </label>
-                                            <input
-                                                type="email"
-                                                required
-                                                value={participant.email}
-                                                onChange={(e) =>
-                                                    setParticipant((p) => ({ ...p, email: e.target.value }))
-                                                }
-                                                placeholder="e.g. yourname@gmail.com"
-                                                className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:border-sky-500 focus:outline-none"
-                                            />
-                                            <span className="mt-0.5 block font-mono text-[10px] text-slate-500">
-                                                Used to link your answers and access your score card later.
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <label className="mb-1 block font-mono text-xs font-bold text-slate-700 uppercase">
-                                                Full Name <span className="text-rose-600">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={participant.name}
-                                                onChange={(e) =>
-                                                    setParticipant((p) => ({ ...p, name: e.target.value }))
-                                                }
-                                                placeholder="e.g. Ratheeswar S"
-                                                className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:border-sky-500 focus:outline-none"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="mb-1 block font-mono text-xs font-bold text-slate-700 uppercase">
-                                            College Roll No / Register No{' '}
-                                            <span className="text-slate-500">(Optional)</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={participant.rollNo}
-                                            onChange={(e) =>
-                                                setParticipant((p) => ({ ...p, rollNo: e.target.value }))
-                                            }
-                                            placeholder="e.g. 715526104001"
-                                            className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 font-mono text-xs focus:border-sky-500 focus:outline-none sm:w-1/2"
-                                        />
-                                    </div>
-
-                                    {/* Rules notice */}
-                                    <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
-                                        <span className="block font-black text-slate-900 uppercase">
-                                            Assessment Rules:
-                                        </span>
-                                        <div>
-                                            • Once started, a live timer of {quizData.durationMinutes} minutes
-                                            will begin.
-                                        </div>
-                                        <div>• The quiz will auto-submit when the countdown expires.</div>
-                                        {quizData.instantFeedback ? (
-                                            <>
-                                                <div>
-                                                    • Answers are marked on the spot: you see whether you got
-                                                    it right as soon as you pick.
+                                    {/* CASE 1: Student is already logged in with verified profile */}
+                                    {storedStudent && !isSwitchingAccount ? (
+                                        <div className="space-y-4 border-2 border-slate-900 bg-white p-5">
+                                            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-100 pb-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500"></span>
+                                                    <span className="font-mono text-xs font-black tracking-wider text-emerald-800 uppercase">
+                                                        🎓 Verified Registered Student Profile
+                                                    </span>
                                                 </div>
-                                                <div>
-                                                    • Because the answer is revealed, a choice is final — you
-                                                    cannot change it afterwards.
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div>
-                                                • Your answers are autosaved as you make your selections.
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsSwitchingAccount(true);
+                                                        setGatekeeperError('');
+                                                    }}
+                                                    className="font-mono text-xs font-bold text-sky-600 underline hover:text-sky-800"
+                                                >
+                                                    Switch Profile / Sign Out
+                                                </button>
                                             </div>
-                                        )}
-                                        <div>
-                                            • You can check your evaluated score and class ranking once
-                                            results are published.
-                                        </div>
-                                    </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={isStarting || isUpcoming || isEnded}
-                                        className="press shadow-brutal-4 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-emerald-400 py-3.5 font-mono text-sm font-black text-slate-900 uppercase hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {isStarting ? (
-                                            <>
-                                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
-                                                <span>Initializing Exam Session...</span>
-                                            </>
-                                        ) : isUpcoming ? (
-                                            <span>Waiting for Scheduled Start Time...</span>
-                                        ) : isEnded ? (
-                                            <span>Quiz Concluded</span>
-                                        ) : (
-                                            <span>Enter Quiz & Start Assessment →</span>
-                                        )}
-                                    </button>
-                                </form>
+                                            <div className="grid grid-cols-1 gap-3 font-mono text-xs sm:grid-cols-3">
+                                                <div className="border border-slate-200 bg-slate-50 p-3">
+                                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">
+                                                        Candidate Name
+                                                    </span>
+                                                    <strong className="text-sm font-black text-slate-900 uppercase">
+                                                        {storedStudent.name}
+                                                    </strong>
+                                                </div>
+                                                <div className="border border-slate-200 bg-slate-50 p-3">
+                                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">
+                                                        College Roll No
+                                                    </span>
+                                                    <strong className="text-sm font-black text-slate-900">
+                                                        {storedStudent.rollNo || 'N/A'}
+                                                    </strong>
+                                                </div>
+                                                <div className="border border-slate-200 bg-slate-50 p-3">
+                                                    <span className="block text-[10px] font-bold text-slate-500 uppercase">
+                                                        Registered Email
+                                                    </span>
+                                                    <strong className="truncate text-xs font-bold text-slate-800">
+                                                        {storedStudent.email}
+                                                    </strong>
+                                                </div>
+                                            </div>
+
+                                            {/* Rules notice */}
+                                            <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
+                                                <span className="block font-black text-slate-900 uppercase">
+                                                    Assessment Rules:
+                                                </span>
+                                                <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
+                                                <div>• The quiz will auto-submit when the countdown expires.</div>
+                                                {quizData.instantFeedback ? (
+                                                    <>
+                                                        <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
+                                                        <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
+                                                    </>
+                                                ) : (
+                                                    <div>• Your answers are autosaved as you make your selections.</div>
+                                                )}
+                                                <div>• You can check your evaluated score and class ranking once results are published.</div>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => startQuizWithStudent(storedStudent)}
+                                                disabled={isStarting || isUpcoming || isEnded}
+                                                className="press shadow-brutal-4 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-emerald-400 py-3.5 font-mono text-sm font-black text-slate-900 uppercase hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                {isStarting ? (
+                                                    <>
+                                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                        <span>Initializing Exam Session...</span>
+                                                    </>
+                                                ) : isUpcoming ? (
+                                                    <span>Waiting for Scheduled Start Time...</span>
+                                                ) : isEnded ? (
+                                                    <span>Quiz Concluded</span>
+                                                ) : (
+                                                    <span>🚀 Enter Quiz Answering Page as {storedStudent.name} →</span>
+                                                )}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        /* CASE 2: Student needs to sign in with profile credentials */
+                                        <form onSubmit={handleStudentLogin} className="space-y-4 border-2 border-slate-900 bg-white p-5">
+                                            <div className="border-b-2 border-slate-100 pb-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-mono text-xs font-black tracking-wider text-sky-600 uppercase">
+                                                        🔒 REGISTERED STUDENT ACCESS
+                                                    </span>
+                                                    {isSwitchingAccount && storedStudent && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsSwitchingAccount(false);
+                                                                setGatekeeperError('');
+                                                            }}
+                                                            className="font-mono text-xs font-bold text-slate-500 hover:text-slate-800"
+                                                        >
+                                                            ✕ Cancel
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <h3 className="mt-1 font-mono text-base font-black text-slate-900 uppercase">
+                                                    Sign In With Your Profile Credentials
+                                                </h3>
+                                                <p className="font-mono text-xs text-slate-500">
+                                                    This quiz is restricted to registered workshop students. Enter your credentials to verify your profile and proceed to the answering page.
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-3 font-mono text-xs">
+                                                <div>
+                                                    <label className="mb-1 block font-bold text-slate-700 uppercase">
+                                                        Mobile Number / Email ID / Roll No <span className="text-rose-600">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={loginIdentifier}
+                                                        onChange={(e) => setLoginIdentifier(e.target.value)}
+                                                        placeholder="e.g. 9876543210, rollno@psgitech.ac.in, or 23L123"
+                                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 text-xs focus:border-sky-500 focus:outline-none"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="mb-1 block font-bold text-slate-700 uppercase">
+                                                        Profile Password <span className="text-rose-600">*</span>
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showLoginPassword ? 'text' : 'password'}
+                                                            required
+                                                            value={loginPassword}
+                                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                                            placeholder="Enter password (default: asterix)"
+                                                            className="w-full border-2 border-slate-900 bg-white px-3 py-2.5 pr-16 text-xs focus:border-sky-500 focus:outline-none"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowLoginPassword((prev) => !prev)}
+                                                            className="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer border border-slate-800 bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase hover:bg-slate-200"
+                                                        >
+                                                            {showLoginPassword ? 'Hide' : 'Show'}
+                                                        </button>
+                                                    </div>
+                                                    <span className="mt-1 block text-[10px] text-slate-500">
+                                                        💡 Initial default password for all workshop participants is &quot;asterix&quot;.
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Rules notice */}
+                                            <div className="space-y-1 border-2 border-slate-900 bg-slate-50 p-4 font-mono text-[11px] text-slate-700">
+                                                <span className="block font-black text-slate-900 uppercase">
+                                                    Assessment Rules:
+                                                </span>
+                                                <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
+                                                <div>• The quiz will auto-submit when the countdown expires.</div>
+                                                {quizData.instantFeedback ? (
+                                                    <>
+                                                        <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
+                                                        <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
+                                                    </>
+                                                ) : (
+                                                    <div>• Your answers are autosaved as you make your selections.</div>
+                                                )}
+                                                <div>• You can check your evaluated score and class ranking once results are published.</div>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={isLoggingIn || isStarting || isEnded}
+                                                className="press shadow-brutal-4 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-emerald-400 py-3.5 font-mono text-sm font-black text-slate-900 uppercase hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                                {isLoggingIn ? (
+                                                    <>
+                                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                        <span>Verifying Credentials...</span>
+                                                    </>
+                                                ) : isStarting ? (
+                                                    <>
+                                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent"></span>
+                                                        <span>Initializing Exam Session...</span>
+                                                    </>
+                                                ) : isEnded ? (
+                                                    <span>Quiz Concluded</span>
+                                                ) : (
+                                                    <span>🔓 Verify Profile & Enter Quiz →</span>
+                                                )}
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
                             </div>
                         )}
 

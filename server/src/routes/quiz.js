@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import Quiz from '../models/Quiz.js';
 import QuizSubmission from '../models/QuizSubmission.js';
-import { authenticateToken } from '../middleware/auth.js';
+import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import { authenticateToken, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
 
 const router = Router();
@@ -592,7 +594,43 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
 
         const cleanEmail = email.toLowerCase().trim();
         const cleanName = name.trim();
-        const cleanRoll = (rollNo || '').trim();
+        const cleanRoll = (rollNo || '').trim().toUpperCase();
+
+        // Allow administrator bypass for testing / previewing
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        let isAdmin = false;
+        if (token) {
+            try {
+                jwt.verify(token, JWT_SECRET);
+                isAdmin = true;
+            } catch {}
+        }
+
+        let verifiedName = cleanName;
+        let verifiedRoll = cleanRoll;
+
+        if (!isAdmin) {
+            const searchConditions = [{ email: cleanEmail }];
+            if (cleanRoll) searchConditions.push({ rollNo: cleanRoll });
+
+            const registration = await WorkshopRegistration.findOne({ $or: searchConditions });
+
+            if (!registration) {
+                return res.status(403).json({
+                    error: `No workshop registration found for "${cleanEmail}". Workshop quizzes are restricted to registered students only.`
+                });
+            }
+
+            if (registration.status !== 'paid') {
+                return res.status(403).json({
+                    error: `Your registration status is "${registration.status}". Quiz access is reserved for confirmed registered students.`
+                });
+            }
+
+            verifiedName = registration.name || cleanName;
+            verifiedRoll = registration.rollNo || cleanRoll;
+        }
 
         const now = new Date();
         const start = new Date(quiz.startTime);
@@ -638,8 +676,8 @@ router.post('/:idOrSlug/start', requireDb, async (req, res) => {
             submission = new QuizSubmission({
                 quizId: quiz._id,
                 userEmail: cleanEmail,
-                userName: cleanName,
-                rollNo: cleanRoll,
+                userName: verifiedName,
+                rollNo: verifiedRoll,
                 startedAt: now,
                 maxScore: quiz.totalPoints,
                 status: 'in-progress'

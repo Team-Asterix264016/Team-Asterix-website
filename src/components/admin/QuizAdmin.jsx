@@ -518,7 +518,7 @@ export default function QuizAdmin({ showStatus }) {
                                             type="button"
                                             onClick={() => handleOpenProjector(quiz)}
                                             className="press shadow-brutal-2 flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-violet-300 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-200"
-                                            title="Open the big-screen live leaderboard"
+                                            title="Open projector mode with live QR code & student entry portal"
                                         >
                                             <span>📺</span>
                                             <span>Projector</span>
