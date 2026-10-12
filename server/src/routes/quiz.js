@@ -128,7 +128,8 @@ router.post('/admin/create', authenticateToken, requireDb, async (req, res) => {
             questions,
             passingPercentage,
             shuffleQuestions,
-            shuffleOptions
+            shuffleOptions,
+            status
         } = req.body || {};
 
         if (!title?.trim()) {
@@ -190,6 +191,7 @@ router.post('/admin/create', authenticateToken, requireDb, async (req, res) => {
             passingPercentage: Number(passingPercentage) || 50,
             shuffleQuestions: Boolean(shuffleQuestions),
             shuffleOptions: Boolean(shuffleOptions),
+            status: ['draft', 'published', 'archived'].includes(status) ? status : 'published',
             createdBy: req.user?.username || 'admin'
         });
 
@@ -528,7 +530,7 @@ router.get('/admin/:id/export', authenticateToken, requireDb, async (req, res) =
 router.get('/:idOrSlug/info', requireDb, async (req, res) => {
     try {
         const quiz = await findQuizByIdOrSlug(req.params.idOrSlug);
-        if (!quiz || quiz.status === 'archived') {
+        if (!quiz || quiz.status !== 'published') {
             return res.status(404).json({ error: 'Quiz not found or no longer available.' });
         }
 
