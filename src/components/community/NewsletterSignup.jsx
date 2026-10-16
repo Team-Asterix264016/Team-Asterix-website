@@ -45,36 +45,36 @@ export default function NewsletterSignup({
     return (
         <section
             aria-labelledby={`${inputId}-heading`}
-            className="relative w-full overflow-hidden border-t-4 border-slate-900 bg-sky-50/60 p-6 sm:p-8 md:p-10 text-slate-900"
+            className="relative w-full overflow-hidden border-3 border-black bg-white p-6 sm:p-8 md:p-10 text-slate-900 shadow-[6px_6px_0px_#000]"
         >
-            {/* Background Parallax/Technical Watermark in the Website Theme */}
+            {/* Background Parallax/Technical Watermark */}
             <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-6 -right-3 z-0 font-mono text-7xl font-black text-sky-900/[0.04] sm:text-8xl md:text-9xl select-none"
+                className="pointer-events-none absolute -bottom-6 -right-3 z-0 font-mono text-7xl font-black text-slate-100 sm:text-8xl md:text-9xl select-none"
             >
                 // DISPATCH
             </div>
 
             {/* Subtle Motorsport Racing Stripe Detail */}
             <div className="relative z-10 mb-6 flex h-1 w-28 items-center gap-1.5" aria-hidden="true">
-                <div className="h-full w-14 bg-sky-500" />
-                <div className="h-full w-3 bg-slate-900" />
-                <div className="h-full w-7 bg-sky-300" />
+                <div className="h-full w-14 bg-[#ffe500]" />
+                <div className="h-full w-3 bg-black" />
+                <div className="h-full w-7 bg-sky-500" />
             </div>
 
             <div className="relative z-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-xl">
                     <div className="flex items-center gap-2">
-                        <span className="border-2 border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black tracking-wider text-slate-950 uppercase">
+                        <span className="border-2 border-black bg-[#ffe500] px-2 py-0.5 font-mono text-[10px] font-black tracking-wider text-black uppercase shadow-[1.5px_1.5px_0px_#000]">
                             DIRECT DISPATCH
                         </span>
-                        <span className="font-mono text-[11px] font-bold tracking-wider text-sky-800 uppercase">
+                        <span className="font-mono text-[11px] font-bold tracking-wider text-slate-600 uppercase">
                             // HORIZON ARCHIVE
                         </span>
                     </div>
                     <h2
                         id={`${inputId}-heading`}
-                        className="font-display mt-3 text-2xl font-black tracking-tight text-slate-900 uppercase sm:text-3xl"
+                        className="font-display mt-3 text-2xl font-black tracking-tight text-slate-950 uppercase sm:text-3xl"
                     >
                         {title}
                     </h2>
@@ -87,10 +87,10 @@ export default function NewsletterSignup({
                     {status === 'done' ? (
                         <div
                             role="status"
-                            className="border-2 border-slate-900 bg-sky-100 p-4 font-mono text-xs text-slate-950"
+                            className="border-2 border-black bg-[#ffe500] p-4 font-mono text-xs text-black shadow-[3px_3px_0px_#000]"
                         >
-                            <p className="font-black text-sky-950 uppercase">// SUBSCRIBED SUCCESSFULLY //</p>
-                            <p className="mt-1 text-slate-700">
+                            <p className="font-black text-black uppercase">// SUBSCRIBED SUCCESSFULLY //</p>
+                            <p className="mt-1 text-slate-900">
                                 Updates will be sent to {message}. You can unsubscribe anytime.
                             </p>
                         </div>
@@ -127,12 +127,12 @@ export default function NewsletterSignup({
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="your.email@example.com"
-                                    className="h-11 w-full border-2 border-slate-900 bg-white px-3.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none transition-colors"
+                                    className="h-11 w-full border-2 border-black bg-slate-50 px-3.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-black focus:bg-white focus:outline-none transition-colors"
                                 />
                                 <button
                                     type="submit"
                                     disabled={status === 'sending'}
-                                    className="press h-11 shrink-0 cursor-pointer border-2 border-slate-900 bg-sky-400 px-6 font-mono text-xs font-black tracking-wider text-slate-950 uppercase transition-colors hover:bg-sky-300 disabled:cursor-wait disabled:opacity-60"
+                                    className="press h-11 shrink-0 cursor-pointer border-2 border-black bg-[#ffe500] px-6 font-mono text-xs font-black tracking-wider text-black uppercase transition-colors hover:bg-yellow-400 disabled:cursor-wait disabled:opacity-60 shadow-[2px_2px_0px_#000]"
                                 >
                                     {status === 'sending' ? 'Subscribing…' : 'Subscribe'}
                                 </button>
@@ -142,12 +142,12 @@ export default function NewsletterSignup({
 
                     <p
                         aria-live="polite"
-                        className="mt-2 min-h-[1.25rem] font-mono text-xs font-bold text-rose-700"
+                        className="mt-2 min-h-[1.25rem] font-mono text-xs font-bold text-rose-600"
                     >
                         {status === 'error' ? message : ''}
                     </p>
 
-                    <p className="font-mono text-[11px] font-bold text-slate-600">
+                    <p className="font-mono text-[11px] font-bold text-slate-500">
                         // NO SPAM · 1–2 DISPATCHES PER MONTH · UNSUBSCRIBE ANYTIME
                     </p>
                 </div>

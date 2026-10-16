@@ -716,3 +716,56 @@ html.modal-open body {
     font-size: max(1rem, 1em) !important;
   }
 }
+
+/* =========================================================
+   MOBILE MENU DRAWER ANIMATIONS
+========================================================= */
+@keyframes mobileDrawerEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobileItemFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-mobile-drawer {
+  animation: mobileDrawerEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-mobile-item-1 {
+  animation: mobileItemFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+.animate-mobile-item-2 {
+  animation: mobileItemFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+.animate-mobile-item-3 {
+  animation: mobileItemFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-mobile-drawer,
+  .animate-mobile-item-1,
+  .animate-mobile-item-2,
+  .animate-mobile-item-3 {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+

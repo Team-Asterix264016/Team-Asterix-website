@@ -3,7 +3,7 @@ import { renderBlogPromo, generateSocialAdCopy } from '../../lib/blogPromoImage'
 
 export default function BlogPromotionModal({ post, onClose }) {
     const canvasRef = useRef(null);
-    const [format, setFormat] = useState('story'); // 'story' | 'portrait' | 'square'
+    const [format, setFormat] = useState('portrait'); // 'portrait' | 'story' | 'square'
     const [theme, setTheme] = useState('sky'); // 'sky' | 'dark'
     const [ctaText, setCtaText] = useState('LINK IN BIO TO READ');
     const [copiedKey, setCopiedKey] = useState(null);
@@ -97,9 +97,9 @@ export default function BlogPromotionModal({ post, onClose }) {
                                 </span>
                                 <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold">
                                     {[
-                                        { id: 'story', label: 'Story (9:16)' },
-                                        { id: 'portrait', label: 'Feed (4:5)' },
-                                        { id: 'square', label: 'Square (1:1)' }
+                                        { id: 'story', label: 'Story (9:16)', desc: '1080 × 1920 px' },
+                                        { id: 'portrait', label: 'Feed (4:5)', desc: '1080 × 1350 px' },
+                                        { id: 'square', label: 'Square (1:1)', desc: '1080 × 1080 px' }
                                     ].map((f) => (
                                         <button
                                             key={f.id}
@@ -107,7 +107,7 @@ export default function BlogPromotionModal({ post, onClose }) {
                                             onClick={() => setFormat(f.id)}
                                             className={`press cursor-pointer border-2 border-slate-900 px-2.5 py-1 uppercase ${
                                                 format === f.id
-                                                    ? 'bg-sky-400 font-black text-slate-950 shadow-[2px_2px_0px_#0f172a]'
+                                                    ? 'bg-yellow-400 font-black text-slate-950 shadow-[2px_2px_0px_#0f172a]'
                                                     : 'bg-white text-slate-700 hover:bg-slate-50'
                                             }`}
                                         >
@@ -127,33 +127,33 @@ export default function BlogPromotionModal({ post, onClose }) {
                                         onClick={() => setTheme('sky')}
                                         className={`press cursor-pointer border-2 border-slate-900 px-3 py-1 uppercase ${
                                             theme === 'sky'
-                                                ? 'bg-amber-300 font-black text-slate-950 shadow-[2px_2px_0px_#0f172a]'
+                                                ? 'bg-yellow-400 font-black text-slate-950 shadow-[2px_2px_0px_#0f172a]'
                                                 : 'bg-white text-slate-700 hover:bg-slate-50'
                                         }`}
                                     >
-                                        Light Track
+                                        Horizon Light
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setTheme('dark')}
                                         className={`press cursor-pointer border-2 border-slate-900 px-3 py-1 uppercase ${
                                             theme === 'dark'
-                                                ? 'bg-slate-900 font-black text-sky-400 shadow-[2px_2px_0px_#38bdf8]'
+                                                ? 'bg-slate-900 font-black text-yellow-400 shadow-[2px_2px_0px_#ffe500]'
                                                 : 'bg-white text-slate-700 hover:bg-slate-50'
                                         }`}
                                     >
-                                        Cyber Dark
+                                        Motorsport Dark
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Interactive Canvas Rendering Area */}
-                        <div className="my-5 flex w-full flex-1 items-center justify-center overflow-hidden">
-                            <div className="relative max-h-[460px] max-w-[280px] sm:max-h-[520px] sm:max-w-[320px] shadow-[8px_8px_0px_#0f172a] border-3 border-slate-900 bg-white">
+                        {/* Interactive Canvas Rendering Area with larger viewport */}
+                        <div className="my-4 flex w-full flex-1 items-center justify-center overflow-hidden">
+                            <div className="relative max-h-[520px] max-w-[340px] sm:max-h-[580px] sm:max-w-[380px] shadow-[8px_8px_0px_#0f172a] border-4 border-slate-900 bg-white">
                                 <canvas
                                     ref={canvasRef}
-                                    className="block h-auto max-h-[500px] w-auto max-w-full object-contain"
+                                    className="block h-auto max-h-[560px] w-auto max-w-full object-contain"
                                 />
                                 {rendering && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-white/70 font-mono text-xs font-black text-slate-900 backdrop-blur-xs">
@@ -168,9 +168,9 @@ export default function BlogPromotionModal({ post, onClose }) {
                             type="button"
                             onClick={handleDownload}
                             disabled={rendering || downloading}
-                            className="press shadow-[4px_4px_0px_#0f172a] flex w-full cursor-pointer items-center justify-center gap-2 border-3 border-slate-900 bg-emerald-400 py-3 font-mono text-xs font-black uppercase text-slate-950 hover:bg-emerald-300 disabled:opacity-50"
+                            className="press shadow-[4px_4px_0px_#0f172a] flex w-full cursor-pointer items-center justify-center gap-2 border-3 border-slate-900 bg-yellow-400 py-3.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-yellow-300 disabled:opacity-50"
                         >
-                            <span>📥 Download High-Res Photo (PNG)</span>
+                            <span>📥 Download High-Res Poster (PNG)</span>
                         </button>
                     </div>
 

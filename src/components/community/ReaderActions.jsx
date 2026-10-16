@@ -18,7 +18,8 @@ import {
     PiSpeakerHigh,
     PiPause,
     PiPlay,
-    PiStop
+    PiStop,
+    PiImageSquare
 } from 'react-icons/pi';
 import { REACTIONS } from '../../lib/blogEngagement';
 import {
@@ -28,6 +29,7 @@ import {
     shareNatively,
     scrollToElement
 } from '../../lib/readerShare';
+import BlogPostShareModal from './BlogPostShareModal';
 
 // Outline icon at rest, filled once this reader has reacted.
 const REACTION_ICONS = {
@@ -44,6 +46,7 @@ const iconButton = `inline-flex h-10 w-10 cursor-pointer items-center justify-ce
 
 export function ShareButtons({ post, onShare }) {
     const [copied, setCopied] = useState('');
+    const [showModal, setShowModal] = useState(false);
 
     const copy = async () => {
         try {
@@ -57,54 +60,66 @@ export function ShareButtons({ post, onShare }) {
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            {SHARE_TARGETS.map((target) => {
-                const Icon = SHARE_ICONS[target.channel];
-                return (
-                    <a
-                        key={target.channel}
-                        href={target.href(post.slug, post.title)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => onShare(target.channel)}
-                        aria-label={`Share on ${target.label}`}
-                        title={`Share on ${target.label}`}
-                        className={iconButton}
-                    >
-                        <Icon aria-hidden="true" className="h-5 w-5" />
-                    </a>
-                );
-            })}
-            <button
-                type="button"
-                onClick={copy}
-                className={`inline-flex h-10 cursor-pointer items-center gap-2 border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-900 hover:text-slate-900 ${focusRing}`}
-            >
-                {copied === 'done' ? (
-                    <PiCheck aria-hidden="true" className="h-[18px] w-[18px] text-emerald-700" />
-                ) : (
-                    <PiLink aria-hidden="true" className="h-[18px] w-[18px]" />
-                )}
-                <span aria-live="polite">
-                    {copied === 'done'
-                        ? 'Link copied'
-                        : copied === 'failed'
-                          ? 'Copy from the address bar'
-                          : 'Copy link'}
-                </span>
-            </button>
-            {canShareNatively() && (
+        <>
+            <div className="flex flex-wrap items-center gap-2">
                 <button
                     type="button"
-                    onClick={() => shareNatively(post, onShare)}
-                    aria-label="More ways to share"
-                    title="More ways to share"
-                    className={iconButton}
+                    onClick={() => setShowModal(true)}
+                    className="press flex h-10 cursor-pointer items-center gap-1.5 border-2 border-black bg-[#ffe500] px-3.5 text-xs font-mono font-black text-black uppercase shadow-[2px_2px_0px_#000] hover:bg-yellow-400"
+                    title="Preview and download social media share flyer"
                 >
-                    <PiShareNetwork aria-hidden="true" className="h-5 w-5" />
+                    <PiImageSquare aria-hidden="true" className="h-4 w-4" />
+                    <span>Share Flyer</span>
                 </button>
-            )}
-        </div>
+                {SHARE_TARGETS.map((target) => {
+                    const Icon = SHARE_ICONS[target.channel];
+                    return (
+                        <a
+                            key={target.channel}
+                            href={target.href(post.slug, post.title)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => onShare(target.channel)}
+                            aria-label={`Share on ${target.label}`}
+                            title={`Share on ${target.label}`}
+                            className={iconButton}
+                        >
+                            <Icon aria-hidden="true" className="h-5 w-5" />
+                        </a>
+                    );
+                })}
+                <button
+                    type="button"
+                    onClick={copy}
+                    className={`inline-flex h-10 cursor-pointer items-center gap-2 border border-slate-300 bg-white px-3.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-900 hover:text-slate-900 ${focusRing}`}
+                >
+                    {copied === 'done' ? (
+                        <PiCheck aria-hidden="true" className="h-[18px] w-[18px] text-emerald-700" />
+                    ) : (
+                        <PiLink aria-hidden="true" className="h-[18px] w-[18px]" />
+                    )}
+                    <span aria-live="polite">
+                        {copied === 'done'
+                            ? 'Link copied'
+                            : copied === 'failed'
+                              ? 'Copy from the address bar'
+                              : 'Copy link'}
+                    </span>
+                </button>
+                {canShareNatively() && (
+                    <button
+                        type="button"
+                        onClick={() => shareNatively(post, onShare)}
+                        aria-label="More ways to share"
+                        title="More ways to share"
+                        className={iconButton}
+                    >
+                        <PiShareNetwork aria-hidden="true" className="h-5 w-5" />
+                    </button>
+                )}
+            </div>
+            {showModal && <BlogPostShareModal post={post} onClose={() => setShowModal(false)} />}
+        </>
     );
 }
 
@@ -250,6 +265,7 @@ export function ListenButton({ paragraphs, className = '' }) {
    share. It hides over the header and once the full reaction panel is in view. */
 export function FloatingActions({ post, engagement, commentCount, headerRef, endRef, commentsRef }) {
     const [visible, setVisible] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         const header = headerRef.current;
@@ -273,43 +289,47 @@ export function FloatingActions({ post, engagement, commentCount, headerRef, end
     const LikeIcon = liked ? PiThumbsUpFill : PiThumbsUp;
     const item = `flex cursor-pointer items-center gap-1.5 px-3.5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 ${focusRing}`;
 
-    const share = async () => {
-        if (!(await shareNatively(post, engagement.share))) scrollToElement(endRef.current);
+    const share = () => {
+        setShowModal(true);
+        engagement.share('floating_dock');
     };
 
     return (
-        <div
-            className={`fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 transition-all duration-200 ${
-                visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0'
-            }`}
-            aria-hidden={!visible}
-        >
-            <div className="flex divide-x divide-slate-200 border border-slate-300 bg-white shadow-lg">
-                <button
-                    type="button"
-                    tabIndex={visible ? 0 : -1}
-                    aria-pressed={liked}
-                    aria-label={`Like: ${engagement.reactions.like || 0}`}
-                    onClick={() => engagement.toggleReaction('like')}
-                    className={`${item} ${liked ? 'text-slate-900' : ''}`}
-                >
-                    <LikeIcon aria-hidden="true" className="h-[18px] w-[18px]" />
-                    <span className="tabular-nums">{engagement.reactions.like || 0}</span>
-                </button>
-                <button
-                    type="button"
-                    tabIndex={visible ? 0 : -1}
-                    aria-label={`Comments: ${commentCount}`}
-                    onClick={() => scrollToElement(commentsRef.current)}
-                    className={item}
-                >
-                    <PiChatCircle aria-hidden="true" className="h-[18px] w-[18px]" />
-                    <span className="tabular-nums">{commentCount}</span>
-                </button>
-                <button type="button" tabIndex={visible ? 0 : -1} onClick={share} className={item}>
-                    <PiShareNetwork aria-hidden="true" className="h-[18px] w-[18px]" /> Share
-                </button>
+        <>
+            <div
+                className={`fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 transition-all duration-200 ${
+                    visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-6 opacity-0'
+                }`}
+                aria-hidden={!visible}
+            >
+                <div className="flex divide-x divide-slate-200 border border-slate-300 bg-white shadow-lg">
+                    <button
+                        type="button"
+                        tabIndex={visible ? 0 : -1}
+                        aria-pressed={liked}
+                        aria-label={`Like: ${engagement.reactions.like || 0}`}
+                        onClick={() => engagement.toggleReaction('like')}
+                        className={`${item} ${liked ? 'text-slate-900' : ''}`}
+                    >
+                        <LikeIcon aria-hidden="true" className="h-[18px] w-[18px]" />
+                        <span className="tabular-nums">{engagement.reactions.like || 0}</span>
+                    </button>
+                    <button
+                        type="button"
+                        tabIndex={visible ? 0 : -1}
+                        aria-label={`Comments: ${commentCount}`}
+                        onClick={() => scrollToElement(commentsRef.current)}
+                        className={item}
+                    >
+                        <PiChatCircle aria-hidden="true" className="h-[18px] w-[18px]" />
+                        <span className="tabular-nums">{commentCount}</span>
+                    </button>
+                    <button type="button" tabIndex={visible ? 0 : -1} onClick={share} className={item}>
+                        <PiShareNetwork aria-hidden="true" className="h-[18px] w-[18px]" /> Share
+                    </button>
+                </div>
             </div>
-        </div>
+            {showModal && <BlogPostShareModal post={post} onClose={() => setShowModal(false)} />}
+        </>
     );
 }
