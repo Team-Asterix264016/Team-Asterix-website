@@ -122,7 +122,10 @@ export default function CyberNewsletterCTA({ onOpenSponsor }) {
                                 onSubmit={handleSubmit}
                                 className="mx-auto flex max-w-3xl flex-col gap-4 sm:flex-row"
                             >
-                                <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                                <div
+                                    aria-hidden="true"
+                                    className="absolute -left-[9999px] h-px w-px overflow-hidden"
+                                >
                                     <label>
                                         Website
                                         <input

@@ -257,7 +257,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                         const s = scheduleList.find((item) => item.id === e.target.value);
                                         if (s) selectScheduleSession(s);
                                     }}
-                                    className="min-w-0 max-w-full border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                    className="max-w-full min-w-0 border-2 border-slate-700 bg-amber-400 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
                                 >
                                     <option value="">-- {track.toUpperCase()} Schedule --</option>
                                     {scheduleList.map((s) => (

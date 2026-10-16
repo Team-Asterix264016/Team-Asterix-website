@@ -72,22 +72,24 @@ function DesktopSidebar({
     return (
         <aside
             data-lenis-prevent
-            className="hidden lg:block w-80 shrink-0 sticky top-6 self-start space-y-6 max-h-[calc(100vh-3rem)] overflow-y-auto pr-1"
+            className="sticky top-6 hidden max-h-[calc(100vh-3rem)] w-80 shrink-0 space-y-6 self-start overflow-y-auto pr-1 lg:block"
         >
             {/* Author & Audio Card */}
-            <div className="border-4 border-slate-900 bg-white p-5 shadow-brutal-4">
-                <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
+            <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-5">
+                <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
                     AUTHOR & DISPATCH
                 </span>
                 <div className="mt-3.5 flex items-center gap-3">
                     <span
                         aria-hidden="true"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-base font-black text-slate-900 shadow-brutal-2"
+                        className="shadow-brutal-2 flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-base font-black text-slate-900"
                     >
                         {(post.author || 'T').charAt(0).toUpperCase()}
                     </span>
                     <div className="min-w-0">
-                        <p className="truncate font-display text-sm font-bold text-slate-900">{post.author}</p>
+                        <p className="font-display truncate text-sm font-bold text-slate-900">
+                            {post.author}
+                        </p>
                         {post.authorRole && (
                             <p className="truncate font-mono text-xs text-slate-500">{post.authorRole}</p>
                         )}
@@ -104,9 +106,9 @@ function DesktopSidebar({
 
             {/* Sticky Table of Contents */}
             {headings.length > 1 && (
-                <div className="border-4 border-slate-900 bg-white p-5 shadow-brutal-4">
+                <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-5">
                     <div className="flex items-center justify-between">
-                        <span className="font-mono text-xs font-black uppercase text-slate-900">
+                        <span className="font-mono text-xs font-black text-slate-900 uppercase">
                             Table of Contents
                         </span>
                         <span className="font-mono text-[10px] font-bold text-slate-400">
@@ -121,9 +123,9 @@ function DesktopSidebar({
                                     <button
                                         type="button"
                                         onClick={() => scrollToElement(document.getElementById(h.id))}
-                                        className={`cursor-pointer text-left transition-colors duration-150 block w-full py-1 pr-2 ${
+                                        className={`block w-full cursor-pointer py-1 pr-2 text-left transition-colors duration-150 ${
                                             isActive
-                                                ? 'font-black text-slate-950 bg-amber-200 -ml-3 pl-2.5 border-l-2 border-slate-900'
+                                                ? '-ml-3 border-l-2 border-slate-900 bg-amber-200 pl-2.5 font-black text-slate-950'
                                                 : 'text-slate-600 hover:text-slate-900 hover:underline'
                                         }`}
                                     >
@@ -141,8 +143,8 @@ function DesktopSidebar({
 
             {/* Key Takeaways in Sidebar */}
             {post.takeaways?.length > 0 && (
-                <div className="border-4 border-slate-900 bg-amber-50 p-5 shadow-brutal-4">
-                    <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
+                <div className="shadow-brutal-4 border-4 border-slate-900 bg-amber-50 p-5">
+                    <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
                         KEY TAKEAWAYS
                     </span>
                     <ul className="mt-3 space-y-2 text-xs leading-relaxed text-slate-800">
@@ -157,8 +159,10 @@ function DesktopSidebar({
             )}
 
             {/* Quick Actions Dock */}
-            <div className="border-4 border-slate-900 bg-white p-4 shadow-brutal-4">
-                <span className="font-mono text-[10px] font-black uppercase text-slate-500">QUICK ACTIONS</span>
+            <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-4">
+                <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
+                    QUICK ACTIONS
+                </span>
                 <div className="mt-2.5 grid grid-cols-3 gap-2 font-mono text-xs font-black">
                     <button
                         type="button"
@@ -199,7 +203,7 @@ function DesktopSidebar({
             {/* Topics & Tags */}
             {post.tags?.length > 0 && (
                 <div className="border-2 border-slate-900 bg-slate-50 p-4">
-                    <span className="font-mono text-[10px] font-black uppercase text-slate-500">TOPICS</span>
+                    <span className="font-mono text-[10px] font-black text-slate-500 uppercase">TOPICS</span>
                     <div className="mt-2 flex flex-wrap gap-1.5">
                         {post.tags.map((tag) => (
                             <span
@@ -234,10 +238,83 @@ function ArticleView({ post, previous, next, related }) {
     useEffect(() => {
         const previousTitle = document.title;
         document.title = `${post.title} · Horizon · Team Asterix`;
+
+        const siteOrigin =
+            typeof window !== 'undefined' && window.location.origin
+                ? window.location.origin
+                : 'https://asterix-website.vercel.app';
+
+        let coverSrc = post.coverImage || '/og-image.png';
+        if (coverSrc.startsWith('/')) {
+            coverSrc = `${siteOrigin}${coverSrc}`;
+        }
+
+        const canonicalUrl = `${siteOrigin}/blog/${encodeURIComponent(post.slug)}`;
+
+        const tags = [
+            {
+                selector: 'meta[property="og:title"]',
+                attr: 'property',
+                name: 'og:title',
+                content: post.title
+            },
+            {
+                selector: 'meta[property="og:description"]',
+                attr: 'property',
+                name: 'og:description',
+                content: post.excerpt || post.title
+            },
+            { selector: 'meta[property="og:image"]', attr: 'property', name: 'og:image', content: coverSrc },
+            {
+                selector: 'meta[property="og:image:secure_url"]',
+                attr: 'property',
+                name: 'og:image:secure_url',
+                content: coverSrc
+            },
+            { selector: 'meta[property="og:url"]', attr: 'property', name: 'og:url', content: canonicalUrl },
+            { selector: 'meta[property="og:type"]', attr: 'property', name: 'og:type', content: 'article' },
+            {
+                selector: 'meta[name="twitter:card"]',
+                attr: 'name',
+                name: 'twitter:card',
+                content: 'summary_large_image'
+            },
+            {
+                selector: 'meta[name="twitter:title"]',
+                attr: 'name',
+                name: 'twitter:title',
+                content: post.title
+            },
+            {
+                selector: 'meta[name="twitter:description"]',
+                attr: 'name',
+                name: 'twitter:description',
+                content: post.excerpt || post.title
+            },
+            { selector: 'meta[name="twitter:image"]', attr: 'name', name: 'twitter:image', content: coverSrc }
+        ];
+
+        const saved = tags.map((t) => {
+            let el = document.querySelector(t.selector);
+            const created = !el;
+            if (!el) {
+                el = document.createElement('meta');
+                el.setAttribute(t.attr, t.name);
+                document.head.appendChild(el);
+            }
+            const prev = el.getAttribute('content');
+            el.setAttribute('content', t.content);
+            return { el, created, prev };
+        });
+
         return () => {
             document.title = previousTitle;
+            saved.forEach(({ el, created, prev }) => {
+                if (created) el.remove();
+                else if (prev !== null) el.setAttribute('content', prev);
+            });
         };
-    }, [post.title]);
+    }, [post.title, post.excerpt, post.coverImage, post.slug]);
 
     // Active heading scroll spy for sticky table of contents
     useEffect(() => {
@@ -270,7 +347,7 @@ function ArticleView({ post, previous, next, related }) {
     return (
         <>
             <ReadingProgress targetRef={bodyRef} />
-            <article className="mx-auto max-w-6xl xl:max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-16 sm:pt-12">
+            <article className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12 lg:px-8 xl:max-w-7xl">
                 <a
                     href="#community"
                     className="font-mono text-xs font-black tracking-wider text-sky-800 uppercase no-underline hover:text-slate-900"
@@ -281,15 +358,15 @@ function ArticleView({ post, previous, next, related }) {
                 {/* Article Header */}
                 <header ref={headerRef} className="mt-6 max-w-4xl">
                     {post.category && (
-                        <span className="inline-block border-2 border-slate-900 bg-sky-300 px-2 py-0.5 font-mono text-[11px] font-black uppercase text-slate-950">
+                        <span className="inline-block border-2 border-slate-900 bg-sky-300 px-2 py-0.5 font-mono text-[11px] font-black text-slate-950 uppercase">
                             {post.category}
                         </span>
                     )}
-                    <h1 className="mt-4 font-display text-3xl font-bold leading-[1.15] text-balance text-slate-900 sm:text-5xl lg:text-6xl">
+                    <h1 className="font-display mt-4 text-3xl leading-[1.15] font-bold text-balance text-slate-900 sm:text-5xl lg:text-6xl">
                         {post.title}
                     </h1>
                     {post.excerpt && (
-                        <p className="mt-4 text-lg leading-relaxed text-pretty text-slate-600 sm:text-xl max-w-3xl">
+                        <p className="mt-4 max-w-3xl text-lg leading-relaxed text-pretty text-slate-600 sm:text-xl">
                             {post.excerpt}
                         </p>
                     )}
@@ -309,8 +386,10 @@ function ArticleView({ post, previous, next, related }) {
                                 )}
                             </div>
                         </div>
-                        <p className="text-sm text-slate-500 font-mono">
-                            <time dateTime={post.publishedAt || undefined}>{formatPostDate(post.publishedAt)}</time>
+                        <p className="font-mono text-sm text-slate-500">
+                            <time dateTime={post.publishedAt || undefined}>
+                                {formatPostDate(post.publishedAt)}
+                            </time>
                             <span aria-hidden="true"> · </span>
                             {post.readMinutes} min read
                         </p>
@@ -343,14 +422,14 @@ function ArticleView({ post, previous, next, related }) {
                         src={cover}
                         alt={post.coverAlt || ''}
                         style={{ objectPosition: post.coverPosition || '50% 50%' }}
-                        className="mt-8 aspect-[16/9] w-full max-w-5xl border-4 border-slate-900 object-cover shadow-brutal-4"
+                        className="shadow-brutal-4 mt-8 aspect-[16/9] w-full max-w-5xl border-4 border-slate-900 object-cover"
                     />
                 )}
 
                 {/* 2-Column Desktop Layout: Main Content + Sticky Companion Sidebar */}
                 <div className="mt-10 flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
                     {/* Main Reading & Interaction Column */}
-                    <div className="min-w-0 flex-1 max-w-3xl lg:max-w-[48rem] xl:max-w-[54rem]">
+                    <div className="max-w-3xl min-w-0 flex-1 lg:max-w-[48rem] xl:max-w-[54rem]">
                         {/* Mobile-only inline takeaways & TOC */}
                         <div className="lg:hidden">
                             <Takeaways items={post.takeaways} />
@@ -362,7 +441,7 @@ function ArticleView({ post, previous, next, related }) {
                             <ArticleBody
                                 blocks={blocks}
                                 renderPoll={renderPoll}
-                                className="mt-6 lg:mt-0 lg:max-w-none lg:mx-0"
+                                className="mt-6 lg:mx-0 lg:mt-0 lg:max-w-none"
                             />
                         </div>
 
@@ -386,10 +465,15 @@ function ArticleView({ post, previous, next, related }) {
                             aria-labelledby="react-heading"
                             className="mt-12 scroll-mt-24 border border-slate-200 bg-white p-5 sm:p-6"
                         >
-                            <h2 id="react-heading" className="font-display text-lg font-semibold text-slate-900">
+                            <h2
+                                id="react-heading"
+                                className="font-display text-lg font-semibold text-slate-900"
+                            >
                                 Was this useful?
                             </h2>
-                            <p className="mt-1 text-sm text-slate-500">Reactions are anonymous. No sign-in needed.</p>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Reactions are anonymous. No sign-in needed.
+                            </p>
                             <div className="mt-4">
                                 <ReactionButtons engagement={engagement} />
                             </div>
@@ -410,10 +494,12 @@ function ArticleView({ post, previous, next, related }) {
                                         href={`#community/blog/${next.slug}`}
                                         className="press shadow-brutal-2 block border-2 border-slate-900 bg-white p-4 no-underline hover:bg-sky-50"
                                     >
-                                        <span className="font-mono text-[10px] font-black uppercase text-slate-500">
+                                        <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
                                             ← Newer
                                         </span>
-                                        <span className="mt-1 block font-bold text-slate-900">{next.title}</span>
+                                        <span className="mt-1 block font-bold text-slate-900">
+                                            {next.title}
+                                        </span>
                                     </a>
                                 ) : (
                                     <span className="hidden sm:block" />
@@ -423,10 +509,12 @@ function ArticleView({ post, previous, next, related }) {
                                         href={`#community/blog/${previous.slug}`}
                                         className="press shadow-brutal-2 block border-2 border-slate-900 bg-white p-4 text-right no-underline hover:bg-sky-50"
                                     >
-                                        <span className="font-mono text-[10px] font-black uppercase text-slate-500">
+                                        <span className="font-mono text-[10px] font-black text-slate-500 uppercase">
                                             Older →
                                         </span>
-                                        <span className="mt-1 block font-bold text-slate-900">{previous.title}</span>
+                                        <span className="mt-1 block font-bold text-slate-900">
+                                            {previous.title}
+                                        </span>
                                     </a>
                                 )}
                             </nav>
@@ -541,7 +629,7 @@ export default function BlogArticle({ slug }) {
                     )}
                     <a
                         href="#community"
-                        className="press shadow-brutal-2 border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black uppercase text-slate-900 no-underline"
+                        className="press shadow-brutal-2 border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black text-slate-900 uppercase no-underline"
                     >
                         ← All posts
                     </a>

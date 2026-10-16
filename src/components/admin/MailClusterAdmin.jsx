@@ -62,7 +62,12 @@ export default function MailClusterAdmin({ showStatus }) {
         return state.contacts.filter(
             (c) =>
                 matchesSegment(c, segment) &&
-                (!q || [c.email, c.name, c.department].some((v) => String(v || '').toLowerCase().includes(q)))
+                (!q ||
+                    [c.email, c.name, c.department].some((v) =>
+                        String(v || '')
+                            .toLowerCase()
+                            .includes(q)
+                    ))
         );
     }, [state.contacts, segment, query]);
 
@@ -71,7 +76,9 @@ export default function MailClusterAdmin({ showStatus }) {
         try {
             await navigator.clipboard.writeText(list);
             setManualCopy('');
-            showStatus?.(`Copied ${visible.length} email${visible.length === 1 ? '' : 's'}. Paste them into BCC.`);
+            showStatus?.(
+                `Copied ${visible.length} email${visible.length === 1 ? '' : 's'}. Paste them into BCC.`
+            );
         } catch {
             setManualCopy(list);
         }
@@ -215,8 +222,8 @@ export default function MailClusterAdmin({ showStatus }) {
                 </div>
                 <p className="font-mono text-[10px] font-bold text-slate-600">
                     Paste copied addresses into BCC, never To or CC, so recipients cannot see each other. For
-                    newsletters, send from a mail-merge tool with the CSV instead: its &quot;Unsubscribe link&quot;
-                    column gives each person their own link, which a BCC email cannot.
+                    newsletters, send from a mail-merge tool with the CSV instead: its &quot;Unsubscribe
+                    link&quot; column gives each person their own link, which a BCC email cannot.
                 </p>
                 {manualCopy && (
                     <div>
@@ -235,7 +242,9 @@ export default function MailClusterAdmin({ showStatus }) {
             </div>
 
             {state.status === 'loading' && (
-                <div className="p-8 text-center font-mono text-sm text-slate-500">Building the mail cluster…</div>
+                <div className="p-8 text-center font-mono text-sm text-slate-500">
+                    Building the mail cluster…
+                </div>
             )}
 
             {state.status === 'error' && (
@@ -302,7 +311,9 @@ export default function MailClusterAdmin({ showStatus }) {
                                     <td className="p-2.5 text-slate-600">
                                         {formatDate(c.subscribedAt)}
                                         {c.source && (
-                                            <span className="block text-[10px] text-slate-400">via {c.source}</span>
+                                            <span className="block text-[10px] text-slate-400">
+                                                via {c.source}
+                                            </span>
                                         )}
                                     </td>
                                 </tr>

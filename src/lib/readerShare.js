@@ -8,8 +8,17 @@ export function scrollToElement(el) {
 }
 
 // Share links carry utm_source so the analytics can tell which network a reader came from.
-export const postUrl = (slug, source) =>
-    `${window.location.origin}/${source ? `?utm_source=${source}` : ''}#community/blog/${slug}`;
+// Uses a clean /blog/:slug pathname so social crawlers (WhatsApp, LinkedIn, Twitter/X)
+// can parse the Open Graph tags and display the post's cover image.
+export const postUrl = (slug, source) => {
+    const origin =
+        typeof window !== 'undefined' && window.location.origin
+            ? window.location.origin
+            : 'https://asterix-website.vercel.app';
+    const cleanSlug = encodeURIComponent(slug);
+    const query = source ? `?utm_source=${encodeURIComponent(source)}` : '';
+    return `${origin}/blog/${cleanSlug}${query}`;
+};
 
 export const SHARE_TARGETS = [
     {

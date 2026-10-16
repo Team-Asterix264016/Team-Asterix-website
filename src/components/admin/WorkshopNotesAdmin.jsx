@@ -41,7 +41,8 @@ function detectLinkType(urlOrName) {
     if (path.endsWith('.pdf')) return 'pdf';
     if (/docs\.google\.com\/presentation/.test(value) || /\.(pptx?|key)$/.test(path)) return 'slides';
     if (/docs\.google\.com\/document/.test(value) || /\.(docx?|txt)$/.test(path)) return 'doc';
-    if (/docs\.google\.com\/spreadsheets/.test(value) || /\.(csv|xlsx?|json|ya?ml)$/.test(path)) return 'dataset';
+    if (/docs\.google\.com\/spreadsheets/.test(value) || /\.(csv|xlsx?|json|ya?ml)$/.test(path))
+        return 'dataset';
     if (/\.(py|c|cpp|h|hpp|ino|m|java|zip)$/.test(path)) return 'code';
     if (/youtube\.com|youtu\.be|vimeo\.com/.test(value)) return 'video';
     if (/drive\.google\.com/.test(value)) return 'drive';
@@ -118,7 +119,9 @@ export default function WorkshopNotesAdmin({ showStatus }) {
             const track = { ...WORKSHOP_TRACKS[trackId], ...siteData?.workshop?.tracks?.[trackId] };
             (track.schedule || [])
                 .filter((s) => s.type !== 'holiday')
-                .forEach((s) => map.set(s.id, { ...s, trackId, option: `${s.date} · ${s.label} · ${s.title}` }));
+                .forEach((s) =>
+                    map.set(s.id, { ...s, trackId, option: `${s.date} · ${s.label} · ${s.title}` })
+                );
         });
         return map;
     }, [siteData]);
@@ -148,8 +151,12 @@ export default function WorkshopNotesAdmin({ showStatus }) {
 
     const patchDraft = (patch) => setDraft((prev) => ({ ...prev, ...patch }));
     const patchLink = (index, patch) =>
-        setDraft((prev) => ({ ...prev, resources: prev.resources.map((l, i) => (i === index ? { ...l, ...patch } : l)) }));
-    const removeLink = (index) => setDraft((prev) => ({ ...prev, resources: prev.resources.filter((_, i) => i !== index) }));
+        setDraft((prev) => ({
+            ...prev,
+            resources: prev.resources.map((l, i) => (i === index ? { ...l, ...patch } : l))
+        }));
+    const removeLink = (index) =>
+        setDraft((prev) => ({ ...prev, resources: prev.resources.filter((_, i) => i !== index) }));
 
     // Sets the URL and, unless the admin chose a type themselves, the type detected from it.
     const setLinkUrl = (index, url, nameHint = url) =>
@@ -170,11 +177,16 @@ export default function WorkshopNotesAdmin({ showStatus }) {
         try {
             const body = new FormData();
             body.append('file', file);
-            const response = await fetch(apiUrl('/api/upload/note-file'), { method: 'POST', headers: adminHeaders(), body });
+            const response = await fetch(apiUrl('/api/upload/note-file'), {
+                method: 'POST',
+                headers: adminHeaders(),
+                body
+            });
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.error || `Upload failed (${response.status}).`);
             setLinkUrl(index, data.url, file.name);
-            if (!draft.resources[index]?.label) patchLink(index, { label: file.name.replace(/\.[^.]+$/, '') });
+            if (!draft.resources[index]?.label)
+                patchLink(index, { label: file.name.replace(/\.[^.]+$/, '') });
             showStatus?.(`Uploaded ${file.name}.`);
         } catch (err) {
             showStatus?.(`⚠️ ${err.message}`);
@@ -222,8 +234,8 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                 <div>
                     <h2 className="text-2xl font-black uppercase">Workshop Notes</h2>
                     <p className="mt-1 text-xs font-bold text-slate-600">
-                        Notes, slides and links shown on each participant&apos;s profile under the Notes tab. Only what you publish
-                        here is shown.
+                        Notes, slides and links shown on each participant&apos;s profile under the Notes tab.
+                        Only what you publish here is shown.
                     </p>
                 </div>
                 <button
@@ -236,8 +248,13 @@ export default function WorkshopNotesAdmin({ showStatus }) {
             </div>
 
             {editingId && (
-                <form onSubmit={saveNote} className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-white p-5">
-                    <h3 className="font-mono text-sm font-black uppercase">{editingId === 'new' ? 'New note' : 'Edit note'}</h3>
+                <form
+                    onSubmit={saveNote}
+                    className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-white p-5"
+                >
+                    <h3 className="font-mono text-sm font-black uppercase">
+                        {editingId === 'new' ? 'New note' : 'Edit note'}
+                    </h3>
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <label>
@@ -247,7 +264,9 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                                 value={draft.track}
                                 onChange={(e) => {
                                     const track = e.target.value;
-                                    const keepSession = sessionOptions(track).some((s) => s.id === draft.sessionId);
+                                    const keepSession = sessionOptions(track).some(
+                                        (s) => s.id === draft.sessionId
+                                    );
                                     patchDraft({ track, ...(keepSession ? {} : { sessionId: '' }) });
                                 }}
                             >
@@ -285,12 +304,20 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                     </div>
 
                     <label className="block">
-                        <span className={LABEL_CLASS}>Session (participants see this note when they open the class in Timetable)</span>
-                        <select className={FIELD_CLASS} value={draft.sessionId} onChange={(e) => patchDraft({ sessionId: e.target.value })}>
+                        <span className={LABEL_CLASS}>
+                            Session (participants see this note when they open the class in Timetable)
+                        </span>
+                        <select
+                            className={FIELD_CLASS}
+                            value={draft.sessionId}
+                            onChange={(e) => patchDraft({ sessionId: e.target.value })}
+                        >
                             <option value="">Not tied to a session (Notes tab only)</option>
                             {sessionOptions(draft.track).map((s) => (
                                 <option key={s.id} value={s.id}>
-                                    {draft.track === 'common' ? `${s.trackId === 'software' ? 'Software' : 'Powertrain'} · ` : ''}
+                                    {draft.track === 'common'
+                                        ? `${s.trackId === 'software' ? 'Software' : 'Powertrain'} · `
+                                        : ''}
                                     {s.option}
                                 </option>
                             ))}
@@ -299,7 +326,12 @@ export default function WorkshopNotesAdmin({ showStatus }) {
 
                     <label className="block">
                         <span className={LABEL_CLASS}>Title</span>
-                        <input required className={FIELD_CLASS} value={draft.title} onChange={(e) => patchDraft({ title: e.target.value })} />
+                        <input
+                            required
+                            className={FIELD_CLASS}
+                            value={draft.title}
+                            onChange={(e) => patchDraft({ title: e.target.value })}
+                        />
                     </label>
 
                     <label className="block">
@@ -326,7 +358,10 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                     <div className="space-y-3">
                         <span className={LABEL_CLASS}>Links &amp; files</span>
                         {draft.resources.map((link, index) => (
-                            <div key={index} className="grid grid-cols-1 gap-2 border-2 border-slate-200 bg-slate-50 p-3 sm:grid-cols-12">
+                            <div
+                                key={index}
+                                className="grid grid-cols-1 gap-2 border-2 border-slate-200 bg-slate-50 p-3 sm:grid-cols-12"
+                            >
                                 <input
                                     className={`${FIELD_CLASS} sm:col-span-3`}
                                     placeholder="Label, e.g. Session 2 slides"
@@ -363,7 +398,9 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                                             className={FIELD_CLASS}
                                             placeholder="Custom type, e.g. lab manual"
                                             value={link.type}
-                                            onChange={(e) => patchLink(index, { type: e.target.value, typeTouched: true })}
+                                            onChange={(e) =>
+                                                patchLink(index, { type: e.target.value, typeTouched: true })
+                                            }
                                         />
                                     )}
                                 </div>
@@ -441,33 +478,55 @@ export default function WorkshopNotesAdmin({ showStatus }) {
                 </div>
             ) : visibleNotes.length === 0 ? (
                 <div className="border-2 border-dashed border-slate-400 bg-white p-6 text-center font-mono text-xs font-bold text-slate-600">
-                    No notes published{trackFilter === 'all' ? '' : ' for this track'} yet. Use “+ New note” to add one.
+                    No notes published{trackFilter === 'all' ? '' : ' for this track'} yet. Use “+ New note”
+                    to add one.
                 </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {visibleNotes.map((note) => (
-                        <div key={note._id} className="shadow-brutal-2 border-2 border-slate-900 bg-white p-4">
+                        <div
+                            key={note._id}
+                            className="shadow-brutal-2 border-2 border-slate-900 bg-white p-4"
+                        >
                             <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] font-black uppercase">
                                 <span className="bg-slate-900 px-2 py-0.5 text-amber-300">
                                     {TRACKS.find((t) => t.id === note.track)?.label || note.track}
                                 </span>
-                                {note.module && <span className="border border-slate-900 bg-amber-200 px-2 py-0.5">{note.module}</span>}
+                                {note.module && (
+                                    <span className="border border-slate-900 bg-amber-200 px-2 py-0.5">
+                                        {note.module}
+                                    </span>
+                                )}
                                 <span className="text-slate-500">Order {note.sessionNumber ?? 1}</span>
                             </div>
                             {note.sessionId && (
                                 <p className="mt-2 font-mono text-[10px] font-black text-sky-800 uppercase">
-                                    🗓 {sessionsById.get(note.sessionId)?.option || `Session ${note.sessionId} (no longer in schedule)`}
+                                    🗓{' '}
+                                    {sessionsById.get(note.sessionId)?.option ||
+                                        `Session ${note.sessionId} (no longer in schedule)`}
                                 </p>
                             )}
                             <h4 className="mt-2 text-base font-black uppercase">{note.title}</h4>
-                            {note.description && <p className="mt-1 text-xs font-bold text-slate-600">{note.description}</p>}
+                            {note.description && (
+                                <p className="mt-1 text-xs font-bold text-slate-600">{note.description}</p>
+                            )}
                             <ul className="mt-3 space-y-1 font-mono text-[11px] font-bold">
                                 {(note.resources || []).map((link, i) => (
-                                    <li key={i} className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1">
-                                        <a href={safeHref(link.url)} target="_blank" rel="noopener noreferrer" className="truncate text-sky-800 underline">
+                                    <li
+                                        key={i}
+                                        className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1"
+                                    >
+                                        <a
+                                            href={safeHref(link.url)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="truncate text-sky-800 underline"
+                                        >
                                             {link.label}
                                         </a>
-                                        <span className="shrink-0 border border-slate-400 px-1.5 text-[10px] uppercase">{link.type || 'link'}</span>
+                                        <span className="shrink-0 border border-slate-400 px-1.5 text-[10px] uppercase">
+                                            {link.type || 'link'}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>

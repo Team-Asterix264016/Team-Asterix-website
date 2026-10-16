@@ -678,7 +678,13 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
                 { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
                 ...(isSuperAdmin
-                    ? [{ id: 'participant-passwords', label: 'Participant Passwords & Logins 🔐', icon: 'users' }]
+                    ? [
+                          {
+                              id: 'participant-passwords',
+                              label: 'Participant Passwords & Logins 🔐',
+                              icon: 'users'
+                          }
+                      ]
                     : [])
             ]
         },
@@ -822,40 +828,63 @@ export default function AdminDashboard({ onExit }) {
 
                             const groupStyles = {
                                 'website-content-group': {
-                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-sky-500 text-slate-950 font-black',
-                                    inactiveHeader: 'border-2 border-sky-400/80 bg-sky-50/90 text-sky-950 font-bold hover:bg-sky-100 hover:border-sky-600',
-                                    badgeActive: 'border border-slate-900 bg-sky-300 text-slate-950 font-bold',
+                                    activeHeader:
+                                        'shadow-brutal-2 border-slate-900 bg-sky-500 text-slate-950 font-black',
+                                    inactiveHeader:
+                                        'border-2 border-sky-400/80 bg-sky-50/90 text-sky-950 font-bold hover:bg-sky-100 hover:border-sky-600',
+                                    badgeActive:
+                                        'border border-slate-900 bg-sky-300 text-slate-950 font-bold',
                                     badgeInactive: 'border border-sky-400 bg-sky-200 text-sky-950 font-bold',
                                     borderLeft: 'border-l-2 border-sky-400 pl-2',
-                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-sky-400 font-black text-slate-950',
-                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-sky-300 hover:bg-sky-50'
+                                    activeChild:
+                                        'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-sky-400 font-black text-slate-950',
+                                    inactiveChild:
+                                        'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-sky-300 hover:bg-sky-50'
                                 },
                                 'workshop-group': {
-                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-amber-400 text-slate-950 font-black',
-                                    inactiveHeader: 'border-2 border-amber-400/80 bg-amber-50/90 text-amber-950 font-bold hover:bg-amber-100 hover:border-amber-600',
-                                    badgeActive: 'border border-slate-900 bg-amber-300 text-slate-950 font-bold',
-                                    badgeInactive: 'border border-amber-400 bg-amber-200 text-amber-950 font-bold',
+                                    activeHeader:
+                                        'shadow-brutal-2 border-slate-900 bg-amber-400 text-slate-950 font-black',
+                                    inactiveHeader:
+                                        'border-2 border-amber-400/80 bg-amber-50/90 text-amber-950 font-bold hover:bg-amber-100 hover:border-amber-600',
+                                    badgeActive:
+                                        'border border-slate-900 bg-amber-300 text-slate-950 font-bold',
+                                    badgeInactive:
+                                        'border border-amber-400 bg-amber-200 text-amber-950 font-bold',
                                     borderLeft: 'border-l-2 border-amber-400 pl-2',
-                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-amber-400 font-black text-slate-950',
-                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-amber-300 hover:bg-amber-50'
+                                    activeChild:
+                                        'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-amber-400 font-black text-slate-950',
+                                    inactiveChild:
+                                        'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-amber-300 hover:bg-amber-50'
                                 },
                                 'community-group': {
-                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-violet-400 text-slate-950 font-black',
-                                    inactiveHeader: 'border-2 border-violet-400/80 bg-violet-50/90 text-violet-950 font-bold hover:bg-violet-100 hover:border-violet-600',
-                                    badgeActive: 'border border-slate-900 bg-violet-300 text-slate-950 font-bold',
-                                    badgeInactive: 'border border-violet-400 bg-violet-200 text-violet-950 font-bold',
+                                    activeHeader:
+                                        'shadow-brutal-2 border-slate-900 bg-violet-400 text-slate-950 font-black',
+                                    inactiveHeader:
+                                        'border-2 border-violet-400/80 bg-violet-50/90 text-violet-950 font-bold hover:bg-violet-100 hover:border-violet-600',
+                                    badgeActive:
+                                        'border border-slate-900 bg-violet-300 text-slate-950 font-bold',
+                                    badgeInactive:
+                                        'border border-violet-400 bg-violet-200 text-violet-950 font-bold',
                                     borderLeft: 'border-l-2 border-violet-400 pl-2',
-                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-violet-400 font-black text-slate-950',
-                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-violet-300 hover:bg-violet-50'
+                                    activeChild:
+                                        'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-violet-400 font-black text-slate-950',
+                                    inactiveChild:
+                                        'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-violet-300 hover:bg-violet-50'
                                 },
                                 'dev-group': {
-                                    activeHeader: 'shadow-brutal-2 border-slate-900 bg-emerald-400 text-slate-950 font-black',
-                                    inactiveHeader: 'border-2 border-emerald-400/80 bg-emerald-50/90 text-emerald-950 font-bold hover:bg-emerald-100 hover:border-emerald-600',
-                                    badgeActive: 'border border-slate-900 bg-emerald-300 text-slate-950 font-bold',
-                                    badgeInactive: 'border border-emerald-400 bg-emerald-200 text-emerald-950 font-bold',
+                                    activeHeader:
+                                        'shadow-brutal-2 border-slate-900 bg-emerald-400 text-slate-950 font-black',
+                                    inactiveHeader:
+                                        'border-2 border-emerald-400/80 bg-emerald-50/90 text-emerald-950 font-bold hover:bg-emerald-100 hover:border-emerald-600',
+                                    badgeActive:
+                                        'border border-slate-900 bg-emerald-300 text-slate-950 font-bold',
+                                    badgeInactive:
+                                        'border border-emerald-400 bg-emerald-200 text-emerald-950 font-bold',
                                     borderLeft: 'border-l-2 border-emerald-400 pl-2',
-                                    activeChild: 'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-emerald-400 font-black text-slate-950',
-                                    inactiveChild: 'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-emerald-300 hover:bg-emerald-50'
+                                    activeChild:
+                                        'shadow-brutal-2 translate-x-1 border-2 border-slate-900 bg-emerald-400 font-black text-slate-950',
+                                    inactiveChild:
+                                        'border-2 border-transparent bg-white font-bold text-slate-800 hover:border-emerald-300 hover:bg-emerald-50'
                                 }
                             };
                             const currentStyle = groupStyles[tab.id] || groupStyles['website-content-group'];
@@ -870,7 +899,9 @@ export default function AdminDashboard({ onExit }) {
                                             if (next && !isAnyChildActive) setActiveTab(tab.children[0].id);
                                         }}
                                         className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3.5 py-2.5 text-left font-mono text-xs uppercase transition-all ${
-                                            isAnyChildActive ? currentStyle.activeHeader : currentStyle.inactiveHeader
+                                            isAnyChildActive
+                                                ? currentStyle.activeHeader
+                                                : currentStyle.inactiveHeader
                                         }`}
                                         aria-expanded={isExpanded}
                                     >
@@ -881,7 +912,9 @@ export default function AdminDashboard({ onExit }) {
                                         <span className="flex items-center gap-1.5">
                                             <span
                                                 className={`px-1.5 py-0.5 font-mono text-[9px] ${
-                                                    isAnyChildActive ? currentStyle.badgeActive : currentStyle.badgeInactive
+                                                    isAnyChildActive
+                                                        ? currentStyle.badgeActive
+                                                        : currentStyle.badgeInactive
                                                 }`}
                                             >
                                                 {tab.children.length}
@@ -893,7 +926,9 @@ export default function AdminDashboard({ onExit }) {
                                     </button>
 
                                     {isExpanded && (
-                                        <div className={`my-1 ml-1 flex flex-col gap-1 ${currentStyle.borderLeft}`}>
+                                        <div
+                                            className={`my-1 ml-1 flex flex-col gap-1 ${currentStyle.borderLeft}`}
+                                        >
                                             {tab.children.map((child) => {
                                                 const isTabRestricted = child.adminOnly && !isAdmin;
                                                 const isActive = activeTab === child.id;
@@ -902,7 +937,9 @@ export default function AdminDashboard({ onExit }) {
                                                         key={child.id}
                                                         onClick={() => setActiveTab(child.id)}
                                                         className={`press press-flat flex w-full cursor-pointer items-center justify-between gap-2 border-2 px-3 py-2 text-left font-mono text-[11px] uppercase transition-all ${
-                                                            isActive ? currentStyle.activeChild : currentStyle.inactiveChild
+                                                            isActive
+                                                                ? currentStyle.activeChild
+                                                                : currentStyle.inactiveChild
                                                         }`}
                                                         aria-current={isActive ? 'page' : undefined}
                                                     >
@@ -957,12 +994,12 @@ export default function AdminDashboard({ onExit }) {
 
                     {/* Live Health & Real-time Connectors Status Monitor */}
                     <div className="mt-6 border-t-2 border-slate-200 pt-4">
-                        <div className="shadow-brutal-2 border-2 border-slate-900 bg-slate-900 p-3 text-white font-mono text-xs">
-                            <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2.5">
-                                <span className="text-[10px] font-black tracking-widest text-sky-400 uppercase flex items-center gap-1.5">
+                        <div className="shadow-brutal-2 border-2 border-slate-900 bg-slate-900 p-3 font-mono text-xs text-white">
+                            <div className="mb-2.5 flex items-center justify-between border-b border-slate-700 pb-2">
+                                <span className="flex items-center gap-1.5 text-[10px] font-black tracking-widest text-sky-400 uppercase">
                                     <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                                     </span>
                                     LIVE CONNECTORS
                                 </span>
@@ -970,7 +1007,7 @@ export default function AdminDashboard({ onExit }) {
                                     type="button"
                                     onClick={checkLiveConnectors}
                                     disabled={liveHealth.isChecking}
-                                    className="text-[9px] font-bold uppercase text-slate-400 hover:text-white underline cursor-pointer disabled:opacity-50"
+                                    className="cursor-pointer text-[9px] font-bold text-slate-400 uppercase underline hover:text-white disabled:opacity-50"
                                     title="Ping API and Database now"
                                 >
                                     {liveHealth.isChecking ? 'Pinging...' : 'Ping Now ⚡'}
@@ -979,33 +1016,49 @@ export default function AdminDashboard({ onExit }) {
 
                             <div className="space-y-2 text-[11px]">
                                 {/* 1. Frontend -> Backend API Connector */}
-                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.apiConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'}`}></span>
+                                <div className="flex items-center justify-between border border-slate-700 bg-slate-800/90 p-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span
+                                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${liveHealth.apiConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-500'}`}
+                                        ></span>
                                         <div className="min-w-0 truncate">
-                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Frontend ↔ Backend API</span>
-                                            <span className="block text-[9px] text-slate-400 truncate">
-                                                {liveHealth.apiConnected ? `REST Engine (${liveHealth.apiLatencyMs}ms)` : 'API Offline'}
+                                            <span className="block truncate text-[10px] font-black text-slate-200 uppercase">
+                                                Frontend ↔ Backend API
+                                            </span>
+                                            <span className="block truncate text-[9px] text-slate-400">
+                                                {liveHealth.apiConnected
+                                                    ? `REST Engine (${liveHealth.apiLatencyMs}ms)`
+                                                    : 'API Offline'}
                                             </span>
                                         </div>
                                     </div>
-                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.apiConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-rose-500 bg-rose-950 text-rose-300'}`}>
+                                    <span
+                                        className={`shrink-0 border px-1.5 py-0.5 text-[9px] font-black uppercase ${liveHealth.apiConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-rose-500 bg-rose-950 text-rose-300'}`}
+                                    >
                                         {liveHealth.apiConnected ? `${liveHealth.apiLatencyMs}ms` : 'OFFLINE'}
                                     </span>
                                 </div>
 
                                 {/* 2. Backend -> Database Connector */}
-                                <div className="flex items-center justify-between bg-slate-800/90 p-2 border border-slate-700">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span className={`h-2.5 w-2.5 rounded-full shrink-0 ${liveHealth.dbConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-500'}`}></span>
+                                <div className="flex items-center justify-between border border-slate-700 bg-slate-800/90 p-2">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                        <span
+                                            className={`h-2.5 w-2.5 shrink-0 rounded-full ${liveHealth.dbConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-amber-500'}`}
+                                        ></span>
                                         <div className="min-w-0 truncate">
-                                            <span className="block font-black text-slate-200 text-[10px] uppercase truncate">Backend ↔ Database</span>
-                                            <span className="block text-[9px] text-slate-400 truncate">
-                                                {liveHealth.dbConnected ? liveHealth.dbProvider : 'DB Disconnected'}
+                                            <span className="block truncate text-[10px] font-black text-slate-200 uppercase">
+                                                Backend ↔ Database
+                                            </span>
+                                            <span className="block truncate text-[9px] text-slate-400">
+                                                {liveHealth.dbConnected
+                                                    ? liveHealth.dbProvider
+                                                    : 'DB Disconnected'}
                                             </span>
                                         </div>
                                     </div>
-                                    <span className={`border px-1.5 py-0.5 text-[9px] font-black uppercase shrink-0 ${liveHealth.dbConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-amber-500 bg-amber-950 text-amber-300'}`}>
+                                    <span
+                                        className={`shrink-0 border px-1.5 py-0.5 text-[9px] font-black uppercase ${liveHealth.dbConnected ? 'border-emerald-500 bg-emerald-950 text-emerald-300' : 'border-amber-500 bg-amber-950 text-amber-300'}`}
+                                    >
                                         {liveHealth.dbConnected ? 'CONNECTED' : 'OFFLINE'}
                                     </span>
                                 </div>
@@ -2145,9 +2198,7 @@ export default function AdminDashboard({ onExit }) {
                         />
                     )}
 
-                    {activeTab === 'barcode-attendance' && (
-                        <BarcodeAttendanceAdmin showStatus={showStatus} />
-                    )}
+                    {activeTab === 'barcode-attendance' && <BarcodeAttendanceAdmin showStatus={showStatus} />}
 
                     {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}
 
@@ -2563,10 +2614,14 @@ export default function AdminDashboard({ onExit }) {
                                                         {sub.unsubscribed_at ? (
                                                             <span className="font-bold text-rose-700">
                                                                 Unsubscribed{' '}
-                                                                {new Date(sub.unsubscribed_at).toLocaleDateString()}
+                                                                {new Date(
+                                                                    sub.unsubscribed_at
+                                                                ).toLocaleDateString()}
                                                             </span>
                                                         ) : (
-                                                            <span className="font-bold text-emerald-700">Active</span>
+                                                            <span className="font-bold text-emerald-700">
+                                                                Active
+                                                            </span>
                                                         )}
                                                     </td>
                                                     <td className="p-2.5 text-[11px] text-slate-500">
@@ -2683,7 +2738,9 @@ export default function AdminDashboard({ onExit }) {
                                         addAccount(createdAccount);
 
                                         // 2. Register in backend DB if token is available
-                                        const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+                                        const token =
+                                            sessionStorage.getItem(AUTH_TOKEN_KEY) ||
+                                            localStorage.getItem('admin_token');
                                         if (token) {
                                             try {
                                                 const res = await fetch(apiUrl('/api/auth/accounts'), {
@@ -2699,7 +2756,9 @@ export default function AdminDashboard({ onExit }) {
                                                     if (data.account) {
                                                         setDbAccounts((prev) => [
                                                             ...prev.filter(
-                                                                (a) => a.username !== cleanUsername && a.id !== createdAccount.id
+                                                                (a) =>
+                                                                    a.username !== cleanUsername &&
+                                                                    a.id !== createdAccount.id
                                                             ),
                                                             data.account
                                                         ]);
@@ -2707,7 +2766,9 @@ export default function AdminDashboard({ onExit }) {
                                                     fetchAccounts();
                                                 } else {
                                                     const errData = await res.json().catch(() => ({}));
-                                                    return alert(`⚠️ Failed to create member account: ${errData.error || 'Server error'}`);
+                                                    return alert(
+                                                        `⚠️ Failed to create member account: ${errData.error || 'Server error'}`
+                                                    );
                                                 }
                                             } catch (err) {
                                                 console.warn('Backend API account notice:', err);
@@ -2761,59 +2822,63 @@ export default function AdminDashboard({ onExit }) {
                                                         </span>
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                        {acc.accessLevel !== 'SuperAdmin' && String(acc.username || '').toLowerCase() !== 'admin1' && (
-                                                            <button
-                                                                onClick={async () => {
-                                                                    if (
-                                                                        !confirm(
-                                                                            `Delete account for ${acc.name}?`
+                                                        {acc.accessLevel !== 'SuperAdmin' &&
+                                                            String(acc.username || '').toLowerCase() !==
+                                                                'admin1' && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (
+                                                                            !confirm(
+                                                                                `Delete account for ${acc.name}?`
+                                                                            )
                                                                         )
-                                                                    )
-                                                                        return;
-                                                                    const token =
-                                                                        sessionStorage.getItem(
-                                                                            AUTH_TOKEN_KEY
-                                                                        );
-                                                                    if (token) {
-                                                                        try {
-                                                                            const res = await fetch(
-                                                                                apiUrl(
-                                                                                    `/api/auth/accounts/${acc.id}`
-                                                                                ),
-                                                                                {
-                                                                                    method: 'DELETE',
-                                                                                    headers: {
-                                                                                        Authorization: `Bearer ${token}`
+                                                                            return;
+                                                                        const token =
+                                                                            sessionStorage.getItem(
+                                                                                AUTH_TOKEN_KEY
+                                                                            );
+                                                                        if (token) {
+                                                                            try {
+                                                                                const res = await fetch(
+                                                                                    apiUrl(
+                                                                                        `/api/auth/accounts/${acc.id}`
+                                                                                    ),
+                                                                                    {
+                                                                                        method: 'DELETE',
+                                                                                        headers: {
+                                                                                            Authorization: `Bearer ${token}`
+                                                                                        }
                                                                                     }
+                                                                                );
+                                                                                if (res.ok) {
+                                                                                    setDbAccounts((prev) =>
+                                                                                        prev.filter(
+                                                                                            (a) =>
+                                                                                                a.id !==
+                                                                                                acc.id
+                                                                                        )
+                                                                                    );
+                                                                                    deleteAccount(acc.id);
+                                                                                    showStatus(
+                                                                                        'Account removed from database!'
+                                                                                    );
+                                                                                    return;
                                                                                 }
-                                                                            );
-                                                                            if (res.ok) {
-                                                                                setDbAccounts((prev) =>
-                                                                                    prev.filter(
-                                                                                        (a) => a.id !== acc.id
-                                                                                    )
+                                                                            } catch (err) {
+                                                                                console.warn(
+                                                                                    'Backend delete failed:',
+                                                                                    err
                                                                                 );
-                                                                                deleteAccount(acc.id);
-                                                                                showStatus(
-                                                                                    'Account removed from database!'
-                                                                                );
-                                                                                return;
                                                                             }
-                                                                        } catch (err) {
-                                                                            console.warn(
-                                                                                'Backend delete failed:',
-                                                                                err
-                                                                            );
                                                                         }
-                                                                    }
-                                                                    deleteAccount(acc.id);
-                                                                    showStatus('Account removed.');
-                                                                }}
-                                                                className="press press-flat cursor-pointer font-black text-rose-600 hover:text-rose-900"
-                                                            >
-                                                                Delete ✕
-                                                            </button>
-                                                        )}
+                                                                        deleteAccount(acc.id);
+                                                                        showStatus('Account removed.');
+                                                                    }}
+                                                                    className="press press-flat cursor-pointer font-black text-rose-600 hover:text-rose-900"
+                                                                >
+                                                                    Delete ✕
+                                                                </button>
+                                                            )}
                                                     </td>
                                                 </tr>
                                             )

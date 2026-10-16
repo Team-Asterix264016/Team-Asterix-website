@@ -82,9 +82,10 @@ export default function QuizLeaderboardProjector({ onExit }) {
         .slice(0, 6);
 
     // Compute the student quiz entry URL
-    const quizUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}${window.location.pathname}#quiz/${quiz?.slug || quiz?._id || quizId}`
-        : '';
+    const quizUrl =
+        typeof window !== 'undefined'
+            ? `${window.location.origin}${window.location.pathname}#quiz/${quiz?.slug || quiz?._id || quizId}`
+            : '';
 
     // Generate crisp QR code
     useEffect(() => {
@@ -305,7 +306,8 @@ export default function QuizLeaderboardProjector({ onExit }) {
                                 {quiz?.title || 'Workshop Assessment'}
                             </h2>
                             <p className="mt-1 font-sans text-xs font-bold text-slate-600 sm:text-sm">
-                                Scan with phone camera → Log in with registered student credentials → Begin answering
+                                Scan with phone camera → Log in with registered student credentials → Begin
+                                answering
                             </p>
                         </div>
 
@@ -339,7 +341,9 @@ export default function QuizLeaderboardProjector({ onExit }) {
                                 </strong>
                             </div>
                             <div>
-                                <span className="block text-[10px] text-slate-500 uppercase">Total Points</span>
+                                <span className="block text-[10px] text-slate-500 uppercase">
+                                    Total Points
+                                </span>
                                 <strong className="text-sm font-black text-slate-900">
                                     {quiz?.totalPoints || 0} Pts
                                 </strong>
@@ -348,9 +352,7 @@ export default function QuizLeaderboardProjector({ onExit }) {
 
                         {/* Direct Link Badge */}
                         <div className="mt-4 flex w-full items-center justify-between gap-2 border-2 border-slate-900 bg-sky-100 p-2.5 font-mono text-xs">
-                            <span className="truncate font-bold text-slate-800">
-                                {quizUrl}
-                            </span>
+                            <span className="truncate font-bold text-slate-800">{quizUrl}</span>
                             <button
                                 type="button"
                                 onClick={handleCopyLink}
@@ -407,26 +409,33 @@ export default function QuizLeaderboardProjector({ onExit }) {
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 font-mono text-[10px] font-black text-slate-950">
                                             1
                                         </span>
-                                        <span className="text-[11px] font-bold">Scan QR on your phone camera</span>
+                                        <span className="text-[11px] font-bold">
+                                            Scan QR on your phone camera
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-slate-300">
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-400 font-mono text-[10px] font-black text-slate-950">
                                             2
                                         </span>
-                                        <span className="text-[11px] font-bold">Log in with your registered student profile</span>
+                                        <span className="text-[11px] font-bold">
+                                            Log in with your registered student profile
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2 text-slate-300">
                                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-400 font-mono text-[10px] font-black text-slate-950">
                                             3
                                         </span>
-                                        <span className="text-[11px] font-bold">Quiz answering page starts automatically</span>
+                                        <span className="text-[11px] font-bold">
+                                            Quiz answering page starts automatically
+                                        </span>
                                     </div>
                                 </div>
 
                                 {/* Specs Pill */}
                                 <div className="mt-3 flex w-full shrink-0 items-center justify-between border border-slate-800 bg-slate-950/60 p-2 font-mono text-[10px]">
                                     <span className="text-slate-400">
-                                        ⏱ {quiz?.durationMinutes || 15}m · {quiz?.totalQuestions || 0} Qs · {quiz?.totalPoints || 0} pts
+                                        ⏱ {quiz?.durationMinutes || 15}m · {quiz?.totalQuestions || 0} Qs ·{' '}
+                                        {quiz?.totalPoints || 0} pts
                                     </span>
                                     <button
                                         type="button"
@@ -510,7 +519,8 @@ export default function QuizLeaderboardProjector({ onExit }) {
                                                         </div>
                                                         <span className="block truncate text-[10px] font-bold text-slate-400 sm:text-xs">
                                                             {row.rollNo ? `${row.rollNo} · ` : ''}
-                                                            {row.answered}/{quiz?.totalQuestions ?? 0} answered
+                                                            {row.answered}/{quiz?.totalQuestions ?? 0}{' '}
+                                                            answered
                                                             {row.timeSpentSeconds
                                                                 ? ` · ${formatClock(row.timeSpentSeconds)}`
                                                                 : ''}

@@ -302,7 +302,8 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                 👤 Track Lead &amp; Default Contact Details
                             </h3>
                             <p className="mt-1 font-mono text-xs font-bold text-slate-500">
-                                Set contact details for candidates requesting support or accessing details for this track.
+                                Set contact details for candidates requesting support or accessing details for
+                                this track.
                             </p>
                         </div>
 
@@ -357,21 +358,26 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                     <div className="shadow-brutal-3 space-y-4 border-2 border-slate-900 bg-white p-5">
                         <div className="border-b border-slate-200 pb-3">
                             <h3 className="text-lg font-black text-slate-900 uppercase">
-                                📚 Session Schedule &amp; Instructor Directory ({currentTrack.schedule?.length || 0} Sessions)
+                                📚 Session Schedule &amp; Instructor Directory (
+                                {currentTrack.schedule?.length || 0} Sessions)
                             </h3>
                             <p className="mt-1 font-mono text-xs font-bold text-slate-500">
-                                Edit individual session titles, venues, instructor names, roles, emails, and phone numbers shown in student session modals.
+                                Edit individual session titles, venues, instructor names, roles, emails, and
+                                phone numbers shown in student session modals.
                             </p>
                         </div>
 
                         <div className="space-y-4">
                             {currentTrack.schedule?.map((sess, idx) => (
-                                <div key={sess.id || idx} className="border-2 border-slate-900 bg-slate-50 p-4 shadow-brutal-2">
+                                <div
+                                    key={sess.id || idx}
+                                    className="shadow-brutal-2 border-2 border-slate-900 bg-slate-50 p-4"
+                                >
                                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 pb-2">
-                                        <span className="font-mono text-xs font-black uppercase text-slate-900">
+                                        <span className="font-mono text-xs font-black text-slate-900 uppercase">
                                             {sess.label} ({sess.date} - {sess.days})
                                         </span>
-                                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-950">
+                                        <span className="border border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
                                             {sess.type || 'lecture'}
                                         </span>
                                     </div>
@@ -411,7 +417,10 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                                 value={sess.instructor || ''}
                                                 onChange={(e) => {
                                                     const newSch = [...(currentTrack.schedule || [])];
-                                                    newSch[idx] = { ...newSch[idx], instructor: e.target.value };
+                                                    newSch[idx] = {
+                                                        ...newSch[idx],
+                                                        instructor: e.target.value
+                                                    };
                                                     patchTrack({ schedule: newSch });
                                                 }}
                                                 placeholder="e.g. Ratheeswar, Preethika"
@@ -419,13 +428,18 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                             />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Instructor Role / Designation</label>
+                                            <label className={labelClass}>
+                                                Instructor Role / Designation
+                                            </label>
                                             <input
                                                 type="text"
                                                 value={sess.instructorRole || ''}
                                                 onChange={(e) => {
                                                     const newSch = [...(currentTrack.schedule || [])];
-                                                    newSch[idx] = { ...newSch[idx], instructorRole: e.target.value };
+                                                    newSch[idx] = {
+                                                        ...newSch[idx],
+                                                        instructorRole: e.target.value
+                                                    };
                                                     patchTrack({ schedule: newSch });
                                                 }}
                                                 placeholder="e.g. Autonomous Perception Lead"
@@ -439,7 +453,10 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                                 value={sess.instructorEmail || ''}
                                                 onChange={(e) => {
                                                     const newSch = [...(currentTrack.schedule || [])];
-                                                    newSch[idx] = { ...newSch[idx], instructorEmail: e.target.value };
+                                                    newSch[idx] = {
+                                                        ...newSch[idx],
+                                                        instructorEmail: e.target.value
+                                                    };
                                                     patchTrack({ schedule: newSch });
                                                 }}
                                                 placeholder="e.g. software.asterix@psgitech.ac.in"
@@ -453,7 +470,10 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                                 value={sess.instructorPhone || ''}
                                                 onChange={(e) => {
                                                     const newSch = [...(currentTrack.schedule || [])];
-                                                    newSch[idx] = { ...newSch[idx], instructorPhone: e.target.value };
+                                                    newSch[idx] = {
+                                                        ...newSch[idx],
+                                                        instructorPhone: e.target.value
+                                                    };
                                                     patchTrack({ schedule: newSch });
                                                 }}
                                                 placeholder="e.g. +91 86089 44644"

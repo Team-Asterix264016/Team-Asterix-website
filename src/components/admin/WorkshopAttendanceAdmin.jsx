@@ -109,10 +109,13 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         setActionBusyRoll(cand.rollNo);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(apiUrl(`/api/workshop/registrations/${cand.registrationId}/upgrade-combo`), {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await fetch(
+                apiUrl(`/api/workshop/registrations/${cand.registrationId}/upgrade-combo`),
+                {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to upgrade candidate');
@@ -266,334 +269,350 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 <>
                     {/* Session Settings & Selector Bar */}
                     <div className="shadow-brutal-3 space-y-3 border-2 border-slate-900 bg-slate-50 p-4">
-                <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-                    <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
-                        // Attendance Session Configuration
-                    </span>
-                    {scheduleList && scheduleList.length > 0 && (
-                        <div className="flex min-w-0 items-center gap-1.5 text-xs">
-                            <span className="shrink-0 text-[10px] font-bold text-slate-600 uppercase">🗓 Quick Select:</span>
-                            <select
-                                value={currentScheduleMatch?.id || ''}
-                                onChange={(e) => {
-                                    const s = scheduleList.find((item) => item.id === e.target.value);
-                                    if (s) selectScheduleSession(s);
-                                }}
-                                className="min-w-0 max-w-full border-2 border-slate-900 bg-amber-200 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
-                            >
-                                <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
-                                {scheduleList.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.label} ({s.dateStr}) — {s.title}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+                            <span className="block text-[10px] font-black tracking-wider text-sky-700 uppercase">
+                                // Attendance Session Configuration
+                            </span>
+                            {scheduleList && scheduleList.length > 0 && (
+                                <div className="flex min-w-0 items-center gap-1.5 text-xs">
+                                    <span className="shrink-0 text-[10px] font-bold text-slate-600 uppercase">
+                                        🗓 Quick Select:
+                                    </span>
+                                    <select
+                                        value={currentScheduleMatch?.id || ''}
+                                        onChange={(e) => {
+                                            const s = scheduleList.find((item) => item.id === e.target.value);
+                                            if (s) selectScheduleSession(s);
+                                        }}
+                                        className="max-w-full min-w-0 border-2 border-slate-900 bg-amber-200 px-2 py-0.5 text-[11px] font-black text-slate-950 focus:outline-none"
+                                    >
+                                        <option value="">
+                                            -- Choose from {track.toUpperCase()} Schedule --
+                                        </option>
+                                        {scheduleList.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.label} ({s.dateStr}) — {s.title}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+                            {/* Track Selection */}
+                            <div>
+                                <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
+                                    Workshop Track
+                                </label>
+                                <select
+                                    value={track}
+                                    onChange={(e) => setTrack(e.target.value)}
+                                    className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
+                                >
+                                    <option value="software">Software & Perception</option>
+                                    <option value="powertrain">Electronics & Powertrain</option>
+                                </select>
+                            </div>
+
+                            {/* Session Number */}
+                            <div>
+                                <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
+                                    Session Number
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    value={sessionNumber}
+                                    onChange={(e) => setSessionNumber(e.target.value)}
+                                    className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Session Date */}
+                            <div>
+                                <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
+                                    Session Date (IST)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={sessionDate}
+                                    onChange={(e) => setSessionDate(e.target.value)}
+                                    className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Topic (Optional) */}
+                            <div>
+                                <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
+                                    Session Topic (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={sessionTopic}
+                                    onChange={(e) => setSessionTopic(e.target.value)}
+                                    placeholder="e.g. ROS Publisher Nodes"
+                                    className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-2 text-[11px] text-slate-500">
+                            <span>
+                                Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
+                                {currentScheduleMatch && (
+                                    <span className="ml-2 font-bold text-emerald-700">
+                                        ✓ Linked to {currentScheduleMatch.label} (
+                                        {currentScheduleMatch.dateStr})
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Metrics Cards */}
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-emerald-50 p-3.5">
+                            <span className="block truncate text-[10px] font-black text-emerald-800 uppercase">
+                                Present In Class
+                            </span>
+                            <span className="text-2xl font-black text-emerald-700 sm:text-3xl">
+                                {rosterData.totalPresent}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-emerald-600">
+                                Verified attendees
+                            </span>
+                        </div>
+
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-rose-50 p-3.5">
+                            <span className="block truncate text-[10px] font-black text-rose-800 uppercase">
+                                Absent / Pending
+                            </span>
+                            <span className="text-2xl font-black text-rose-700 sm:text-3xl">
+                                {absentCount}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-rose-600">Awaiting check-in</span>
+                        </div>
+
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-3.5">
+                            <span className="block truncate text-[10px] font-black text-sky-800 uppercase">
+                                Total Eligible
+                            </span>
+                            <span className="text-2xl font-black text-slate-900 sm:text-3xl">
+                                {rosterData.totalEligible}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-slate-500">
+                                Paid candidates in track
+                            </span>
+                        </div>
+
+                        <div className="shadow-brutal-3 border-2 border-slate-900 bg-amber-50 p-3.5">
+                            <span className="block truncate text-[10px] font-black text-amber-800 uppercase">
+                                Attendance Rate
+                            </span>
+                            <span className="text-2xl font-black text-amber-800 sm:text-3xl">
+                                {attendancePct}%
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-slate-500">Quorum achieved</span>
+                        </div>
+                    </div>
+
+                    {/* Error Banner */}
+                    {error && (
+                        <div className="border-2 border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-800">
+                            ⚠️ {error}
                         </div>
                     )}
-                </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
-                    {/* Track Selection */}
-                    <div>
-                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
-                            Workshop Track
-                        </label>
-                        <select
-                            value={track}
-                            onChange={(e) => setTrack(e.target.value)}
-                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
-                        >
-                            <option value="software">Software & Perception</option>
-                            <option value="powertrain">Electronics & Powertrain</option>
-                        </select>
-                    </div>
-
-                    {/* Session Number */}
-                    <div>
-                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
-                            Session Number
-                        </label>
-                        <input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={sessionNumber}
-                            onChange={(e) => setSessionNumber(e.target.value)}
-                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
-                        />
-                    </div>
-
-                    {/* Session Date */}
-                    <div>
-                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
-                            Session Date (IST)
-                        </label>
-                        <input
-                            type="date"
-                            value={sessionDate}
-                            onChange={(e) => setSessionDate(e.target.value)}
-                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
-                        />
-                    </div>
-
-                    {/* Topic (Optional) */}
-                    <div>
-                        <label className="mb-1 block text-[10px] font-black text-slate-700 uppercase">
-                            Session Topic (Optional)
-                        </label>
-                        <input
-                            type="text"
-                            value={sessionTopic}
-                            onChange={(e) => setSessionTopic(e.target.value)}
-                            placeholder="e.g. ROS Publisher Nodes"
-                            className="w-full border-2 border-slate-900 bg-white px-2.5 py-1.5 text-xs font-bold focus:outline-none"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-2 text-[11px] text-slate-500">
-                    <span>
-                        Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
-                        {currentScheduleMatch && (
-                            <span className="ml-2 font-bold text-emerald-700">
-                                ✓ Linked to {currentScheduleMatch.label} ({currentScheduleMatch.dateStr})
+                    {/* Roster Search & Filter Controls */}
+                    <div className="shadow-brutal-2 flex flex-col justify-between gap-3 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="mr-1 text-[10px] font-black text-slate-500 uppercase">
+                                Filter:
                             </span>
-                        )}
-                    </span>
-                </div>
-            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFilterStatus('all')}
+                                className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                                    filterStatus === 'all'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'bg-white text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                All ({rosterData.roster?.length || 0})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFilterStatus('present')}
+                                className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                                    filterStatus === 'present'
+                                        ? 'bg-emerald-500 text-slate-950'
+                                        : 'bg-white text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                Present ({rosterData.totalPresent || 0})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFilterStatus('absent')}
+                                className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
+                                    filterStatus === 'absent'
+                                        ? 'bg-rose-500 text-white'
+                                        : 'bg-white text-slate-700 hover:bg-slate-100'
+                                }`}
+                            >
+                                Absent ({absentCount || 0})
+                            </button>
+                        </div>
 
-            {/* Metrics Cards */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <div className="shadow-brutal-3 border-2 border-slate-900 bg-emerald-50 p-3.5">
-                    <span className="block truncate text-[10px] font-black text-emerald-800 uppercase">
-                        Present In Class
-                    </span>
-                    <span className="text-2xl font-black text-emerald-700 sm:text-3xl">
-                        {rosterData.totalPresent}
-                    </span>
-                    <span className="mt-0.5 block text-[10px] text-emerald-600">Verified attendees</span>
-                </div>
+                        <div className="relative w-full max-w-xs">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search roll, name, dept..."
+                                className="w-full border-2 border-slate-900 px-2.5 py-1 font-mono text-xs focus:outline-none"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute top-1 right-2 text-xs text-slate-600 hover:text-slate-900"
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
-                <div className="shadow-brutal-3 border-2 border-slate-900 bg-rose-50 p-3.5">
-                    <span className="block truncate text-[10px] font-black text-rose-800 uppercase">
-                        Absent / Pending
-                    </span>
-                    <span className="text-2xl font-black text-rose-700 sm:text-3xl">{absentCount}</span>
-                    <span className="mt-0.5 block text-[10px] text-rose-600">Awaiting check-in</span>
-                </div>
-
-                <div className="shadow-brutal-3 border-2 border-slate-900 bg-sky-50 p-3.5">
-                    <span className="block truncate text-[10px] font-black text-sky-800 uppercase">
-                        Total Eligible
-                    </span>
-                    <span className="text-2xl font-black text-slate-900 sm:text-3xl">
-                        {rosterData.totalEligible}
-                    </span>
-                    <span className="mt-0.5 block text-[10px] text-slate-500">Paid candidates in track</span>
-                </div>
-
-                <div className="shadow-brutal-3 border-2 border-slate-900 bg-amber-50 p-3.5">
-                    <span className="block truncate text-[10px] font-black text-amber-800 uppercase">
-                        Attendance Rate
-                    </span>
-                    <span className="text-2xl font-black text-amber-800 sm:text-3xl">{attendancePct}%</span>
-                    <span className="mt-0.5 block text-[10px] text-slate-500">Quorum achieved</span>
-                </div>
-            </div>
-
-            {/* Error Banner */}
-            {error && (
-                <div className="border-2 border-rose-600 bg-rose-50 p-3 font-mono text-xs font-bold text-rose-800">
-                    ⚠️ {error}
-                </div>
-            )}
-
-            {/* Roster Search & Filter Controls */}
-            <div className="shadow-brutal-2 flex flex-col justify-between gap-3 border-2 border-slate-900 bg-white p-3 sm:flex-row sm:items-center">
-                <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="mr-1 text-[10px] font-black text-slate-500 uppercase">Filter:</span>
-                    <button
-                        type="button"
-                        onClick={() => setFilterStatus('all')}
-                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
-                            filterStatus === 'all'
-                                ? 'bg-slate-900 text-white'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
-                        }`}
-                    >
-                        All ({rosterData.roster?.length || 0})
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setFilterStatus('present')}
-                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
-                            filterStatus === 'present'
-                                ? 'bg-emerald-500 text-slate-950'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
-                        }`}
-                    >
-                        Present ({rosterData.totalPresent || 0})
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setFilterStatus('absent')}
-                        className={`cursor-pointer border border-slate-900 px-2.5 py-1 text-[10px] font-black uppercase ${
-                            filterStatus === 'absent'
-                                ? 'bg-rose-500 text-white'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
-                        }`}
-                    >
-                        Absent ({absentCount || 0})
-                    </button>
-                </div>
-
-                <div className="relative w-full max-w-xs">
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search roll, name, dept..."
-                        className="w-full border-2 border-slate-900 px-2.5 py-1 font-mono text-xs focus:outline-none"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute top-1 right-2 text-xs text-slate-600 hover:text-slate-900"
-                        >
-                            ✕
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Roster Table */}
-            <div className="shadow-brutal-4 overflow-x-auto border-2 border-slate-900 bg-white">
-                <table className="w-full border-collapse text-left text-xs">
-                    <thead>
-                        <tr className="bg-slate-900 font-mono text-[10px] text-white uppercase">
-                            <th className="border-r border-slate-700 p-2.5">Roll No</th>
-                            <th className="border-r border-slate-700 p-2.5">Name</th>
-                            <th className="border-r border-slate-700 p-2.5">Department</th>
-                            <th className="border-r border-slate-700 p-2.5">Package</th>
-                            <th className="border-r border-slate-700 p-2.5 text-center">Status</th>
-                            <th className="border-r border-slate-700 p-2.5">Check-in Time</th>
-                            <th className="p-2.5 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                        {isLoading ? (
-                            <tr>
-                                <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
-                                    <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
-                                    Loading attendance roster...
-                                </td>
-                            </tr>
-                        ) : filteredRoster.length === 0 ? (
-                            <tr>
-                                <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
-                                    No candidates found matching the selected filter.
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredRoster.map((cand) => {
-                                const isBusy = actionBusyRoll === cand.rollNo;
-
-                                return (
-                                    <tr
-                                        key={cand.rollNo}
-                                        className={`transition-colors hover:bg-slate-50 ${
-                                            cand.isPresent ? 'bg-emerald-50/30' : ''
-                                        }`}
-                                    >
-                                        <td className="border-r border-slate-200 p-2.5 font-mono font-black text-slate-900">
-                                            {cand.rollNo}
-                                        </td>
-                                        <td className="border-r border-slate-200 p-2.5 font-bold text-slate-900">
-                                            <div>{cand.name}</div>
-                                            <div className="font-mono text-[10px] text-slate-500">
-                                                {cand.email}
-                                            </div>
-                                        </td>
-                                        <td className="border-r border-slate-200 p-2.5 text-slate-700">
-                                            <div>{cand.department}</div>
-                                            <div className="text-[10px] text-slate-500">Year {cand.year}</div>
-                                        </td>
-                                        <td className="border-r border-slate-200 p-2.5">
-                                            <span className="border border-slate-900 bg-slate-100 px-1.5 py-0.5 text-[9px] font-black uppercase">
-                                                {cand.package}
-                                            </span>
-                                        </td>
-                                        <td className="border-r border-slate-200 p-2.5 text-center">
-                                            {cand.isPresent ? (
-                                                <span className="border border-emerald-500 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase">
-                                                    ✓ Present
-                                                </span>
-                                            ) : (
-                                                <span className="border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 uppercase">
-                                                    Absent
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="border-r border-slate-200 p-2.5 font-mono text-[11px] text-slate-600">
-                                            {cand.checkedInAt ? (
-                                                <div>
-                                                    <span className="font-bold text-slate-900">
-                                                        {new Date(cand.checkedInAt).toLocaleTimeString(
-                                                            'en-IN',
-                                                            {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                                second: '2-digit',
-                                                                hour12: true
-                                                            }
-                                                        )}
-                                                    </span>
-                                                    <span className="block text-[9px] text-slate-500">
-                                                        via {cand.verifiedBy}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </td>
-                                        <td className="p-2.5 text-right">
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                {cand.package !== 'combo' && (
-                                                    <button
-                                                        type="button"
-                                                        disabled={isBusy}
-                                                        onClick={() => handleUpgradeToCombo(cand)}
-                                                        className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
-                                                        title="Upgrade participant profile to Combo package"
-                                                    >
-                                                        {isBusy ? 'Upgrading…' : '⚡ Upgrade Combo'}
-                                                    </button>
-                                                )}
-                                                {!cand.isPresent ? (
-                                                    <button
-                                                        type="button"
-                                                        disabled={isBusy}
-                                                        onClick={() => handleManualMark(cand.rollNo)}
-                                                        className="press shadow-brutal-1 cursor-pointer border border-slate-900 bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
-                                                        title="Mark present manually if student phone has issue"
-                                                    >
-                                                        {isBusy ? 'Saving...' : 'Mark Present ✓'}
-                                                    </button>
-                                                ) : (
-                                                    <span className="text-[10px] font-bold text-emerald-700">
-                                                        Recorded
-                                                    </span>
-                                                )}
-                                            </div>
+                    {/* Roster Table */}
+                    <div className="shadow-brutal-4 overflow-x-auto border-2 border-slate-900 bg-white">
+                        <table className="w-full border-collapse text-left text-xs">
+                            <thead>
+                                <tr className="bg-slate-900 font-mono text-[10px] text-white uppercase">
+                                    <th className="border-r border-slate-700 p-2.5">Roll No</th>
+                                    <th className="border-r border-slate-700 p-2.5">Name</th>
+                                    <th className="border-r border-slate-700 p-2.5">Department</th>
+                                    <th className="border-r border-slate-700 p-2.5">Package</th>
+                                    <th className="border-r border-slate-700 p-2.5 text-center">Status</th>
+                                    <th className="border-r border-slate-700 p-2.5">Check-in Time</th>
+                                    <th className="p-2.5 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                                {isLoading ? (
+                                    <tr>
+                                        <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
+                                            <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent align-middle"></span>
+                                            Loading attendance roster...
                                         </td>
                                     </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                                ) : filteredRoster.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="7" className="p-8 text-center font-bold text-slate-500">
+                                            No candidates found matching the selected filter.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredRoster.map((cand) => {
+                                        const isBusy = actionBusyRoll === cand.rollNo;
+
+                                        return (
+                                            <tr
+                                                key={cand.rollNo}
+                                                className={`transition-colors hover:bg-slate-50 ${
+                                                    cand.isPresent ? 'bg-emerald-50/30' : ''
+                                                }`}
+                                            >
+                                                <td className="border-r border-slate-200 p-2.5 font-mono font-black text-slate-900">
+                                                    {cand.rollNo}
+                                                </td>
+                                                <td className="border-r border-slate-200 p-2.5 font-bold text-slate-900">
+                                                    <div>{cand.name}</div>
+                                                    <div className="font-mono text-[10px] text-slate-500">
+                                                        {cand.email}
+                                                    </div>
+                                                </td>
+                                                <td className="border-r border-slate-200 p-2.5 text-slate-700">
+                                                    <div>{cand.department}</div>
+                                                    <div className="text-[10px] text-slate-500">
+                                                        Year {cand.year}
+                                                    </div>
+                                                </td>
+                                                <td className="border-r border-slate-200 p-2.5">
+                                                    <span className="border border-slate-900 bg-slate-100 px-1.5 py-0.5 text-[9px] font-black uppercase">
+                                                        {cand.package}
+                                                    </span>
+                                                </td>
+                                                <td className="border-r border-slate-200 p-2.5 text-center">
+                                                    {cand.isPresent ? (
+                                                        <span className="border border-emerald-500 bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-900 uppercase">
+                                                            ✓ Present
+                                                        </span>
+                                                    ) : (
+                                                        <span className="border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 uppercase">
+                                                            Absent
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="border-r border-slate-200 p-2.5 font-mono text-[11px] text-slate-600">
+                                                    {cand.checkedInAt ? (
+                                                        <div>
+                                                            <span className="font-bold text-slate-900">
+                                                                {new Date(
+                                                                    cand.checkedInAt
+                                                                ).toLocaleTimeString('en-IN', {
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                    second: '2-digit',
+                                                                    hour12: true
+                                                                })}
+                                                            </span>
+                                                            <span className="block text-[9px] text-slate-500">
+                                                                via {cand.verifiedBy}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        '—'
+                                                    )}
+                                                </td>
+                                                <td className="p-2.5 text-right">
+                                                    <div className="flex items-center justify-end gap-1.5">
+                                                        {cand.package !== 'combo' && (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isBusy}
+                                                                onClick={() => handleUpgradeToCombo(cand)}
+                                                                className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
+                                                                title="Upgrade participant profile to Combo package"
+                                                            >
+                                                                {isBusy ? 'Upgrading…' : '⚡ Upgrade Combo'}
+                                                            </button>
+                                                        )}
+                                                        {!cand.isPresent ? (
+                                                            <button
+                                                                type="button"
+                                                                disabled={isBusy}
+                                                                onClick={() => handleManualMark(cand.rollNo)}
+                                                                className="press shadow-brutal-1 cursor-pointer border border-slate-900 bg-amber-300 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
+                                                                title="Mark present manually if student phone has issue"
+                                                            >
+                                                                {isBusy ? 'Saving...' : 'Mark Present ✓'}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-emerald-700">
+                                                                Recorded
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             )}
         </div>

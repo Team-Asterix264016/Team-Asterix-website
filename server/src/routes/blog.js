@@ -231,4 +231,74 @@ router.get('/:slug', requireDb, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/blog/share/:slug
+ * Public: returns an HTML page with Open Graph and Twitter Card tags
+ * for social crawlers (WhatsApp, Twitter/X, LinkedIn, Discord),
+ * with instant client-side redirection for human users.
+ */
+router.get('/share/:slug', requireDb, async (req, res) => {
+    try {
+        const slug = String(req.params.slug || '').toLowerCase();
+        const post = await BlogPost.findOne({ ...PUBLISHED, slug }).lean();
+        if (!post) return res.status(404).send('Post not found');
+
+        const siteUrl = 'https://asterix-website.vercel.app';
+        let coverImage = post.coverImage || `${siteUrl}/og-image.png`;
+        if (coverImage.startsWith('/uploads/')) {
+            const host = req.get('host') || 'asterix-backend.onrender.com';
+            coverImage = `${req.protocol}://${host}${coverImage}`;
+        } else if (coverImage.startsWith('/')) {
+            coverImage = `${siteUrl}${coverImage}`;
+        }
+
+        const escapeHtml = (str) =>
+            String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+        const title = post.title ? `${post.title} | Team Asterix Horizon` : 'Team Asterix Horizon Blog';
+        const description =
+            post.excerpt ||
+            'Latest technologies, automotive trends, electric vehicles, and much more directly from the Team Asterix community.';
+        const canonicalUrl = `${siteUrl}/blog/${encodeURIComponent(slug)}`;
+        const destinationUrl = `${siteUrl}/#community/blog/${encodeURIComponent(slug)}`;
+
+        const html = `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Team Asterix">
+    <meta property="og:title" content="${escapeHtml(post.title || title)}">
+    <meta property="og:description" content="${escapeHtml(description)}">
+    <meta property="og:image" content="${escapeHtml(coverImage)}">
+    <meta property="og:image:secure_url" content="${escapeHtml(coverImage)}">
+    <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${escapeHtml(post.title || title)}">
+    <meta name="twitter:description" content="${escapeHtml(description)}">
+    <meta name="twitter:image" content="${escapeHtml(coverImage)}">
+    <meta http-equiv="refresh" content="0;url=${destinationUrl}">
+</head>
+<body style="font-family:sans-serif;padding:2rem;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:80vh;">
+    <script>window.location.replace('${destinationUrl}');</script>
+    <p>Redirecting to <a href="${destinationUrl}" style="color:#38bdf8;">${escapeHtml(title)}</a>...</p>
+</body>
+</html>`;
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+    } catch (err) {
+        console.error('Error generating share preview:', err);
+        return res.status(500).send('Error loading preview');
+    }
+});
+
 export default router;

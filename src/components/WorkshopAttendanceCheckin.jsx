@@ -27,7 +27,11 @@ function getOrCreateDeviceId() {
 function triggerSuccessFeedback(studentName = '') {
     // 1. Mobile Haptic Vibration
     try {
-        if (typeof window !== 'undefined' && 'navigator' in window && typeof navigator.vibrate === 'function') {
+        if (
+            typeof window !== 'undefined' &&
+            'navigator' in window &&
+            typeof navigator.vibrate === 'function'
+        ) {
             navigator.vibrate([70, 40, 70]);
         }
     } catch {}
@@ -343,7 +347,7 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                             )}
                         </button>
 
-                        <div className="pt-2 text-center space-y-1.5 font-mono text-[10px]">
+                        <div className="space-y-1.5 pt-2 text-center font-mono text-[10px]">
                             <a
                                 href="tel:+918608944644"
                                 className="press inline-flex items-center gap-1 border border-slate-900 bg-amber-200 px-2 py-1 font-bold text-slate-950 uppercase hover:bg-amber-300"

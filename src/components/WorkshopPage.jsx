@@ -813,7 +813,7 @@ export default function WorkshopPage({ onBack }) {
                         </button>
                         {/* Student JWT Login Status / Button */}
                         {student ? (
-                            <div className="flex items-center gap-2 border-2 border-slate-900 bg-emerald-400 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase shadow-brutal-2">
+                            <div className="shadow-brutal-2 flex items-center gap-2 border-2 border-slate-900 bg-emerald-400 px-3 py-1.5 font-mono text-xs font-black text-slate-950 uppercase">
                                 <span>👤 {student.name}</span>
                                 <button
                                     type="button"
@@ -831,7 +831,7 @@ export default function WorkshopPage({ onBack }) {
                             <button
                                 type="button"
                                 onClick={() => setLoginModalOpen(true)}
-                                className="press shadow-brutal-3 border-2 border-slate-900 bg-sky-300 px-3 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-sky-400 sm:px-4"
+                                className="press shadow-brutal-3 border-2 border-slate-900 bg-sky-300 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-400 sm:px-4"
                             >
                                 🔑 Student Login
                             </button>
@@ -884,8 +884,8 @@ export default function WorkshopPage({ onBack }) {
                             Autonomous Subsystems Masterclass Deck
                         </h1>
                         <p className="mt-4 max-w-3xl text-base leading-relaxed font-bold text-slate-900 sm:text-xl">
-                            Official curriculum, session schedules, software guides, and project portal for both
-                            Team Asterix engineering subsystems.
+                            Official curriculum, session schedules, software guides, and project portal for
+                            both Team Asterix engineering subsystems.
                         </p>
 
                         {/* Quick CTA Actions */}
@@ -946,7 +946,8 @@ export default function WorkshopPage({ onBack }) {
                                     !student ||
                                     student.package === 'combo' ||
                                     student.package === id ||
-                                    (Array.isArray(student.tracksEnrolled) && student.tracksEnrolled.includes(id));
+                                    (Array.isArray(student.tracksEnrolled) &&
+                                        student.tracksEnrolled.includes(id));
 
                                 return (
                                     <button
@@ -969,7 +970,9 @@ export default function WorkshopPage({ onBack }) {
                                                         : 'text-sky-700 group-hover:text-sky-700'
                                                 }`}
                                             >
-                                                <span>{active ? '● Active Subsystem' : '○ View Subsystem'}</span>
+                                                <span>
+                                                    {active ? '● Active Subsystem' : '○ View Subsystem'}
+                                                </span>
                                             </span>
                                             {student && (
                                                 <span
@@ -1008,19 +1011,24 @@ export default function WorkshopPage({ onBack }) {
                                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-3 border-amber-300 bg-amber-300 text-3xl font-black text-slate-900">
                                     🔒
                                 </div>
-                                <h3 className="mt-4 text-2xl font-black uppercase tracking-tight text-amber-300 sm:text-3xl">
+                                <h3 className="mt-4 text-2xl font-black tracking-tight text-amber-300 uppercase sm:text-3xl">
                                     {track.name} Notes &amp; Deck Locked
                                 </h3>
                                 <p className="mx-auto mt-2 max-w-xl text-sm font-bold text-slate-300 sm:text-base">
                                     Your account (<strong>{student.name}</strong>) is enrolled in the{' '}
                                     <span className="text-amber-300 uppercase">{student.package}</span> track.
-                                    Only candidates who paid for the <strong>Dual-Track Combo</strong> can access both Software and Powertrain notes and sessions!
+                                    Only candidates who paid for the <strong>Dual-Track Combo</strong> can
+                                    access both Software and Powertrain notes and sessions!
                                 </p>
                                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                                     <button
                                         type="button"
-                                        onClick={() => selectTrack(student.package === 'software' ? 'software' : 'powertrain')}
-                                        className="press shadow-brutal-4 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black uppercase text-slate-950 hover:bg-amber-400"
+                                        onClick={() =>
+                                            selectTrack(
+                                                student.package === 'software' ? 'software' : 'powertrain'
+                                            )
+                                        }
+                                        className="press shadow-brutal-4 border-2 border-slate-900 bg-amber-300 px-5 py-2.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
                                     >
                                         ← Switch to My Registered Track ({student.package?.toUpperCase()})
                                     </button>
@@ -1051,7 +1059,9 @@ export default function WorkshopPage({ onBack }) {
                                         Check Your Registered Track &amp; Workshop Schedule
                                     </h3>
                                     <p className="max-w-2xl text-xs font-bold text-slate-800 sm:text-sm">
-                                        Registered for the workshop? Enter your registered email or phone number to unlock your verified participant status, downloadable payment receipt, session schedule, and project submissions.
+                                        Registered for the workshop? Enter your registered email or phone
+                                        number to unlock your verified participant status, downloadable
+                                        payment receipt, session schedule, and project submissions.
                                     </p>
                                 </div>
                                 <button
@@ -1695,16 +1705,48 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
     // Subsystem specific tool guides
     const toolGuides = isSoftware
         ? [
-              { name: 'ROS 2 Humble / Ubuntu 24.04', desc: 'Core robotics framework & node setup guide', link: 'https://docs.ros.org/en/humble/' },
-              { name: 'OpenCV & Python Setup', desc: 'Computer vision & image processing environment', link: 'https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html' },
-              { name: 'PyTorch / ML Stack', desc: 'Machine learning fundamentals for perception', link: 'https://pytorch.org/get-started/locally/' },
-              { name: 'Agentic AI & LLM Tools', desc: 'Building autonomous decision-making agents', link: 'https://github.com/' }
+              {
+                  name: 'ROS 2 Humble / Ubuntu 24.04',
+                  desc: 'Core robotics framework & node setup guide',
+                  link: 'https://docs.ros.org/en/humble/'
+              },
+              {
+                  name: 'OpenCV & Python Setup',
+                  desc: 'Computer vision & image processing environment',
+                  link: 'https://docs.opencv.org/4.x/d6/d00/tutorial_py_root.html'
+              },
+              {
+                  name: 'PyTorch / ML Stack',
+                  desc: 'Machine learning fundamentals for perception',
+                  link: 'https://pytorch.org/get-started/locally/'
+              },
+              {
+                  name: 'Agentic AI & LLM Tools',
+                  desc: 'Building autonomous decision-making agents',
+                  link: 'https://github.com/'
+              }
           ]
         : [
-              { name: 'LTspice Simulation Software', desc: 'Circuit design, transient analysis & SPICE simulation', link: 'https://www.analog.com/en/design-center/design-tools-and-calculators/ltspice-simulator.html' },
-              { name: 'Tinkercad Circuits', desc: 'Virtual microcontroller lab & interlock testbed', link: 'https://www.tinkercad.com/' },
-              { name: 'Arduino IDE / ESP32 Core', desc: 'Flashing firmware & motor controller code', link: 'https://docs.espressif.com/projects/arduino-esp32/en/latest/' },
-              { name: 'KiCad EDA PCB Design', desc: 'Schematic capture and multi-layer PCB layout', link: 'https://www.kicad.org/' }
+              {
+                  name: 'LTspice Simulation Software',
+                  desc: 'Circuit design, transient analysis & SPICE simulation',
+                  link: 'https://www.analog.com/en/design-center/design-tools-and-calculators/ltspice-simulator.html'
+              },
+              {
+                  name: 'Tinkercad Circuits',
+                  desc: 'Virtual microcontroller lab & interlock testbed',
+                  link: 'https://www.tinkercad.com/'
+              },
+              {
+                  name: 'Arduino IDE / ESP32 Core',
+                  desc: 'Flashing firmware & motor controller code',
+                  link: 'https://docs.espressif.com/projects/arduino-esp32/en/latest/'
+              },
+              {
+                  name: 'KiCad EDA PCB Design',
+                  desc: 'Schematic capture and multi-layer PCB layout',
+                  link: 'https://www.kicad.org/'
+              }
           ];
 
     const allSchedule = track.schedule || [];
@@ -1712,34 +1754,66 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
         if (activeFilter === 'lecture') return allSchedule.filter((s) => s.type === 'lecture');
         if (activeFilter === 'handson') return allSchedule.filter((s) => s.type === 'handson');
         if (activeFilter === 'expert') return allSchedule.filter((s) => s.type === 'expert');
-        if (activeFilter === 'bonus') return allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type));
+        if (activeFilter === 'bonus')
+            return allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type));
         return allSchedule;
     }, [allSchedule, activeFilter]);
 
-    const counts = useMemo(() => ({
-        all: allSchedule.length,
-        lecture: allSchedule.filter((s) => s.type === 'lecture').length,
-        handson: allSchedule.filter((s) => s.type === 'handson').length,
-        expert: allSchedule.filter((s) => s.type === 'expert').length,
-        bonus: allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type)).length
-    }), [allSchedule]);
+    const counts = useMemo(
+        () => ({
+            all: allSchedule.length,
+            lecture: allSchedule.filter((s) => s.type === 'lecture').length,
+            handson: allSchedule.filter((s) => s.type === 'handson').length,
+            expert: allSchedule.filter((s) => s.type === 'expert').length,
+            bonus: allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type)).length
+        }),
+        [allSchedule]
+    );
 
     const renderTypeBadge = (type) => {
         switch (type) {
             case 'lecture':
-                return <span className="border border-slate-900 bg-indigo-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">📖 Core Talk</span>;
+                return (
+                    <span className="border border-slate-900 bg-indigo-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">
+                        📖 Core Talk
+                    </span>
+                );
             case 'handson':
-                return <span className="border border-slate-900 bg-emerald-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">💻 Hands-on Lab</span>;
+                return (
+                    <span className="border border-slate-900 bg-emerald-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
+                        💻 Hands-on Lab
+                    </span>
+                );
             case 'expert':
-                return <span className="border border-slate-900 bg-purple-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">🎓 Expert Session</span>;
+                return (
+                    <span className="border border-slate-900 bg-purple-600 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">
+                        🎓 Expert Session
+                    </span>
+                );
             case 'online':
-                return <span className="border border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🌐 Pre-Workshop</span>;
+                return (
+                    <span className="border border-slate-900 bg-sky-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
+                        🌐 Pre-Workshop
+                    </span>
+                );
             case 'catchup':
-                return <span className="border border-slate-900 bg-amber-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🔄 Weekly Catch-up</span>;
+                return (
+                    <span className="border border-slate-900 bg-amber-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
+                        🔄 Weekly Catch-up
+                    </span>
+                );
             case 'complimentary':
-                return <span className="border border-slate-900 bg-teal-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">🎁 Complimentary</span>;
+                return (
+                    <span className="border border-slate-900 bg-teal-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
+                        🎁 Complimentary
+                    </span>
+                );
             case 'holiday':
-                return <span className="border border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">🌴 Holiday</span>;
+                return (
+                    <span className="border border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[10px] font-black text-white uppercase">
+                        🌴 Holiday
+                    </span>
+                );
             default:
                 return null;
         }
@@ -1754,7 +1828,10 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
             <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                 <div>
                     <span className="inline-block border-2 border-slate-900 bg-slate-900 px-2.5 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase sm:text-xs">
-                        ✦ {isSoftware ? 'SOFTWARE & AUTONOMOUS SUBSYSTEM DECK' : 'ELECTRONICS & POWERTRAIN SUBSYSTEM DECK'}
+                        ✦{' '}
+                        {isSoftware
+                            ? 'SOFTWARE & AUTONOMOUS SUBSYSTEM DECK'
+                            : 'ELECTRONICS & POWERTRAIN SUBSYSTEM DECK'}
                     </span>
                     <h3 className="mt-2 text-2xl font-black uppercase sm:text-4xl">{track.name}</h3>
                     {track.tagline && (
@@ -1762,25 +1839,40 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                     )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="border-2 border-slate-900 bg-emerald-400 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase shadow-brutal-2">
+                    <span className="shadow-brutal-2 border-2 border-slate-900 bg-emerald-400 px-3 py-1 font-mono text-xs font-black text-slate-950 uppercase">
                         OFFICIAL SYLLABUS LIVE
                     </span>
                 </div>
             </div>
 
             {/* Quick Navigation Jump Anchors */}
-            <nav aria-label="Deck section navigation" className="mt-4 flex flex-wrap items-center gap-2 border-y-2 border-slate-900 py-3">
+            <nav
+                aria-label="Deck section navigation"
+                className="mt-4 flex flex-wrap items-center gap-2 border-y-2 border-slate-900 py-3"
+            >
                 <span className="font-mono text-xs font-black text-slate-500 uppercase">Quick Jump:</span>
-                <a href="#topics-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                <a
+                    href="#topics-section"
+                    className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                >
                     Topics ↓
                 </a>
-                <a href="#timetable-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-400">
+                <a
+                    href="#timetable-section"
+                    className="press shadow-brutal-2 border-2 border-slate-900 bg-amber-300 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-400"
+                >
                     Timetable ({allSchedule.length}) ↓
                 </a>
-                <a href="#resources-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                <a
+                    href="#resources-section"
+                    className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                >
                     Tools &amp; Resources ↓
                 </a>
-                <a href="#safety-section" className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300">
+                <a
+                    href="#safety-section"
+                    className="press shadow-brutal-2 border-2 border-slate-900 bg-slate-100 px-3 py-1 font-mono text-xs font-black text-slate-900 uppercase no-underline hover:bg-amber-300"
+                >
                     Lab Rules ↓
                 </a>
             </nav>
@@ -1791,21 +1883,31 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
 
             {/* Quick Stats Grid */}
             <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div className="border-2 border-slate-900 bg-amber-100 p-3 shadow-brutal-2">
-                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Dates</dt>
+                <div className="shadow-brutal-2 border-2 border-slate-900 bg-amber-100 p-3">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">
+                        Dates
+                    </dt>
                     <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.dates}</dd>
                 </div>
-                <div className="border-2 border-slate-900 bg-sky-100 p-3 shadow-brutal-2">
-                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Schedule</dt>
+                <div className="shadow-brutal-2 border-2 border-slate-900 bg-sky-100 p-3">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">
+                        Schedule
+                    </dt>
                     <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.days}</dd>
                 </div>
-                <div className="border-2 border-slate-900 bg-amber-100 p-3 shadow-brutal-2">
-                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Session Timing</dt>
+                <div className="shadow-brutal-2 border-2 border-slate-900 bg-amber-100 p-3">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">
+                        Session Timing
+                    </dt>
                     <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm">{track.timing}</dd>
                 </div>
-                <div className="border-2 border-slate-900 bg-emerald-100 p-3 shadow-brutal-2">
-                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">Primary Venue</dt>
-                    <dd className="mt-1 text-xs font-black text-slate-950 sm:text-sm truncate">{track.venue?.split('(')[0] || 'PSG iTech Labs'}</dd>
+                <div className="shadow-brutal-2 border-2 border-slate-900 bg-emerald-100 p-3">
+                    <dt className="font-mono text-[10px] font-black tracking-widest text-slate-600 uppercase">
+                        Primary Venue
+                    </dt>
+                    <dd className="mt-1 truncate text-xs font-black text-slate-950 sm:text-sm">
+                        {track.venue?.split('(')[0] || 'PSG iTech Labs'}
+                    </dd>
                 </div>
             </dl>
 
@@ -1816,12 +1918,19 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                 </h4>
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {track.topics?.map((topic, i) => (
-                        <div key={i} className="border-2 border-slate-900 bg-slate-50 p-4 shadow-brutal-3">
-                            <span className="font-mono text-[10px] font-black text-sky-700 uppercase">Topic 0{i + 1}</span>
-                            <h5 className="mt-1 text-base font-black uppercase text-slate-900">{topic.title}</h5>
+                        <div key={i} className="shadow-brutal-3 border-2 border-slate-900 bg-slate-50 p-4">
+                            <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
+                                Topic 0{i + 1}
+                            </span>
+                            <h5 className="mt-1 text-base font-black text-slate-900 uppercase">
+                                {topic.title}
+                            </h5>
                             <ul className="mt-2 space-y-1">
                                 {topic.points?.map((pt, idx) => (
-                                    <li key={idx} className="flex items-start gap-1.5 text-xs font-bold text-slate-600">
+                                    <li
+                                        key={idx}
+                                        className="flex items-start gap-1.5 text-xs font-bold text-slate-600"
+                                    >
                                         <span className="text-amber-600">▪</span>
                                         <span>{pt}</span>
                                     </li>
@@ -1840,7 +1949,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                                 02 / Subsystem Masterclass Timeline &amp; Interactive Timetable
                             </span>
-                            <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                            <h4 className="mt-1 text-xl font-black text-slate-900 uppercase sm:text-2xl">
                                 Session Schedule ({filteredSchedule.length} of {allSchedule.length})
                             </h4>
                         </div>
@@ -1853,7 +1962,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                     { [activeTrack]: track }
                                 )
                             }
-                            className="press border-2 border-slate-900 bg-amber-300 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 shadow-brutal-2 hover:bg-amber-400"
+                            className="press shadow-brutal-2 border-2 border-slate-900 bg-amber-300 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400"
                         >
                             📅 Sync All Sessions to Calendar (.ICS)
                         </button>
@@ -1866,7 +1975,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             onClick={() => setActiveFilter('all')}
                             className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
                                 activeFilter === 'all'
-                                    ? 'bg-slate-900 text-amber-300 shadow-brutal-2'
+                                    ? 'shadow-brutal-2 bg-slate-900 text-amber-300'
                                     : 'bg-white text-slate-900 hover:bg-amber-100'
                             }`}
                         >
@@ -1877,7 +1986,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             onClick={() => setActiveFilter('lecture')}
                             className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
                                 activeFilter === 'lecture'
-                                    ? 'bg-indigo-600 text-white shadow-brutal-2'
+                                    ? 'shadow-brutal-2 bg-indigo-600 text-white'
                                     : 'bg-indigo-50 text-indigo-950 hover:bg-indigo-100'
                             }`}
                         >
@@ -1888,7 +1997,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             onClick={() => setActiveFilter('handson')}
                             className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
                                 activeFilter === 'handson'
-                                    ? 'bg-emerald-400 text-slate-950 shadow-brutal-2'
+                                    ? 'shadow-brutal-2 bg-emerald-400 text-slate-950'
                                     : 'bg-emerald-50 text-emerald-950 hover:bg-emerald-100'
                             }`}
                         >
@@ -1899,7 +2008,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             onClick={() => setActiveFilter('expert')}
                             className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
                                 activeFilter === 'expert'
-                                    ? 'bg-purple-600 text-white shadow-brutal-2'
+                                    ? 'shadow-brutal-2 bg-purple-600 text-white'
                                     : 'bg-purple-50 text-purple-950 hover:bg-purple-100'
                             }`}
                         >
@@ -1911,7 +2020,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                 onClick={() => setActiveFilter('bonus')}
                                 className={`press border-2 border-slate-900 px-3 py-1.5 font-mono text-xs font-black uppercase transition-all ${
                                     activeFilter === 'bonus'
-                                        ? 'bg-amber-400 text-slate-950 shadow-brutal-2'
+                                        ? 'shadow-brutal-2 bg-amber-400 text-slate-950'
                                         : 'bg-amber-50 text-amber-950 hover:bg-amber-100'
                                 }`}
                             >
@@ -1927,18 +2036,18 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                 <div
                                     key={item.id}
                                     onClick={() => setSelectedSession(item)}
-                                    className={`group cursor-pointer border-3 border-slate-900 p-4 shadow-brutal-4 transition-all hover:border-sky-600 ${
+                                    className={`group shadow-brutal-4 cursor-pointer border-3 border-slate-900 p-4 transition-all hover:border-sky-600 ${
                                         item.type === 'handson'
                                             ? 'bg-emerald-50/70 hover:bg-emerald-100/80'
                                             : item.type === 'expert'
-                                            ? 'bg-purple-50/70 hover:bg-purple-100/80'
-                                            : item.type === 'holiday'
-                                            ? 'bg-rose-50/70 opacity-75'
-                                            : 'bg-sky-50/60 hover:bg-sky-100/80'
+                                              ? 'bg-purple-50/70 hover:bg-purple-100/80'
+                                              : item.type === 'holiday'
+                                                ? 'bg-rose-50/70 opacity-75'
+                                                : 'bg-sky-50/60 hover:bg-sky-100/80'
                                     }`}
                                 >
                                     <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                                        <div className="space-y-1.5 min-w-0">
+                                        <div className="min-w-0 space-y-1.5">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <span className="border border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[10px] font-black text-amber-300 uppercase">
                                                     {item.label}
@@ -1953,7 +2062,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                                     </span>
                                                 )}
                                             </div>
-                                            <h5 className="text-base font-black uppercase text-slate-900 group-hover:text-sky-900 sm:text-lg">
+                                            <h5 className="text-base font-black text-slate-900 uppercase group-hover:text-sky-900 sm:text-lg">
                                                 {item.title}
                                             </h5>
 
@@ -1961,7 +2070,9 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                                 {item.instructor && item.instructor !== '-' && (
                                                     <span className="flex items-center gap-1 text-slate-900">
                                                         <span>👤 Handled by:</span>
-                                                        <strong className="font-black text-sky-800">{item.instructor}</strong>
+                                                        <strong className="font-black text-sky-800">
+                                                            {item.instructor}
+                                                        </strong>
                                                     </span>
                                                 )}
                                                 {item.project && (
@@ -1973,7 +2084,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                             </div>
 
                                             {item.reportingInstructions && (
-                                                <p className="text-xs font-bold text-slate-700 pt-0.5">
+                                                <p className="pt-0.5 text-xs font-bold text-slate-700">
                                                     ℹ️ {item.reportingInstructions}
                                                 </p>
                                             )}
@@ -2006,13 +2117,12 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                 }}
             />
 
-
             {/* Resource Library & Handouts */}
             <div id="resources-section" className="mt-10 border-t-4 border-slate-900 pt-8">
                 <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                     03 / Subsystem Software &amp; Tool Setup Guides
                 </span>
-                <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                <h4 className="mt-1 text-xl font-black text-slate-900 uppercase sm:text-2xl">
                     Resource Library &amp; Documentation
                 </h4>
 
@@ -2023,13 +2133,19 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                             href={guide.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="press group border-2 border-slate-900 bg-white p-4 shadow-brutal-3 no-underline transition-all hover:bg-amber-100"
+                            className="press group shadow-brutal-3 border-2 border-slate-900 bg-white p-4 no-underline transition-all hover:bg-amber-100"
                         >
                             <div className="flex items-center justify-between">
-                                <span className="font-mono text-[10px] font-black text-sky-700 uppercase">Guide 0{idx + 1}</span>
-                                <span className="font-mono text-xs font-black text-slate-900 group-hover:translate-x-0.5">↗</span>
+                                <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
+                                    Guide 0{idx + 1}
+                                </span>
+                                <span className="font-mono text-xs font-black text-slate-900 group-hover:translate-x-0.5">
+                                    ↗
+                                </span>
                             </div>
-                            <h5 className="mt-1.5 text-sm font-black uppercase text-slate-900">{guide.name}</h5>
+                            <h5 className="mt-1.5 text-sm font-black text-slate-900 uppercase">
+                                {guide.name}
+                            </h5>
                             <p className="mt-1 text-xs font-bold text-slate-600">{guide.desc}</p>
                         </a>
                     ))}
@@ -2039,7 +2155,9 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                 {hasSyllabus && (
                     <div className="shadow-brutal-4 mt-6 flex flex-col justify-between gap-3 border-3 border-slate-900 bg-amber-100 p-4 sm:flex-row sm:items-center">
                         <div>
-                            <span className="font-mono text-[10px] font-black tracking-wider text-amber-900 uppercase">Official Curriculum Document</span>
+                            <span className="font-mono text-[10px] font-black tracking-wider text-amber-900 uppercase">
+                                Official Curriculum Document
+                            </span>
                             <h5 className="text-base font-black text-slate-900 uppercase sm:text-lg">
                                 {track.name} Official Syllabus &amp; Lab Manual PDF
                             </h5>
@@ -2074,22 +2192,28 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                 <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
                     04 / Lab Guidelines &amp; Venue Directions
                 </span>
-                <h4 className="mt-1 text-xl font-black uppercase text-slate-900 sm:text-2xl">
+                <h4 className="mt-1 text-xl font-black text-slate-900 uppercase sm:text-2xl">
                     Reporting Instructions &amp; Lab Safety
                 </h4>
 
                 <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="border-3 border-slate-900 bg-sky-50 p-4 shadow-brutal-3">
-                        <span className="font-mono text-[10px] font-black text-sky-700 uppercase">📍 Primary Venue</span>
+                    <div className="shadow-brutal-3 border-3 border-slate-900 bg-sky-50 p-4">
+                        <span className="font-mono text-[10px] font-black text-sky-700 uppercase">
+                            📍 Primary Venue
+                        </span>
                         <h5 className="mt-1 text-base font-black text-slate-900 uppercase">{track.venue}</h5>
-                        <p className="mt-2 text-xs font-bold text-slate-700 leading-relaxed">
+                        <p className="mt-2 text-xs leading-relaxed font-bold text-slate-700">
                             {track.reportingInstructions}
                         </p>
                     </div>
 
-                    <div className="border-3 border-slate-900 bg-amber-50 p-4 shadow-brutal-3">
-                        <span className="font-mono text-[10px] font-black text-amber-700 uppercase">⚠️ Mandatory Gear &amp; Attendance</span>
-                        <h5 className="mt-1 text-base font-black text-slate-900 uppercase">Safety &amp; Hardware Rules</h5>
+                    <div className="shadow-brutal-3 border-3 border-slate-900 bg-amber-50 p-4">
+                        <span className="font-mono text-[10px] font-black text-amber-700 uppercase">
+                            ⚠️ Mandatory Gear &amp; Attendance
+                        </span>
+                        <h5 className="mt-1 text-base font-black text-slate-900 uppercase">
+                            Safety &amp; Hardware Rules
+                        </h5>
                         <ul className="mt-2 space-y-1 text-xs font-bold text-slate-700">
                             <li>▪ Closed-toe shoes mandatory inside all laboratory bays.</li>
                             <li>▪ Bring laptop with power chargers for every hands-on lab.</li>
@@ -2101,10 +2225,12 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
 
             {/* Direct Shortcuts */}
             <div className="mt-10 border-t-4 border-slate-900 pt-8">
-                <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900 p-5 text-white shadow-brutal-6">
+                <div className="shadow-brutal-6 flex flex-wrap items-center justify-between gap-4 bg-slate-900 p-5 text-white">
                     <div>
-                        <span className="font-mono text-[10px] font-black text-amber-300 uppercase">PARTICIPANT ACTIONS</span>
-                        <h4 className="text-lg font-black uppercase text-white sm:text-xl">
+                        <span className="font-mono text-[10px] font-black text-amber-300 uppercase">
+                            PARTICIPANT ACTIONS
+                        </span>
+                        <h4 className="text-lg font-black text-white uppercase sm:text-xl">
                             Ready to test your knowledge or submit your project?
                         </h4>
                     </div>

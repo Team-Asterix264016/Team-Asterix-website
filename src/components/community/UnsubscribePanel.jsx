@@ -35,16 +35,17 @@ export default function UnsubscribePanel({ email, token }) {
 
                 {!hasLink && (
                     <p className="mt-3 leading-relaxed text-slate-700">
-                        To unsubscribe, open the link at the bottom of one of our emails, or reply to the email and
-                        ask us to remove you.
+                        To unsubscribe, open the link at the bottom of one of our emails, or reply to the
+                        email and ask us to remove you.
                     </p>
                 )}
 
                 {hasLink && status === 'done' && (
                     <div role="status" className="mt-3 space-y-3 leading-relaxed text-slate-700">
                         <p>
-                            You are unsubscribed. <strong className="break-all text-slate-900">{email}</strong> will
-                            not get newsletters or announcements from Team Asterix any more.
+                            You are unsubscribed.{' '}
+                            <strong className="break-all text-slate-900">{email}</strong> will not get
+                            newsletters or announcements from Team Asterix any more.
                         </p>
                         <p className="text-sm">
                             Changed your mind?{' '}

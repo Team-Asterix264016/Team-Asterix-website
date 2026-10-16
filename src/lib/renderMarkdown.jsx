@@ -30,7 +30,16 @@ function renderLink(text, url, key) {
 function renderImage(alt, url, key) {
     const src = safeHref(url);
     if (!src) return null;
-    return <img key={key} src={src} alt={alt} loading="lazy" decoding="async" className="my-2 inline-block max-w-full" />;
+    return (
+        <img
+            key={key}
+            src={src}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            className="my-2 inline-block max-w-full"
+        />
+    );
 }
 
 export function renderInline(text) {
@@ -47,7 +56,10 @@ export function renderInline(text) {
         const key = `${match.index}-${token.length}`;
         if (match[1]) {
             out.push(
-                <code key={key} className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-mono text-[0.88em] text-slate-900">
+                <code
+                    key={key}
+                    className="rounded-sm bg-slate-100 px-1.5 py-0.5 font-mono text-[0.88em] text-slate-900"
+                >
                     {token.slice(1, -1)}
                 </code>
             );
@@ -155,7 +167,11 @@ export function renderBlocks(blocks, options = {}) {
                 );
             }
             case 'poll':
-                return renderPoll ? <div key={key}>{renderPoll(block)}</div> : <StaticPoll key={key} poll={block} />;
+                return renderPoll ? (
+                    <div key={key}>{renderPoll(block)}</div>
+                ) : (
+                    <StaticPoll key={key} poll={block} />
+                );
             case 'poll-error':
                 return showProblems ? (
                     <p

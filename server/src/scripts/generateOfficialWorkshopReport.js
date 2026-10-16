@@ -218,7 +218,7 @@ async function generateReport() {
     const cardW = (contentWidth - cardGap * 4) / 5;
     const cardH = 56;
 
-    drawMetricCard(marginLeft + (cardW + cardGap) * 0, curY, cardW, cardH,
+    drawMetricCard(marginLeft, curY, cardW, cardH,
         'Total Confirmed', `${totalParticipants}`, '100% Verified Paid Seats', '#ffffff', '#e2e8f0', '#2563eb');
 
     drawMetricCard(marginLeft + (cardW + cardGap) * 1, curY, cardW, cardH,

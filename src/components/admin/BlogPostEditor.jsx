@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import ImageField from './ImageField';
 import { adminGet, adminSend } from './adminRequest';
 import ArticleBody from '../community/ArticleBody';
+import BlogPromotionModal from './BlogPromotionModal';
 import { slugify, countWords, readMinutes } from '../../lib/blogText';
 import { safeHref } from '../../lib/safeHref';
 
@@ -65,7 +66,11 @@ const TOOLS = [
 
 const COMMENT_MODES = [
     { id: 'open', label: 'Open', hint: 'Comments appear as soon as they are posted.' },
-    { id: 'approval', label: 'Approve first', hint: 'Comments wait in Blog Comments until you approve them.' },
+    {
+        id: 'approval',
+        label: 'Approve first',
+        hint: 'Comments wait in Blog Comments until you approve them.'
+    },
     { id: 'closed', label: 'Closed', hint: 'No new comments. Existing ones stay visible.' }
 ];
 
@@ -77,7 +82,10 @@ const inputClass = (invalid) =>
 function Field({ label, hint, htmlFor, children }) {
     return (
         <div>
-            <label htmlFor={htmlFor} className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase">
+            <label
+                htmlFor={htmlFor}
+                className="mb-1 block font-mono text-[10px] font-black text-slate-700 uppercase"
+            >
                 {label}
             </label>
             {children}
@@ -98,6 +106,7 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
     const [error, setError] = useState({ message: '', field: '' });
     const [tab, setTab] = useState('write');
     const [dirty, setDirty] = useState(false);
+    const [showPromo, setShowPromo] = useState(false);
     const bodyRef = useRef(null);
 
     useEffect(() => {
@@ -206,7 +215,11 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                 .split('\n')
                 .map((line, i) => prefix(i) + line.replace(/^(#{1,4}\s+|[-*+]\s+|\d+[.)]\s+|>\s?)/, ''))
                 .join('\n');
-            return { text: v.slice(0, start) + block + v.slice(end), selStart: start, selEnd: start + block.length };
+            return {
+                text: v.slice(0, start) + block + v.slice(end),
+                selStart: start,
+                selEnd: start + block.length
+            };
         });
 
     // Block snippets get a blank line on both sides, which Markdown needs to see them as blocks.
@@ -246,8 +259,10 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
         else if (id === 'code') insertBlock('```\ncode\n```', 'code');
         else if (id === 'image') insertBlock('![Describe the image](https://)', 'https://');
         else if (id === 'rule') insertBlock('---', '---');
-        else if (id === 'callout') insertBlock(':::tip Title (optional)\nWrite the tip here.\n:::', 'Write the tip here.');
-        else if (id === 'poll') insertBlock(':::poll Your question?\n- First option\n- Second option\n:::', 'Your question?');
+        else if (id === 'callout')
+            insertBlock(':::tip Title (optional)\nWrite the tip here.\n:::', 'Write the tip here.');
+        else if (id === 'poll')
+            insertBlock(':::poll Your question?\n- First option\n- Second option\n:::', 'Your question?');
     };
 
     if (loadState === 'loading') {
@@ -298,18 +313,34 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                     >
                         {isPublished ? 'Published' : 'Draft'}
                     </span>
-                    {dirty && <span className="font-mono text-[10px] font-bold text-amber-700">● Unsaved changes</span>}
+                    {dirty && (
+                        <span className="font-mono text-[10px] font-bold text-amber-700">
+                            ● Unsaved changes
+                        </span>
+                    )}
                 </div>
-                {isPublished && form.slug && (
-                    <a
-                        href={`/#community/blog/${form.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-xs font-black text-sky-700 hover:text-slate-900"
-                    >
-                        View live ↗
-                    </a>
-                )}
+                <div className="flex flex-wrap items-center gap-3">
+                    {form.title && (
+                        <button
+                            type="button"
+                            onClick={() => setShowPromo(true)}
+                            className="press shadow-[2px_2px_0px_#0f172a] cursor-pointer border-2 border-slate-900 bg-pink-100 px-3 py-1.5 font-mono text-xs font-black uppercase text-pink-900 hover:bg-pink-200"
+                            title="Generate Instagram Story/Feed Photos & Captions"
+                        >
+                            📣 Insta / Ad Kit
+                        </button>
+                    )}
+                    {isPublished && form.slug && (
+                        <a
+                            href={`/#community/blog/${form.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs font-black text-sky-700 hover:text-slate-900"
+                        >
+                            View live ↗
+                        </a>
+                    )}
+                </div>
             </div>
 
             {error.message && (
@@ -354,8 +385,14 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
 
                     <div>
                         <div className="flex flex-wrap items-end justify-between gap-2">
-                            <span className="font-mono text-[10px] font-black text-slate-700 uppercase">Post body</span>
-                            <div className="flex border-2 border-slate-900" role="tablist" aria-label="Editor mode">
+                            <span className="font-mono text-[10px] font-black text-slate-700 uppercase">
+                                Post body
+                            </span>
+                            <div
+                                className="flex border-2 border-slate-900"
+                                role="tablist"
+                                aria-label="Editor mode"
+                            >
                                 {['write', 'preview'].map((mode) => (
                                     <button
                                         key={mode}
@@ -364,7 +401,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                         aria-selected={tab === mode}
                                         onClick={() => setTab(mode)}
                                         className={`cursor-pointer px-3 py-1 font-mono text-[11px] font-black uppercase ${
-                                            tab === mode ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'
+                                            tab === mode
+                                                ? 'bg-slate-900 text-white'
+                                                : 'bg-white text-slate-700'
                                         }`}
                                     >
                                         {mode}
@@ -402,7 +441,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                     value={form.body}
                                     onChange={(e) => update('body', e.target.value)}
                                     data-lenis-prevent
-                                    placeholder={'Write the post here.\n\n## A section heading\n\nParagraphs are separated by a blank line.'}
+                                    placeholder={
+                                        'Write the post here.\n\n## A section heading\n\nParagraphs are separated by a blank line.'
+                                    }
                                     className="block h-[28rem] w-full resize-y p-3 font-mono text-base leading-relaxed focus:outline-none sm:text-sm"
                                 />
                             </div>
@@ -416,11 +457,13 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                         className="mx-auto mb-6 aspect-[16/9] w-full max-w-[38rem] border-4 border-slate-900 object-cover"
                                     />
                                 )}
-                                <h1 className="mx-auto max-w-[38rem] font-display text-3xl leading-tight font-bold text-slate-900">
+                                <h1 className="font-display mx-auto max-w-[38rem] text-3xl leading-tight font-bold text-slate-900">
                                     {form.title || 'Untitled post'}
                                 </h1>
                                 {form.excerpt && (
-                                    <p className="mx-auto mt-3 max-w-[38rem] text-lg text-slate-600">{form.excerpt}</p>
+                                    <p className="mx-auto mt-3 max-w-[38rem] text-lg text-slate-600">
+                                        {form.excerpt}
+                                    </p>
                                 )}
                                 {form.body.trim() ? (
                                     <ArticleBody markdown={form.body} showProblems className="mt-6" />
@@ -432,20 +475,22 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                             </div>
                         )}
                         <p className="mt-1 font-mono text-[10px] text-slate-500">
-                            {words} words · {readMinutes(form.body)} min read · Markdown: ## heading, **bold**,
-                            *italic*, - list, [text](url), ![alt](image url)
+                            {words} words · {readMinutes(form.body)} min read · Markdown: ## heading,
+                            **bold**, *italic*, - list, [text](url), ![alt](image url)
                         </p>
                         <p className="mt-1 font-mono text-[10px] text-slate-500">
-                            Callouts start with :::note, :::tip or :::warning and end with :::. Polls start with
-                            :::poll and the question, list 2 to 8 options, and end with :::. Votes belong to the
-                            question, so rewording a live poll's question starts its count again.
+                            Callouts start with :::note, :::tip or :::warning and end with :::. Polls start
+                            with :::poll and the question, list 2 to 8 options, and end with :::. Votes belong
+                            to the question, so rewording a live poll's question starts its count again.
                         </p>
                     </div>
                 </div>
 
                 <div className="space-y-4">
                     <div className="space-y-3 border-2 border-slate-900 bg-violet-50 p-4">
-                        <span className="block font-mono text-[10px] font-black text-slate-700 uppercase">Placement</span>
+                        <span className="block font-mono text-[10px] font-black text-slate-700 uppercase">
+                            Placement
+                        </span>
                         <label className="flex cursor-pointer items-start gap-2 text-sm">
                             <input
                                 type="checkbox"
@@ -456,8 +501,8 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                             <span>
                                 <span className="font-bold">Feature this post</span>
                                 <span className="block text-xs text-slate-600">
-                                    Pins it to the large card at the top of the blog and first on the home page.
-                                    Featuring it unfeatures any other post.
+                                    Pins it to the large card at the top of the blog and first on the home
+                                    page. Featuring it unfeatures any other post.
                                 </span>
                             </span>
                         </label>
@@ -481,7 +526,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                     </Field>
 
                     <fieldset className="space-y-2 border-2 border-slate-900 bg-white p-3">
-                        <legend className="px-1 font-mono text-[10px] font-black text-slate-700 uppercase">Comments</legend>
+                        <legend className="px-1 font-mono text-[10px] font-black text-slate-700 uppercase">
+                            Comments
+                        </legend>
                         {COMMENT_MODES.map((mode) => (
                             <label key={mode.id} className="flex cursor-pointer items-start gap-2 text-sm">
                                 <input
@@ -513,7 +560,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                 setSlugTouched(true);
                                 update('slug', e.target.value);
                             }}
-                            onBlur={() => setForm((prev) => ({ ...prev, slug: slugify(prev.slug || prev.title) }))}
+                            onBlur={() =>
+                                setForm((prev) => ({ ...prev, slug: slugify(prev.slug || prev.title) }))
+                            }
                             aria-invalid={error.field === 'slug' || undefined}
                             className={`${inputClass(error.field === 'slug')} font-mono`}
                         />
@@ -527,7 +576,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                             position={form.coverPosition}
                             frames={COVER_FRAMES}
                             folder="/asterix/blog"
-                            onUpload={(e, cb, folder) => onUploadImage?.(e, cb, folder, form.slug || 'blog_cover')}
+                            onUpload={(e, cb, folder) =>
+                                onUploadImage?.(e, cb, folder, form.slug || 'blog_cover')
+                            }
                             onChange={(fields) => {
                                 if (fields.url !== undefined) update('coverImage', fields.url);
                                 if (fields.position !== undefined) update('coverPosition', fields.position);
@@ -627,6 +678,25 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                     {saving ? 'Saving…' : isPublished ? 'Save changes' : 'Publish'}
                 </button>
             </div>
+
+            {/* Instagram / Social Media Promotion Modal */}
+            {showPromo && (
+                <BlogPromotionModal
+                    post={{
+                        id,
+                        title: form.title,
+                        slug: form.slug,
+                        excerpt: form.excerpt,
+                        author: form.author,
+                        category: form.category,
+                        cover: form.coverImage,
+                        readMinutes: readMinutes(countWords(form.body || '')),
+                        takeaways: form.takeaways.split('\n').filter(Boolean),
+                        tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+                    }}
+                    onClose={() => setShowPromo(false)}
+                />
+            )}
         </div>
     );
 }

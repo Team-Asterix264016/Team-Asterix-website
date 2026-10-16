@@ -11,7 +11,11 @@ import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 function playAudioTone(type = 'success', isMuted = false, candidateName = '') {
     // 1. Mobile Haptic Vibration Feedback
     try {
-        if (typeof window !== 'undefined' && 'navigator' in window && typeof navigator.vibrate === 'function') {
+        if (
+            typeof window !== 'undefined' &&
+            'navigator' in window &&
+            typeof navigator.vibrate === 'function'
+        ) {
             if (type === 'success') {
                 navigator.vibrate([60, 40, 60]); // Double pulse tick
             } else if (type === 'warning') {
@@ -246,7 +250,18 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                 }
             }
         },
-        [isProcessingScan, track, sessionId, sessionTopic, sessionNumber, sessionDate, isAudioMuted, showStatus, fetchLiveStats, autoFocusEnabled]
+        [
+            isProcessingScan,
+            track,
+            sessionId,
+            sessionTopic,
+            sessionNumber,
+            sessionDate,
+            isAudioMuted,
+            showStatus,
+            fetchLiveStats,
+            autoFocusEnabled
+        ]
     );
 
     // Form submit handler for text input
@@ -266,7 +281,12 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             const now = Date.now();
 
             const activeElem = document.activeElement;
-            if (activeElem && activeElem.tagName === 'INPUT' && activeElem !== inputRef.current && activeElem.type === 'text') {
+            if (
+                activeElem &&
+                activeElem.tagName === 'INPUT' &&
+                activeElem !== inputRef.current &&
+                activeElem.type === 'text'
+            ) {
                 return;
             }
 
@@ -332,7 +352,8 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                     const now = Date.now();
                     if (
                         decodedText &&
-                        (decodedText !== lastCameraBarcodeRef.current || now - lastCameraScanTimeRef.current > 3000)
+                        (decodedText !== lastCameraBarcodeRef.current ||
+                            now - lastCameraScanTimeRef.current > 3000)
                     ) {
                         lastCameraBarcodeRef.current = decodedText;
                         lastCameraScanTimeRef.current = now;
@@ -398,19 +419,20 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             <div className="flex flex-col justify-between gap-4 border-b-2 border-slate-200 pb-5 sm:flex-row sm:items-center">
                 <div>
                     <div className="flex items-center gap-2">
-                        <span className="rounded bg-sky-500/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-sky-600 border border-sky-400/30">
+                        <span className="rounded border border-sky-400/30 bg-sky-500/15 px-2.5 py-1 text-xs font-bold tracking-wider text-sky-600 uppercase">
                             Super Admin Tool
                         </span>
-                        <span className="rounded bg-emerald-500/15 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 border border-emerald-400/30">
+                        <span className="rounded border border-emerald-400/30 bg-emerald-500/15 px-2.5 py-1 text-xs font-bold tracking-wider text-emerald-600 uppercase">
                             Universal Scanner Engine
                         </span>
                     </div>
-                    <h2 className="mt-1 text-2xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
+                    <h2 className="mt-1 flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 uppercase">
                         <span>Barcode Attendance Scanner</span>
                         <span className="text-xl">⚡</span>
                     </h2>
                     <p className="text-sm font-semibold text-slate-600">
-                        Scan student ID card barcodes / register numbers to instantly record workshop attendance.
+                        Scan student ID card barcodes / register numbers to instantly record workshop
+                        attendance.
                     </p>
                 </div>
 
@@ -418,7 +440,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                     <button
                         onClick={fetchLiveStats}
                         disabled={isLoadingStats}
-                        className="press flex items-center gap-2 rounded-lg border-2 border-slate-900 bg-white px-3.5 py-2 text-xs font-bold uppercase text-slate-900 shadow-sm hover:bg-slate-100 disabled:opacity-50"
+                        className="press flex items-center gap-2 rounded-lg border-2 border-slate-900 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 uppercase shadow-sm hover:bg-slate-100 disabled:opacity-50"
                         title="Refresh session attendance stats"
                     >
                         <span>🔄</span>
@@ -427,7 +449,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
 
                     <button
                         onClick={handleExportCSV}
-                        className="press flex items-center gap-2 rounded-lg border-2 border-slate-900 bg-emerald-600 px-3.5 py-2 text-xs font-bold uppercase text-white shadow-sm hover:bg-emerald-700"
+                        className="press flex items-center gap-2 rounded-lg border-2 border-slate-900 bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white uppercase shadow-sm hover:bg-emerald-700"
                     >
                         <span>📥</span>
                         <span>Export CSV</span>
@@ -438,7 +460,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             {/* Session Configuration Card */}
             <div className="rounded-xl border-2 border-slate-900 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex flex-col justify-between gap-2 border-b-2 border-slate-100 pb-3 sm:flex-row sm:items-center">
-                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 uppercase tracking-wider">
+                    <h3 className="flex items-center gap-2 text-sm font-bold tracking-wider text-slate-800 uppercase">
                         <span>🎯 Active Session Settings</span>
                     </h3>
                     <div className="flex flex-wrap items-center gap-2">
@@ -449,7 +471,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                     const s = scheduleList.find((item) => item.id === e.target.value);
                                     if (s) selectScheduleSession(s);
                                 }}
-                                className="min-w-0 max-w-full rounded border-2 border-slate-900 bg-amber-100 px-2 py-1 text-xs font-bold text-slate-950 focus:outline-none"
+                                className="max-w-full min-w-0 rounded border-2 border-slate-900 bg-amber-100 px-2 py-1 text-xs font-bold text-slate-950 focus:outline-none"
                             >
                                 <option value="">-- Choose from {track.toUpperCase()} Schedule --</option>
                                 {scheduleList.map((s) => (
@@ -468,11 +490,13 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {/* Track */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold uppercase text-slate-700">Workshop Track</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700 uppercase">
+                            Workshop Track
+                        </label>
                         <select
                             value={track}
                             onChange={(e) => setTrack(e.target.value)}
-                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 uppercase focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         >
                             <option value="software">Software & Autonomous Systems</option>
                             <option value="powertrain">Electronics & Powertrain</option>
@@ -481,11 +505,13 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
 
                     {/* Session Number */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold uppercase text-slate-700">Session Number</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700 uppercase">
+                            Session Number
+                        </label>
                         <select
                             value={sessionNumber}
                             onChange={(e) => setSessionNumber(e.target.value)}
-                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 uppercase focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         >
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((num) => (
                                 <option key={num} value={num}>
@@ -497,24 +523,28 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
 
                     {/* Session Date */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold uppercase text-slate-700">Session Date</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700 uppercase">
+                            Session Date
+                        </label>
                         <input
                             type="date"
                             value={sessionDate}
                             onChange={(e) => setSessionDate(e.target.value)}
-                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         />
                     </div>
 
                     {/* Topic */}
                     <div>
-                        <label className="mb-1 block text-xs font-bold uppercase text-slate-700">Session Topic (Optional)</label>
+                        <label className="mb-1 block text-xs font-bold text-slate-700 uppercase">
+                            Session Topic (Optional)
+                        </label>
                         <input
                             type="text"
                             placeholder="e.g. ROS2 Architecture & LiDAR"
                             value={sessionTopic}
                             onChange={(e) => setSessionTopic(e.target.value)}
-                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full rounded-lg border-2 border-slate-900 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -523,19 +553,25 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             {/* Live Stats Overview Card */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="rounded-xl border-2 border-slate-900 bg-sky-50 p-4">
-                    <div className="text-xs font-bold uppercase text-sky-800">Total Enrolled Eligible</div>
+                    <div className="text-xs font-bold text-sky-800 uppercase">Total Enrolled Eligible</div>
                     <div className="mt-1 text-3xl font-black text-slate-900">{stats.totalEligible}</div>
-                    <div className="text-[11px] font-semibold text-sky-700">Paid candidates in this track</div>
+                    <div className="text-[11px] font-semibold text-sky-700">
+                        Paid candidates in this track
+                    </div>
                 </div>
 
                 <div className="rounded-xl border-2 border-slate-900 bg-emerald-50 p-4">
-                    <div className="text-xs font-bold uppercase text-emerald-800">Scanned & Marked Present</div>
+                    <div className="text-xs font-bold text-emerald-800 uppercase">
+                        Scanned & Marked Present
+                    </div>
                     <div className="mt-1 text-3xl font-black text-emerald-700">{stats.totalPresent}</div>
-                    <div className="text-[11px] font-semibold text-emerald-800">Recorded for session {sessionId}</div>
+                    <div className="text-[11px] font-semibold text-emerald-800">
+                        Recorded for session {sessionId}
+                    </div>
                 </div>
 
                 <div className="rounded-xl border-2 border-slate-900 bg-amber-50 p-4">
-                    <div className="text-xs font-bold uppercase text-amber-800">Live Attendance Rate</div>
+                    <div className="text-xs font-bold text-amber-800 uppercase">Live Attendance Rate</div>
                     <div className="mt-1 text-3xl font-black text-amber-700">{stats.percentage}%</div>
                     <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-200">
                         <div
@@ -616,18 +652,20 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                     value={scannedInput}
                                     onChange={(e) => setScannedInput(e.target.value)}
                                     disabled={isProcessingScan}
-                                    className="w-full rounded-xl border-2 border-sky-500/60 bg-slate-950 py-4 pl-24 pr-32 font-mono text-lg font-black tracking-wider text-sky-400 placeholder-slate-600 shadow-inner focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-500/30"
+                                    className="w-full rounded-xl border-2 border-sky-500/60 bg-slate-950 py-4 pr-32 pl-24 font-mono text-lg font-black tracking-wider text-sky-400 placeholder-slate-600 shadow-inner focus:border-sky-400 focus:ring-4 focus:ring-sky-500/30 focus:outline-none"
                                 />
                                 <button
                                     type="submit"
                                     disabled={isProcessingScan || !scannedInput.trim()}
-                                    className="press absolute right-2.5 top-2.5 rounded-lg bg-sky-500 px-5 py-2.5 text-xs font-black uppercase text-slate-950 shadow hover:bg-sky-400 disabled:opacity-50"
+                                    className="press absolute top-2.5 right-2.5 rounded-lg bg-sky-500 px-5 py-2.5 text-xs font-black text-slate-950 uppercase shadow hover:bg-sky-400 disabled:opacity-50"
                                 >
                                     {isProcessingScan ? 'Processing...' : 'Mark Present ↵'}
                                 </button>
                             </div>
-                            <div className="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
-                                <span>⚡ Point physical USB/Bluetooth scanner at barcode and press trigger.</span>
+                            <div className="flex items-center justify-between px-1 text-xs font-semibold text-slate-400">
+                                <span>
+                                    ⚡ Point physical USB/Bluetooth scanner at barcode and press trigger.
+                                </span>
                                 <span className="text-emerald-400">● Scanner Ready & Active</span>
                             </div>
                         </form>
@@ -637,12 +675,15 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                 {/* MODE 2: Built-in Camera Barcode Scanner Container */}
                 {scanMode === 'camera' && (
                     <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="relative w-full max-w-md overflow-hidden rounded-2xl border-4 border-sky-500 bg-black shadow-2xl p-1">
-                            <div id="barcode-camera-container" className="w-full h-64 overflow-hidden rounded-xl bg-slate-950" />
+                        <div className="relative w-full max-w-md overflow-hidden rounded-2xl border-4 border-sky-500 bg-black p-1 shadow-2xl">
+                            <div
+                                id="barcode-camera-container"
+                                className="h-64 w-full overflow-hidden rounded-xl bg-slate-950"
+                            />
                         </div>
 
                         {cameraError && (
-                            <div className="w-full max-w-md rounded-lg border-2 border-red-500/50 bg-red-950/60 p-3 text-xs font-bold text-red-300 text-center">
+                            <div className="w-full max-w-md rounded-lg border-2 border-red-500/50 bg-red-950/60 p-3 text-center text-xs font-bold text-red-300">
                                 ⚠️ {cameraError}
                             </div>
                         )}
@@ -656,8 +697,8 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                             lastResult.type === 'success'
                                 ? 'border-emerald-500 bg-emerald-950/80 text-emerald-100 shadow-[0_0_30px_rgba(16,185,129,0.3)]'
                                 : lastResult.type === 'warning'
-                                ? 'border-amber-500 bg-amber-950/80 text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.3)]'
-                                : 'border-rose-500 bg-rose-950/80 text-rose-100 shadow-[0_0_30px_rgba(244,63,94,0.3)]'
+                                  ? 'border-amber-500 bg-amber-950/80 text-amber-100 shadow-[0_0_30px_rgba(245,158,11,0.3)]'
+                                  : 'border-rose-500 bg-rose-950/80 text-rose-100 shadow-[0_0_30px_rgba(244,63,94,0.3)]'
                         }`}
                     >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -667,44 +708,51 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                         lastResult.type === 'success'
                                             ? 'bg-emerald-500 text-slate-950'
                                             : lastResult.type === 'warning'
-                                            ? 'bg-amber-500 text-slate-950'
-                                            : 'bg-rose-500 text-white'
+                                              ? 'bg-amber-500 text-slate-950'
+                                              : 'bg-rose-500 text-white'
                                     }`}
                                 >
-                                    {lastResult.type === 'success' ? '✓' : lastResult.type === 'warning' ? '⚠️' : '✕'}
+                                    {lastResult.type === 'success'
+                                        ? '✓'
+                                        : lastResult.type === 'warning'
+                                          ? '⚠️'
+                                          : '✕'}
                                 </div>
 
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <span
-                                            className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                            className={`rounded px-2 py-0.5 text-[10px] font-black tracking-wider uppercase ${
                                                 lastResult.type === 'success'
-                                                    ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
+                                                    ? 'border border-emerald-500/40 bg-emerald-500/30 text-emerald-300'
                                                     : lastResult.type === 'warning'
-                                                    ? 'bg-amber-500/30 text-amber-300 border border-amber-500/40'
-                                                    : 'bg-rose-500/30 text-rose-300 border border-rose-500/40'
+                                                      ? 'border border-amber-500/40 bg-amber-500/30 text-amber-300'
+                                                      : 'border border-rose-500/40 bg-rose-500/30 text-rose-300'
                                             }`}
                                         >
                                             {lastResult.type === 'success'
                                                 ? 'ATTENDANCE CONFIRMED'
                                                 : lastResult.type === 'warning'
-                                                ? 'ALREADY RECORDED'
-                                                : 'STUDENT NOT FOUND / UNPAID'}
+                                                  ? 'ALREADY RECORDED'
+                                                  : 'STUDENT NOT FOUND / UNPAID'}
                                         </span>
-                                        <span className="text-xs font-mono opacity-75">{lastResult.time}</span>
+                                        <span className="font-mono text-xs opacity-75">
+                                            {lastResult.time}
+                                        </span>
                                     </div>
 
                                     <h3 className="mt-1 text-2xl font-black tracking-tight">
                                         {lastResult.candidate?.name || 'Unknown Candidate'}
                                     </h3>
 
-                                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs font-mono font-bold">
-                                        <span className="rounded bg-black/40 px-2.5 py-1 text-sky-300 border border-sky-500/30">
+                                    <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-xs font-bold">
+                                        <span className="rounded border border-sky-500/30 bg-black/40 px-2.5 py-1 text-sky-300">
                                             Roll: {lastResult.candidate?.rollNo || lastResult.barcode}
                                         </span>
                                         {lastResult.candidate?.department && (
                                             <span className="opacity-90">
-                                                Dept: {lastResult.candidate.department} (Yr {lastResult.candidate.year})
+                                                Dept: {lastResult.candidate.department} (Yr{' '}
+                                                {lastResult.candidate.year})
                                             </span>
                                         )}
                                         {lastResult.candidate?.receiptNo && (
@@ -714,7 +762,9 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                         )}
                                     </div>
 
-                                    <p className="mt-2 text-xs font-semibold opacity-90">{lastResult.message}</p>
+                                    <p className="mt-2 text-xs font-semibold opacity-90">
+                                        {lastResult.message}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -725,7 +775,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             {/* RECENT SCANS LOG & ROSTER */}
             <div className="rounded-xl border-2 border-slate-900 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between border-b-2 border-slate-100 pb-3">
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                    <h3 className="flex items-center gap-2 text-sm font-bold tracking-wider text-slate-800 uppercase">
                         <span>📋 Live Scan Activity Log ({recentScans.length})</span>
                     </h3>
                     <span className="text-xs font-bold text-slate-500">Session: {sessionId}</span>
@@ -737,8 +787,8 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs font-mono">
-                            <thead className="border-b-2 border-slate-900 bg-slate-100 uppercase text-slate-700">
+                        <table className="w-full text-left font-mono text-xs">
+                            <thead className="border-b-2 border-slate-900 bg-slate-100 text-slate-700 uppercase">
                                 <tr>
                                     <th className="px-3 py-2">Time</th>
                                     <th className="px-3 py-2">Register No</th>
@@ -752,23 +802,31 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                                 {recentScans.map((scan, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50">
                                         <td className="px-3 py-2 text-slate-500">{scan.time}</td>
-                                        <td className="px-3 py-2 font-bold text-sky-600">{scan.candidate?.rollNo || scan.barcode}</td>
-                                        <td className="px-3 py-2 font-bold text-slate-900">{scan.candidate?.name || '—'}</td>
-                                        <td className="px-3 py-2 text-slate-600">
-                                            {scan.candidate?.department ? `${scan.candidate.department} (Yr ${scan.candidate.year})` : '—'}
+                                        <td className="px-3 py-2 font-bold text-sky-600">
+                                            {scan.candidate?.rollNo || scan.barcode}
                                         </td>
-                                        <td className="px-3 py-2 uppercase text-slate-600">{scan.candidate?.package || '—'}</td>
+                                        <td className="px-3 py-2 font-bold text-slate-900">
+                                            {scan.candidate?.name || '—'}
+                                        </td>
+                                        <td className="px-3 py-2 text-slate-600">
+                                            {scan.candidate?.department
+                                                ? `${scan.candidate.department} (Yr ${scan.candidate.year})`
+                                                : '—'}
+                                        </td>
+                                        <td className="px-3 py-2 text-slate-600 uppercase">
+                                            {scan.candidate?.package || '—'}
+                                        </td>
                                         <td className="px-3 py-2">
                                             {scan.type === 'success' ? (
-                                                <span className="inline-block rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-300">
+                                                <span className="inline-block rounded border border-emerald-300 bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                                                     ✓ PRESENT
                                                 </span>
                                             ) : scan.type === 'warning' ? (
-                                                <span className="inline-block rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300">
+                                                <span className="inline-block rounded border border-amber-300 bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                                                     ⚠️ ALREADY PRESENT
                                                 </span>
                                             ) : (
-                                                <span className="inline-block rounded bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 border border-rose-300">
+                                                <span className="inline-block rounded border border-rose-300 bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800">
                                                     ✕ FAILED
                                                 </span>
                                             )}

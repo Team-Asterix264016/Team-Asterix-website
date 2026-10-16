@@ -99,9 +99,7 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                                 <span className="flex flex-shrink-0 items-center justify-center rounded border border-slate-900 bg-sky-100 p-1 text-slate-900">
                                     <Icon name="phone" className="h-3.5 w-3.5" />
                                 </span>
-                                <span className="truncate text-[11px]">
-                                    +91 86089 44644
-                                </span>
+                                <span className="truncate text-[11px]">+91 86089 44644</span>
                             </a>
 
                             <a

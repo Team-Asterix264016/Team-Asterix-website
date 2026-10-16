@@ -24,12 +24,17 @@ function resolveSessionMinutes(item, track) {
     if (!times.length) {
         const segments = String(track?.timing || '')
             .split('·')
-            .map((part) => ({ label: (part.match(/^\s*([^\d:]+):/)?.[1] || '').toLowerCase(), times: extractClockTimes(part) }))
+            .map((part) => ({
+                label: (part.match(/^\s*([^\d:]+):/)?.[1] || '').toLowerCase(),
+                times: extractClockTimes(part)
+            }))
             .filter((seg) => seg.times.length);
         const wanted = SEGMENT_FOR_TYPE[item.type];
         const segment = wanted
             ? segments.find((seg) => wanted.test(seg.label))
-            : segments.find((seg) => /core/.test(seg.label)) || segments.find((seg) => !seg.label) || segments[0];
+            : segments.find((seg) => /core/.test(seg.label)) ||
+              segments.find((seg) => !seg.label) ||
+              segments[0];
         times = segment?.times || [];
     }
     if (!times.length) return null;
@@ -102,7 +107,10 @@ export function downloadAllIcsFile(items, calendarName = 'Team Asterix Workshop'
         const when = minutes
             ? [`DTSTART:${istToUtcStamp(date, minutes.start)}`, `DTEND:${istToUtcStamp(date, minutes.end)}`]
             : [`DTSTART;VALUE=DATE:${dateStamp(date)}`, `DTEND;VALUE=DATE:${dateStamp(date, 1)}`];
-        const description = [item.instructor && item.instructor !== '-' ? `Handled by: ${item.instructor}` : '', item.project ? `Milestone: ${item.project}` : '']
+        const description = [
+            item.instructor && item.instructor !== '-' ? `Handled by: ${item.instructor}` : '',
+            item.project ? `Milestone: ${item.project}` : ''
+        ]
             .filter(Boolean)
             .join('\n');
 

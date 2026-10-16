@@ -307,7 +307,10 @@ export default function QuizRunner({ onBack }) {
                 if (data.alreadySubmitted) {
                     setGatekeeperTab('lookup');
                     setLookupEmail(email);
-                    setGatekeeperError(data.error || 'You have already completed all attempts (2 of 2) for this quiz. View your results below.');
+                    setGatekeeperError(
+                        data.error ||
+                            'You have already completed all attempts (2 of 2) for this quiz. View your results below.'
+                    );
                     await performLookup(email);
                     return;
                 }
@@ -330,10 +333,7 @@ export default function QuizRunner({ onBack }) {
 
             // Remember the candidate so a refresh does not ask again.
             try {
-                sessionStorage.setItem(
-                    'asterix_quiz_attendee',
-                    JSON.stringify({ name, email, rollNo })
-                );
+                sessionStorage.setItem('asterix_quiz_attendee', JSON.stringify({ name, email, rollNo }));
             } catch {}
             setParticipant({ name, email, rollNo });
 
@@ -371,8 +371,11 @@ export default function QuizRunner({ onBack }) {
                 // Restore a local draft from a dropped connection, if any.
                 try {
                     const draft = JSON.parse(
-                        localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${email}_att_${data.attemptNumber || 1}`) ||
-                        localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${email}`) || '{}'
+                        localStorage.getItem(
+                            `asterix_quiz_${quizIdOrSlug}_${email}_att_${data.attemptNumber || 1}`
+                        ) ||
+                            localStorage.getItem(`asterix_quiz_${quizIdOrSlug}_${email}`) ||
+                            '{}'
                     );
                     setAnswers(draft && typeof draft === 'object' ? draft : {});
                 } catch {
@@ -495,7 +498,9 @@ export default function QuizRunner({ onBack }) {
                 // Clear local draft answers
                 try {
                     localStorage.removeItem(`asterix_quiz_${quizIdOrSlug}_${participant.email}`);
-                    localStorage.removeItem(`asterix_quiz_${quizIdOrSlug}_${participant.email}_att_${attemptNumber}`);
+                    localStorage.removeItem(
+                        `asterix_quiz_${quizIdOrSlug}_${participant.email}_att_${attemptNumber}`
+                    );
                 } catch {
                     // ignore
                 }
@@ -524,7 +529,15 @@ export default function QuizRunner({ onBack }) {
                 setShowConfirmModal(false);
             }
         },
-        [submissionId, quizIdOrSlug, participant.email, participant.name, quizData, attemptNumber, performLookup]
+        [
+            submissionId,
+            quizIdOrSlug,
+            participant.email,
+            participant.name,
+            quizData,
+            attemptNumber,
+            performLookup
+        ]
     );
 
     // Live countdown against the server-issued deadline, with auto-submit when
@@ -717,9 +730,9 @@ export default function QuizRunner({ onBack }) {
         );
     }
 
-    const isUpcoming = quizData ? (Boolean(timeUntilStart) || quizData.stage === 'upcoming') : false;
+    const isUpcoming = quizData ? Boolean(timeUntilStart) || quizData.stage === 'upcoming' : false;
     const isEnded = quizData ? quizData.stage === 'ended' : false;
-    const isActive = quizData ? (!isUpcoming && !isEnded) : false;
+    const isActive = quizData ? !isUpcoming && !isEnded : false;
 
     // -------------------------------------------------------------
     // RENDER: VIEW 1 - GATEKEEPER & ATTENDEE FORM
@@ -792,10 +805,12 @@ export default function QuizRunner({ onBack }) {
                                         onClick={() => setShowDescription((prev) => !prev)}
                                         className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs font-black text-sky-600 uppercase hover:text-sky-800"
                                     >
-                                        <span>{showDescription ? '▴ Hide Description' : '▾ Show Description'}</span>
+                                        <span>
+                                            {showDescription ? '▴ Hide Description' : '▾ Show Description'}
+                                        </span>
                                     </button>
                                     {showDescription && (
-                                        <p className="mt-2 border-l-4 border-sky-400 bg-slate-50 p-3 text-sm font-medium leading-relaxed text-slate-600 sm:text-base">
+                                        <p className="mt-2 border-l-4 border-sky-400 bg-slate-50 p-3 text-sm leading-relaxed font-medium text-slate-600 sm:text-base">
                                             {quizData.description}
                                         </p>
                                     )}
@@ -1018,7 +1033,10 @@ export default function QuizRunner({ onBack }) {
                                         </div>
                                     ) : (
                                         /* CASE 2: Student sign-in fields */
-                                        <form onSubmit={handleStudentLogin} className="space-y-4 border-2 border-slate-900 bg-white p-5">
+                                        <form
+                                            onSubmit={handleStudentLogin}
+                                            className="space-y-4 border-2 border-slate-900 bg-white p-5"
+                                        >
                                             {isSwitchingAccount && storedStudent && (
                                                 <div className="flex justify-end">
                                                     <button
@@ -1094,19 +1112,39 @@ export default function QuizRunner({ onBack }) {
                                         <span className="block font-black text-slate-900 uppercase">
                                             Assessment Rules:
                                         </span>
-                                        <div>• <strong>2 Attempts Granted:</strong> You can take this quiz up to 2 times. If you face issues, you can take a 2nd attempt.</div>
-                                        <div>• <strong>Best Score Counts:</strong> Your highest score out of the 2 attempts will be considered.</div>
-                                        <div>• Once started, a live timer of {quizData.durationMinutes} minutes will begin.</div>
+                                        <div>
+                                            • <strong>2 Attempts Granted:</strong> You can take this quiz up
+                                            to 2 times. If you face issues, you can take a 2nd attempt.
+                                        </div>
+                                        <div>
+                                            • <strong>Best Score Counts:</strong> Your highest score out of
+                                            the 2 attempts will be considered.
+                                        </div>
+                                        <div>
+                                            • Once started, a live timer of {quizData.durationMinutes} minutes
+                                            will begin.
+                                        </div>
                                         <div>• The quiz will auto-submit when the countdown expires.</div>
                                         {quizData.instantFeedback ? (
                                             <>
-                                                <div>• Answers are marked on the spot: you see whether you got it right as soon as you pick.</div>
-                                                <div>• Because the answer is revealed, a choice is final — you cannot change it afterwards.</div>
+                                                <div>
+                                                    • Answers are marked on the spot: you see whether you got
+                                                    it right as soon as you pick.
+                                                </div>
+                                                <div>
+                                                    • Because the answer is revealed, a choice is final — you
+                                                    cannot change it afterwards.
+                                                </div>
                                             </>
                                         ) : (
-                                            <div>• Your answers are autosaved as you make your selections.</div>
+                                            <div>
+                                                • Your answers are autosaved as you make your selections.
+                                            </div>
                                         )}
-                                        <div>• You can check your evaluated score and class ranking once results are published.</div>
+                                        <div>
+                                            • You can check your evaluated score and class ranking once
+                                            results are published.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1158,34 +1196,38 @@ export default function QuizRunner({ onBack }) {
 
                 {/* Second Attempt Prompt Modal */}
                 {promptSecondAttemptModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs font-mono">
-                        <div className="bg-white border-4 border-slate-900 shadow-[8px_8px_0px_#0f172a] max-w-md w-full p-6 space-y-4 animate-in fade-in">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 font-mono backdrop-blur-xs">
+                        <div className="animate-in fade-in w-full max-w-md space-y-4 border-4 border-slate-900 bg-white p-6 shadow-[8px_8px_0px_#0f172a]">
                             <div className="flex items-center gap-2 border-b-2 border-slate-900 pb-3">
                                 <span className="text-2xl">📝</span>
                                 <div>
-                                    <h3 className="font-black text-sm uppercase text-slate-900">
+                                    <h3 className="text-sm font-black text-slate-900 uppercase">
                                         Attempt 1 Completed
                                     </h3>
-                                    <p className="text-[11px] text-slate-500 font-bold">
+                                    <p className="text-[11px] font-bold text-slate-500">
                                         1 Attempt Remaining Out of 2
                                     </p>
                                 </div>
                             </div>
 
-                            <p className="text-xs text-slate-700 leading-relaxed font-bold">
-                                You have already taken your first attempt for this quiz. Every participant is granted <strong>2 attempts</strong>.
+                            <p className="text-xs leading-relaxed font-bold text-slate-700">
+                                You have already taken your first attempt for this quiz. Every participant is
+                                granted <strong>2 attempts</strong>.
                             </p>
 
-                            <div className="p-3 bg-amber-50 border-2 border-slate-900 text-xs space-y-1">
-                                <div className="text-[10px] uppercase font-black text-amber-900">
-                                    Participant: {promptSecondAttemptModal.name} ({promptSecondAttemptModal.email})
+                            <div className="space-y-1 border-2 border-slate-900 bg-amber-50 p-3 text-xs">
+                                <div className="text-[10px] font-black text-amber-900 uppercase">
+                                    Participant: {promptSecondAttemptModal.name} (
+                                    {promptSecondAttemptModal.email})
                                 </div>
                                 <div className="text-slate-700">
-                                    If you faced network drops, device issues, or want to retake the quiz, you can start Attempt 2 now. Your higher score will count towards your ranking.
+                                    If you faced network drops, device issues, or want to retake the quiz, you
+                                    can start Attempt 2 now. Your higher score will count towards your
+                                    ranking.
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                            <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1194,14 +1236,14 @@ export default function QuizRunner({ onBack }) {
                                         setGatekeeperTab('lookup');
                                         performLookup(email);
                                     }}
-                                    className="press flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border-2 border-slate-900 text-slate-900 font-black text-xs uppercase cursor-pointer"
+                                    className="press flex-1 cursor-pointer border-2 border-slate-900 bg-slate-100 py-2.5 text-xs font-black text-slate-900 uppercase hover:bg-slate-200"
                                 >
                                     View Attempt 1 Result
                                 </button>
                                 <button
                                     type="button"
                                     onClick={triggerStartAttempt2}
-                                    className="press flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                                    className="press flex flex-1 cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-400 py-2.5 text-xs font-black text-slate-950 uppercase shadow-[2px_2px_0px_#0f172a] hover:bg-amber-300"
                                 >
                                     <span>Start Attempt 2 →</span>
                                 </button>
@@ -1227,11 +1269,13 @@ export default function QuizRunner({ onBack }) {
                         <span className="bg-slate-900 px-2 py-0.5 font-mono text-xs font-black text-white uppercase">
                             Q {currentQIndex + 1} / {totalQuestionsCount}
                         </span>
-                        <span className={`px-2 py-0.5 border font-mono font-black text-xs uppercase shadow-[1px_1px_0px_#0f172a] ${
-                            attemptNumber === 2
-                                ? 'bg-purple-200 text-purple-950 border-purple-900'
-                                : 'bg-amber-200 text-amber-950 border-amber-900'
-                        }`}>
+                        <span
+                            className={`border px-2 py-0.5 font-mono text-xs font-black uppercase shadow-[1px_1px_0px_#0f172a] ${
+                                attemptNumber === 2
+                                    ? 'border-purple-900 bg-purple-200 text-purple-950'
+                                    : 'border-amber-900 bg-amber-200 text-amber-950'
+                            }`}
+                        >
                             Attempt {attemptNumber} of 2
                         </span>
                         <div className="hidden md:block">
@@ -1690,29 +1734,38 @@ export default function QuizRunner({ onBack }) {
                         </div>
 
                         {/* Attempts Status & Retake Option */}
-                        <div className="p-5 bg-sky-50 border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] text-left space-y-3 font-mono">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                <span className="font-black text-xs uppercase text-slate-900 flex items-center gap-1.5">
+                        <div className="space-y-3 border-3 border-slate-900 bg-sky-50 p-5 text-left font-mono shadow-[4px_4px_0px_#0f172a]">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="flex items-center gap-1.5 text-xs font-black text-slate-900 uppercase">
                                     <span>🎯</span>
-                                    <span>Attempt {resultData?.attemptNumber || attemptNumber} of 2 Completed</span>
+                                    <span>
+                                        Attempt {resultData?.attemptNumber || attemptNumber} of 2 Completed
+                                    </span>
                                 </span>
-                                <span className={`px-2 py-0.5 border text-[10px] font-black uppercase ${
-                                    resultData?.canTakeSecondAttempt
-                                        ? 'bg-amber-300 text-amber-950 border-amber-900'
-                                        : 'bg-emerald-200 text-emerald-950 border-emerald-900'
-                                }`}>
-                                    {resultData?.canTakeSecondAttempt ? '1 Attempt Remaining' : 'All Attempts Completed (2/2)'}
+                                <span
+                                    className={`border px-2 py-0.5 text-[10px] font-black uppercase ${
+                                        resultData?.canTakeSecondAttempt
+                                            ? 'border-amber-900 bg-amber-300 text-amber-950'
+                                            : 'border-emerald-900 bg-emerald-200 text-emerald-950'
+                                    }`}
+                                >
+                                    {resultData?.canTakeSecondAttempt
+                                        ? '1 Attempt Remaining'
+                                        : 'All Attempts Completed (2/2)'}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-700 font-bold">
-                                Every participant is granted <strong>2 attempts</strong>. If you experienced network lag, submission issues, or technical glitches during this attempt, you can retake the quiz using your second attempt. Your best score will be recorded.
+                            <p className="text-xs font-bold text-slate-700">
+                                Every participant is granted <strong>2 attempts</strong>. If you experienced
+                                network lag, submission issues, or technical glitches during this attempt, you
+                                can retake the quiz using your second attempt. Your best score will be
+                                recorded.
                             </p>
                             {resultData?.canTakeSecondAttempt && (
                                 <div className="pt-2">
                                     <button
                                         type="button"
                                         onClick={() => handleStartQuiz(null, true)}
-                                        className="press w-full sm:w-auto px-5 py-2.5 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[2px_2px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2"
+                                        className="press flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-amber-400 px-5 py-2.5 text-xs font-black text-slate-950 uppercase shadow-[2px_2px_0px_#0f172a] hover:bg-amber-300 sm:w-auto"
                                     >
                                         <span>🔄</span>
                                         <span>Start Attempt 2 Now →</span>
@@ -1910,50 +1963,63 @@ export default function QuizRunner({ onBack }) {
 
                     {/* Multi-Attempt History Comparison */}
                     {resultData.attempts && resultData.attempts.length > 1 && (
-                        <div className="p-5 bg-white border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] font-mono space-y-4">
-                            <div className="flex items-center justify-between flex-wrap gap-2 border-b-2 border-slate-200 pb-3">
+                        <div className="space-y-4 border-4 border-slate-900 bg-white p-5 font-mono shadow-[6px_6px_0px_#0f172a]">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-200 pb-3">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xl">📊</span>
-                                    <h3 className="text-sm font-black uppercase text-slate-900">
+                                    <h3 className="text-sm font-black text-slate-900 uppercase">
                                         Multi-Attempt Comparison
                                     </h3>
                                 </div>
-                                <span className="px-2 py-0.5 bg-purple-100 border border-purple-400 text-purple-900 text-[10px] font-black uppercase">
+                                <span className="border border-purple-400 bg-purple-100 px-2 py-0.5 text-[10px] font-black text-purple-900 uppercase">
                                     2 of 2 Attempts Completed
                                 </span>
                             </div>
 
-                            <p className="text-xs text-slate-600 font-bold">
-                                Both of your attempts have been safely recorded in the database. The system automatically awards you your highest score:
+                            <p className="text-xs font-bold text-slate-600">
+                                Both of your attempts have been safely recorded in the database. The system
+                                automatically awards you your highest score:
                             </p>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {resultData.attempts.map((att) => (
                                     <div
                                         key={att.attemptNumber}
-                                        className={`p-4 border-2 border-slate-900 relative ${
+                                        className={`relative border-2 border-slate-900 p-4 ${
                                             att.isBest
                                                 ? 'bg-amber-100 shadow-[4px_4px_0px_#0f172a] ring-2 ring-amber-500'
                                                 : 'bg-slate-50'
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="font-black text-xs uppercase text-slate-900">
+                                        <div className="mb-2 flex items-center justify-between">
+                                            <span className="text-xs font-black text-slate-900 uppercase">
                                                 Attempt {att.attemptNumber}
                                             </span>
                                             {att.isBest && (
-                                                <span className="px-2 py-0.5 bg-amber-400 border border-slate-900 text-slate-950 text-[10px] font-black uppercase shadow-[1px_1px_0px_#0f172a]">
+                                                <span className="border border-slate-900 bg-amber-400 px-2 py-0.5 text-[10px] font-black text-slate-950 uppercase shadow-[1px_1px_0px_#0f172a]">
                                                     ★ Official Best Score
                                                 </span>
                                             )}
                                         </div>
                                         <div className="text-2xl font-black text-slate-900">
                                             {att.score} / {att.maxScore}
-                                            <span className="text-xs text-slate-600 ml-2 font-bold">({att.percentage}%)</span>
+                                            <span className="ml-2 text-xs font-bold text-slate-600">
+                                                ({att.percentage}%)
+                                            </span>
                                         </div>
-                                        <div className="text-[11px] text-slate-500 font-bold mt-2 pt-2 border-t border-slate-900/10 flex justify-between">
-                                            <span>Time: {Math.round((att.timeSpentSeconds || 0) / 60 * 10) / 10}m</span>
-                                            <span>{att.submittedAt ? new Date(att.submittedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                                        <div className="mt-2 flex justify-between border-t border-slate-900/10 pt-2 text-[11px] font-bold text-slate-500">
+                                            <span>
+                                                Time:{' '}
+                                                {Math.round(((att.timeSpentSeconds || 0) / 60) * 10) / 10}m
+                                            </span>
+                                            <span>
+                                                {att.submittedAt
+                                                    ? new Date(att.submittedAt).toLocaleTimeString('en-IN', {
+                                                          hour: '2-digit',
+                                                          minute: '2-digit'
+                                                      })
+                                                    : 'N/A'}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -1963,20 +2029,21 @@ export default function QuizRunner({ onBack }) {
 
                     {/* Second Attempt Available Banner in Results */}
                     {resultData.canTakeSecondAttempt && (
-                        <div className="p-5 bg-amber-50 border-4 border-slate-900 shadow-[6px_6px_0px_#0f172a] font-mono flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex flex-col items-center justify-between gap-4 border-4 border-slate-900 bg-amber-50 p-5 font-mono shadow-[6px_6px_0px_#0f172a] sm:flex-row">
                             <div className="space-y-1 text-left">
-                                <div className="font-black text-xs uppercase text-amber-950 flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 text-xs font-black text-amber-950 uppercase">
                                     <span>💡</span>
                                     <span>You Have 1 Attempt Remaining</span>
                                 </div>
-                                <p className="text-xs text-amber-900 font-bold">
-                                    Experienced glitches, lags, or want to improve your score? You are eligible to take your second attempt. Your best score will be retained.
+                                <p className="text-xs font-bold text-amber-900">
+                                    Experienced glitches, lags, or want to improve your score? You are
+                                    eligible to take your second attempt. Your best score will be retained.
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => handleStartQuiz(null, true)}
-                                className="press w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-xs uppercase shadow-[3px_3px_0px_#0f172a] cursor-pointer shrink-0"
+                                className="press w-full shrink-0 cursor-pointer border-2 border-slate-900 bg-amber-400 px-6 py-3 text-xs font-black text-slate-950 uppercase shadow-[3px_3px_0px_#0f172a] hover:bg-amber-300 sm:w-auto"
                             >
                                 Start Attempt 2 Now →
                             </button>

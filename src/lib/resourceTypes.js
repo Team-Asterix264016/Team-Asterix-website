@@ -15,7 +15,9 @@ const RESOURCE_TYPE_BADGES = {
 };
 
 export function resourceBadge(type) {
-    const t = String(type || '').trim().toLowerCase();
+    const t = String(type || '')
+        .trim()
+        .toLowerCase();
     if (Object.hasOwn(RESOURCE_TYPE_BADGES, t)) return RESOURCE_TYPE_BADGES[t];
     if (t) return `↗ ${t.toUpperCase()}`;
     return '↗ Open';

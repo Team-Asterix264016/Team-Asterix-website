@@ -707,7 +707,7 @@ html.modal-open body {
 /* iOS Safari zooms the page when a focused control's text is under 16px, and
    never zooms back out. `max(1rem, 1em)` raises only the controls that are too
    small -- anything already at or above 16px keeps its size, since `1em`
-   resolves against the parent -- which is what makes the `!important` safe
+   resolves against the parent add-- which is what makes the `!important` safe
    here. 767px rather than 639px: iPad Safari does the same thing. */
 @media (max-width: 767px) {
   input,

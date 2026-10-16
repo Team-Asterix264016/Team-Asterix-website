@@ -4,47 +4,62 @@ import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 
 export default function ParticipantPasswordsAdmin({ showStatus }) {
     const [auditList, setAuditList] = useState([]);
-    const [summary, setSummary] = useState({ totalPaid: 0, hasLoggedIn: 0, customPasswordSet: 0, usingDefaultPassword: 0 });
+    const [summary, setSummary] = useState({
+        totalPaid: 0,
+        hasLoggedIn: 0,
+        customPasswordSet: 0,
+        usingDefaultPassword: 0
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'loggedin' | 'custom' | 'default'
 
-    const fetchAudit = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoading(true);
-        setError('');
-        try {
-            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            if (!token) {
-                setError('No admin authorization token found. Please sign in again.');
-                setIsLoading(false);
-                return;
-            }
-
-            const res = await fetch(apiUrl('/api/workshop/registrations/superadmin-security'), {
-                headers: {
-                    Authorization: `Bearer ${token}`
+    const fetchAudit = useCallback(
+        async (isSilent = false) => {
+            if (!isSilent) setIsLoading(true);
+            setError('');
+            try {
+                const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+                if (!token) {
+                    setError('No admin authorization token found. Please sign in again.');
+                    setIsLoading(false);
+                    return;
                 }
-            });
 
-            if (!res.ok) {
-                const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || `Server returned HTTP ${res.status}`);
-            }
+                const res = await fetch(apiUrl('/api/workshop/registrations/superadmin-security'), {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
 
-            const data = await res.json();
-            setAuditList(data.auditList || []);
-            setSummary(data.summary || { totalPaid: 0, hasLoggedIn: 0, customPasswordSet: 0, usingDefaultPassword: 0 });
-        } catch (err) {
-            console.error('Error fetching security audit:', err);
-            setError(err.message || 'Failed to fetch security audit logs');
-            if (!isSilent && showStatus) {
-                showStatus(`⚠️ Security audit error: ${err.message}`);
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server returned HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+                setAuditList(data.auditList || []);
+                setSummary(
+                    data.summary || {
+                        totalPaid: 0,
+                        hasLoggedIn: 0,
+                        customPasswordSet: 0,
+                        usingDefaultPassword: 0
+                    }
+                );
+            } catch (err) {
+                console.error('Error fetching security audit:', err);
+                setError(err.message || 'Failed to fetch security audit logs');
+                if (!isSilent && showStatus) {
+                    showStatus(`⚠️ Security audit error: ${err.message}`);
+                }
+            } finally {
+                if (!isSilent) setIsLoading(false);
             }
-        } finally {
-            if (!isSilent) setIsLoading(false);
-        }
-    }, [showStatus]);
+        },
+        [showStatus]
+    );
 
     useEffect(() => {
         let isMounted = true;
@@ -168,11 +183,13 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                 Real-Time Security Audit
                             </span>
                         </div>
-                        <h2 className="mt-2 text-3xl font-black uppercase text-slate-950 sm:text-4xl">
+                        <h2 className="mt-2 text-3xl font-black text-slate-950 uppercase sm:text-4xl">
                             Participant Logins &amp; Password Status 🔑
                         </h2>
                         <p className="mt-1 font-mono text-xs font-bold text-slate-900">
-                            Paid participants who logged into their profile, when and how often, and whether they set their own password. Passwords are stored only as one-way hashes and cannot be viewed; reset a participant to the default if they forget theirs.
+                            Paid participants who logged into their profile, when and how often, and whether
+                            they set their own password. Passwords are stored only as one-way hashes and
+                            cannot be viewed; reset a participant to the default if they forget theirs.
                         </p>
                     </div>
 
@@ -189,23 +206,39 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
             {/* Summary KPI Cards */}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div className="shadow-brutal-4 border-3 border-slate-900 bg-white p-4">
-                    <span className="block font-mono text-[10px] font-black text-slate-500 uppercase">Total Paid Participants</span>
-                    <strong className="mt-1 block text-2xl font-black text-slate-900 sm:text-3xl">{summary.totalPaid}</strong>
+                    <span className="block font-mono text-[10px] font-black text-slate-500 uppercase">
+                        Total Paid Participants
+                    </span>
+                    <strong className="mt-1 block text-2xl font-black text-slate-900 sm:text-3xl">
+                        {summary.totalPaid}
+                    </strong>
                 </div>
 
                 <div className="shadow-brutal-4 border-3 border-slate-900 bg-emerald-100 p-4">
-                    <span className="block font-mono text-[10px] font-black text-emerald-800 uppercase">Logged-In Participants</span>
-                    <strong className="mt-1 block text-2xl font-black text-emerald-950 sm:text-3xl">{summary.hasLoggedIn}</strong>
+                    <span className="block font-mono text-[10px] font-black text-emerald-800 uppercase">
+                        Logged-In Participants
+                    </span>
+                    <strong className="mt-1 block text-2xl font-black text-emerald-950 sm:text-3xl">
+                        {summary.hasLoggedIn}
+                    </strong>
                 </div>
 
                 <div className="shadow-brutal-4 border-3 border-slate-900 bg-sky-100 p-4">
-                    <span className="block font-mono text-[10px] font-black text-sky-800 uppercase">Custom Password Set</span>
-                    <strong className="mt-1 block text-2xl font-black text-sky-950 sm:text-3xl">{summary.customPasswordSet}</strong>
+                    <span className="block font-mono text-[10px] font-black text-sky-800 uppercase">
+                        Custom Password Set
+                    </span>
+                    <strong className="mt-1 block text-2xl font-black text-sky-950 sm:text-3xl">
+                        {summary.customPasswordSet}
+                    </strong>
                 </div>
 
                 <div className="shadow-brutal-4 border-3 border-slate-900 bg-amber-100 p-4">
-                    <span className="block font-mono text-[10px] font-black text-amber-800 uppercase">Using Default (&quot;asterix&quot;)</span>
-                    <strong className="mt-1 block text-2xl font-black text-amber-950 sm:text-3xl">{summary.usingDefaultPassword}</strong>
+                    <span className="block font-mono text-[10px] font-black text-amber-800 uppercase">
+                        Using Default (&quot;asterix&quot;)
+                    </span>
+                    <strong className="mt-1 block text-2xl font-black text-amber-950 sm:text-3xl">
+                        {summary.usingDefaultPassword}
+                    </strong>
                 </div>
             </div>
 
@@ -310,16 +343,19 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                             {/* Candidate Info */}
                                             <td className="px-4 py-3 align-top">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono text-[10px] font-bold text-slate-500">#{idx + 1}</span>
+                                                    <span className="font-mono text-[10px] font-bold text-slate-500">
+                                                        #{idx + 1}
+                                                    </span>
                                                     <span className="rounded border border-slate-900 bg-amber-300 px-1.5 py-0.5 font-mono text-[10px] font-black text-slate-950">
                                                         {item.receiptNo || 'CONFIRMED'}
                                                     </span>
                                                 </div>
-                                                <strong className="mt-1 block text-sm font-black uppercase text-slate-900">
+                                                <strong className="mt-1 block text-sm font-black text-slate-900 uppercase">
                                                     {item.name}
                                                 </strong>
                                                 <span className="font-mono text-xs font-bold text-sky-800">
-                                                    Roll: {item.rollNo} • {item.department} ({item.year === '1' ? '1st Yr' : '2nd Yr'})
+                                                    Roll: {item.rollNo} • {item.department} (
+                                                    {item.year === '1' ? '1st Yr' : '2nd Yr'})
                                                 </span>
                                             </td>
 
@@ -331,8 +367,8 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
 
                                             {/* Track / Package */}
                                             <td className="px-4 py-3 align-top">
-                                                <div className="flex flex-col gap-1 items-start">
-                                                    <span className="inline-block rounded border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-sky-950">
+                                                <div className="flex flex-col items-start gap-1">
+                                                    <span className="inline-block rounded border border-slate-900 bg-sky-100 px-2 py-0.5 font-mono text-[10px] font-black text-sky-950 uppercase">
                                                         {item.packageName || item.package}
                                                     </span>
                                                     {item.package !== 'combo' && (
@@ -343,7 +379,9 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                                             className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
                                                             title="Upgrade candidate profile to Combo package"
                                                         >
-                                                            {actionBusyId === item.id ? 'Upgrading…' : '⚡ Upgrade Combo'}
+                                                            {actionBusyId === item.id
+                                                                ? 'Upgrading…'
+                                                                : '⚡ Upgrade Combo'}
                                                         </button>
                                                     )}
                                                 </div>
@@ -369,8 +407,12 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
 
                                             {/* Login Count */}
                                             <td className="px-4 py-3 align-top font-mono">
-                                                <strong className="text-sm font-black text-slate-900">{item.loginCount}</strong>
-                                                <span className="block text-[10px] text-slate-500">total logins</span>
+                                                <strong className="text-sm font-black text-slate-900">
+                                                    {item.loginCount}
+                                                </strong>
+                                                <span className="block text-[10px] text-slate-500">
+                                                    total logins
+                                                </span>
                                             </td>
 
                                             {/* Password Status & Custom Password */}
@@ -387,7 +429,9 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                                             className="press block border border-slate-900 bg-white px-2 py-0.5 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-rose-100 disabled:opacity-50"
                                                             title="Put this participant back on the default password"
                                                         >
-                                                            {actionBusyId === item.id ? 'Resetting…' : '↺ Reset to default'}
+                                                            {actionBusyId === item.id
+                                                                ? 'Resetting…'
+                                                                : '↺ Reset to default'}
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -396,7 +440,10 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                                             ⚠️ Initial Default (&quot;asterix&quot;)
                                                         </span>
                                                         <div className="font-mono text-xs font-bold text-slate-600">
-                                                            Password: <code className="font-black text-slate-900">asterix</code>
+                                                            Password:{' '}
+                                                            <code className="font-black text-slate-900">
+                                                                asterix
+                                                            </code>
                                                         </div>
                                                     </div>
                                                 )}
@@ -405,7 +452,9 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                                             {/* Password Updated At */}
                                             <td className="px-4 py-3 align-top font-mono text-xs text-slate-600">
                                                 {formattedPwdUpdate ? (
-                                                    <span className="font-bold text-slate-900">{formattedPwdUpdate}</span>
+                                                    <span className="font-bold text-slate-900">
+                                                        {formattedPwdUpdate}
+                                                    </span>
                                                 ) : (
                                                     <span className="text-slate-400">-</span>
                                                 )}

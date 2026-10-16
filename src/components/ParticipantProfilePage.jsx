@@ -513,8 +513,8 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             </h1>
                             <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed font-bold text-slate-600 sm:text-sm">
                                 Enter your college email ID, registered phone number, or roll number below to
-                                access your class timetable schedule, lecture slides,
-                                SPICE circuits, and Colab notebooks.
+                                access your class timetable schedule, lecture slides, SPICE circuits, and
+                                Colab notebooks.
                             </p>
                         </div>
 
@@ -578,10 +578,15 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                         )}
 
                         <div className="mt-4 border-t-2 border-slate-200 pt-3 text-center font-mono text-xs font-bold text-slate-600">
-                            Having trouble unlocking your profile? See the floating support badge on the side or call{' '}
-                            <a href="tel:+918608944644" className="font-black text-slate-950 underline hover:text-sky-700">
+                            Having trouble unlocking your profile? See the floating support badge on the side
+                            or call{' '}
+                            <a
+                                href="tel:+918608944644"
+                                className="font-black text-slate-950 underline hover:text-sky-700"
+                            >
                                 +91 86089 44644
-                            </a>.
+                            </a>
+                            .
                         </div>
                     </div>
 
@@ -1300,19 +1305,22 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="edit-profile-title"
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 sm:p-6 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
                             onClick={closeEditDetails}
                         >
                             <div
-                                className="shadow-brutal-8 relative flex max-h-[90dvh] sm:max-h-[85dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white"
+                                className="shadow-brutal-8 relative flex max-h-[90dvh] w-full max-w-lg flex-col border-4 border-slate-900 bg-white sm:max-h-[85dvh]"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div className="flex shrink-0 items-start justify-between gap-3 border-b-3 border-slate-900 bg-white p-5 sm:p-6 pb-4">
+                                <div className="flex shrink-0 items-start justify-between gap-3 border-b-3 border-slate-900 bg-white p-5 pb-4 sm:p-6">
                                     <div>
                                         <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                                             Participant Credentials
                                         </span>
-                                        <h3 id="edit-profile-title" className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
+                                        <h3
+                                            id="edit-profile-title"
+                                            className="text-xl font-black text-slate-900 uppercase sm:text-2xl"
+                                        >
                                             Edit Profile Details ✏️
                                         </h3>
                                     </div>
@@ -1325,16 +1333,19 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleEditDetailsSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                                <form
+                                    onSubmit={handleEditDetailsSubmit}
+                                    className="flex min-h-0 flex-1 flex-col overflow-hidden"
+                                >
                                     <div
                                         data-lenis-prevent
                                         data-modal-scroll
-                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6 scroll-smooth overscroll-contain"
+                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scroll-smooth p-5 sm:p-6"
                                     >
                                         <div className="border-2 border-slate-900 bg-slate-100 p-3">
                                             <p className="font-mono text-[11px] font-bold text-slate-700">
-                                                🔒 Your enrolled track, amount paid and receipt number cannot be
-                                                changed here — call the workshop team on{' '}
+                                                🔒 Your enrolled track, amount paid and receipt number cannot
+                                                be changed here — call the workshop team on{' '}
                                                 <a
                                                     href="tel:+918608944644"
                                                     className="font-black text-slate-950 underline"
@@ -1365,8 +1376,8 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             ) : (
                                                 <p className="mt-1 font-mono text-[11px] font-bold text-amber-800">
                                                     ⚠️ Fix this if you typed it wrong while registering — your
-                                                    project and quiz records move to the corrected
-                                                    number automatically. Enter it exactly as printed on your ID
+                                                    project and quiz records move to the corrected number
+                                                    automatically. Enter it exactly as printed on your ID
                                                     card.
                                                 </p>
                                             )}
@@ -1433,7 +1444,9 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                             </label>
                                             <select
                                                 value={editForm.department}
-                                                onChange={(e) => updateEditField('department', e.target.value)}
+                                                onChange={(e) =>
+                                                    updateEditField('department', e.target.value)
+                                                }
                                                 className="w-full border-3 border-slate-900 bg-slate-50 px-3.5 py-2.5 font-mono text-sm font-black text-slate-900 focus:bg-amber-50 focus:outline-none"
                                             >
                                                 <option value="">Select department</option>
@@ -1524,19 +1537,22 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="change-password-title"
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 sm:p-6 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6"
                             onClick={closeChangePassword}
                         >
                             <div
-                                className="shadow-brutal-8 relative flex max-h-[90dvh] sm:max-h-[85dvh] w-full max-w-md flex-col border-4 border-slate-900 bg-white"
+                                className="shadow-brutal-8 relative flex max-h-[90dvh] w-full max-w-md flex-col border-4 border-slate-900 bg-white sm:max-h-[85dvh]"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div className="flex shrink-0 items-center justify-between border-b-3 border-slate-900 bg-white p-5 sm:p-6 pb-4">
+                                <div className="flex shrink-0 items-center justify-between border-b-3 border-slate-900 bg-white p-5 pb-4 sm:p-6">
                                     <div>
                                         <span className="font-mono text-[10px] font-black tracking-widest text-sky-700 uppercase">
                                             Account Security
                                         </span>
-                                        <h3 id="change-password-title" className="text-xl font-black text-slate-900 uppercase sm:text-2xl">
+                                        <h3
+                                            id="change-password-title"
+                                            className="text-xl font-black text-slate-900 uppercase sm:text-2xl"
+                                        >
                                             Change Profile Password 🔑
                                         </h3>
                                     </div>
@@ -1549,11 +1565,14 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     </button>
                                 </div>
 
-                                <form onSubmit={handleChangePasswordSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                                <form
+                                    onSubmit={handleChangePasswordSubmit}
+                                    className="flex min-h-0 flex-1 flex-col overflow-hidden"
+                                >
                                     <div
                                         data-lenis-prevent
                                         data-modal-scroll
-                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6 scroll-smooth overscroll-contain"
+                                        className="custom-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain scroll-smooth p-5 sm:p-6"
                                     >
                                         <div>
                                             <label className="mb-1 block font-mono text-xs font-black text-slate-700 uppercase">
@@ -1630,7 +1649,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                 </main>
             )}
             {/* FLOATING SIDE CONTACT SUPPORT WIDGET (Visually striking on dark background) */}
-            <aside className="fixed bottom-6 right-6 z-50 flex items-center">
+            <aside className="fixed right-6 bottom-6 z-50 flex items-center">
                 <a
                     href="tel:+918608944644"
                     className="group relative flex items-center gap-3 rounded-none border-3 border-slate-900 bg-amber-300 px-4 py-3 font-mono text-xs font-black text-slate-950 uppercase shadow-[6px_6px_0px_#000000] transition-all hover:-translate-x-1 hover:-translate-y-1 hover:bg-amber-400 hover:shadow-[9px_9px_0px_#000000]"

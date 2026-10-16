@@ -41,8 +41,11 @@ function MainApp() {
             window.location.hash === '#profile' ||
             window.location.pathname.startsWith('/workshop/profile')
     );
-    const [isCommunityPage, setIsCommunityPage] = useState(() =>
-        window.location.hash.startsWith('#community')
+    const [isCommunityPage, setIsCommunityPage] = useState(
+        () =>
+            window.location.hash.startsWith('#community') ||
+            window.location.pathname.startsWith('/blog') ||
+            window.location.pathname.startsWith('/community')
     );
     const [isWorkshopProjectPage, setIsWorkshopProjectPage] = useState(
         () => window.location.hash === '#workshop-project-submit'
@@ -73,6 +76,7 @@ function MainApp() {
     useEffect(() => {
         const handleHashChange = () => {
             const hash = window.location.hash;
+            const pathname = window.location.pathname;
             // Clear retired recruitment, freshers and submission hashes to prevent broken landing
             if (
                 ['#join', '#recruitment', '#freshers-recruitment', '#freshers'].includes(hash) ||
@@ -90,9 +94,13 @@ function MainApp() {
                 hash === '#workshop-profile' ||
                     hash === '#profile' ||
                     hash === '#workshop' ||
-                    window.location.pathname.startsWith('/workshop/profile')
+                    pathname.startsWith('/workshop/profile')
             );
-            setIsCommunityPage(hash.startsWith('#community'));
+            setIsCommunityPage(
+                hash.startsWith('#community') ||
+                    pathname.startsWith('/blog') ||
+                    pathname.startsWith('/community')
+            );
             setIsWorkshopProjectPage(hash === '#workshop-project-submit');
             setIsAttendancePage(hash.startsWith('#attendance') && !hash.startsWith('#attendance-projector'));
             setIsProjectorPage(hash.startsWith('#attendance-projector'));
@@ -112,7 +120,11 @@ function MainApp() {
         }
 
         window.addEventListener('hashchange', handleHashChange);
-        return () => window.removeEventListener('hashchange', handleHashChange);
+        window.addEventListener('popstate', handleHashChange);
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+            window.removeEventListener('popstate', handleHashChange);
+        };
     }, []);
 
     useEffect(() => {
@@ -243,9 +255,12 @@ function MainApp() {
     const handleBackToHome = () => {
         closeAll();
         const hash = window.location.hash;
+        const pathname = window.location.pathname;
         if (
             hash.startsWith('#admin') ||
             hash.startsWith('#community') ||
+            pathname.startsWith('/blog') ||
+            pathname.startsWith('/community') ||
             [
                 '#sponsor',
                 '#workshop',
@@ -255,7 +270,7 @@ function MainApp() {
                 '#model'
             ].includes(hash)
         ) {
-            window.history.replaceState(null, '', window.location.pathname);
+            window.history.replaceState(null, '', '/');
         }
         scrollToTop();
     };

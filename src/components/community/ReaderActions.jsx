@@ -86,7 +86,11 @@ export function ShareButtons({ post, onShare }) {
                     <PiLink aria-hidden="true" className="h-[18px] w-[18px]" />
                 )}
                 <span aria-live="polite">
-                    {copied === 'done' ? 'Link copied' : copied === 'failed' ? 'Copy from the address bar' : 'Copy link'}
+                    {copied === 'done'
+                        ? 'Link copied'
+                        : copied === 'failed'
+                          ? 'Copy from the address bar'
+                          : 'Copy link'}
                 </span>
             </button>
             {canShareNatively() && (
@@ -128,7 +132,9 @@ export function ReactionButtons({ engagement }) {
                         <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
                         <span>{r.label}</span>
                         {count > 0 && (
-                            <span className={`tabular-nums ${on ? 'text-slate-300' : 'text-slate-400'}`}>{count}</span>
+                            <span className={`tabular-nums ${on ? 'text-slate-300' : 'text-slate-400'}`}>
+                                {count}
+                            </span>
                         )}
                     </button>
                 );

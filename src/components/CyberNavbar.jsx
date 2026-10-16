@@ -244,8 +244,8 @@ export default function CyberNavbar({
                                             >
                                                 <div className="mb-3.5 flex items-center justify-between border-b-2 border-slate-900 pb-2">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                        <span className="font-mono text-xs font-black text-slate-900 uppercase tracking-wider">
+                                                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500" />
+                                                        <span className="font-mono text-xs font-black tracking-wider text-slate-900 uppercase">
                                                             // COMMS & SOCIALS
                                                         </span>
                                                     </div>
@@ -269,11 +269,11 @@ export default function CyberNavbar({
                                                             className={`shadow-brutal-2 hover:shadow-brutal-4 group flex cursor-pointer items-center justify-between rounded-lg border-2 border-slate-900 bg-slate-50 p-3 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 ${item.color}`}
                                                         >
                                                             <div className="flex items-center gap-3">
-                                                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border-2 border-slate-900 bg-white text-slate-900 shadow-brutal-1">
+                                                                <div className="shadow-brutal-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border-2 border-slate-900 bg-white text-slate-900">
                                                                     {item.icon}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="block text-xs font-black text-slate-900 uppercase tracking-wide group-hover:text-inherit sm:text-sm">
+                                                                    <span className="block text-xs font-black tracking-wide text-slate-900 uppercase group-hover:text-inherit sm:text-sm">
                                                                         {item.name}
                                                                     </span>
                                                                     <span className="block font-mono text-[11px] font-bold text-slate-600">
@@ -281,7 +281,7 @@ export default function CyberNavbar({
                                                                     </span>
                                                                 </div>
                                                             </div>
-                                                            <span className="flex h-7 w-7 items-center justify-center border-2 border-slate-900 bg-white text-xs font-black text-slate-900 shadow-brutal-1 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                                                            <span className="shadow-brutal-1 flex h-7 w-7 items-center justify-center border-2 border-slate-900 bg-white text-xs font-black text-slate-900 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                                                                 ↗
                                                             </span>
                                                         </a>
@@ -484,18 +484,24 @@ export default function CyberNavbar({
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             onClick={() => setMobileOpen(false)}
-                                            className="tap flex items-center justify-between border-2 border-slate-900 bg-white p-2.5 text-xs font-bold hover:bg-sky-100 shadow-brutal-1"
+                                            className="tap shadow-brutal-1 flex items-center justify-between border-2 border-slate-900 bg-white p-2.5 text-xs font-bold hover:bg-sky-100"
                                         >
                                             <div className="flex items-center gap-2.5">
                                                 <div className="flex h-7 w-7 items-center justify-center border border-slate-900 bg-slate-100">
                                                     {item.icon}
                                                 </div>
                                                 <div>
-                                                    <span className="block font-black uppercase text-slate-900 text-xs">{item.name}</span>
-                                                    <span className="block font-mono text-[10px] text-slate-600 font-semibold">{item.handle}</span>
+                                                    <span className="block text-xs font-black text-slate-900 uppercase">
+                                                        {item.name}
+                                                    </span>
+                                                    <span className="block font-mono text-[10px] font-semibold text-slate-600">
+                                                        {item.handle}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <span className="font-mono text-xs font-black text-slate-900">↗</span>
+                                            <span className="font-mono text-xs font-black text-slate-900">
+                                                ↗
+                                            </span>
                                         </a>
                                     ))}
                                     <a

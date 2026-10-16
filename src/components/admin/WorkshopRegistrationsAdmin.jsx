@@ -48,7 +48,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
             const res = await fetch(
-                apiUrl(`/api/workshop/student-status?rollNo=${encodeURIComponent(reg.rollNo || '')}&email=${encodeURIComponent(reg.email || '')}`),
+                apiUrl(
+                    `/api/workshop/student-status?rollNo=${encodeURIComponent(reg.rollNo || '')}&email=${encodeURIComponent(reg.email || '')}`
+                ),
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -87,7 +89,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
     );
     const editModalRef = useModalBehavior(Boolean(editingRegistration), () => setEditingRegistration(null));
     const addModalRef = useModalBehavior(isAddingParticipant, () => setIsAddingParticipant(false));
-
 
     const fetchRegistrations = useCallback(
         async (isSilent = false) => {
@@ -311,7 +312,13 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
 
             if (showStatus) showStatus(data.message || `✓ Upgraded ${reg.name} to Combo!`);
             if (selectedRegistration?._id === reg._id) {
-                setSelectedRegistration(data.registration || { ...reg, package: 'combo', tracksEnrolled: ['software', 'powertrain'] });
+                setSelectedRegistration(
+                    data.registration || {
+                        ...reg,
+                        package: 'combo',
+                        tracksEnrolled: ['software', 'powertrain']
+                    }
+                );
             }
             await fetchRegistrations(true);
         } catch (err) {
@@ -417,8 +424,15 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             const timeB = new Date(b.paidAt || b.createdAt || 0).getTime();
             return timeB - timeA;
         });
-    }, [registrations, statusFilter, packageFilter, enrolledTrackFilter, deptFilter, yearFilter, searchQuery]);
-
+    }, [
+        registrations,
+        statusFilter,
+        packageFilter,
+        enrolledTrackFilter,
+        deptFilter,
+        yearFilter,
+        searchQuery
+    ]);
 
     const formatCurrency = (amt) => {
         return new Intl.NumberFormat('en-IN', {
@@ -504,7 +518,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         <span>{isExporting ? 'Exporting...' : 'Export CSV'}</span>
                     </button>
                 </div>
-
             </div>
 
             {/* Error Banner */}
@@ -571,7 +584,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         </span>
                     </div>
                 </div>
-
 
                 {/* 3. Total Registered */}
                 <div className="shadow-brutal-4 flex flex-col justify-between border-2 border-slate-900 bg-slate-50 p-4 sm:p-5">
@@ -728,7 +740,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             <div className="shadow-brutal-3 space-y-3.5 border-2 border-slate-900 bg-slate-50 p-3 sm:p-4">
                 {/* 1-Click Quick Filter Pills */}
                 <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 pb-2.5">
-                    <span className="font-mono text-[10px] font-black text-slate-600 uppercase pr-1">
+                    <span className="pr-1 font-mono text-[10px] font-black text-slate-600 uppercase">
                         Quick Filter:
                     </span>
                     <button
@@ -741,7 +753,11 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                             setYearFilter('all');
                         }}
                         className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            packageFilter === 'all' && enrolledTrackFilter === 'all' && deptFilter === 'all' && yearFilter === 'all' && statusFilter === 'paid'
+                            packageFilter === 'all' &&
+                            enrolledTrackFilter === 'all' &&
+                            deptFilter === 'all' &&
+                            yearFilter === 'all' &&
+                            statusFilter === 'paid'
                                 ? 'shadow-brutal-1 border-slate-900 bg-slate-900 text-white'
                                 : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                         }`}
@@ -928,9 +944,15 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
 
                 <div className="flex flex-wrap items-center justify-between gap-1 border-t border-slate-200 pt-1.5 font-mono text-[11px] font-bold text-slate-600">
                     <span>
-                        Showing <strong className="text-slate-900">{filteredRegistrations.length}</strong> of {registrations.length} matching participants
+                        Showing <strong className="text-slate-900">{filteredRegistrations.length}</strong> of{' '}
+                        {registrations.length} matching participants
                     </span>
-                    {(statusFilter !== 'paid' || packageFilter !== 'all' || enrolledTrackFilter !== 'all' || deptFilter !== 'all' || yearFilter !== 'all' || searchQuery) && (
+                    {(statusFilter !== 'paid' ||
+                        packageFilter !== 'all' ||
+                        enrolledTrackFilter !== 'all' ||
+                        deptFilter !== 'all' ||
+                        yearFilter !== 'all' ||
+                        searchQuery) && (
                         <button
                             onClick={() => {
                                 setStatusFilter('paid');
@@ -940,14 +962,13 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 setYearFilter('all');
                                 setSearchQuery('');
                             }}
-                            className="cursor-pointer text-sky-700 hover:underline font-black"
+                            className="cursor-pointer font-black text-sky-700 hover:underline"
                         >
                             ✕ Reset All Filters
                         </button>
                     )}
                 </div>
             </div>
-
 
             {/* Mobile-Friendly Candidate Cards (Visible on screens < 768px) */}
             <div className="block space-y-3 md:hidden">
@@ -999,7 +1020,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 <div>
                                     <h4
                                         onClick={() => handleViewParticipant(reg)}
-                                        className="text-sm leading-snug font-black text-slate-900 uppercase cursor-pointer hover:text-sky-700 hover:underline flex items-center gap-1.5"
+                                        className="flex cursor-pointer items-center gap-1.5 text-sm leading-snug font-black text-slate-900 uppercase hover:text-sky-700 hover:underline"
                                         title="Click to view details and attendance history"
                                     >
                                         <span>{reg.name}</span>
@@ -1056,7 +1077,6 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                         🗑 Delete
                                     </button>
                                 </div>
-
                             </div>
                         );
                     })
@@ -1120,11 +1140,11 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                             <button
                                                 type="button"
                                                 onClick={() => handleViewParticipant(reg)}
-                                                className="text-left font-bold text-slate-900 uppercase hover:text-sky-700 hover:underline cursor-pointer flex items-center gap-1"
+                                                className="flex cursor-pointer items-center gap-1 text-left font-bold text-slate-900 uppercase hover:text-sky-700 hover:underline"
                                                 title="Click to view candidate details & attendance log"
                                             >
                                                 <span>{reg.name}</span>
-                                                <span className="text-sky-700 text-[10px]">👤</span>
+                                                <span className="text-[10px] text-sky-700">👤</span>
                                             </button>
                                             <div className="text-[11px] text-slate-600">{reg.email}</div>
                                             <div className="text-[10px] font-bold text-sky-700">
@@ -1216,7 +1236,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                                         className="press cursor-pointer border border-purple-900 bg-purple-400 px-2 py-1 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
                                                         title="Upgrade candidate profile to Combo package"
                                                     >
-                                                        {actionBusyId === reg._id ? 'Upgrading…' : '⚡ Upgrade Combo'}
+                                                        {actionBusyId === reg._id
+                                                            ? 'Upgrading…'
+                                                            : '⚡ Upgrade Combo'}
                                                     </button>
                                                 )}
                                                 <button
@@ -1348,7 +1370,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                         📅 Attendance History ({candidateAttendance.length} Sessions)
                                     </span>
                                     {isLoadingAttendance && (
-                                        <span className="font-mono text-[10px] font-bold text-sky-700 animate-pulse">
+                                        <span className="animate-pulse font-mono text-[10px] font-bold text-sky-700">
                                             Loading...
                                         </span>
                                     )}
@@ -1363,7 +1385,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                         No attendance check-in records found for this student yet.
                                     </div>
                                 ) : (
-                                    <div className="max-h-48 overflow-y-auto space-y-1.5 font-mono text-xs">
+                                    <div className="max-h-48 space-y-1.5 overflow-y-auto font-mono text-xs">
                                         {candidateAttendance.map((att, idx) => (
                                             <div
                                                 key={att._id || idx}
@@ -1371,10 +1393,12 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                             >
                                                 <div>
                                                     <div className="font-bold text-slate-900">
-                                                        {att.sessionTopic || `Session ${att.sessionNumber || ''}`}
+                                                        {att.sessionTopic ||
+                                                            `Session ${att.sessionNumber || ''}`}
                                                     </div>
                                                     <div className="text-[10px] text-slate-500">
-                                                        {(att.track || 'workshop').toUpperCase()} • {att.sessionDate || att.sessionId}
+                                                        {(att.track || 'workshop').toUpperCase()} •{' '}
+                                                        {att.sessionDate || att.sessionId}
                                                     </div>
                                                 </div>
                                                 <div className="text-right text-[10px]">
@@ -1419,7 +1443,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                     className="press cursor-pointer border-2 border-slate-900 bg-rose-500 px-3 py-1.5 font-mono text-xs font-black text-white uppercase hover:bg-rose-600 disabled:opacity-50"
                                     title="Permanently delete student record and attendance"
                                 >
-                                    {actionBusyId === selectedRegistration._id ? 'Deleting...' : '🗑 Delete Student'}
+                                    {actionBusyId === selectedRegistration._id
+                                        ? 'Deleting...'
+                                        : '🗑 Delete Student'}
                                 </button>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1430,7 +1456,9 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                         disabled={actionBusyId === selectedRegistration._id}
                                         className="press cursor-pointer border-2 border-slate-900 bg-purple-400 px-3.5 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-purple-300 disabled:opacity-50"
                                     >
-                                        {actionBusyId === selectedRegistration._id ? 'Upgrading...' : '⚡ Upgrade to Combo'}
+                                        {actionBusyId === selectedRegistration._id
+                                            ? 'Upgrading...'
+                                            : '⚡ Upgrade to Combo'}
                                     </button>
                                 )}
                                 <button
@@ -1567,7 +1595,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </p>
                                 <h3
                                     id="add-participant-title"
-                                    className="mt-1 text-lg font-black uppercase text-slate-900"
+                                    className="mt-1 text-lg font-black text-slate-900 uppercase"
                                 >
                                     ➕ Add New Participant
                                 </h3>
@@ -1584,11 +1612,14 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                         </div>
 
                         <div className="mt-4 font-mono text-[11px] font-bold text-slate-600">
-                            Participants added with <span className="text-emerald-700 font-black">CONFIRMED PAID</span> status can immediately log into profile creation and are reflected in attendance rosters for their package.
+                            Participants added with{' '}
+                            <span className="font-black text-emerald-700">CONFIRMED PAID</span> status can
+                            immediately log into profile creation and are reflected in attendance rosters for
+                            their package.
                         </div>
 
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2 font-mono">
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                        <div className="mt-4 grid gap-3 font-mono sm:grid-cols-2">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Full Name *
                                 <input
                                     type="text"
@@ -1600,7 +1631,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 />
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Email Address *
                                 <input
                                     type="email"
@@ -1612,7 +1643,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 />
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Phone Number (10 Digits) *
                                 <input
                                     type="tel"
@@ -1624,7 +1655,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 />
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Roll / Register Number *
                                 <input
                                     type="text"
@@ -1636,7 +1667,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 />
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800 sm:col-span-2">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase sm:col-span-2">
                                 Department *
                                 <select
                                     className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
@@ -1651,7 +1682,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </select>
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Academic Year *
                                 <select
                                     className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
@@ -1663,7 +1694,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </select>
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 College Name
                                 <input
                                     type="text"
@@ -1674,7 +1705,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 />
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Workshop Package *
                                 <select
                                     className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
@@ -1687,7 +1718,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                 </select>
                             </label>
 
-                            <label className="block text-[10px] font-black uppercase text-slate-800">
+                            <label className="block text-[10px] font-black text-slate-800 uppercase">
                                 Payment Status *
                                 <select
                                     className="mt-1 min-h-10 w-full border-2 border-slate-300 bg-white px-2.5 py-2 text-xs font-bold text-slate-900 focus:border-sky-600 focus:outline-none"
@@ -1732,4 +1763,3 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
         </div>
     );
 }
-

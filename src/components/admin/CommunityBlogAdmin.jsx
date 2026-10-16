@@ -3,6 +3,7 @@ import { adminGet, adminSend } from './adminRequest';
 import { formatPostDate } from '../../lib/postDate';
 import BlogPostEditor from './BlogPostEditor';
 import BlogAnalyticsPanel from './BlogAnalyticsPanel';
+import BlogPromotionModal from './BlogPromotionModal';
 
 const rowButton =
     'press press-flat cursor-pointer border border-slate-900 bg-white px-2 py-1 font-mono text-[10px] font-black uppercase hover:bg-slate-100 disabled:opacity-50';
@@ -47,6 +48,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
     const [state, setState] = useState({ status: 'loading', posts: [], error: '' });
     // { view: 'list' } | { view: 'edit', id: 'new' | postId } | { view: 'stats', id: postId }
     const [screen, setScreen] = useState({ view: 'list' });
+    const [promoPost, setPromoPost] = useState(null);
     const [busyId, setBusyId] = useState(null);
     const [reach, setReach] = useState(null);
 
@@ -181,8 +183,8 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
             {state.status === 'ready' && state.posts.length === 0 && (
                 <div className="border-2 border-dashed border-slate-300 p-8 text-center">
                     <p className="font-mono text-xs text-slate-500">
-                        No posts yet. Until one is published, the community page says the first posts are on the
-                        way and the home page shows no blog section.
+                        No posts yet. Until one is published, the community page says the first posts are on
+                        the way and the home page shows no blog section.
                     </p>
                     <button
                         type="button"
@@ -238,7 +240,9 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                 {post.status}
                                             </span>
                                         </td>
-                                        <td className="p-2.5 text-slate-600">{formatPostDate(post.publishedAt) || '—'}</td>
+                                        <td className="p-2.5 text-slate-600">
+                                            {formatPostDate(post.publishedAt) || '—'}
+                                        </td>
                                         <td className="p-2.5 text-slate-600">{post.readMinutes} min</td>
                                         <td className="p-2.5 whitespace-nowrap text-slate-700">
                                             <span title="Views">👁 {post.stats?.views || 0}</span>
@@ -270,7 +274,9 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                         patch(
                                                             post,
                                                             { status: isPublished ? 'draft' : 'published' },
-                                                            isPublished ? 'Post unpublished.' : 'Post published.'
+                                                            isPublished
+                                                                ? 'Post unpublished.'
+                                                                : 'Post published.'
                                                         )
                                                     }
                                                     className={rowButton}
@@ -285,7 +291,9 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                         patch(
                                                             post,
                                                             { featured: !post.featured },
-                                                            post.featured ? 'Post unfeatured.' : 'Post featured.'
+                                                            post.featured
+                                                                ? 'Post unfeatured.'
+                                                                : 'Post featured.'
                                                         )
                                                     }
                                                     className={rowButton}
@@ -304,6 +312,14 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                 )}
                                                 <button
                                                     type="button"
+                                                    onClick={() => setPromoPost(post)}
+                                                    className={`${rowButton} border-pink-600 bg-pink-50 text-pink-700 hover:bg-pink-100 font-black`}
+                                                    title="Create Instagram & Social Media Promo Kit"
+                                                >
+                                                    📣 Promote
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     disabled={busy}
                                                     onClick={() => remove(post)}
                                                     className={`${rowButton} text-rose-700 hover:bg-rose-50`}
@@ -318,6 +334,14 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {/* Instagram / Social Media Promotion Modal */}
+            {promoPost && (
+                <BlogPromotionModal
+                    post={promoPost}
+                    onClose={() => setPromoPost(null)}
+                />
             )}
         </div>
     );
