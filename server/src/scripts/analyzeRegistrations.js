@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import Counter from '../models/Counter.js';
+import { resolveMongoDbName } from '../db/mongodb.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function analyze() {
     const uri = process.env.MONGODB_URI;
-    const dbName = process.env.MONGODB_DB_NAME?.trim() || 'asterix';
+    const dbName = resolveMongoDbName(uri);
 
     await mongoose.connect(uri, { 
         dbName, 

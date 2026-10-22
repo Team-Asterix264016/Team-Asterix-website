@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import User from '../models/User.js';
+import { resolveMongoDbName } from '../db/mongodb.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function queryAll() {
     const uri = process.env.MONGODB_URI;
-    const dbName = process.env.MONGODB_DB_NAME?.trim() || 'asterix';
+    const dbName = resolveMongoDbName(uri);
     if (!uri) {
         console.error('MONGODB_URI is not set in .env');
         process.exit(1);

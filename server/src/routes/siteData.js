@@ -7,8 +7,50 @@ import TeamUpdate from '../models/TeamUpdate.js';
 import SiteData from '../models/SiteData.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
+import { archiveDocuments, actorOf } from '../lib/recycleBin.js';
 
 const router = Router();
+
+/*
+ * Removes the rows a save left out, but only when the save is credible.
+ *
+ * The admin dashboard sends its whole in-memory copy of the site on every
+ * save, and the server used to delete everything missing from it. That made a
+ * stale browser tab destructive: GET /api/site-data answers with empty arrays
+ * while Mongo is disconnected (free-tier Render sleeps, Atlas drops the
+ * connection), and a dashboard holding that empty copy — or an older
+ * localStorage copy — would delete every member, gallery item and update in
+ * the database the next time it autosaved. That is how live data disappeared
+ * with nobody deleting anything on purpose.
+ *
+ * So a payload is now allowed to remove rows only if it still contains some,
+ * and only up to PRUNE_MAX_SHARE of what is stored. Anything larger is logged
+ * and skipped: an admin who genuinely wants to empty a section deletes the
+ * items one at a time. Whatever is pruned is archived first.
+ */
+const PRUNE_MAX_SHARE = 0.34;
+
+export async function pruneMissing(Model, collectionName, filter, keepIds, { actor, label }) {
+    const stored = await Model.countDocuments(filter);
+    if (stored === 0) return { pruned: 0 };
+
+    if (keepIds.length === 0) {
+        console.warn(`[SITE SYNC] Refused to delete all ${stored} ${label}: the save carried none. Nothing removed.`);
+        return { pruned: 0, refused: true, stored };
+    }
+
+    const doomed = await Model.find({ ...filter, id: { $nin: keepIds } }).lean();
+    if (doomed.length === 0) return { pruned: 0 };
+
+    if (doomed.length / stored > PRUNE_MAX_SHARE) {
+        console.warn(`[SITE SYNC] Refused to delete ${doomed.length} of ${stored} ${label} in one save (over ${Math.round(PRUNE_MAX_SHARE * 100)}%). Likely a stale dashboard copy. Nothing removed.`);
+        return { pruned: 0, refused: true, stored, wouldDelete: doomed.length };
+    }
+
+    await archiveDocuments(collectionName, doomed, { deletedBy: actor, reason: 'omitted from a site-data save' });
+    const { deletedCount } = await Model.deleteMany({ _id: { $in: doomed.map(d => d._id) } });
+    return { pruned: deletedCount };
+}
 
 // Auto-migrate legacy SiteData single-document into the 5 collections if needed
 async function autoMigrateLegacySiteData() {
@@ -145,7 +187,12 @@ async function autoMigrateLegacySiteData() {
 router.get('/', async (req, res) => {
     try {
         if (!isMongoConnected()) {
+            /* These empty arrays mean "not loaded", never "the site has no
+               members or gallery". `offline` says so explicitly, and
+               `lastModified` stays at the epoch so no client mistakes this
+               answer for state newer than its own copy and saves it back. */
             return res.json({
+                offline: true,
                 hero: null,
                 story: '',
                 subsystems: [],
@@ -154,7 +201,7 @@ router.get('/', async (req, res) => {
                 contact: null,
                 sponsorship: null,
                 recruitment: null,
-                lastModified: new Date().toISOString()
+                lastModified: '1970-01-01T00:00:00.000Z'
             });
         }
 
@@ -200,7 +247,15 @@ router.get('/', async (req, res) => {
 // PUT /api/site-data (Protected - Bulk sync across the 5 MongoDB collections)
 router.put('/', authenticateToken, async (req, res) => {
     try {
+        /* A save that starts while the database is unreachable would apply
+           half of itself and prune against a payload nobody can verify, so it
+           is refused outright and the dashboard keeps its local copy. */
+        if (!isMongoConnected()) {
+            return res.status(503).json({ error: 'Database unavailable. Nothing was saved; your changes are still local.' });
+        }
+
         const payload = req.body;
+        const actor = actorOf(req);
         const now = new Date().toISOString();
 
         // 1. Update SiteConfig
@@ -269,7 +324,9 @@ router.put('/', authenticateToken, async (req, res) => {
                         );
                     }
                     // Clean up deleted members for this subsystem
-                    await TeamMember.deleteMany({ subsystemId: sub.id, id: { $nin: currentMemIds } });
+                    await pruneMissing(TeamMember, 'TeamMember', { subsystemId: sub.id }, currentMemIds, {
+                        actor, label: `members of subsystem "${sub.id}"`
+                    });
                 }
             }
         }
@@ -301,7 +358,7 @@ router.put('/', authenticateToken, async (req, res) => {
                     { upsert: true }
                 );
             }
-            await GalleryItem.deleteMany({ id: { $nin: currentGalIds } });
+            await pruneMissing(GalleryItem, 'GalleryItem', {}, currentGalIds, { actor, label: 'gallery items' });
         }
 
         // 4. Sync TeamUpdates
@@ -330,7 +387,7 @@ router.put('/', authenticateToken, async (req, res) => {
                     { upsert: true }
                 );
             }
-            await TeamUpdate.deleteMany({ id: { $nin: currentUpdIds } });
+            await pruneMissing(TeamUpdate, 'TeamUpdate', {}, currentUpdIds, { actor, label: 'team updates' });
         }
 
         res.json({

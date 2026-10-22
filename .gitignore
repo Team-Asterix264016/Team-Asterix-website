@@ -44,3 +44,9 @@ media/
 *.njsproj
 *.sln
 *.sw?
+
+# Local Claude Code settings (may hold connection strings)
+.claude/settings.local.json
+
+# Participant data dumps: PII, never commit
+server/data/backups/

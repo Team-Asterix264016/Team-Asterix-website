@@ -23,6 +23,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
 
 const { default: User } = await import('../models/User.js');
+const { resolveMongoDbName } = await import('../db/mongodb.js');
 
 const password = process.argv[2];
 const username = (process.argv[3] || 'admin').trim().toLowerCase();
@@ -39,7 +40,8 @@ if (!uri) {
     process.exit(1);
 }
 
-await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
+const dbName = resolveMongoDbName(uri);
+await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000, dbName });
 
 const passwordHash = bcrypt.hashSync(password, 10);
 const existing = await User.findOne({ username });
