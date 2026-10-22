@@ -5,6 +5,7 @@ import ArticleBody from '../community/ArticleBody';
 import BlogPromotionModal from './BlogPromotionModal';
 import { slugify, countWords, readMinutes } from '../../lib/blogText';
 import { safeHref } from '../../lib/safeHref';
+import { normalizeAuthors, formatAuthorNames } from '../../lib/blogAuthors';
 
 const EMPTY = {
     title: '',
@@ -14,6 +15,7 @@ const EMPTY = {
     coverImage: '',
     coverAlt: '',
     coverPosition: '50% 50%',
+    authors: [{ name: '', role: '' }],
     author: '',
     authorRole: '',
     category: '',
@@ -30,6 +32,7 @@ const COVER_FRAMES = [
 ];
 
 function toForm(post) {
+    const authors = normalizeAuthors(post);
     return {
         title: post.title || '',
         slug: post.slug || '',
@@ -38,8 +41,9 @@ function toForm(post) {
         coverImage: post.coverImage || '',
         coverAlt: post.coverAlt || '',
         coverPosition: post.coverPosition || '50% 50%',
-        author: post.author || '',
-        authorRole: post.authorRole || '',
+        authors,
+        author: post.author || formatAuthorNames(authors),
+        authorRole: post.authorRole || authors[0]?.role || '',
         category: post.category || '',
         tags: (post.tags || []).join(', '),
         takeaways: (post.takeaways || []).join('\n'),
@@ -99,7 +103,14 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
     const ids = (name) => `${uid}-${name}`;
     const [id, setId] = useState(postId || null);
     const [savedStatus, setSavedStatus] = useState('draft');
-    const [form, setForm] = useState(() => ({ ...EMPTY, author: defaultAuthor || '' }));
+    const [form, setForm] = useState(() => {
+        const initialAuthors = [{ name: defaultAuthor || 'Team Asterix', role: '' }];
+        return {
+            ...EMPTY,
+            authors: initialAuthors,
+            author: defaultAuthor || 'Team Asterix'
+        };
+    });
     const [slugTouched, setSlugTouched] = useState(Boolean(postId));
     const [loadState, setLoadState] = useState(postId ? 'loading' : 'ready');
     const [saving, setSaving] = useState(false);
@@ -139,15 +150,82 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
         });
     };
 
+    const addAuthor = () => {
+        setDirty(true);
+        setForm((prev) => {
+            const nextAuthors = [...prev.authors, { name: '', role: '' }];
+            return {
+                ...prev,
+                authors: nextAuthors,
+                author: nextAuthors.map((a) => a.name).filter(Boolean).join(', ')
+            };
+        });
+    };
+
+    const updateAuthor = (index, field, value) => {
+        setDirty(true);
+        setForm((prev) => {
+            const nextAuthors = prev.authors.map((a, i) => (i === index ? { ...a, [field]: value } : a));
+            const primary = nextAuthors[0] || { name: '', role: '' };
+            return {
+                ...prev,
+                authors: nextAuthors,
+                author: nextAuthors.map((a) => a.name).filter(Boolean).join(', '),
+                authorRole: primary.role || ''
+            };
+        });
+    };
+
+    const removeAuthor = (index) => {
+        if (form.authors.length <= 1) return;
+        setDirty(true);
+        setForm((prev) => {
+            const nextAuthors = prev.authors.filter((_, i) => i !== index);
+            const primary = nextAuthors[0] || { name: '', role: '' };
+            return {
+                ...prev,
+                authors: nextAuthors,
+                author: nextAuthors.map((a) => a.name).filter(Boolean).join(', '),
+                authorRole: primary.role || ''
+            };
+        });
+    };
+
+    const moveAuthor = (fromIndex, toIndex) => {
+        if (toIndex < 0 || toIndex >= form.authors.length) return;
+        setDirty(true);
+        setForm((prev) => {
+            const nextAuthors = [...prev.authors];
+            const [moved] = nextAuthors.splice(fromIndex, 1);
+            nextAuthors.splice(toIndex, 0, moved);
+            const primary = nextAuthors[0] || { name: '', role: '' };
+            return {
+                ...prev,
+                authors: nextAuthors,
+                author: nextAuthors.map((a) => a.name).filter(Boolean).join(', '),
+                authorRole: primary.role || ''
+            };
+        });
+    };
+
     const save = async (targetStatus) => {
         if (!form.title.trim()) {
             setError({ message: 'Give the post a title.', field: 'title' });
             return;
         }
+        const validAuthors = form.authors.filter((a) => a.name && a.name.trim());
+        if (validAuthors.length === 0) {
+            setError({ message: 'Give the post at least one author name.', field: 'authors' });
+            return;
+        }
         setSaving(true);
         setError({ message: '', field: '' });
         try {
-            const payload = { ...form, status: targetStatus };
+            const payload = {
+                ...form,
+                authors: form.authors.map((a) => ({ name: a.name.trim(), role: (a.role || '').trim() })),
+                status: targetStatus
+            };
             const { post } = id
                 ? await adminSend(`/api/blog/admin/${id}`, 'PUT', payload)
                 : await adminSend('/api/blog/admin', 'POST', payload);
@@ -601,7 +679,7 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                         />
                     </Field>
 
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Field label="Category" htmlFor={ids('category')}>
                             <input
                                 id={ids('category')}
@@ -623,27 +701,121 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                                 className={inputClass(error.field === 'tags')}
                             />
                         </Field>
-                        <Field label="Author" htmlFor={ids('author')}>
-                            <input
-                                id={ids('author')}
-                                type="text"
-                                value={form.author}
-                                maxLength={120}
-                                placeholder="Team Asterix"
-                                onChange={(e) => update('author', e.target.value)}
-                                className={inputClass(error.field === 'author')}
-                            />
-                        </Field>
-                        <Field label="Author role" htmlFor={ids('authorRole')}>
-                            <input
-                                id={ids('authorRole')}
-                                type="text"
-                                value={form.authorRole}
-                                maxLength={120}
-                                onChange={(e) => update('authorRole', e.target.value)}
-                                className={inputClass(error.field === 'authorRole')}
-                            />
-                        </Field>
+                    </div>
+
+                    {/* Authors Management */}
+                    <div className="space-y-3 border-2 border-slate-900 bg-amber-50/60 p-3.5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <span className="block font-mono text-[10px] font-black text-slate-700 uppercase">
+                                    Authors ({form.authors.length})
+                                </span>
+                                <p className="font-mono text-[10px] text-slate-500">
+                                    Credit one or more student engineers or co-authors.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={addAuthor}
+                                className="press cursor-pointer border-2 border-slate-900 bg-amber-300 px-2.5 py-1 font-mono text-[11px] font-black text-slate-950 uppercase hover:bg-amber-400"
+                            >
+                                + Add author
+                            </button>
+                        </div>
+
+                        {error.field === 'authors' && (
+                            <p className="font-mono text-[11px] font-bold text-rose-700">
+                                ⚠️ At least one author name is required.
+                            </p>
+                        )}
+
+                        <div className="space-y-2.5">
+                            {form.authors.map((author, index) => (
+                                <div
+                                    key={index}
+                                    className="border-2 border-slate-900 bg-white p-3 shadow-[2px_2px_0px_#0f172a]"
+                                >
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="flex h-5 w-5 items-center justify-center border border-slate-900 bg-amber-300 font-mono text-[10px] font-black text-slate-900">
+                                                {index + 1}
+                                            </span>
+                                            <span className="font-mono text-[11px] font-black uppercase text-slate-800">
+                                                {index === 0 ? 'Lead Author' : `Co-Author ${index + 1}`}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    title="Move author up"
+                                                    onClick={() => moveAuthor(index, index - 1)}
+                                                    className="cursor-pointer border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] font-bold hover:border-slate-900 hover:bg-white"
+                                                >
+                                                    ▲
+                                                </button>
+                                            )}
+                                            {index < form.authors.length - 1 && (
+                                                <button
+                                                    type="button"
+                                                    title="Move author down"
+                                                    onClick={() => moveAuthor(index, index + 1)}
+                                                    className="cursor-pointer border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] font-bold hover:border-slate-900 hover:bg-white"
+                                                >
+                                                    ▼
+                                                </button>
+                                            )}
+                                            {form.authors.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    title="Remove author"
+                                                    onClick={() => removeAuthor(index)}
+                                                    className="cursor-pointer border border-rose-300 bg-rose-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-rose-700 hover:border-rose-900 hover:bg-rose-100"
+                                                >
+                                                    ✕ Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <div>
+                                            <label
+                                                htmlFor={ids(`author-name-${index}`)}
+                                                className="mb-0.5 block font-mono text-[9px] font-black text-slate-600 uppercase"
+                                            >
+                                                Author Name
+                                            </label>
+                                            <input
+                                                id={ids(`author-name-${index}`)}
+                                                type="text"
+                                                value={author.name}
+                                                maxLength={120}
+                                                placeholder="e.g. Ratheeswar S"
+                                                onChange={(e) => updateAuthor(index, 'name', e.target.value)}
+                                                className={inputClass(error.field === 'authors' && !author.name.trim())}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label
+                                                htmlFor={ids(`author-role-${index}`)}
+                                                className="mb-0.5 block font-mono text-[9px] font-black text-slate-600 uppercase"
+                                            >
+                                                Role / Subsystem
+                                            </label>
+                                            <input
+                                                id={ids(`author-role-${index}`)}
+                                                type="text"
+                                                value={author.role}
+                                                maxLength={120}
+                                                placeholder="e.g. Perception Lead"
+                                                onChange={(e) => updateAuthor(index, 'role', e.target.value)}
+                                                className={inputClass(false)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -687,7 +859,9 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                         title: form.title,
                         slug: form.slug,
                         excerpt: form.excerpt,
+                        authors: form.authors,
                         author: form.author,
+                        authorRole: form.authorRole,
                         category: form.category,
                         cover: form.coverImage,
                         readMinutes: readMinutes(countWords(form.body || '')),

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { adminGet, adminSend } from './adminRequest';
 import { formatPostDate } from '../../lib/postDate';
+import { formatAuthorNames } from '../../lib/blogAuthors';
 import BlogPostEditor from './BlogPostEditor';
 import BlogAnalyticsPanel from './BlogAnalyticsPanel';
 import BlogPromotionModal from './BlogPromotionModal';
@@ -225,7 +226,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                 {post.title}
                                             </span>
                                             <span className="block text-[10px] text-slate-500">
-                                                {post.author}
+                                                {formatAuthorNames(post)}
                                                 {post.category ? ` · ${post.category}` : ''}
                                             </span>
                                         </td>

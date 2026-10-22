@@ -76,3 +76,30 @@ test('parseBlogBody keeps an explicit slug, defaults bad cover positions, and on
     assert.equal(doc.coverPosition, '50% 50%');
     assert.equal(doc.featured, false);
 });
+
+test('parseBlogBody handles multiple authors correctly', () => {
+    const { doc, error } = parseBlogBody({
+        title: 'Telemetry Overhaul',
+        authors: [
+            { name: 'Arya A', role: 'Telemetry Lead' },
+            { name: 'Ratheeswar S', role: 'Perception Lead' }
+        ]
+    });
+    assert.equal(error, undefined);
+    assert.equal(doc.authors.length, 2);
+    assert.equal(doc.authors[0].name, 'Arya A');
+    assert.equal(doc.authors[0].role, 'Telemetry Lead');
+    assert.equal(doc.authors[1].name, 'Ratheeswar S');
+    assert.equal(doc.authors[1].role, 'Perception Lead');
+    assert.equal(doc.author, 'Arya A, Ratheeswar S');
+    assert.equal(doc.authorRole, 'Telemetry Lead');
+});
+
+test('parseBlogBody limits authors to at most 10', () => {
+    const res = parseBlogBody({
+        title: 'Too Many Authors',
+        authors: Array.from({ length: 11 }, (_, i) => ({ name: `Author ${i}` }))
+    });
+    assert.equal(res.field, 'authors');
+});
+

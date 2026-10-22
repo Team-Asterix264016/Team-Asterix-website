@@ -4,6 +4,7 @@ import { PostCover, PostMeta } from './PostParts';
 import BlogArticle from './BlogArticle';
 import NewsletterSignup from './NewsletterSignup';
 import UnsubscribePanel from './UnsubscribePanel';
+import { formatAuthorNames } from '../../lib/blogAuthors';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 /* Route parser supporting both hash and path based deep links */
@@ -692,8 +693,8 @@ export default function CommunityPage({ onBack }) {
                                                         </div>
 
                                                         <div className="mt-6 flex items-center justify-between border-t-2 border-slate-100 pt-4">
-                                                            <span className="font-mono text-xs font-bold text-slate-600">
-                                                                BY {filtered[0].author?.toUpperCase()}
+                                                            <span className="font-mono text-xs font-bold text-slate-600 truncate max-w-[70%]">
+                                                                BY {formatAuthorNames(filtered[0]).toUpperCase()}
                                                             </span>
                                                             <span className="font-mono text-sm font-black text-black group-hover:translate-x-1 transition-transform">
                                                                 READ STORY →
@@ -755,8 +756,8 @@ export default function CommunityPage({ onBack }) {
                                                         </div>
 
                                                         <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3">
-                                                            <span className="font-mono text-[11px] font-bold text-slate-600 truncate">
-                                                                {post.author || 'Asterix Crew'}
+                                                            <span className="font-mono text-[11px] font-bold text-slate-600 truncate max-w-[80%]" title={formatAuthorNames(post)}>
+                                                                {formatAuthorNames(post)}
                                                             </span>
                                                             <span className="font-mono text-xs font-black text-black group-hover:translate-x-1 transition-transform">
                                                                 →

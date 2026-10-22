@@ -18,6 +18,7 @@
  */
 
 import { apiUrl } from './api';
+import { normalizeAuthors, formatAuthorNames, formatAuthorRoles } from './blogAuthors';
 
 const PAPER_BG = '#f5f2eb';
 const INK_PRIMARY = '#111827';
@@ -257,6 +258,10 @@ export async function renderBlogPromo(canvas, post, format = 'portrait', options
     });
 
     // Author Byline Block
+    const authors = normalizeAuthors(post);
+    const authorName = formatAuthorNames(authors);
+    const authorRoleText = formatAuthorRoles(authors, post.authorRole || 'PSG iTech Motorsport');
+
     const authorY = Math.min(currentY + 36, bodyBottomY - 140);
     const avatarRadius = 28;
     const avatarCenterX = margin + avatarRadius;
@@ -270,7 +275,6 @@ export async function renderBlogPromo(canvas, post, format = 'portrait', options
     ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(margin, authorY, avatarRadius * 2, avatarRadius * 2);
 
-    const authorName = post.author || 'Team Asterix';
     const authorInitial = authorName.charAt(0).toUpperCase();
 
     // Initials background or subtle avatar drawing
@@ -296,7 +300,6 @@ export async function renderBlogPromo(canvas, post, format = 'portrait', options
 
     ctx.fillStyle = INK_SECONDARY;
     ctx.font = `600 14px ${SANS}`;
-    const authorRoleText = post.authorRole || 'PSG iTech Motorsport';
     ctx.fillText(authorRoleText, authorTextX, authorCenterY + 18);
 
     // Call To Action Yellow Button
@@ -416,14 +419,15 @@ export async function renderBlogPromo(canvas, post, format = 'portrait', options
  */
 export function generateSocialAdCopy(post, siteOrigin = 'https://asterix-website.vercel.app') {
     const postUrl = `${siteOrigin}/blog/${encodeURIComponent(post.slug || '')}`;
-    const author = post.author || 'Team Asterix';
+    const authors = normalizeAuthors(post);
+    const author = formatAuthorNames(authors);
     const category = post.category || 'Engineering';
 
     const shortAd = `🏁 NEW ON HORIZON: ${post.title}\n\n${post.excerpt || 'Deep dive into motorsport engineering, telemetry, and electric mobility.'}\n\n👉 Read the breakdown on Asterix Blogs: ${postUrl}\n\n#TeamAsterix #BajaSAE #MotorsportEngineering #${category.replace(/\s+/g, '')} #StudentEngineers`;
 
     const detailedAd =
         `🚀 [NEW DISPATCH] ${post.title.toUpperCase()}\n\n` +
-        `Written by student engineer ${author} directly from the Team Asterix garage.\n\n` +
+        `Written by student ${authors.length > 1 ? 'engineers' : 'engineer'} ${author} directly from the Team Asterix garage.\n\n` +
         `🔍 What's inside:\n` +
         (post.takeaways && post.takeaways.length > 0
             ? post.takeaways.slice(0, 3).map((t) => `• ${t}`).join('\n') + '\n\n'

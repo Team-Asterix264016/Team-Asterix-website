@@ -22,6 +22,15 @@ const blogPostSchema = new mongoose.Schema(
         coverPosition: { type: String, default: '50% 50%', trim: true },
         // At most one post is featured; it takes the large card at the top of the blog.
         featured: { type: Boolean, default: false },
+        authors: {
+            type: [
+                {
+                    name: { type: String, trim: true, maxlength: 120 },
+                    role: { type: String, default: '', trim: true, maxlength: 120 }
+                }
+            ],
+            default: []
+        },
         author: { type: String, default: 'Team Asterix', trim: true, maxlength: 120 },
         authorRole: { type: String, default: '', trim: true, maxlength: 120 },
         category: { type: String, default: '', trim: true, maxlength: 60 },

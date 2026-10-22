@@ -14,6 +14,7 @@ import { ReactionButtons, ShareButtons, ListenButton, FloatingActions } from './
 import { shareNatively, scrollToElement } from '../../lib/readerShare';
 import { renderInline } from '../../lib/renderMarkdown';
 import { PiThumbsUp, PiThumbsUpFill, PiChatCircle, PiShareNetwork } from 'react-icons/pi';
+import { normalizeAuthors } from '../../lib/blogAuthors';
 
 /* Thin bar across the top of the viewport showing how far through the post
    body the reader is. Lenis scrolls the window, so the native scroll event fires. */
@@ -77,23 +78,27 @@ function DesktopSidebar({
             {/* Author & Audio Card */}
             <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-5">
                 <span className="border-2 border-slate-900 bg-amber-300 px-2 py-0.5 font-mono text-[10px] font-black text-slate-950 uppercase">
-                    AUTHOR & DISPATCH
+                    {normalizeAuthors(post).length > 1 ? 'AUTHORS & DISPATCH' : 'AUTHOR & DISPATCH'}
                 </span>
-                <div className="mt-3.5 flex items-center gap-3">
-                    <span
-                        aria-hidden="true"
-                        className="shadow-brutal-2 flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-base font-black text-slate-900"
-                    >
-                        {(post.author || 'T').charAt(0).toUpperCase()}
-                    </span>
-                    <div className="min-w-0">
-                        <p className="font-display truncate text-sm font-bold text-slate-900">
-                            {post.author}
-                        </p>
-                        {post.authorRole && (
-                            <p className="truncate font-mono text-xs text-slate-500">{post.authorRole}</p>
-                        )}
-                    </div>
+                <div className="mt-3.5 space-y-3">
+                    {normalizeAuthors(post).map((author, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                            <span
+                                aria-hidden="true"
+                                className="shadow-brutal-2 flex h-9 w-9 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-mono text-sm font-black text-slate-900"
+                            >
+                                {(author.name || 'T').charAt(0).toUpperCase()}
+                            </span>
+                            <div className="min-w-0">
+                                <p className="font-display truncate text-sm font-bold text-slate-900">
+                                    {author.name}
+                                </p>
+                                {author.role && (
+                                    <p className="truncate font-mono text-xs text-slate-500">{author.role}</p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
                 <div className="mt-3 flex items-center justify-between border-t-2 border-slate-100 pt-3 font-mono text-xs text-slate-500">
                     <span>{formatPostDate(post.publishedAt)}</span>
@@ -371,20 +376,24 @@ function ArticleView({ post, previous, next, related }) {
                         </p>
                     )}
 
-                    <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 border-y-2 border-slate-200 py-4">
-                        <div className="flex min-w-0 items-center gap-3">
-                            <span
-                                aria-hidden="true"
-                                className="flex h-10 w-10 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-black text-slate-900"
-                            >
-                                {(post.author || 'T').charAt(0).toUpperCase()}
-                            </span>
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-slate-900">{post.author}</p>
-                                {post.authorRole && (
-                                    <p className="truncate text-xs text-slate-500">{post.authorRole}</p>
-                                )}
-                            </div>
+                    <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 border-y-2 border-slate-200 py-4">
+                        <div className="flex min-w-0 flex-wrap items-center gap-4">
+                            {normalizeAuthors(post).map((author, idx) => (
+                                <div key={idx} className="flex min-w-0 items-center gap-2.5">
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center border-2 border-slate-900 bg-amber-300 font-black text-slate-900"
+                                    >
+                                        {(author.name || 'T').charAt(0).toUpperCase()}
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-bold text-slate-900">{author.name}</p>
+                                        {author.role && (
+                                            <p className="truncate text-xs text-slate-500">{author.role}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                         <p className="font-mono text-sm text-slate-500">
                             <time dateTime={post.publishedAt || undefined}>

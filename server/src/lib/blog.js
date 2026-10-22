@@ -48,12 +48,24 @@ export function parsePostFile(text) {
     const slug = slugify(meta.slug || meta.title);
     if (!slug) throw new Error('Could not derive a slug; add one to the front matter.');
 
+    let authors = [];
+    if (meta.authors) {
+        authors = meta.authors.split(',').map((s) => {
+            const m = s.trim().match(/^(.+?)(?:\s*\((.*?)\))?$/);
+            return { name: m ? m[1].trim() : s.trim(), role: m && m[2] ? m[2].trim() : '' };
+        }).filter((a) => a.name);
+    }
+    if (authors.length === 0) {
+        authors = [{ name: meta.author || 'Team Asterix', role: meta.authorRole || '' }];
+    }
+
     return {
         slug,
         title: meta.title,
         excerpt: meta.excerpt || '',
-        author: meta.author || 'Team Asterix',
-        authorRole: meta.authorRole || '',
+        authors,
+        author: meta.author || authors.map((a) => a.name).join(', '),
+        authorRole: meta.authorRole || authors[0]?.role || '',
         category: meta.category || '',
         tags: (meta.tags || '')
             .split(',')
@@ -85,14 +97,57 @@ const POSITION_RE = /^\d{1,3}% \d{1,3}%$/;
  */
 export function parseBlogBody(body = {}) {
     const text = (key) => String(body[key] ?? '').trim();
+
+    let authors = [];
+    if (Array.isArray(body.authors)) {
+        authors = body.authors
+            .map((a) => {
+                if (typeof a === 'string') return { name: a.trim(), role: '' };
+                return {
+                    name: String(a?.name ?? '').trim(),
+                    role: String(a?.role ?? '').trim()
+                };
+            })
+            .filter((a) => a.name);
+    }
+
+    if (authors.length === 0) {
+        const rawAuthor = text('author');
+        if (rawAuthor) {
+            authors = [{ name: rawAuthor, role: text('authorRole') }];
+        }
+    }
+
+    if (authors.length === 0) {
+        authors = [{ name: 'Team Asterix', role: '' }];
+    }
+
+    if (authors.length > 10) {
+        return { error: 'A post can have at most 10 authors.', field: 'authors' };
+    }
+
+    for (const a of authors) {
+        if (a.name.length > 120) {
+            return { error: `Author name "${a.name.slice(0, 20)}" is too long (max 120 characters).`, field: 'authors' };
+        }
+        if (a.role.length > 120) {
+            return { error: `Author role is too long (max 120 characters).`, field: 'authors' };
+        }
+    }
+
+    const primaryAuthor = authors[0]?.name || 'Team Asterix';
+    const primaryRole = authors[0]?.role || '';
+    const combinedAuthors = authors.map((a) => a.name).join(', ');
+
     const doc = {
         title: text('title'),
         excerpt: text('excerpt'),
         body: String(body.body ?? '').replace(/\r\n/g, '\n').trim(),
         coverImage: text('coverImage'),
         coverAlt: text('coverAlt'),
-        author: text('author') || 'Team Asterix',
-        authorRole: text('authorRole'),
+        authors,
+        author: combinedAuthors.length <= 120 ? combinedAuthors : primaryAuthor,
+        authorRole: primaryRole,
         category: text('category'),
         featured: body.featured === true
     };
@@ -146,6 +201,10 @@ export function publicStats(post) {
 
 // The shape the public list and the admin table both use: everything but the body.
 export function toListItem(post) {
+    const rawAuthors = Array.isArray(post.authors) && post.authors.length > 0
+        ? post.authors.map((a) => ({ name: a.name || '', role: a.role || '' }))
+        : (post.author ? [{ name: post.author, role: post.authorRole || '' }] : [{ name: 'Team Asterix', role: '' }]);
+
     return {
         id: String(post._id ?? ''),
         slug: post.slug,
@@ -155,8 +214,9 @@ export function toListItem(post) {
         coverAlt: post.coverAlt,
         coverPosition: post.coverPosition || '50% 50%',
         featured: Boolean(post.featured),
-        author: post.author,
-        authorRole: post.authorRole,
+        authors: rawAuthors,
+        author: post.author || rawAuthors.map((a) => a.name).join(', '),
+        authorRole: post.authorRole || rawAuthors[0]?.role || '',
         category: post.category,
         tags: post.tags || [],
         status: post.status,
