@@ -9,6 +9,21 @@ import WorkshopRegistration from '../models/WorkshopRegistration.js';
 
 let isConnected = false;
 
+export function resolveMongoDbName(uri) {
+    if (process.env.MONGODB_DB_NAME?.trim()) {
+        return process.env.MONGODB_DB_NAME.trim();
+    }
+    if (uri) {
+        try {
+            const match = uri.match(/^mongodb(?:\+srv)?:\/\/[^/]+\/([^?]+)/);
+            if (match && match[1]?.trim()) {
+                return decodeURIComponent(match[1].trim());
+            }
+        } catch {}
+    }
+    return 'asterix';
+}
+
 export function isMongoConnected() {
     return isConnected && mongoose.connection.readyState === 1;
 }
@@ -22,8 +37,8 @@ export async function connectMongoDB() {
         return false;
     }
 
-    // MONGODB_DB_NAME overrides the database; unset keeps the historical 'asterix'.
-    const dbName = process.env.MONGODB_DB_NAME?.trim() || 'asterix';
+    // MONGODB_DB_NAME overrides the database; URI path or unset defaults to 'asterix'.
+    const dbName = resolveMongoDbName(uri);
 
     try {
         await mongoose.connect(uri, {
@@ -34,6 +49,7 @@ export async function connectMongoDB() {
         console.log(`🍃 Successfully connected to MongoDB Atlas (database: ${dbName})!`);
         await seedDatabaseIfNeeded();
         await purgeLegacyPlaintextPasswords();
+        await verifyRegistrationIntegrity();
         return true;
     } catch (err) {
         // Fallback for environments with custom or system-managed certificates (e.g. Windows Node 24)
@@ -47,7 +63,8 @@ export async function connectMongoDB() {
             isConnected = true;
             console.log(`🍃 Successfully connected to MongoDB Atlas (TLS fallback enabled, database: ${dbName})!`);
             await seedDatabaseIfNeeded();
-        await purgeLegacyPlaintextPasswords();
+            await purgeLegacyPlaintextPasswords();
+            await verifyRegistrationIntegrity();
             return true;
         } catch (retryErr) {
             console.error('❌ Failed to connect to MongoDB Atlas:', retryErr.message);
@@ -74,6 +91,51 @@ export async function purgeLegacyPlaintextPasswords() {
         }
     } catch (err) {
         console.error('Failed to remove stored plaintext passwords:', err.message);
+    }
+}
+
+/* Receipt numbers are handed out by the 'workshopReceipt' counter and never
+   reused, so the counter is a tamper-proof record of how many paid
+   registrations have ever existed. Fewer paid rows than that means either rows
+   were deleted or the process is pointed at the wrong database; both have
+   happened, and both look identical from the admin dashboard. This only logs —
+   it never writes — so a false alarm costs nothing. */
+export async function verifyRegistrationIntegrity() {
+    try {
+        const counter = await mongoose.connection.collection('counters').findOne({ _id: 'workshopReceipt' });
+        const expectedPaid = counter?.seq || 0;
+        const total = await WorkshopRegistration.estimatedDocumentCount();
+        const paid = await WorkshopRegistration.countDocuments({ status: 'paid' });
+        const dbName = mongoose.connection.name;
+
+        console.log(`🧾 Registrations in "${dbName}": ${total} total, ${paid} paid; receipts issued: ${expectedPaid}.`);
+
+        if (paid >= expectedPaid) return { ok: true, dbName, total, paid, expectedPaid };
+
+        console.error(`🚨 REGISTRATION DATA MISMATCH in database "${dbName}": ${expectedPaid} receipts were issued but only ${paid} paid registrations are present. ${expectedPaid - paid} participant record(s) are missing.`);
+        console.error('🚨 Do not run any clear/seed script. Check MONGODB_DB_NAME and the database name in MONGODB_URI first, then restore from an Atlas snapshot.');
+
+        // A wrong-database mistake is the cheap explanation, so name the other
+        // databases that hold registrations before anyone assumes data loss.
+        try {
+            const admin = mongoose.connection.getClient().db().admin();
+            const { databases } = await admin.listDatabases();
+            for (const { name } of databases) {
+                if (name === dbName || ['admin', 'local', 'config'].includes(name)) continue;
+                const other = await mongoose.connection.getClient()
+                    .db(name).collection('workshopregistrations').estimatedDocumentCount();
+                if (other > 0) {
+                    console.error(`🚨 Database "${name}" holds ${other} registration(s). The data may simply be there instead.`);
+                }
+            }
+        } catch (listErr) {
+            console.warn(`Could not list sibling databases (${listErr.message}). Check the cluster in Atlas by hand.`);
+        }
+
+        return { ok: false, dbName, total, paid, expectedPaid };
+    } catch (err) {
+        console.error('Registration integrity check failed to run:', err.message);
+        return { ok: false, error: err.message };
     }
 }
 

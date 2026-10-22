@@ -634,6 +634,14 @@ export function WebsiteDataProvider({ children }) {
             const res = await fetch(apiUrl('/api/site-data'));
             if (res.ok) {
                 const data = await res.json();
+                /* The backend answers 200 with empty arrays while its database
+                   is unreachable. Taking that as the site's contents is how an
+                   admin tab ended up holding an empty copy and saving it back
+                   over the real data. */
+                if (data?.offline) {
+                    setIsServerConnected(false);
+                    return false;
+                }
                 if (data && (data.hero || data.subsystems?.length > 0)) {
                     setSiteData((prev) => {
                         /* An edit of ours is still on its way to the server, so

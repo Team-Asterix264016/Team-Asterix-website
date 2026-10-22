@@ -215,10 +215,23 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
             return;
         }
 
+        /* A paid registration is the only record that this person paid, so the
+           server will not remove one on a plain click: it wants the roll
+           number typed back, and only from a SuperAdmin. */
+        let confirmRollNo = '';
+        if (reg.status === 'paid') {
+            confirmRollNo = window.prompt(
+                `${reg.name} has PAID${reg.receiptNo ? ` (receipt ${reg.receiptNo})` : ''}. To delete this record, type their roll number exactly: ${reg.rollNo}`,
+                ''
+            );
+            if (!confirmRollNo) return;
+        }
+
         setActionBusyId(reg._id);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(apiUrl(`/api/workshop/registrations/${reg._id}`), {
+            const query = confirmRollNo ? `?confirm=${encodeURIComponent(confirmRollNo.trim())}` : '';
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${reg._id}${query}`), {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Bearer ${token}`
