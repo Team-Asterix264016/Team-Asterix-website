@@ -139,6 +139,16 @@ export function parseBlogBody(body = {}) {
     const primaryRole = authors[0]?.role || '';
     const combinedAuthors = authors.map((a) => a.name).join(', ');
 
+    let scheduledFor = null;
+    if (body.scheduledFor) {
+        const d = new Date(body.scheduledFor);
+        if (!isNaN(d.getTime())) {
+            scheduledFor = d;
+        } else if (body.status === 'scheduled') {
+            return { error: 'Provide a valid date and time to schedule the post.', field: 'scheduledFor' };
+        }
+    }
+
     const doc = {
         title: text('title'),
         excerpt: text('excerpt'),
@@ -149,7 +159,8 @@ export function parseBlogBody(body = {}) {
         author: combinedAuthors.length <= 120 ? combinedAuthors : primaryAuthor,
         authorRole: primaryRole,
         category: text('category'),
-        featured: body.featured === true
+        featured: body.featured === true,
+        scheduledFor
     };
 
     if (!doc.title) return { error: 'Give the post a title.', field: 'title' };
@@ -220,6 +231,7 @@ export function toListItem(post) {
         category: post.category,
         tags: post.tags || [],
         status: post.status,
+        scheduledFor: post.scheduledFor || null,
         publishedAt: post.publishedAt,
         updatedAt: post.updatedAt,
         readMinutes: readMinutes(post.body),

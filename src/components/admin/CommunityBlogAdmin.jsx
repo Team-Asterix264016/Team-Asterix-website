@@ -131,6 +131,8 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
     }
 
     const published = state.posts.filter((p) => p.status === 'published').length;
+    const scheduled = state.posts.filter((p) => p.status === 'scheduled').length;
+    const drafts = state.posts.length - published - scheduled;
 
     return (
         <div className="space-y-6">
@@ -139,7 +141,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                     <h2 className="text-2xl font-black text-slate-900 uppercase">Horizon Blog Posts</h2>
                     <p className="mt-1 font-mono text-xs font-bold text-slate-500">
                         {state.status === 'ready'
-                            ? `${published} published · ${state.posts.length - published} draft`
+                            ? `${published} published · ${scheduled > 0 ? `${scheduled} scheduled · ` : ''}${drafts} draft`
                             : 'Write, publish and feature posts for the community page.'}
                     </p>
                 </div>
@@ -204,7 +206,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                             <tr>
                                 <th className="p-2.5">Title</th>
                                 <th className="p-2.5">Status</th>
-                                <th className="p-2.5">Published</th>
+                                <th className="p-2.5">Published / Scheduled</th>
                                 <th className="p-2.5">Read</th>
                                 <th className="p-2.5">Reach (all time)</th>
                                 <th className="p-2.5 text-right">Actions</th>
@@ -213,6 +215,7 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                         <tbody className="divide-y divide-slate-200 bg-white">
                             {state.posts.map((post) => {
                                 const isPublished = post.status === 'published';
+                                const isScheduled = post.status === 'scheduled';
                                 const busy = busyId === post.id;
                                 return (
                                     <tr key={post.id} className="hover:bg-slate-50">
@@ -235,14 +238,30 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                 className={`border px-1.5 py-0.5 text-[10px] font-black uppercase ${
                                                     isPublished
                                                         ? 'border-emerald-700 bg-emerald-100 text-emerald-900'
-                                                        : 'border-slate-400 bg-slate-100 text-slate-700'
+                                                        : isScheduled
+                                                          ? 'border-sky-700 bg-sky-100 text-sky-900'
+                                                          : 'border-slate-400 bg-slate-100 text-slate-700'
                                                 }`}
                                             >
                                                 {post.status}
                                             </span>
+                                            {isScheduled && post.scheduledFor && (
+                                                <span className="block mt-0.5 font-mono text-[9px] font-bold text-sky-800">
+                                                    {new Date(post.scheduledFor).toLocaleString(undefined, {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="p-2.5 text-slate-600">
-                                            {formatPostDate(post.publishedAt) || '—'}
+                                            {isPublished
+                                                ? formatPostDate(post.publishedAt) || '—'
+                                                : isScheduled && post.scheduledFor
+                                                  ? `📅 ${formatPostDate(post.scheduledFor)}`
+                                                  : '—'}
                                         </td>
                                         <td className="p-2.5 text-slate-600">{post.readMinutes} min</td>
                                         <td className="p-2.5 whitespace-nowrap text-slate-700">
@@ -268,22 +287,70 @@ export default function CommunityBlogAdmin({ showStatus, onUploadImage, defaultA
                                                 >
                                                     📊 Stats
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={busy}
-                                                    onClick={() =>
-                                                        patch(
-                                                            post,
-                                                            { status: isPublished ? 'draft' : 'published' },
-                                                            isPublished
-                                                                ? 'Post unpublished.'
-                                                                : 'Post published.'
-                                                        )
-                                                    }
-                                                    className={rowButton}
-                                                >
-                                                    {isPublished ? 'Unpublish' : 'Publish'}
-                                                </button>
+                                                {isPublished && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={busy}
+                                                        onClick={() =>
+                                                            patch(
+                                                                post,
+                                                                { status: 'draft' },
+                                                                'Post unpublished.'
+                                                            )
+                                                        }
+                                                        className={rowButton}
+                                                    >
+                                                        Unpublish
+                                                    </button>
+                                                )}
+                                                {isScheduled && (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            disabled={busy}
+                                                            onClick={() =>
+                                                                patch(
+                                                                    post,
+                                                                    { status: 'published' },
+                                                                    'Post published now.'
+                                                                )
+                                                            }
+                                                            className={`${rowButton} text-amber-800 font-bold`}
+                                                        >
+                                                            Publish now
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={busy}
+                                                            onClick={() =>
+                                                                patch(
+                                                                    post,
+                                                                    { status: 'draft' },
+                                                                    'Schedule cancelled.'
+                                                                )
+                                                            }
+                                                            className={rowButton}
+                                                        >
+                                                            Draft
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {!isPublished && !isScheduled && (
+                                                    <button
+                                                        type="button"
+                                                        disabled={busy}
+                                                        onClick={() =>
+                                                            patch(
+                                                                post,
+                                                                { status: 'published' },
+                                                                'Post published.'
+                                                            )
+                                                        }
+                                                        className={rowButton}
+                                                    >
+                                                        Publish
+                                                    </button>
+                                                )}
                                                 <button
                                                     type="button"
                                                     disabled={busy}

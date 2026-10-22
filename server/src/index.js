@@ -25,7 +25,7 @@ import workshopRoutes from './routes/workshop.js';
 import attendanceRoutes from './routes/attendance.js';
 import quizRoutes from './routes/quiz.js';
 import workshopProjectRoutes from './routes/workshopProjects.js';
-import blogRoutes from './routes/blog.js';
+import blogRoutes, { autoPublishScheduled } from './routes/blog.js';
 import blogEngagementRoutes from './routes/blogEngagement.js';
 import communityRoutes from './routes/community.js';
 import { describeRazorpayStatus } from './lib/razorpay.js';
@@ -143,4 +143,15 @@ app.listen(PORT, HOST, () => {
     console.log(`🚀 Asterix Server & MongoDB API running on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     console.log(`📁 Uploads available at http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/uploads/`);
     console.log(`💳 ${describeRazorpayStatus()}`);
+
+    // Auto-publish scheduled posts in the background every 60s
+    setInterval(async () => {
+        if (isMongoConnected()) {
+            try {
+                await autoPublishScheduled();
+            } catch (err) {
+                // Ignore transient db errors
+            }
+        }
+    }, 60 * 1000);
 });

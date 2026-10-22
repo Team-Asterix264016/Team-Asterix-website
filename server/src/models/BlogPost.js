@@ -39,7 +39,8 @@ const blogPostSchema = new mongoose.Schema(
         takeaways: { type: [{ type: String, trim: true, maxlength: 200 }], default: [] },
         // open: comments appear at once; approval: held until an admin approves; closed: no new comments.
         commentsMode: { type: String, enum: ['open', 'approval', 'closed'], default: 'open' },
-        status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+        status: { type: String, enum: ['draft', 'published', 'scheduled'], default: 'draft' },
+        scheduledFor: { type: Date, default: null },
         publishedAt: { type: Date, default: null },
 
         // Public counters, recounted by the engagement routes; analytics come from BlogView.
@@ -63,5 +64,6 @@ const blogPostSchema = new mongoose.Schema(
 );
 
 blogPostSchema.index({ status: 1, publishedAt: -1 });
+blogPostSchema.index({ status: 1, scheduledFor: 1 });
 
 export default mongoose.models.BlogPost || mongoose.model('BlogPost', blogPostSchema);

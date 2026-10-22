@@ -103,3 +103,22 @@ test('parseBlogBody limits authors to at most 10', () => {
     assert.equal(res.field, 'authors');
 });
 
+test('parseBlogBody parses scheduledFor and rejects invalid scheduled dates', () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    const { doc, error } = parseBlogBody({
+        title: 'Scheduled Launch',
+        status: 'scheduled',
+        scheduledFor: future
+    });
+    assert.equal(error, undefined);
+    assert.ok(doc.scheduledFor instanceof Date);
+
+    const bad = parseBlogBody({
+        title: 'Bad Schedule',
+        status: 'scheduled',
+        scheduledFor: 'not-a-valid-date'
+    });
+    assert.equal(bad.field, 'scheduledFor');
+});
+
+

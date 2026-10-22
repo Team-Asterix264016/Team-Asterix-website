@@ -10,6 +10,32 @@ import { toListItem, parseBlogBody } from '../lib/blog.js';
 
 const router = Router();
 
+export async function autoPublishScheduled() {
+    const now = new Date();
+    const duePosts = await BlogPost.find({
+        status: 'scheduled',
+        scheduledFor: { $lte: now }
+    });
+    if (duePosts.length > 0) {
+        for (const post of duePosts) {
+            post.status = 'published';
+            post.publishedAt = post.scheduledFor || now;
+            await post.save();
+            await keepSingleFeatured(post);
+        }
+    }
+}
+
+function getPublicFilter() {
+    const now = new Date();
+    return {
+        $or: [
+            { status: 'published' },
+            { status: 'scheduled', scheduledFor: { $lte: now } }
+        ]
+    };
+}
+
 function requireDb(req, res, next) {
     if (!isMongoConnected()) {
         return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
@@ -17,7 +43,18 @@ function requireDb(req, res, next) {
     next();
 }
 
-const PUBLISHED = { status: 'published' };
+// Auto-publish any due scheduled posts on request
+router.use(async (_req, _res, next) => {
+    if (isMongoConnected()) {
+        try {
+            await autoPublishScheduled();
+        } catch (err) {
+            console.error('Error auto-publishing scheduled posts:', err);
+        }
+    }
+    next();
+});
+
 const adminOnly = [authenticateToken, requireLeadOrAdmin, requireDb];
 
 // The featured post takes the large card first; everything else is newest first.
@@ -34,7 +71,7 @@ function withBody(post) {
 
 // "Keep reading": posts sharing the category or a tag first, topped up with the newest.
 async function relatedPosts(post, limit = 3) {
-    const others = { ...PUBLISHED, _id: { $ne: post._id } };
+    const others = { ...getPublicFilter(), _id: { $ne: post._id } };
     const topical = [];
     if (post.category || post.tags?.length) {
         const or = [];
@@ -55,10 +92,29 @@ async function relatedPosts(post, limit = 3) {
 
 // A post gets its publish date the first time it goes live and keeps it after that,
 // so unpublishing to fix a typo does not move it to the top of the list.
-function applyStatus(post, status) {
-    if (status !== 'published' && status !== 'draft') return;
-    post.status = status;
-    if (status === 'published' && !post.publishedAt) post.publishedAt = new Date();
+function applyStatus(post, status, scheduledFor) {
+    if (status === 'scheduled') {
+        post.status = 'scheduled';
+        if (scheduledFor) {
+            const date = new Date(scheduledFor);
+            if (!isNaN(date.getTime())) {
+                post.scheduledFor = date;
+            }
+        }
+        if (!post.scheduledFor) {
+            post.scheduledFor = new Date(Date.now() + 60 * 60 * 1000);
+        }
+        // If scheduled time has already arrived, publish immediately
+        if (post.scheduledFor <= new Date()) {
+            post.status = 'published';
+            post.publishedAt = post.scheduledFor;
+        }
+    } else if (status === 'published') {
+        post.status = 'published';
+        if (!post.publishedAt) post.publishedAt = new Date();
+    } else if (status === 'draft') {
+        post.status = 'draft';
+    }
 }
 
 async function keepSingleFeatured(post) {
@@ -97,7 +153,7 @@ async function findForAdmin(req, res) {
  */
 router.get('/', requireDb, async (_req, res) => {
     try {
-        const posts = await BlogPost.find(PUBLISHED).sort(PUBLIC_ORDER).lean();
+        const posts = await BlogPost.find(getPublicFilter()).sort(PUBLIC_ORDER).lean();
         return res.json({ posts: posts.map(toListItem) });
     } catch (err) {
         console.error('Error listing blog posts:', err);
@@ -137,7 +193,7 @@ router.post('/admin', ...adminOnly, async (req, res) => {
     if (error) return res.status(400).json({ error, field });
     try {
         const post = new BlogPost(doc);
-        applyStatus(post, req.body.status);
+        applyStatus(post, req.body.status, req.body.scheduledFor);
         await post.save();
         await keepSingleFeatured(post);
         return res.status(201).json({ post: withBody(post) });
@@ -154,7 +210,7 @@ router.put('/admin/:id', ...adminOnly, async (req, res) => {
         const post = await findForAdmin(req, res);
         if (!post) return undefined;
         post.set(doc);
-        applyStatus(post, req.body.status);
+        applyStatus(post, req.body.status, req.body.scheduledFor);
         await post.save();
         await keepSingleFeatured(post);
         return res.json({ post: withBody(post) });
@@ -168,7 +224,7 @@ router.patch('/admin/:id', ...adminOnly, async (req, res) => {
     try {
         const post = await findForAdmin(req, res);
         if (!post) return undefined;
-        applyStatus(post, req.body.status);
+        applyStatus(post, req.body.status, req.body.scheduledFor);
         if (typeof req.body.featured === 'boolean') post.featured = req.body.featured;
         await post.save();
         await keepSingleFeatured(post);
@@ -204,15 +260,15 @@ router.delete('/admin/:id', ...adminOnly, async (req, res) => {
 router.get('/:slug', requireDb, async (req, res) => {
     try {
         const slug = String(req.params.slug || '').toLowerCase();
-        const post = await BlogPost.findOne({ ...PUBLISHED, slug }).lean();
+        const post = await BlogPost.findOne({ ...getPublicFilter(), slug }).lean();
         if (!post) return res.status(404).json({ error: 'Post not found' });
 
         const [older, newer, related] = await Promise.all([
-            BlogPost.findOne({ ...PUBLISHED, publishedAt: { $lt: post.publishedAt } })
+            BlogPost.findOne({ ...getPublicFilter(), publishedAt: { $lt: post.publishedAt } })
                 .sort({ publishedAt: -1 })
                 .select('slug title')
                 .lean(),
-            BlogPost.findOne({ ...PUBLISHED, publishedAt: { $gt: post.publishedAt } })
+            BlogPost.findOne({ ...getPublicFilter(), publishedAt: { $gt: post.publishedAt } })
                 .sort({ publishedAt: 1 })
                 .select('slug title')
                 .lean(),
@@ -240,7 +296,7 @@ router.get('/:slug', requireDb, async (req, res) => {
 router.get('/share/:slug', requireDb, async (req, res) => {
     try {
         const slug = String(req.params.slug || '').toLowerCase();
-        const post = await BlogPost.findOne({ ...PUBLISHED, slug }).lean();
+        const post = await BlogPost.findOne({ ...getPublicFilter(), slug }).lean();
         if (!post) return res.status(404).send('Post not found');
 
         const siteUrl = 'https://asterix-website.vercel.app';

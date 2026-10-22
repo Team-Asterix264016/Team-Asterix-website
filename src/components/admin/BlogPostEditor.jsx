@@ -7,6 +7,14 @@ import { slugify, countWords, readMinutes } from '../../lib/blogText';
 import { safeHref } from '../../lib/safeHref';
 import { normalizeAuthors, formatAuthorNames } from '../../lib/blogAuthors';
 
+function toDatetimeLocal(val) {
+    if (!val) return '';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 const EMPTY = {
     title: '',
     slug: '',
@@ -22,7 +30,8 @@ const EMPTY = {
     tags: '',
     takeaways: '',
     commentsMode: 'open',
-    featured: false
+    featured: false,
+    scheduledFor: ''
 };
 
 // The two places a cover is cropped on the public site.
@@ -48,7 +57,8 @@ function toForm(post) {
         tags: (post.tags || []).join(', '),
         takeaways: (post.takeaways || []).join('\n'),
         commentsMode: post.commentsMode || 'open',
-        featured: Boolean(post.featured)
+        featured: Boolean(post.featured),
+        scheduledFor: toDatetimeLocal(post.scheduledFor)
     };
 }
 
@@ -218,11 +228,23 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
             setError({ message: 'Give the post at least one author name.', field: 'authors' });
             return;
         }
+        if (targetStatus === 'scheduled') {
+            if (!form.scheduledFor) {
+                setError({ message: 'Select a date and time to schedule the post.', field: 'scheduledFor' });
+                return;
+            }
+            const d = new Date(form.scheduledFor);
+            if (isNaN(d.getTime())) {
+                setError({ message: 'Enter a valid scheduled date and time.', field: 'scheduledFor' });
+                return;
+            }
+        }
         setSaving(true);
         setError({ message: '', field: '' });
         try {
             const payload = {
                 ...form,
+                scheduledFor: form.scheduledFor ? new Date(form.scheduledFor).toISOString() : null,
                 authors: form.authors.map((a) => ({ name: a.name.trim(), role: (a.role || '').trim() })),
                 status: targetStatus
             };
@@ -230,6 +252,7 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                 ? await adminSend(`/api/blog/admin/${id}`, 'PUT', payload)
                 : await adminSend('/api/blog/admin', 'POST', payload);
             const wasPublished = savedStatus === 'published';
+            const wasScheduled = savedStatus === 'scheduled';
             setId(post.id);
             setSavedStatus(post.status);
             setForm(toForm(post));
@@ -240,11 +263,15 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                     ? wasPublished
                         ? 'Post updated.'
                         : 'Post published. It is live on the community page.'
-                    : wasPublished
-                      ? 'Post unpublished and kept as a draft.'
-                      : 'Draft saved.'
+                    : targetStatus === 'scheduled'
+                      ? `Post scheduled for ${new Date(post.scheduledFor || form.scheduledFor).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.`
+                      : wasPublished
+                        ? 'Post unpublished and kept as a draft.'
+                        : wasScheduled
+                          ? 'Post unscheduled and kept as a draft.'
+                          : 'Draft saved.'
             );
-            if (targetStatus === 'published') {
+            if (targetStatus === 'published' || targetStatus === 'scheduled') {
                 onClose?.();
                 return;
             }
@@ -365,6 +392,7 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
     }
 
     const isPublished = savedStatus === 'published';
+    const isScheduled = savedStatus === 'scheduled';
     const words = countWords(form.body);
     const coverPreview = safeHref(form.coverImage);
 
@@ -386,10 +414,12 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                         className={`border px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
                             isPublished
                                 ? 'border-emerald-700 bg-emerald-100 text-emerald-900'
-                                : 'border-slate-400 bg-slate-100 text-slate-700'
+                                : isScheduled
+                                  ? 'border-sky-700 bg-sky-100 text-sky-900'
+                                  : 'border-slate-400 bg-slate-100 text-slate-700'
                         }`}
                     >
-                        {isPublished ? 'Published' : 'Draft'}
+                        {isPublished ? 'Published' : isScheduled ? 'Scheduled' : 'Draft'}
                     </span>
                     {dirty && (
                         <span className="font-mono text-[10px] font-bold text-amber-700">
@@ -565,6 +595,51 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
                 </div>
 
                 <div className="space-y-4">
+                    {/* Schedule Card */}
+                    <div className="space-y-3 border-2 border-slate-900 bg-sky-50/70 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="block font-mono text-[10px] font-black text-slate-700 uppercase">
+                                Publishing Schedule
+                            </span>
+                            {isScheduled && (
+                                <span className="border border-sky-600 bg-sky-200 px-1.5 py-0.2 font-mono text-[9px] font-black uppercase text-sky-900">
+                                    Scheduled
+                                </span>
+                            )}
+                        </div>
+                        <p className="font-mono text-[10px] text-slate-600">
+                            Set a date and time. Once reached, this post will automatically get published to the community page.
+                        </p>
+                        <div>
+                            <label
+                                htmlFor={ids('scheduledFor')}
+                                className="mb-1 block font-mono text-[9px] font-black text-slate-700 uppercase"
+                            >
+                                Publish Date & Time
+                            </label>
+                            <input
+                                id={ids('scheduledFor')}
+                                type="datetime-local"
+                                value={form.scheduledFor}
+                                min={toDatetimeLocal(new Date())}
+                                onChange={(e) => update('scheduledFor', e.target.value)}
+                                className={`${inputClass(error.field === 'scheduledFor')} font-mono`}
+                            />
+                            {form.scheduledFor && !isNaN(new Date(form.scheduledFor).getTime()) && (
+                                <p className="mt-1.5 font-mono text-[10px] font-bold text-sky-800">
+                                    ⏰ Auto-publishes:{' '}
+                                    {new Date(form.scheduledFor).toLocaleString(undefined, {
+                                        weekday: 'short',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit'
+                                    })}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="space-y-3 border-2 border-slate-900 bg-violet-50 p-4">
                         <span className="block font-mono text-[10px] font-black text-slate-700 uppercase">
                             Placement
@@ -822,33 +897,85 @@ export default function BlogPostEditor({ postId, defaultAuthor, onUploadImage, o
 
             <div className="sticky bottom-0 z-10 -mx-1 flex flex-wrap items-center justify-end gap-2 border-t-4 border-slate-900 bg-white/95 px-1 py-3 backdrop-blur-sm">
                 {isPublished && (
-                    <button
-                        type="button"
-                        disabled={saving}
-                        onClick={() => save('draft')}
-                        className="press press-flat cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100 disabled:opacity-50"
-                    >
-                        Unpublish
-                    </button>
+                    <>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('draft')}
+                            className="press press-flat cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            Unpublish (Draft)
+                        </button>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('published')}
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-violet-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-300 disabled:opacity-50"
+                        >
+                            {saving ? 'Saving…' : 'Save changes'}
+                        </button>
+                    </>
                 )}
-                {!isPublished && (
-                    <button
-                        type="button"
-                        disabled={saving}
-                        onClick={() => save('draft')}
-                        className="press press-flat cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100 disabled:opacity-50"
-                    >
-                        {saving ? 'Saving…' : 'Save draft'}
-                    </button>
+
+                {isScheduled && (
+                    <>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('draft')}
+                            className="press press-flat cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            Cancel Schedule (Draft)
+                        </button>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('published')}
+                            className="press press-flat cursor-pointer border-2 border-slate-900 bg-amber-300 px-3 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
+                        >
+                            Publish now
+                        </button>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('scheduled')}
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300 disabled:opacity-50"
+                        >
+                            {saving ? 'Saving…' : 'Update schedule'}
+                        </button>
+                    </>
                 )}
-                <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => save('published')}
-                    className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-violet-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-300 disabled:opacity-50"
-                >
-                    {saving ? 'Saving…' : isPublished ? 'Save changes' : 'Publish'}
-                </button>
+
+                {!isPublished && !isScheduled && (
+                    <>
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('draft')}
+                            className="press press-flat cursor-pointer border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 uppercase hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            {saving ? 'Saving…' : 'Save draft'}
+                        </button>
+                        {form.scheduledFor && (
+                            <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => save('scheduled')}
+                                className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-sky-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-sky-300 disabled:opacity-50"
+                            >
+                                {saving ? 'Scheduling…' : 'Schedule post'}
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => save('published')}
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-violet-400 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase hover:bg-violet-300 disabled:opacity-50"
+                        >
+                            {saving ? 'Publishing…' : 'Publish now'}
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Instagram / Social Media Promotion Modal */}
