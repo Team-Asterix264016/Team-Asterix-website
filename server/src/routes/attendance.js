@@ -9,7 +9,14 @@ import SiteConfig from '../models/SiteConfig.js';
 import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../config/workshopPackages.js';
 import { sessionIsoDate } from '../config/sessionDates.js';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
-import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
+import {
+    syncParticipantIdentity,
+    normalizeRollNo,
+    ROLL_NO_RE,
+    escapeRegex,
+    buildCandidateSearchConditions
+} from '../lib/participantIdentity.js';
+import { archiveDocuments, actorOf } from '../lib/recycleBin.js';
 
 const router = Router();
 
@@ -130,15 +137,30 @@ router.post('/checkin', async (req, res) => {
         }
 
         const { track, sessionId } = tokenData;
-        const cleanRoll = String(rollNo).trim().toUpperCase();
+        const cleanRoll = String(rollNo).trim();
         const cleanEmail = String(email).trim().toLowerCase();
         const cleanDeviceId = String(deviceId).trim();
 
-        // 2. Query student registration in MongoDB
-        const registration = await WorkshopRegistration.findOne({
-            rollNo: cleanRoll,
-            email: cleanEmail
+        // 2. Query student registration in MongoDB (case-insensitive roll number & flexible email/prefix)
+        const rollConditions = [
+            { rollNo: cleanRoll.toUpperCase() },
+            { rollNo: new RegExp(`^\\s*${escapeRegex(cleanRoll)}\\s*$`, 'i') },
+            { rollNo: new RegExp(`^\\s*${escapeRegex(normalizeRollNo(cleanRoll))}\\s*$`, 'i') }
+        ];
+        const emailConditions = [
+            { email: cleanEmail },
+            { email: new RegExp(`^\\s*${escapeRegex(cleanEmail)}\\s*$`, 'i') },
+            { email: new RegExp(`^${escapeRegex(cleanRoll)}@`, 'i') }
+        ];
+
+        let registration = await WorkshopRegistration.findOne({
+            $and: [{ $or: rollConditions }, { $or: emailConditions }]
         });
+
+        // Fallback to roll number alone if email differs (e.g. personal vs college email)
+        if (!registration) {
+            registration = await WorkshopRegistration.findOne({ $or: rollConditions });
+        }
 
         if (!registration) {
             return res.status(404).json({
@@ -165,8 +187,12 @@ router.post('/checkin', async (req, res) => {
 
         // 5. Check if candidate already checked in for this session
         const existingAttendance = await WorkshopAttendance.findOne({
-            rollNo: cleanRoll,
-            sessionId
+            sessionId,
+            $or: [
+                { registrationId: registration._id },
+                { rollNo: registration.rollNo },
+                { rollNo: cleanRoll.toUpperCase() }
+            ]
         });
 
         if (existingAttendance) {
@@ -189,7 +215,8 @@ router.post('/checkin', async (req, res) => {
         const proxyCheck = await WorkshopAttendance.findOne({
             sessionId,
             deviceId: cleanDeviceId,
-            rollNo: { $ne: cleanRoll }
+            registrationId: { $ne: registration._id },
+            rollNo: { $nin: [registration.rollNo, cleanRoll.toUpperCase(), cleanRoll] }
         });
 
         if (proxyCheck) {
@@ -211,8 +238,8 @@ router.post('/checkin', async (req, res) => {
 
         const newAttendance = await WorkshopAttendance.create({
             registrationId: registration._id,
-            rollNo: cleanRoll,
-            email: cleanEmail,
+            rollNo: registration.rollNo || cleanRoll.toUpperCase(),
+            email: registration.email || cleanEmail,
             name: registration.name,
             department: registration.department,
             year: registration.year,
@@ -379,9 +406,13 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'rollNo and sessionId are required' });
         }
 
-        const cleanRoll = String(rollNo).trim().toUpperCase();
+        const cleanRoll = String(rollNo).trim();
         const registration = await WorkshopRegistration.findOne({
-            rollNo: cleanRoll,
+            $or: [
+                { rollNo: cleanRoll.toUpperCase() },
+                { rollNo: new RegExp(`^\\s*${escapeRegex(cleanRoll)}\\s*$`, 'i') },
+                { rollNo: new RegExp(`^\\s*${escapeRegex(normalizeRollNo(cleanRoll))}\\s*$`, 'i') }
+            ],
             status: 'paid'
         });
 
@@ -395,14 +426,21 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
         const sessionNumber = parseInt(sessionNumStr, 10) || 1;
         const sessionDate = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
 
-        const existing = await WorkshopAttendance.findOne({ rollNo: cleanRoll, sessionId });
+        const existing = await WorkshopAttendance.findOne({
+            sessionId,
+            $or: [
+                { registrationId: registration._id },
+                { rollNo: registration.rollNo },
+                { rollNo: cleanRoll.toUpperCase() }
+            ]
+        });
         if (existing) {
             return res.json({ success: true, message: 'Candidate is already marked present.' });
         }
 
         const manualRecord = await WorkshopAttendance.create({
             registrationId: registration._id,
-            rollNo: cleanRoll,
+            rollNo: registration.rollNo || cleanRoll.toUpperCase(),
             email: registration.email,
             name: registration.name,
             department: registration.department,
@@ -446,17 +484,20 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
 
         // Clean raw barcode input (handles scanner carriage returns, spaces, or prefixed URLs)
         let cleanInput = barcode.trim();
-        // If scanner reads a URL like http://...#rollNo=21EC001 or similar
+        // Parse URL parameter if full link was scanned
         if (cleanInput.includes('rollNo=')) {
-            const match = cleanInput.match(/rollNo=([^&]+)/i);
+            const match = cleanInput.match(/rollNo=([^&#\s]+)/i);
             if (match) cleanInput = match[1];
-        } else if (cleanInput.includes(':')) {
+        } else if (cleanInput.includes('roll=')) {
+            const match = cleanInput.match(/roll=([^&#\s]+)/i);
+            if (match) cleanInput = match[1];
+        } else if (!cleanInput.startsWith('http') && cleanInput.includes(':')) {
+            // Only split prefix like "ROLL:23CB12" when NOT a URL
             const parts = cleanInput.split(':');
             cleanInput = parts[parts.length - 1];
         }
 
         const cleanBarcode = cleanInput.trim();
-        const upperBarcode = cleanBarcode.toUpperCase();
 
         // Target track & session ID resolution
         const track = (inputTrack || 'software').toLowerCase().trim();
@@ -465,19 +506,9 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
             : `${track}-s${String(sessionNumber || 1).padStart(2, '0')}-${sessionDate || new Date().toISOString().slice(0, 10)}`;
 
         // 1. Search candidate by register number (rollNo), email, phone, or receipt number
-        const searchConditions = [
-            { rollNo: upperBarcode },
-            { rollNo: new RegExp(`^${cleanBarcode}$`, 'i') },
-            { email: cleanBarcode.toLowerCase() },
-            { receiptNo: upperBarcode }
-        ];
-
-        const digits = cleanBarcode.replace(/\D/g, '');
-        if (digits.length >= 7) {
-            searchConditions.push({ phone: new RegExp(`${digits.slice(-10)}$`) });
-        }
-
-        const registration = await WorkshopRegistration.findOne({ $or: searchConditions });
+        const registration = await WorkshopRegistration.findOne({
+            $or: buildCandidateSearchConditions(cleanBarcode)
+        });
 
         if (!registration) {
             return res.status(404).json({
@@ -517,8 +548,11 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
 
         // 4. Check if already marked present
         const existing = await WorkshopAttendance.findOne({
-            rollNo: registration.rollNo,
-            sessionId: targetSessionId
+            sessionId: targetSessionId,
+            $or: [
+                { registrationId: registration._id },
+                { rollNo: registration.rollNo }
+            ]
         });
 
         if (existing) {
@@ -688,14 +722,7 @@ router.post('/profile', async (req, res) => {
             return res.status(400).json({ error: 'Please enter your profile password. Initial default password is "asterix".' });
         }
 
-        const queryLower = queryRaw.toLowerCase();
-        const digits = queryRaw.replace(/\D/g, '');
-        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
-        if (phoneDigits.length >= 7) {
-            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
-        }
+        const searchConditions = buildCandidateSearchConditions(queryRaw);
 
         // Only paid registrations get a profile. One person can have several attempts (a failed
         // payment, then a paid one), so take the most recently paid.
@@ -933,14 +960,7 @@ router.post('/profile/change-password', async (req, res) => {
             return res.status(400).json({ ok: false, error: 'New password must be at least 4 characters long.' });
         }
 
-        const queryLower = queryRaw.toLowerCase();
-        const digits = queryRaw.replace(/\D/g, '');
-        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
-
-        const searchConditions = [{ email: queryLower }, { rollNo: queryRaw.toUpperCase() }];
-        if (phoneDigits.length >= 7) {
-            searchConditions.push({ phone: new RegExp(`${phoneDigits}$`) });
-        }
+        const searchConditions = buildCandidateSearchConditions(queryRaw);
 
         const candidate = await WorkshopRegistration.findOne({ $or: searchConditions, status: 'paid' })
             .sort({ paidAt: -1, createdAt: -1 });
@@ -976,17 +996,6 @@ const PROFILE_EDIT_YEARS = ['1', '2'];
 // Roll numbers are the attendance key, so self-service corrections are capped;
 // beyond this the workshop team has to make the change.
 const MAX_SELF_ROLL_NO_CHANGES = 3;
-
-// Email / roll no / phone all unlock the same profile, so every lookup matches on all three.
-function candidateSearchConditions(queryRaw) {
-    const digits = queryRaw.replace(/\D/g, '');
-    const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
-    const conditions = [{ email: queryRaw.toLowerCase() }, { rollNo: queryRaw.toUpperCase() }];
-    if (phoneDigits.length >= 7) {
-        conditions.push({ phone: new RegExp(`${phoneDigits}$`) });
-    }
-    return conditions;
-}
 
 /**
  * POST /api/workshop/attendance/profile/update-details
@@ -1043,7 +1052,7 @@ router.post('/profile/update-details', async (req, res) => {
         }
 
         const candidate = await WorkshopRegistration.findOne({
-            $or: candidateSearchConditions(queryRaw),
+            $or: buildCandidateSearchConditions(queryRaw),
             status: 'paid'
         }).sort({ paidAt: -1, createdAt: -1 });
 
@@ -1286,11 +1295,32 @@ router.post('/clear-all', authenticateToken, requireSuperAdmin, async (req, res)
         if (!isMongoConnected()) {
             return res.json({ success: true, message: 'Database offline or disconnected. No records stored.' });
         }
+
+        /* Wiping attendance destroys who actually turned up, which nothing else
+           records. The caller has to name the number of records it means to
+           delete, so a replayed or mistakenly fired request cannot clear a
+           session that has since been marked. Everything goes to the recycle
+           bin first. */
+        const total = await WorkshopAttendance.countDocuments();
+        const confirmCount = Number(req.body?.confirmCount);
+        if (!Number.isInteger(confirmCount) || confirmCount !== total) {
+            return res.status(400).json({
+                error: `There are ${total} attendance record(s). Send confirmCount: ${total} to clear them.`,
+                total
+            });
+        }
+
+        const doomed = await WorkshopAttendance.find({}).lean();
+        await archiveDocuments('WorkshopAttendance', doomed, {
+            deletedBy: actorOf(req),
+            reason: 'clear-all from the admin dashboard'
+        });
+
         const result = await WorkshopAttendance.deleteMany({});
-        console.log(`[ATTENDANCE CLEARED] Deleted ${result.deletedCount} attendance record(s).`);
+        console.log(`[ATTENDANCE CLEARED] ${actorOf(req)} deleted ${result.deletedCount} attendance record(s). Recoverable from the recycle bin.`);
         return res.json({
             success: true,
-            message: `Cleared all ${result.deletedCount} attendance activity records from database.`
+            message: `Cleared all ${result.deletedCount} attendance activity records from database. They are recoverable from the recycle bin.`
         });
     } catch (err) {
         console.error('Error clearing attendance activity:', err);
@@ -1311,22 +1341,44 @@ router.get('/export-csv', authenticateToken, async (req, res) => {
         }
 
         const records = await WorkshopAttendance.find(filter).sort({ sessionNumber: 1, checkedInAt: -1 }).lean();
+        const registrationIds = Array.from(new Set(records.map(r => r.registrationId).filter(Boolean)));
         const rollNumbers = Array.from(new Set(records.map(r => r.rollNo).filter(Boolean)));
 
-        const registrations = await WorkshopRegistration.find({ rollNo: { $in: rollNumbers } }).lean();
+        const orConditions = [];
+        if (registrationIds.length > 0) {
+            orConditions.push({ _id: { $in: registrationIds } });
+        }
+        if (rollNumbers.length > 0) {
+            orConditions.push({ rollNo: { $in: rollNumbers } });
+            orConditions.push({ rollNo: { $in: rollNumbers.map(r => new RegExp(`^${escapeRegex(r.trim())}$`, 'i')) } });
+        }
+
+        const registrations = orConditions.length > 0
+            ? await WorkshopRegistration.find({ $or: orConditions }).lean()
+            : [];
+
         const regMap = new Map();
-        registrations.forEach(r => regMap.set(r.rollNo?.toLowerCase()?.trim(), r));
+        registrations.forEach(r => {
+            if (r._id) regMap.set(r._id.toString(), r);
+            if (r.rollNo) {
+                regMap.set(r.rollNo.toLowerCase().trim(), r);
+                regMap.set(normalizeRollNo(r.rollNo), r);
+            }
+        });
 
         const csvHeaders = ['Roll No', 'Name', 'Department', 'Year', 'Track', 'Session Number', 'Session Topic', 'Status', 'Check-in Method', 'Check-in Time'];
         const csvRows = [csvHeaders.join(',')];
 
         records.forEach(r => {
-            const reg = regMap.get(r.rollNo?.toLowerCase()?.trim()) || {};
+            const reg = (r.registrationId && regMap.get(r.registrationId.toString()))
+                || (r.rollNo && regMap.get(r.rollNo?.toLowerCase()?.trim()))
+                || (r.rollNo && regMap.get(normalizeRollNo(r.rollNo)))
+                || {};
             const row = [
                 `"${r.rollNo || ''}"`,
                 `"${(reg.name || r.name || '').replace(/"/g, '""')}"`,
-                `"${(reg.department || '').replace(/"/g, '""')}"`,
-                `"${reg.year || ''}"`,
+                `"${(reg.department || r.department || '').replace(/"/g, '""')}"`,
+                `"${reg.year || r.year || ''}"`,
                 `"${r.track || ''}"`,
                 `"${r.sessionNumber || 1}"`,
                 `"${(r.sessionTopic || '').replace(/"/g, '""')}"`,

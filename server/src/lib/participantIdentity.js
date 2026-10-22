@@ -9,6 +9,70 @@ export function normalizeRollNo(value) {
     return String(value ?? '').trim().toUpperCase().replace(/\s+/g, '');
 }
 
+export function escapeRegex(value) {
+    return String(value ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function normalizePhone(value) {
+    if (!value) return '';
+    return String(value).replace(/\D/g, '').slice(-10);
+}
+
+export function formatReceiptNo(seq) {
+    return `AST-WS-${String(seq).padStart(4, '0')}`;
+}
+
+export function buildCandidateSearchConditions(term) {
+    const raw = String(term ?? '').trim();
+    if (!raw) return [];
+
+    const lower = raw.toLowerCase();
+    const upper = raw.toUpperCase();
+    const normRoll = normalizeRollNo(raw);
+    const escapedRaw = escapeRegex(raw);
+    const escapedNorm = escapeRegex(normRoll);
+    const escapedLower = escapeRegex(lower);
+
+    const conditions = [];
+
+    // 1. Roll number matching (case-insensitive & trimmed)
+    conditions.push({ rollNo: new RegExp(`^\\s*${escapedRaw}\\s*$`, 'i') });
+    if (normRoll && normRoll !== upper) {
+        conditions.push({ rollNo: new RegExp(`^\\s*${escapedNorm}\\s*$`, 'i') });
+    }
+    conditions.push({ rollNo: upper });
+    conditions.push({ rollNo: raw });
+
+    // 2. Email matching (exact lowercase & case-insensitive regex)
+    conditions.push({ email: lower });
+    conditions.push({ email: new RegExp(`^\\s*${escapedLower}\\s*$`, 'i') });
+
+    // 3. College email prefix matching (e.g. roll number "26m125" matching "26m125@psgitech.ac.in")
+    if (/^[a-z0-9_-]+$/i.test(raw)) {
+        conditions.push({ email: new RegExp(`^${escapedLower}@`, 'i') });
+    }
+
+    // 4. Receipt number matching (e.g. "AST-WS-0028" or "0028" or "28")
+    if (/^AST-WS-\d+$/i.test(raw)) {
+        conditions.push({ receiptNo: upper });
+    } else if (/^\d{1,4}$/.test(raw)) {
+        conditions.push({ receiptNo: formatReceiptNo(parseInt(raw, 10)) });
+    }
+
+    // 5. Phone matching (clean digits, handles +91 or spaces/dashes in DB)
+    const digits = raw.replace(/\D/g, '');
+    if (digits.length >= 7) {
+        const phoneDigits = digits.length >= 10 ? digits.slice(-10) : digits;
+        conditions.push({ phone: phoneDigits });
+        conditions.push({ phone: new RegExp(`${escapeRegex(phoneDigits)}$`) });
+        const spacedPhone = phoneDigits.split('').map(escapeRegex).join('[\\s-]*');
+        conditions.push({ phone: new RegExp(`${spacedPhone}$`) });
+    }
+    conditions.push({ phone: raw });
+
+    return conditions;
+}
+
 /**
  * Pushes a registration's corrected identity into every collection that keeps a
  * denormalized copy of it. Attendance and project submissions are matched on

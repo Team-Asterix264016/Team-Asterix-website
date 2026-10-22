@@ -7,7 +7,8 @@ import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { nextSequence } from '../models/Counter.js';
 import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
-import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE } from '../lib/participantIdentity.js';
+import { syncParticipantIdentity, normalizeRollNo, ROLL_NO_RE, escapeRegex, buildCandidateSearchConditions } from '../lib/participantIdentity.js';
+import { archiveDocuments, actorOf } from '../lib/recycleBin.js';
 import {
     WORKSHOP_PACKAGES,
     WORKSHOP_TRACKS,
@@ -133,7 +134,7 @@ function validateRegistration(body) {
         college: str(body.college, 150),
         year: str(body.year, 2),
         department: str(body.department, 100),
-        rollNo: str(body.rollNo, 40),
+        rollNo: normalizeRollNo(str(body.rollNo, 40)),
         package: str(body.package, 20).toLowerCase()
     };
 
@@ -471,9 +472,9 @@ router.post('/upgrade', requireDb, async (req, res) => {
         } else if (rollNo || email || phone) {
             const query = { status: 'paid' };
             const orConditions = [];
-            if (rollNo) orConditions.push({ rollNo: String(rollNo).trim() });
-            if (email) orConditions.push({ email: String(email).toLowerCase().trim() });
-            if (phone) orConditions.push({ phone: normalizePhone(phone) });
+            if (rollNo) orConditions.push(...buildCandidateSearchConditions(rollNo));
+            if (email) orConditions.push(...buildCandidateSearchConditions(email));
+            if (phone) orConditions.push(...buildCandidateSearchConditions(phone));
             if (orConditions.length > 0) query.$or = orConditions;
             reg = await WorkshopRegistration.findOne(query).sort({ createdAt: -1 });
         }
@@ -697,10 +698,6 @@ function lookupLimited(req) {
         }
     }
     return hits.length > LOOKUP_MAX;
-}
-
-function escapeRegex(text) {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function maskEmail(email) {
@@ -1430,6 +1427,12 @@ router.post('/registrations/sync-razorpay', authenticateToken, requireLeadOrAdmi
  * DELETE /api/workshop/registrations/:id
  * Protected: SuperAdmins, Leads, and Members.
  * Deletes an abandoned or duplicate pending registration.
+ *
+ * A paid registration is the only record that someone paid, so it is not
+ * deletable here at all: it takes a SuperAdmin sending `confirm` with the
+ * participant's exact roll number, which no stray click or loop can produce.
+ * Both paths copy the registration and its attendance into the recycle bin
+ * first (models/DeletedRecord.js), so any delete can be undone.
  */
 router.delete('/registrations/:id', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
@@ -1443,17 +1446,42 @@ router.delete('/registrations/:id', authenticateToken, requireLeadOrAdmin, requi
             return res.status(404).json({ error: 'Registration record not found.' });
         }
 
-        // Delete associated attendance records for clean removal
-        await WorkshopAttendance.deleteMany({
-            $or: [
-                { registrationId: reg._id },
-                { rollNo: reg.rollNo },
-                { email: reg.email }
-            ]
+        const actor = actorOf(req);
+
+        if (reg.status === 'paid') {
+            const confirm = String(req.query.confirm || req.body?.confirm || '').trim();
+            if (req.user?.accessLevel !== 'SuperAdmin') {
+                return res.status(403).json({
+                    error: `${reg.name} (${reg.rollNo}) has paid${reg.receiptNo ? ` (receipt ${reg.receiptNo})` : ''}. Only a SuperAdmin can remove a paid registration.`
+                });
+            }
+            if (normalizeRollNo(confirm) !== normalizeRollNo(reg.rollNo)) {
+                return res.status(400).json({
+                    error: `This is a PAID registration (${reg.name}, ${reg.rollNo}). To delete it, send confirm=<the exact roll number>.`
+                });
+            }
+        }
+
+        /* Attendance is matched on registrationId only. Matching on rollNo or
+           email as well deleted the attendance of every other registration
+           sharing them -- a participant with a failed attempt and a paid one
+           lost their whole attendance history when the dead row was tidied up. */
+        const attendance = await WorkshopAttendance.find({ registrationId: reg._id }).lean();
+
+        await archiveDocuments('WorkshopRegistration', [reg.toObject()], {
+            deletedBy: actor,
+            reason: `admin delete of ${reg.status} registration`
         });
+        if (attendance.length > 0) {
+            await archiveDocuments('WorkshopAttendance', attendance, {
+                deletedBy: actor,
+                reason: `cascade from registration ${reg._id} delete`
+            });
+            await WorkshopAttendance.deleteMany({ _id: { $in: attendance.map(a => a._id) } });
+        }
 
         await WorkshopRegistration.findByIdAndDelete(id);
-        console.log(`[ADMIN DELETE] Removed registration record ${id} (${reg.name}, ${reg.rollNo})`);
+        console.log(`[ADMIN DELETE] ${actor} removed ${reg.status} registration ${id} (${reg.name}, ${reg.rollNo}) and ${attendance.length} attendance record(s). Recoverable from the recycle bin.`);
         res.json({ success: true, message: `✓ Registration record for ${reg.name} (${reg.rollNo}) removed successfully.` });
     } catch (err) {
         console.error('Error deleting registration:', err);
@@ -1475,22 +1503,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Mobile number or Email ID is required.' });
         }
 
-        const cleanEmail = input.toLowerCase();
-        const cleanPhone = normalizePhone(input);
-        const upperInput = input.toUpperCase();
-
-        const searchConditions = [
-            { email: cleanEmail },
-            { rollNo: upperInput },
-            { rollNo: input }
-        ];
-
-        if (cleanPhone.length >= 7) {
-            searchConditions.push({ phone: cleanPhone });
-            searchConditions.push({ phone: new RegExp(`${cleanPhone}$`) });
-        }
-
-        const query = { $or: searchConditions };
+        const query = { $or: buildCandidateSearchConditions(input) };
 
         if (!isMongoConnected()) {
             return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' });
@@ -1601,23 +1614,31 @@ router.get('/student-status', async (req, res) => {
                 registration = await WorkshopRegistration.findById(decodedStudent.registrationId);
             }
             if (!registration && (rollNo || email)) {
-                registration = await WorkshopRegistration.findOne({
-                    $or: [
-                        { rollNo: rollNo || '___none___' },
-                        { email: email || '___none___' }
-                    ]
-                });
+                const searchConditions = [
+                    ...(rollNo ? buildCandidateSearchConditions(rollNo) : []),
+                    ...(email ? buildCandidateSearchConditions(email) : [])
+                ];
+                if (searchConditions.length > 0) {
+                    registration = await WorkshopRegistration.findOne({ $or: searchConditions });
+                }
             }
 
             const searchRoll = registration?.rollNo || rollNo;
             const searchEmail = registration?.email || email;
 
-            if (searchRoll || searchEmail) {
+            if (searchRoll || searchEmail || registration?._id) {
+                const attConditions = [];
+                if (registration?._id) attConditions.push({ registrationId: registration._id });
+                if (searchRoll) {
+                    attConditions.push({ rollNo: searchRoll });
+                    attConditions.push({ rollNo: new RegExp(`^${escapeRegex(searchRoll.trim())}$`, 'i') });
+                }
+                if (searchEmail) {
+                    attConditions.push({ email: searchEmail });
+                    attConditions.push({ email: new RegExp(`^${escapeRegex(searchEmail.trim())}$`, 'i') });
+                }
                 attendanceRecords = await WorkshopAttendance.find({
-                    $or: [
-                        { rollNo: searchRoll || '___none___' },
-                        { email: searchEmail || '___none___' }
-                    ]
+                    $or: attConditions
                 }).select('sessionId sessionNumber sessionDate sessionTopic checkedInAt verifiedBy track');
             }
         }
