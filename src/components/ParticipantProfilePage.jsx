@@ -66,11 +66,229 @@ const SESSION_STATUS_STYLES = {
     PRESENT: { label: '✅ Present', className: 'bg-emerald-400 text-slate-950' },
     ABSENT: { label: '❌ Missed', className: 'bg-rose-500 text-white' },
     OPTIONAL: { label: '💬 Optional', className: 'bg-violet-200 text-violet-950' },
+    CANCELLED: { label: '🚫 Not held', className: 'bg-slate-300 text-slate-700' },
     UPCOMING: { label: '🕒 Upcoming', className: 'bg-sky-200 text-sky-950' }
 };
 
+/* How each track's certificate outlook reads on the profile. "alternate" is for
+   candidates whose attendance can no longer reach the threshold: it points at
+   the tasks route rather than reading as a verdict, because nobody should
+   conclude from this page that there is no reason to keep turning up. */
+const CERT_OUTLOOK = {
+    secured: {
+        label: '🏆 Certificate Secured',
+        badge: 'bg-emerald-400 text-slate-950',
+        bar: 'bg-emerald-400',
+        note: 'You have already cleared the attendance requirement for this track. Keep coming for the work itself.'
+    },
+    'on-track': {
+        label: '✅ On Track',
+        badge: 'bg-emerald-300 text-slate-950',
+        bar: 'bg-emerald-400',
+        note: 'You are above the attendance mark. Hold it and the certificate is yours.'
+    },
+    'at-risk': {
+        label: '⚡ Every Session Counts',
+        badge: 'bg-amber-300 text-slate-950',
+        bar: 'bg-amber-400',
+        note: null
+    },
+    alternate: {
+        label: '🛠️ Earn It Through Tasks',
+        badge: 'bg-violet-300 text-slate-950',
+        bar: 'bg-violet-400',
+        note: null
+    }
+};
+
+function AttendanceSummaryCard({ summary }) {
+    if (!summary || !Array.isArray(summary.perTrack) || summary.perTrack.length === 0) return null;
+    const threshold = summary.threshold || 65;
+
+    return (
+        <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-mono text-sm font-black text-slate-950 uppercase">
+                    📊 Attendance &amp; Certificate
+                </h3>
+                <span className="border-2 border-slate-900 bg-slate-900 px-2 py-1 font-mono text-[10px] font-black text-white uppercase">
+                    {threshold}% required
+                </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {summary.perTrack.map((track) => {
+                    const outlook = CERT_OUTLOOK[track.outlook] || CERT_OUTLOOK['at-risk'];
+                    const pct = Math.max(0, Math.min(100, track.attendancePercentage));
+                    return (
+                        <div key={track.track} className="shadow-brutal-2 border-2 border-slate-900 bg-slate-50 p-3">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                <span className="font-mono text-[11px] font-black text-slate-700 uppercase">
+                                    {track.trackName}
+                                </span>
+                                <span className={`border-2 border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${outlook.badge}`}>
+                                    {outlook.label}
+                                </span>
+                            </div>
+
+                            <div className="mt-2 flex items-baseline gap-2">
+                                <strong className="text-3xl font-black text-slate-950">{track.attendancePercentage}%</strong>
+                                <span className="font-mono text-[11px] font-bold text-slate-600">
+                                    {track.totalPresent} of {track.totalConducted} held
+                                </span>
+                            </div>
+
+                            {/* Progress bar with the threshold marked, so the gap is visible rather than inferred. */}
+                            <div className="relative mt-2 h-4 border-2 border-slate-900 bg-white">
+                                <div className={`h-full ${outlook.bar}`} style={{ width: `${pct}%` }} />
+                                <div
+                                    className="absolute top-0 h-full border-l-2 border-dashed border-slate-900"
+                                    style={{ left: `${threshold}%` }}
+                                    title={`${threshold}% threshold`}
+                                />
+                            </div>
+
+                            {/* Never name a number of sessions that would be "enough": a candidate
+                                below the threshold is told to attend every remaining one. */}
+                            <p className="mt-2 font-mono text-[11px] leading-relaxed font-bold text-slate-700">
+                                {outlook.note
+                                    || (track.outlook === 'at-risk'
+                                        ? `You are below ${threshold}%. ${track.remaining} session${track.remaining === 1 ? '' : 's'} left on this track — attend all ${track.remaining}. Every one of them counts now.`
+                                        : `Even by attending all ${track.remaining} remaining session${track.remaining === 1 ? '' : 's'}, attendance tops out at ${track.maxPossiblePercentage}% here. Your certificate now runs through assigned tasks instead — and you should still attend.`)}
+                            </p>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {summary.needsAlternatePath ? (
+                <div className="shadow-brutal-2 mt-4 border-2 border-slate-900 bg-violet-100 p-4">
+                    <strong className="block font-mono text-xs font-black text-violet-950 uppercase">
+                        🛠️ There is a second route to your certificate
+                    </strong>
+                    <p className="mt-2 text-[13px] leading-relaxed font-bold text-slate-800">
+                        Attendance alone can no longer reach {threshold}% on one of your tracks. That does
+                        not end your workshop. The team will assign you tasks drawn from the sessions you
+                        missed — you complete them, submit your proof of work, and once it is accepted you
+                        are eligible for your certificate.
+                    </p>
+                    <p className="mt-2 text-[13px] leading-relaxed font-bold text-slate-800">
+                        So do not drop out over this number. Keep attending every remaining session, watch
+                        this page for your assigned tasks, and talk to the workshop team.
+                    </p>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+const TASK_STATUS_STYLES = {
+    assigned: { label: '📋 To Do', className: 'bg-amber-300 text-slate-950' },
+    submitted: { label: '⏳ Under Review', className: 'bg-sky-300 text-slate-950' },
+    approved: { label: '✅ Accepted', className: 'bg-emerald-400 text-slate-950' },
+    rejected: { label: '🔄 Resubmit', className: 'bg-rose-400 text-white' }
+};
+
+function MakeupTasksCard({ tasks, cap, onSubmit, busyTaskId }) {
+    const [drafts, setDrafts] = useState({});
+    if (!Array.isArray(tasks) || tasks.length === 0) return null;
+
+    const setDraft = (id, field, value) => {
+        setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    };
+
+    const approved = tasks.filter((task) => task.status === 'approved').length;
+
+    return (
+        <div className="shadow-brutal-4 border-4 border-slate-900 bg-white p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-mono text-sm font-black text-slate-950 uppercase">
+                    🛠️ Your Make-up Tasks
+                </h3>
+                <span className="border-2 border-slate-900 bg-slate-900 px-2 py-1 font-mono text-[10px] font-black text-white uppercase">
+                    {approved} of {cap} accepted
+                </span>
+            </div>
+            <p className="mt-2 text-[13px] leading-relaxed font-bold text-slate-700">
+                Complete each task, submit your proof of work, and once the team accepts it the
+                session it covers is credited to your attendance.
+            </p>
+
+            <div className="mt-4 space-y-4">
+                {tasks.map((task) => {
+                    const style = TASK_STATUS_STYLES[task.status] || TASK_STATUS_STYLES.assigned;
+                    const draft = drafts[task.id] || {};
+                    const locked = task.status === 'approved';
+                    return (
+                        <div key={task.id} className="shadow-brutal-2 border-2 border-slate-900 bg-slate-50 p-3">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                                <strong className="text-sm font-black text-slate-950">{task.title}</strong>
+                                <span className={`border-2 border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${style.className}`}>
+                                    {style.label}
+                                </span>
+                            </div>
+                            <span className="mt-0.5 block font-mono text-[10px] font-black text-slate-500 uppercase">
+                                {task.track} · session of {task.sessionDate}
+                            </span>
+
+                            {task.brief ? (
+                                <pre className="mt-2 overflow-x-auto border-2 border-slate-300 bg-white p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-slate-800">
+                                    {task.brief}
+                                </pre>
+                            ) : null}
+
+                            {task.reviewNote ? (
+                                <p className="mt-2 border-l-4 border-slate-900 bg-amber-50 p-2 text-[12px] font-bold text-slate-800">
+                                    Reviewer: {task.reviewNote}
+                                </p>
+                            ) : null}
+
+                            {locked ? (
+                                <p className="mt-2 font-mono text-[11px] font-black text-emerald-700 uppercase">
+                                    Accepted — this session is credited to your attendance.
+                                </p>
+                            ) : (
+                                <div className="mt-3 space-y-2">
+                                    <input
+                                        type="url"
+                                        value={draft.driveLink ?? task.driveLink ?? ''}
+                                        onChange={(e) => setDraft(task.id, 'driveLink', e.target.value)}
+                                        placeholder="https://drive.google.com/... (anyone with the link can view)"
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-bold text-slate-900"
+                                    />
+                                    <textarea
+                                        rows={2}
+                                        value={draft.submissionNote ?? task.submissionNote ?? ''}
+                                        onChange={(e) => setDraft(task.id, 'submissionNote', e.target.value)}
+                                        placeholder="Anything the reviewer should know (optional)"
+                                        className="w-full border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-bold text-slate-900"
+                                    />
+                                    <button
+                                        type="button"
+                                        disabled={busyTaskId === task.id || !(draft.driveLink || task.driveLink)}
+                                        onClick={() => onSubmit(task.id, {
+                                            driveLink: draft.driveLink ?? task.driveLink ?? '',
+                                            submissionNote: draft.submissionNote ?? task.submissionNote ?? ''
+                                        })}
+                                        className="press shadow-brutal-2 border-2 border-slate-900 bg-violet-300 px-4 py-2 font-mono text-xs font-black text-slate-950 uppercase disabled:opacity-50"
+                                    >
+                                        {busyTaskId === task.id
+                                            ? 'Submitting…'
+                                            : task.status === 'submitted' ? 'Resubmit' : 'Submit proof of work'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const [identifier, setIdentifier] = useState('');
+    const [busyTaskId, setBusyTaskId] = useState(null);
     const [password, setPassword] = useState(() => {
         try {
             const saved = sessionStorage.getItem('asterix_profile_auth');
@@ -254,7 +472,37 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         setPwdSuccess('');
 
         try {
-            const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
+            /* Sends proof of work for one make-up task, then reloads the profile so the
+       task's new status and any credited attendance appear together. */
+    const handleSubmitTask = useCallback(async (taskId, { driveLink, submissionNote }) => {
+        setBusyTaskId(taskId);
+        setError('');
+        try {
+            const res = await fetch(apiUrl('/api/workshop/attendance/tasks/submit'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    identifier: identifier.trim(),
+                    password: password.trim(),
+                    taskId,
+                    driveLink,
+                    submissionNote
+                })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                setError(data.error || 'Could not submit this task. Please try again.');
+                return;
+            }
+            await fetchProfile(identifier, password);
+        } catch {
+            setError('Network error while submitting. Please try again.');
+        } finally {
+            setBusyTaskId(null);
+        }
+    }, [identifier, password, fetchProfile]);
+
+    const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
             const res = await fetch(apiUrl('/api/workshop/attendance/profile/change-password'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -807,6 +1055,15 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     )}
                                 </div>
                             </div>
+
+                            <AttendanceSummaryCard summary={profile.attendanceSummary} />
+
+                            <MakeupTasksCard
+                                tasks={profile.makeupTasks}
+                                cap={profile.taskCreditCap}
+                                onSubmit={handleSubmitTask}
+                                busyTaskId={busyTaskId}
+                            />
 
                             {/* Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">

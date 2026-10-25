@@ -50,6 +50,27 @@ const WorkshopAttendanceSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    // `${track}|${scheduleId}` pointing at the WorkshopSession this belongs to.
+    // Records written before that collection existed have none and are matched
+    // by sessionId or by track + date instead.
+    sessionKey: {
+        type: String,
+        default: '',
+        trim: true,
+        index: true
+    },
+    // Who issued a manual mark and why. Required for every admin override so a
+    // disputed certificate can be traced back to a decision and a person.
+    markedBy: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    markedReason: {
+        type: String,
+        default: '',
+        trim: true
+    },
     sessionNumber: {
         type: Number,
         required: true,
@@ -84,7 +105,7 @@ const WorkshopAttendanceSchema = new mongoose.Schema({
     },
     verifiedBy: {
         type: String,
-        enum: ['qr-scan', 'manual-admin', 'barcode-scanner'],
+        enum: ['qr-scan', 'manual-admin', 'barcode-scanner', 'task-credit'],
         default: 'qr-scan'
     }
 }, {
