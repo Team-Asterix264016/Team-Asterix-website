@@ -71,6 +71,13 @@ const WorkshopAttendanceSchema = new mongoose.Schema({
         default: '',
         trim: true
     },
+    /* Suspicious-but-not-blocked signals, raised at check-in for an admin to
+       judge. Blocking on these would punish honest cases -- a shared phone,
+       a late arrival -- far more often than it would catch anyone. */
+    flags: {
+        type: [String],
+        default: []
+    },
     sessionNumber: {
         type: Number,
         required: true,

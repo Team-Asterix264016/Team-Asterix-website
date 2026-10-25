@@ -7,6 +7,8 @@ import WorkshopScheduleAdmin from './WorkshopScheduleAdmin';
 import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 import WorkshopAttendeeDetailsAdmin from './WorkshopAttendeeDetailsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
+import WorkshopSessionsAdmin from './WorkshopSessionsAdmin';
+import WorkshopTasksAdmin from './WorkshopTasksAdmin';
 import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import WorkshopNotesAdmin from './WorkshopNotesAdmin';
@@ -673,6 +675,8 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-attendee-details', label: 'Workshop Attendee Details 👤', icon: 'users' },
                 { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
+                { id: 'workshop-sessions', label: 'Sessions & Certificate Rule 📊', icon: 'calendar' },
+                { id: 'workshop-tasks', label: 'Make-up Tasks 🛠️', icon: 'clipboard' },
                 { id: 'barcode-attendance', label: 'Barcode Attendance Scanner ⚡', icon: 'camera' },
                 { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
@@ -2197,6 +2201,10 @@ export default function AdminDashboard({ onExit }) {
                             }}
                         />
                     )}
+
+                    {activeTab === 'workshop-sessions' && <WorkshopSessionsAdmin showStatus={showStatus} />}
+
+                    {activeTab === 'workshop-tasks' && <WorkshopTasksAdmin showStatus={showStatus} />}
 
                     {activeTab === 'barcode-attendance' && <BarcodeAttendanceAdmin showStatus={showStatus} />}
 

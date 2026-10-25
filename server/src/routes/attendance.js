@@ -28,6 +28,10 @@ import {
 
 const router = Router();
 
+/* A scan arriving more than this long after the session was opened is flagged,
+   not refused: people do turn up late, but a scan hours in is worth a look. */
+const LATE_SCAN_MINUTES = 45;
+
 const ROTATION_INTERVAL_MS = 12000; // 12 seconds projector rotation
 const TOKEN_EXPIRY_MS = 25000; // 25 seconds validity for scanned token
 const ATTENDANCE_SECRET = process.env.ATTENDANCE_SECRET
@@ -74,6 +78,64 @@ function verifyToken(token) {
     return null;
 }
 
+/* Opens a session for check-in if it is not open already. Called when the
+   projector asks for a token, so putting the QR on screen is what opens the
+   session: an admin who forgets a separate "open" button cannot lock the room
+   out of attendance. */
+async function openSessionsForDate(track, sessionDate, actor) {
+    const tracks = track === 'combo' ? ['software', 'powertrain'] : [track];
+    const sessions = await WorkshopSession.find({
+        track: { $in: tracks },
+        date: sessionDate
+    }).lean();
+
+    for (const session of sessions) {
+        if (session.openedAt && !session.closedAt) continue;
+        await WorkshopSession.updateOne({ sessionKey: session.sessionKey }, {
+            $set: {
+                status: 'conducted',
+                openedAt: session.openedAt || new Date(),
+                openedBy: session.openedBy || actor,
+                closedAt: null,
+                closedBy: ''
+            }
+        });
+    }
+    return sessions.map((session) => session.sessionKey);
+}
+
+/* Refuses a check-in outside the session's open window. This is what stops a
+   shared QR link being used days later: the token alone is no longer enough,
+   the session itself has to be open right now. */
+function windowRefusal(session) {
+    if (!session) return null;
+    if (!session.openedAt) {
+        return 'This session is not open for attendance yet. Wait for the QR code to go up.';
+    }
+    if (session.closedAt) {
+        return 'Attendance for this session is closed. Speak to the workshop team.';
+    }
+    return null;
+}
+
+/* Signals worth a human look, gathered at write time. */
+async function scanFlags({ session, deviceId, registrationId }) {
+    const flags = [];
+    if (session?.openedAt) {
+        const minutes = (Date.now() - new Date(session.openedAt).getTime()) / 60000;
+        if (minutes > LATE_SCAN_MINUTES) flags.push('late-scan');
+    }
+    // The per-session index already blocks one device serving two people in the
+    // same session; this catches a device that travels between candidates across
+    // sessions, which the index cannot see.
+    const otherUse = await WorkshopAttendance.findOne({
+        deviceId,
+        registrationId: { $ne: registrationId }
+    }).lean();
+    if (otherUse) flags.push('shared-device');
+    return flags;
+}
+
 /**
  * GET /api/workshop/attendance/session-token
  * Admin only: Generates current static token for projector display
@@ -102,6 +164,9 @@ router.get('/session-token', authenticateToken, async (req, res) => {
         const token = `${track}.${sessionId}.${tokenTimeVal}.${signature}`;
 
         // Construct scan URL for the student
+        // Putting the code on screen is what opens the session for check-in.
+        const openedKeys = await openSessionsForDate(track, sessionDate, actorOf(req));
+
         const hostUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;
         const scanUrl = `${hostUrl}/#attendance?tok=${token}`;
 
@@ -115,6 +180,7 @@ router.get('/session-token', authenticateToken, async (req, res) => {
             expiresInMs: ROTATION_INTERVAL_MS,
             tokenExpiryMs: TOKEN_EXPIRY_MS,
             rotationIntervalMs: ROTATION_INTERVAL_MS,
+            openedSessionKeys: openedKeys,
             scanUrl
         });
     } catch (err) {
@@ -229,6 +295,9 @@ router.post('/checkin', async (req, res) => {
                     continue;
                 }
 
+                const refusal = windowRefusal(jointSession);
+                if (refusal) return res.status(403).json({ error: refusal, sessionClosed: true });
+
                 // Same anti-proxy rule as a single-track scan, applied per session.
                 const proxy = await WorkshopAttendance.findOne({
                     sessionId: rowSessionId,
@@ -243,7 +312,13 @@ router.post('/checkin', async (req, res) => {
                 }
 
                 try {
+                    const flags = await scanFlags({
+                        session: jointSession,
+                        deviceId: cleanDeviceId,
+                        registrationId: registration._id
+                    });
                     await WorkshopAttendance.create({
+                        flags,
                         registrationId: registration._id,
                         rollNo: registration.rollNo || cleanRoll.toUpperCase(),
                         email: registration.email || cleanEmail,
@@ -359,11 +434,25 @@ router.post('/checkin', async (req, res) => {
         const sessionNumber = parseInt(sessionNumStr, 10) || 1;
         const sessionDate = sessionParts.slice(2).join('-') || new Date().toISOString().slice(0, 10);
 
+        /* 6b. The session has to be open right now. A token on its own is no
+           longer enough, so a forwarded QR link stops working once the session
+           closes. Sessions the schedule does not know about are left alone. */
+        const scheduledSession = await WorkshopSession.findOne({ track, date: sessionDate }).lean();
+        const refusal = windowRefusal(scheduledSession);
+        if (refusal) return res.status(403).json({ error: refusal, sessionClosed: true });
+
         // 7. Record attendance
         const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
         const userAgent = req.headers['user-agent'] || '';
+        const flags = await scanFlags({
+            session: scheduledSession,
+            deviceId: cleanDeviceId,
+            registrationId: registration._id
+        });
 
         const newAttendance = await WorkshopAttendance.create({
+            flags,
+            sessionKey: scheduledSession ? scheduledSession.sessionKey : '',
             registrationId: registration._id,
             rollNo: registration.rollNo || cleanRoll.toUpperCase(),
             email: registration.email || cleanEmail,
@@ -528,9 +617,16 @@ router.get('/records', authenticateToken, async (req, res) => {
  */
 router.post('/manual-mark', authenticateToken, async (req, res) => {
     try {
-        const { rollNo, sessionId, sessionTopic } = req.body;
+        const { rollNo, sessionId, sessionTopic, reason } = req.body;
         if (!rollNo || !sessionId) {
             return res.status(400).json({ error: 'rollNo and sessionId are required' });
+        }
+        /* Every override has to carry a reason and a name. A certificate denial
+           that gets disputed is answered from this field, so an unattributed
+           mark is worse than no mark. */
+        const cleanReason = String(reason || '').trim();
+        if (cleanReason.length < 3) {
+            return res.status(400).json({ error: 'A reason is required for a manual attendance mark.' });
         }
 
         const cleanRoll = String(rollNo).trim();
@@ -582,6 +678,8 @@ router.post('/manual-mark', authenticateToken, async (req, res) => {
             ipAddress: req.ip || '',
             userAgent: 'Admin Manual Override',
             verifiedBy: 'manual-admin',
+            markedBy: actorOf(req),
+            markedReason: cleanReason,
             checkedInAt: new Date()
         });
 
@@ -1385,6 +1483,128 @@ function parseResourceBody(body) {
         }
     };
 }
+
+/**
+ * GET /api/workshop/attendance/sessions
+ * Admin only: every session with its live row count, so the attendance
+ * denominator can be inspected and corrected in one place.
+ */
+router.get('/sessions', authenticateToken, async (req, res) => {
+    try {
+        const sessions = await WorkshopSession.find({}).sort({ date: 1, track: 1 }).lean();
+        const counts = await WorkshopAttendance.aggregate([
+            { $group: { _id: { track: '$track', date: '$sessionDate' }, rows: { $sum: 1 } } }
+        ]);
+        const rowsByTrackDate = new Map(counts.map((c) => [`${c._id.track}|${c._id.date}`, c.rows]));
+
+        return res.json({
+            ok: true,
+            threshold: CERTIFICATE_THRESHOLD,
+            sessions: sessions.map((session) => ({
+                ...session,
+                rows: rowsByTrackDate.get(`${session.track}|${session.date}`) || 0,
+                isOpen: Boolean(session.openedAt && !session.closedAt)
+            }))
+        });
+    } catch (err) {
+        console.error('Error listing workshop sessions:', err);
+        return res.status(500).json({ error: 'Failed to list sessions' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/sessions/open
+ * POST /api/workshop/attendance/sessions/close
+ * Admin only: the attendance window. Check-in is refused outside it.
+ */
+router.post('/sessions/:action(open|close)', authenticateToken, async (req, res) => {
+    try {
+        const sessionKey = String(req.body?.sessionKey || '').trim();
+        if (!sessionKey) return res.status(400).json({ error: 'sessionKey is required.' });
+
+        const session = await WorkshopSession.findOne({ sessionKey });
+        if (!session) return res.status(404).json({ error: `No session ${sessionKey}.` });
+
+        const actor = actorOf(req);
+        if (req.params.action === 'open') {
+            session.openedAt = new Date();
+            session.openedBy = actor;
+            session.closedAt = null;
+            session.closedBy = '';
+            session.status = 'conducted';
+        } else {
+            session.closedAt = new Date();
+            session.closedBy = actor;
+        }
+        await session.save();
+
+        return res.json({
+            success: true,
+            message: `${session.title || sessionKey} ${req.params.action === 'open' ? 'opened' : 'closed'} for attendance.`,
+            session
+        });
+    } catch (err) {
+        console.error('Error changing session window:', err);
+        return res.status(500).json({ error: 'Failed to change the session window.' });
+    }
+});
+
+/**
+ * PATCH /api/workshop/attendance/sessions
+ * Admin only: rule on whether a session was held and whether it counts.
+ * This is what the attendance percentage divides by, so it is deliberately
+ * explicit rather than inferred from the data.
+ */
+router.patch('/sessions', authenticateToken, async (req, res) => {
+    try {
+        const { sessionKey, status, countsForAttendance, notes } = req.body || {};
+        if (!sessionKey) return res.status(400).json({ error: 'sessionKey is required.' });
+
+        const update = {};
+        if (status !== undefined) {
+            if (!['scheduled', 'conducted', 'cancelled'].includes(status)) {
+                return res.status(400).json({ error: "status must be 'scheduled', 'conducted' or 'cancelled'." });
+            }
+            update.status = status;
+        }
+        if (countsForAttendance !== undefined) update.countsForAttendance = Boolean(countsForAttendance);
+        if (notes !== undefined) update.notes = String(notes).trim();
+        if (Object.keys(update).length === 0) {
+            return res.status(400).json({ error: 'Nothing to change.' });
+        }
+
+        const session = await WorkshopSession.findOneAndUpdate(
+            { sessionKey: String(sessionKey).trim() },
+            { $set: update },
+            { new: true }
+        ).lean();
+        if (!session) return res.status(404).json({ error: `No session ${sessionKey}.` });
+
+        return res.json({ success: true, message: 'Session updated.', session });
+    } catch (err) {
+        console.error('Error updating workshop session:', err);
+        return res.status(500).json({ error: 'Failed to update the session.' });
+    }
+});
+
+/**
+ * GET /api/workshop/attendance/flagged
+ * Admin only: check-ins carrying a suspicious signal, for review. Nothing here
+ * was blocked; these are judgement calls left to a person.
+ */
+router.get('/flagged', authenticateToken, async (req, res) => {
+    try {
+        const rows = await WorkshopAttendance.find({ flags: { $exists: true, $ne: [] } })
+            .sort({ checkedInAt: -1 })
+            .limit(500)
+            .select('rollNo name track sessionId sessionKey sessionDate checkedInAt flags deviceId ipAddress verifiedBy')
+            .lean();
+        return res.json({ ok: true, total: rows.length, rows });
+    } catch (err) {
+        console.error('Error listing flagged check-ins:', err);
+        return res.status(500).json({ error: 'Failed to list flagged check-ins' });
+    }
+});
 
 /**
  * Shared cap check for crediting a make-up task.

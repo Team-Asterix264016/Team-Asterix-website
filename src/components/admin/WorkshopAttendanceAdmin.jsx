@@ -68,6 +68,18 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
 
     // Manual Mark Present handler
     const handleManualMark = async (rollNo) => {
+        /* The server requires a reason: a manual mark is the answer to "why does
+           this person have attendance", and that question gets asked when a
+           certificate is refused. */
+        const reason = window.prompt(
+            `Why is ${rollNo} being marked present for this session?\n(Recorded against your name.)`
+        );
+        if (reason === null) return;
+        if (reason.trim().length < 3) {
+            alert('A reason is required for a manual attendance mark.');
+            return;
+        }
+
         setActionBusyRoll(rollNo);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
@@ -80,7 +92,8 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 body: JSON.stringify({
                     rollNo,
                     sessionId,
-                    sessionTopic
+                    sessionTopic,
+                    reason: reason.trim()
                 })
             });
 
