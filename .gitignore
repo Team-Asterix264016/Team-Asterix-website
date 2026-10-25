@@ -50,3 +50,7 @@ media/
 
 # Participant data dumps: PII, never commit
 server/data/backups/
+
+# Participant data for the one-off registration loaders. This repo is public
+# and these files carry students names, emails and phone numbers.
+server/src/scripts/data/
