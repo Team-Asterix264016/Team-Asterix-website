@@ -455,6 +455,39 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         }
     };
 
+    /* Sends proof of work for one make-up task, then reloads the profile so the
+       task's new status and any credited attendance appear together. */
+    const handleSubmitTask = useCallback(
+        async (taskId, { driveLink, submissionNote }) => {
+            setBusyTaskId(taskId);
+            setError('');
+            try {
+                const res = await fetch(apiUrl('/api/workshop/attendance/tasks/submit'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        identifier: identifier.trim(),
+                        password: password.trim(),
+                        taskId,
+                        driveLink,
+                        submissionNote
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    setError(data.error || 'Could not submit this task. Please try again.');
+                    return;
+                }
+                await fetchProfile(identifier, password);
+            } catch {
+                setError('Network error while submitting. Please try again.');
+            } finally {
+                setBusyTaskId(null);
+            }
+        },
+        [identifier, password, fetchProfile]
+    );
+
     const handleChangePasswordSubmit = async (e) => {
         e.preventDefault();
         if (!pwdCurrent.trim()) {
@@ -479,37 +512,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
         setPwdSuccess('');
 
         try {
-            /* Sends proof of work for one make-up task, then reloads the profile so the
-       task's new status and any credited attendance appear together. */
-    const handleSubmitTask = useCallback(async (taskId, { driveLink, submissionNote }) => {
-        setBusyTaskId(taskId);
-        setError('');
-        try {
-            const res = await fetch(apiUrl('/api/workshop/attendance/tasks/submit'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    identifier: identifier.trim(),
-                    password: password.trim(),
-                    taskId,
-                    driveLink,
-                    submissionNote
-                })
-            });
-            const data = await res.json();
-            if (!res.ok || !data.success) {
-                setError(data.error || 'Could not submit this task. Please try again.');
-                return;
-            }
-            await fetchProfile(identifier, password);
-        } catch {
-            setError('Network error while submitting. Please try again.');
-        } finally {
-            setBusyTaskId(null);
-        }
-    }, [identifier, password, fetchProfile]);
-
-    const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
+            const candidateTarget = profile?.candidate?.rollNo || profile?.candidate?.email || identifier;
             const res = await fetch(apiUrl('/api/workshop/attendance/profile/change-password'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

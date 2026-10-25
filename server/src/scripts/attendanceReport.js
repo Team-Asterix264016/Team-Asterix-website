@@ -38,7 +38,11 @@ for (const r of regs) {
   const { perTrack } = summarizeAttendance({ sessions, attendanceRecords:[...seen.values()], tracksEnrolled: tracks });
   const all = Object.values(perTrack);
   const allPass = all.every(t=>t.isEligibleForCertificate);
-  allPass ? buckets.pass++ : buckets.fail++;
+  if (allPass) {
+    buckets.pass++;
+  } else {
+    buckets.fail++;
+  }
   for (const t of all) { if(!t.isEligibleForCertificate) perTrackFail[t.track]++; const b=Math.floor(t.attendancePercentage/10)*10; dist[b]=(dist[b]||0)+1; }
   if (!allPass) rows.push(`${r.rollNo} ${r.name.slice(0,22).padEnd(22)} ${all.map(t=>`${t.track}:${t.totalPresent}/${t.totalConducted}=${t.attendancePercentage}%`).join('  ')}`);
 }
