@@ -1,0 +1,13 @@
+import dotenv from 'dotenv'; import path from 'path'; import { fileURLToPath } from 'url'; import mongoose from 'mongoose';
+import WorkshopRegistration from '../models/WorkshopRegistration.js'; import { resolveMongoDbName } from '../db/mongodb.js';
+const __dirname = path.dirname(fileURLToPath(import.meta.url)); dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const uri = process.env.MONGODB_URI; await mongoose.connect(uri, { dbName: resolveMongoDbName(uri), serverSelectionTimeoutMS: 15000, tlsAllowInvalidCertificates: true });
+const years = await WorkshopRegistration.distinct('year');
+console.log('year values in use:', JSON.stringify(years));
+const depts = await WorkshopRegistration.distinct('department');
+console.log('dept sample:', JSON.stringify(depts.filter(d=>/electr/i.test(d))));
+const combo = await WorkshopRegistration.findOne({ package: 'combo', status: 'paid' }, 'year department tracksEnrolled razorpayPaymentId razorpayOrderId receiptNo currency').lean();
+console.log('combo sample:', JSON.stringify(combo));
+console.log('AST-WS-0030 exists?', !!(await WorkshopRegistration.findOne({ receiptNo: 'AST-WS-0030' }).lean()));
+console.log('_id 6abf32bf32d12f7846af38d5 exists?', !!(await WorkshopRegistration.findById('6abf32bf32d12f7846af38d5').lean().catch(()=>null)));
+await mongoose.disconnect();

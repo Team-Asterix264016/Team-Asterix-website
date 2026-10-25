@@ -4,10 +4,11 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
+import WorkshopSession from '../models/WorkshopSession.js';
+import WorkshopTask from '../models/WorkshopTask.js';
 import WorkshopResource from '../models/WorkshopResource.js';
 import SiteConfig from '../models/SiteConfig.js';
 import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../config/workshopPackages.js';
-import { sessionIsoDate } from '../config/sessionDates.js';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth.js';
 import {
     syncParticipantIdentity,
@@ -17,6 +18,13 @@ import {
     buildCandidateSearchConditions
 } from '../lib/participantIdentity.js';
 import { archiveDocuments, actorOf } from '../lib/recycleBin.js';
+import {
+    summarizeAttendance,
+    buildSessionIndex,
+    resolveSessionKey,
+    CERTIFICATE_THRESHOLD,
+    TASK_CREDIT_CAP
+} from '../lib/workshopSessions.js';
 
 const router = Router();
 
@@ -781,117 +789,120 @@ router.post('/profile', async (req, res) => {
             candidateOrConditions.push({ email: candidate.email.toLowerCase() });
         }
 
-        const [attendanceRecords, conductedSessions] = await Promise.all([
+        const [attendanceRecords, sessions, tasks] = await Promise.all([
             WorkshopAttendance.find({ $or: candidateOrConditions }).lean(),
-            WorkshopAttendance.aggregate([
-                { $match: { track: { $in: tracksEnrolled } } },
-                { $group: { _id: { track: '$track', date: '$sessionDate' } } }
-            ])
+            WorkshopSession.find({ track: { $in: tracksEnrolled } }).lean(),
+            WorkshopTask.find({ registrationId: candidate._id }).sort({ createdAt: 1 }).lean()
         ]);
 
-        const attendanceMap = new Map();
+        // The denominator comes from WorkshopSession, never from the attendance
+        // collection: a session nobody scanned into still has to count against
+        // the people who skipped it.
+        const { perTrack } = summarizeAttendance({ sessions, attendanceRecords, tracksEnrolled });
+
+        const sessionIndex = buildSessionIndex(sessions);
+        const attendanceByKey = new Map();
         attendanceRecords.forEach((att) => {
-            if (att.track && att.sessionDate) {
-                attendanceMap.set(`${att.track}|${att.sessionDate}`, att);
-            }
-            if (att.track && att.sessionId) {
-                attendanceMap.set(`${att.track}|${att.sessionId}`, att);
-            }
-            if (att.track && att.sessionNumber) {
-                attendanceMap.set(`${att.track}|s${att.sessionNumber}`, att);
-                attendanceMap.set(`${att.track}|${att.sessionNumber}`, att);
-            }
+            const key = resolveSessionKey(att, sessionIndex);
+            if (key && !attendanceByKey.has(key)) attendanceByKey.set(key, att);
         });
-        const conductedDates = new Set(conductedSessions.map(({ _id }) => `${_id.track}|${_id.date}`));
 
-        // Build session timeline for enrolled track(s)
-        const sessionTimeline = [];
-        let totalConducted = 0;
-        let totalPresent = 0;
-        const matchedAttKeys = new Set();
+        // One date-ordered timetable across tracks (combo students otherwise saw every
+        // software session before any powertrain one). Undated sessions sink to the end.
+        const sessionTimeline = sessions
+            .slice()
+            .sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'))
+            .map((session) => {
+                const trackConfig = tracks[session.track] || WORKSHOP_TRACKS[session.track] || {};
+                const scheduleItem = (trackConfig.schedule || [])
+                    .find((item) => item.id === session.scheduleId) || {};
+                const att = attendanceByKey.get(session.sessionKey);
 
-        Object.entries(tracks).forEach(([trackId, trackConfig]) => {
-            if (!Array.isArray(trackConfig.schedule)) return;
+                let status;
+                if (!session.countsForAttendance) status = 'OPTIONAL';
+                else if (att) status = 'PRESENT';
+                else if (session.status === 'conducted') status = 'ABSENT';
+                else if (session.status === 'cancelled') status = 'CANCELLED';
+                else status = 'UPCOMING';
 
-            trackConfig.schedule.forEach((sessionItem) => {
-                const isoDate = sessionIsoDate(sessionItem.date, trackConfig);
-                const dateKey = `${trackId}|${isoDate}`;
-                const idKey = `${trackId}|${sessionItem.id}`;
-                const numKey = `${trackId}|s${sessionItem.id}`;
-
-                const att = attendanceMap.get(idKey) || attendanceMap.get(numKey) || attendanceMap.get(dateKey);
-                const isHoliday = sessionItem.type === 'holiday';
-                // Catch-ups are optional knowledge-sharing sessions: shown, never counted or marked missed.
-                const isOptional = sessionItem.type === 'catchup';
-
-                let status = isOptional ? 'OPTIONAL' : 'UPCOMING';
-                let checkedInAt = null;
-
-                if (!isHoliday && att) {
-                    status = 'PRESENT';
-                    checkedInAt = att.checkedInAt;
-                    if (att._id) matchedAttKeys.add(String(att._id));
-                    if (!isOptional) {
-                        totalPresent += 1;
-                        totalConducted += 1;
-                    }
-                } else if (!isHoliday && !isOptional && conductedDates.has(dateKey)) {
-                    status = 'ABSENT';
-                    totalConducted += 1;
-                }
-
-                sessionTimeline.push({
-                    id: sessionItem.id,
-                    track: trackId,
-                    trackName: trackConfig.name,
-                    label: sessionItem.label,
-                    days: sessionItem.days,
-                    date: sessionItem.date,
-                    title: sessionItem.title,
-                    instructor: sessionItem.instructor || '-',
-                    venue: sessionItem.venue || trackConfig.venue,
-                    type: sessionItem.type || 'lecture',
-                    project: sessionItem.project || null,
-                    subject: sessionItem.subject || null,
+                return {
+                    id: session.scheduleId,
+                    sessionKey: session.sessionKey,
+                    track: session.track,
+                    trackName: trackConfig.name || String(session.track).toUpperCase(),
+                    label: session.label,
+                    days: scheduleItem.days || '',
+                    date: scheduleItem.date || session.date,
+                    title: session.title,
+                    instructor: scheduleItem.instructor || '-',
+                    venue: scheduleItem.venue || trackConfig.venue || 'Workshop Lab',
+                    type: session.type,
+                    project: scheduleItem.project || null,
+                    subject: scheduleItem.subject || null,
+                    countsForAttendance: session.countsForAttendance,
                     status,
-                    checkedInAt,
-                    isoDate
-                });
+                    checkedInAt: att ? att.checkedInAt : null,
+                    isoDate: session.date
+                };
             });
-        });
 
-        // Also append any extra session check-ins candidate completed that fall outside static schedule
-        attendanceRecords.forEach((att) => {
-            if (att._id && !matchedAttKeys.has(String(att._id))) {
-                totalPresent += 1;
-                totalConducted += 1;
-                const trackConfig = tracks[att.track] || WORKSHOP_TRACKS[att.track] || {};
-                sessionTimeline.push({
-                    id: att.sessionNumber || att.sessionId,
-                    track: att.track,
-                    trackName: trackConfig.name || (att.track || 'workshop').toUpperCase(),
-                    label: `Session ${att.sessionNumber || ''}`,
-                    days: '',
-                    date: att.sessionDate,
-                    title: att.sessionTopic || `${(att.track || 'workshop').toUpperCase()} Workshop Session`,
-                    instructor: '-',
-                    venue: trackConfig.venue || 'Workshop Lab',
-                    type: 'lecture',
-                    project: null,
-                    subject: null,
-                    status: 'PRESENT',
-                    checkedInAt: att.checkedInAt,
-                    isoDate: att.sessionDate
-                });
+        // Sessions still to come, so the profile can show a route to the threshold
+        // instead of a verdict the candidate cannot act on mid-workshop. A session
+        // still marked "scheduled" whose date has passed is awaiting an admin
+        // ruling, not attendable, so it must not inflate what is still reachable.
+        const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+        const trackSummaries = tracksEnrolled.map((trackId) => {
+            const summary = perTrack[trackId];
+            const remaining = sessions.filter((session) => session.track === trackId
+                && session.countsForAttendance
+                && session.status === 'scheduled'
+                && (!session.date || session.date >= todayIso)).length;
+            const finalTotal = summary.totalConducted + remaining;
+            const needed = finalTotal > 0
+                ? Math.ceil((CERTIFICATE_THRESHOLD * finalTotal) / 100) - summary.totalPresent
+                : 0;
+            const stillNeeded = Math.min(Math.max(needed, 0), remaining + 1);
+            const canStillQualify = stillNeeded <= remaining;
+
+            /* secured   - the threshold holds even if every remaining session is missed
+               on-track  - at or above the threshold today
+               at-risk   - below it, but still reachable by attending
+               alternate - attendance alone can no longer reach it, so the
+                           certificate has to be earned through workshop tasks */
+            let outlook;
+            if (finalTotal > 0 && summary.totalPresent >= Math.ceil((CERTIFICATE_THRESHOLD * finalTotal) / 100)) {
+                outlook = 'secured';
+            } else if (!canStillQualify) {
+                outlook = 'alternate';
+            } else if (summary.isEligibleForCertificate) {
+                outlook = 'on-track';
+            } else {
+                outlook = 'at-risk';
             }
+
+            return {
+                ...summary,
+                trackName: tracks[trackId]?.name || String(trackId).toUpperCase(),
+                remaining,
+                maxPossiblePercentage: finalTotal > 0
+                    ? Math.round(((summary.totalPresent + remaining) / finalTotal) * 100)
+                    : 0,
+                // stillNeeded stays server-side: telling a candidate below the
+                // threshold that N of the remaining sessions would be "enough"
+                // invites them to skip the rest.
+                canStillQualify,
+                outlook
+            };
         });
 
-        // One date-ordered timetable across tracks (combo students otherwise saw every software
-        // session before any powertrain one). Undated sessions sink to the end.
-        sessionTimeline.sort((a, b) => (a.isoDate || '9999').localeCompare(b.isoDate || '9999'));
-
-        const attendancePercentage = totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : 100;
-        const isEligibleForCertificate = attendancePercentage >= 75;
+        const totalConducted = trackSummaries.reduce((sum, t) => sum + t.totalConducted, 0);
+        const totalPresent = trackSummaries.reduce((sum, t) => sum + t.totalPresent, 0);
+        const attendancePercentage = totalConducted > 0
+            ? Math.round((totalPresent / totalConducted) * 100)
+            : 0;
+        // Combo candidates earn a certificate per track, so each track is judged alone.
+        const isEligibleForCertificate = trackSummaries.length > 0
+            && trackSummaries.every((t) => t.isEligibleForCertificate);
 
         // Notes are whatever the workshop team has published from the admin portal; nothing is built in.
         const resources = await WorkshopResource.find({
@@ -918,15 +929,41 @@ router.post('/profile', async (req, res) => {
                 paidAt: candidate.paidAt
             },
             attendanceSummary: {
+                threshold: CERTIFICATE_THRESHOLD,
                 totalConducted,
                 totalPresent,
                 attendancePercentage,
                 isEligibleForCertificate,
+                perTrack: trackSummaries,
+                // True when attendance alone can no longer reach the threshold on
+                // some track. Those candidates keep a route to the certificate
+                // through tasks and activities, so the profile says so plainly
+                // rather than reading as a dismissal.
+                needsAlternatePath: trackSummaries.some((t) => t.outlook === 'alternate'),
                 certificateMessage: isEligibleForCertificate
-                    ? '✓ Certificate Eligible (≥ 75% attendance maintained)'
-                    : `⚠️ ${75 - attendancePercentage}% away from 75% certificate threshold`
+                    ? `On track for your certificate — ${CERTIFICATE_THRESHOLD}% attendance maintained.`
+                    : `Below the ${CERTIFICATE_THRESHOLD}% attendance mark. Your track breakdown below shows exactly what is left.`
             },
             sessionTimeline,
+            // Make-up tasks the team has assigned, with the review outcome so the
+            // candidate sees exactly where each one stands.
+            makeupTasks: tasks.map((task) => ({
+                id: String(task._id),
+                track: task.track,
+                sessionKey: task.sessionKey,
+                sessionTitle: task.sessionTitle,
+                sessionDate: task.sessionDate,
+                title: task.title,
+                brief: task.brief,
+                individualSeed: task.individualSeed,
+                dueAt: task.dueAt,
+                status: task.status,
+                driveLink: task.driveLink,
+                submittedAt: task.submittedAt,
+                reviewNote: task.reviewNote,
+                reviewedAt: task.reviewedAt
+            })),
+            taskCreditCap: TASK_CREDIT_CAP,
             trackInfo: tracks,
             resources
         });
@@ -1229,6 +1266,186 @@ function parseResourceBody(body) {
         }
     };
 }
+
+/**
+ * Shared cap check for crediting a make-up task.
+ * A credit is refused once the candidate holds TASK_CREDIT_CAP approved tasks on
+ * that track, or once attendance has already reached the threshold.
+ */
+async function taskCreditBlocker(task) {
+    const approved = await WorkshopTask.countDocuments({
+        registrationId: task.registrationId,
+        track: task.track,
+        status: 'approved'
+    });
+    if (approved >= TASK_CREDIT_CAP) {
+        return `Cap reached: ${TASK_CREDIT_CAP} sessions already recovered by task on ${task.track}.`;
+    }
+
+    const [sessions, attendanceRecords] = await Promise.all([
+        WorkshopSession.find({ track: task.track }).lean(),
+        WorkshopAttendance.find({ registrationId: task.registrationId }).lean()
+    ]);
+    const { perTrack } = summarizeAttendance({
+        sessions,
+        attendanceRecords,
+        tracksEnrolled: [task.track]
+    });
+    const summary = perTrack[task.track];
+    if (summary && summary.totalConducted > 0 && summary.attendancePercentage >= CERTIFICATE_THRESHOLD) {
+        return `Already at ${summary.attendancePercentage}% on ${task.track}; the task route stops at ${CERTIFICATE_THRESHOLD}%.`;
+    }
+    return null;
+}
+
+/**
+ * POST /api/workshop/attendance/tasks/submit
+ * Public endpoint: candidate submits proof of work for an assigned task.
+ */
+router.post('/tasks/submit', async (req, res) => {
+    try {
+        const { identifier, password, taskId, driveLink, submissionNote } = req.body || {};
+        if (!taskId || !driveLink) {
+            return res.status(400).json({ error: 'Task and a proof-of-work link are required.' });
+        }
+        if (!/^https?:\/\//i.test(String(driveLink).trim())) {
+            return res.status(400).json({ error: 'The proof-of-work link must start with http:// or https://' });
+        }
+
+        const candidate = await WorkshopRegistration.findOne({
+            $or: buildCandidateSearchConditions(String(identifier || '').trim()),
+            status: 'paid'
+        }).sort({ paidAt: -1, createdAt: -1 }).lean();
+        if (!candidate || !verifyCandidatePassword(candidate, String(password || '').trim()).isCorrect) {
+            return res.status(401).json({ error: 'Sign in again to submit this task.' });
+        }
+
+        const task = await WorkshopTask.findOne({ _id: taskId, registrationId: candidate._id });
+        if (!task) return res.status(404).json({ error: 'Task not found for this candidate.' });
+        if (task.status === 'approved') {
+            return res.status(409).json({ error: 'This task is already approved.' });
+        }
+
+        task.driveLink = String(driveLink).trim();
+        task.submissionNote = String(submissionNote || '').trim();
+        task.submittedAt = new Date();
+        task.status = 'submitted';
+        // A resubmission clears the previous rejection so review starts clean.
+        task.reviewNote = '';
+        task.reviewedBy = '';
+        task.reviewedAt = null;
+        await task.save();
+
+        return res.json({ success: true, message: 'Submitted. The workshop team will review it.', task });
+    } catch (err) {
+        console.error('Error submitting workshop task:', err);
+        return res.status(500).json({ error: 'Failed to submit this task. Please try again.' });
+    }
+});
+
+/**
+ * GET /api/workshop/attendance/tasks
+ * Admin only: lists tasks, newest first, optionally filtered by status or track.
+ */
+router.get('/tasks', authenticateToken, async (req, res) => {
+    try {
+        const filter = {};
+        if (req.query.status) filter.status = String(req.query.status).trim();
+        if (req.query.track) filter.track = String(req.query.track).toLowerCase().trim();
+        const tasks = await WorkshopTask.find(filter).sort({ submittedAt: -1, createdAt: -1 }).lean();
+        return res.json({ ok: true, total: tasks.length, tasks });
+    } catch (err) {
+        console.error('Error listing workshop tasks:', err);
+        return res.status(500).json({ error: 'Failed to list tasks' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/tasks/:id/review
+ * Admin only: approve or reject a submission. Approving writes the attendance
+ * row that credits the missed session.
+ */
+router.post('/tasks/:id/review', authenticateToken, async (req, res) => {
+    try {
+        const { decision, reviewNote } = req.body || {};
+        if (!['approve', 'reject'].includes(decision)) {
+            return res.status(400).json({ error: "decision must be 'approve' or 'reject'." });
+        }
+
+        const task = await WorkshopTask.findById(req.params.id);
+        if (!task) return res.status(404).json({ error: 'Task not found.' });
+        if (task.status === 'approved') {
+            return res.status(409).json({ error: 'This task is already approved.' });
+        }
+
+        const reviewer = actorOf(req);
+
+        if (decision === 'reject') {
+            task.status = 'rejected';
+            task.reviewedBy = reviewer;
+            task.reviewNote = String(reviewNote || '').trim();
+            task.reviewedAt = new Date();
+            await task.save();
+            return res.json({ success: true, message: 'Task rejected. The candidate can resubmit.', task });
+        }
+
+        const blocker = await taskCreditBlocker(task);
+        if (blocker) return res.status(403).json({ error: blocker });
+
+        const session = await WorkshopSession.findOne({ sessionKey: task.sessionKey }).lean();
+        if (!session) return res.status(404).json({ error: `No session ${task.sessionKey}.` });
+
+        const registration = await WorkshopRegistration.findById(task.registrationId).lean();
+        if (!registration) return res.status(404).json({ error: 'Registration not found.' });
+
+        const existing = await WorkshopAttendance.findOne({
+            sessionKey: task.sessionKey,
+            registrationId: task.registrationId
+        }).lean();
+
+        let credited = existing;
+        if (!existing) {
+            credited = await WorkshopAttendance.create({
+                registrationId: registration._id,
+                rollNo: String(registration.rollNo || '').toUpperCase(),
+                email: String(registration.email || '').toLowerCase(),
+                name: registration.name,
+                department: registration.department,
+                year: registration.year,
+                package: registration.package,
+                track: task.track,
+                sessionId: `${session.track}-${session.scheduleId}-${session.date}`,
+                sessionKey: session.sessionKey,
+                sessionNumber: session.sessionNumber || 0,
+                sessionDate: session.date,
+                sessionTopic: session.title,
+                deviceId: `task_${task._id}`,
+                ipAddress: '',
+                userAgent: 'Make-up Task Credit',
+                verifiedBy: 'task-credit',
+                markedBy: reviewer,
+                markedReason: `Make-up task approved: ${task.title}`,
+                checkedInAt: new Date()
+            });
+        }
+
+        task.status = 'approved';
+        task.reviewedBy = reviewer;
+        task.reviewNote = String(reviewNote || '').trim();
+        task.reviewedAt = new Date();
+        task.creditedAttendanceId = credited._id;
+        await task.save();
+
+        return res.json({
+            success: true,
+            message: `Approved. ${registration.name} is credited for ${session.title || task.sessionKey}.`,
+            task
+        });
+    } catch (err) {
+        console.error('Error reviewing workshop task:', err);
+        return res.status(500).json({ error: 'Failed to review this task.' });
+    }
+});
 
 /**
  * /api/workshop/attendance/resources
