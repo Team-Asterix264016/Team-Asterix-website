@@ -231,11 +231,18 @@ function MakeupTasksCard({ tasks, cap, onSubmit, busyTaskId }) {
                                 {task.track} · session of {task.sessionDate}
                             </span>
 
+                            {/* Briefs are handed out by the workshop team, not generated here,
+                                so an empty one is the normal case rather than missing data. */}
                             {task.brief ? (
                                 <pre className="mt-2 overflow-x-auto border-2 border-slate-300 bg-white p-2 font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-slate-800">
                                     {task.brief}
                                 </pre>
-                            ) : null}
+                            ) : (
+                                <p className="mt-2 border-2 border-dashed border-slate-300 bg-white p-2 font-mono text-[11px] leading-relaxed font-bold text-slate-600">
+                                    The workshop team will give you this task directly. Once you have done
+                                    it, submit your proof of work below.
+                                </p>
+                            )}
 
                             {task.reviewNote ? (
                                 <p className="mt-2 border-l-4 border-slate-900 bg-amber-50 p-2 text-[12px] font-bold text-slate-800">

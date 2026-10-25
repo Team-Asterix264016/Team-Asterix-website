@@ -23,10 +23,10 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
  * Usage: node src/scripts/generateMakeupTasks.js [--apply]
  *
  * One task per missed session, newest misses first, at most TASK_CREDIT_CAP per
- * track. The brief is a draft built from the session title and a per-candidate
- * number derived from the roll number, so two candidates making up the same
- * session cannot hand in the same file. Whoever taught the session should edit
- * the brief afterwards; the generator cannot know what the exercise should be.
+ * track. The task is created with no brief: the generator cannot know what the
+ * exercise for a session should be, and the workshop team hands the work out
+ * themselves. The row exists so the candidate has somewhere to submit proof and
+ * so approving it credits the right session.
  *
  * Without --apply nothing is written.
  */
@@ -45,28 +45,6 @@ await mongoose.connect(uri, {
 });
 
 const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-
-// Two digits from the roll number, so each candidate works with their own value.
-function seedOf(rollNo) {
-    const digits = String(rollNo || '').replace(/\D/g, '');
-    return digits.slice(-2) || '00';
-}
-
-function draftBrief(session, seed) {
-    return [
-        `You missed "${session.title || session.label}" on ${session.date}.`,
-        '',
-        `Your working value for this task is ${seed}, taken from your roll number.`,
-        'Use it wherever the exercise asks for a parameter, so your submission is your own.',
-        '',
-        'Submit a single Drive link, shared so anyone with the link can view, containing:',
-        '  1. Your work for this session (code, simulation file, schematic or notes).',
-        '  2. A screenshot showing it running or working.',
-        '  3. A short write-up, about 300 words, explaining what you did and what you learned.',
-        '',
-        'The workshop team may ask you to walk through your submission in person.'
-    ].join('\n');
-}
 
 const sessions = await WorkshopSession.find({}).lean();
 const sessionByKey = new Map(sessions.map((session) => [session.sessionKey, session]));
@@ -121,7 +99,6 @@ for (const reg of regs) {
             .slice(0, slots);
 
         for (const session of missed) {
-            const seed = seedOf(reg.rollNo);
             toCreate.push({
                 registrationId: reg._id,
                 rollNo: String(reg.rollNo || '').toUpperCase(),
@@ -132,8 +109,8 @@ for (const reg of regs) {
                 sessionTitle: session.title || session.label,
                 sessionDate: session.date,
                 title: `Make-up: ${session.title || session.label}`,
-                brief: draftBrief(session, seed),
-                individualSeed: seed,
+                // The workshop team gives out the actual exercise themselves.
+                brief: '',
                 status: 'assigned',
                 assignedBy: 'script:generateMakeupTasks'
             });
@@ -155,5 +132,5 @@ if (!apply) {
 
 if (toCreate.length > 0) await WorkshopTask.insertMany(toCreate, { ordered: false });
 console.log(`Created ${toCreate.length}. Tasks now: ${await WorkshopTask.countDocuments()}`);
-console.log('Edit each brief with the real exercise before telling candidates to start.');
+console.log('Tasks carry no brief. Give each candidate their exercise directly.');
 await mongoose.disconnect();

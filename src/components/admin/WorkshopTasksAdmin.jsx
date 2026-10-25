@@ -79,9 +79,9 @@ export default function WorkshopTasksAdmin({ showStatus }) {
                     🛠️ Make-up Tasks ({tasks.length})
                 </h2>
                 <p className="mt-1 font-mono text-[11px] font-bold text-slate-600">
-                    Approving a task credits the session it covers. Check the proof of work before
-                    you do: the value in the brief is derived from the candidate&apos;s roll number,
-                    so a submission carrying someone else&apos;s number is a forwarded one.
+                    Approving a task credits the session it covers, so check the proof of work first.
+                    Tasks carry no brief: the exercise is handed out by the team, and the candidate
+                    only sees the session it makes up.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1">
                     {FILTERS.map((value) => (
@@ -117,9 +117,11 @@ export default function WorkshopTasksAdmin({ showStatus }) {
                         </span>
                     </div>
 
-                    <span className="mt-2 inline-block border-2 border-slate-900 bg-violet-200 px-2 py-0.5 font-mono text-[10px] font-black uppercase">
-                        Their value: {task.individualSeed || '—'}
-                    </span>
+                    {task.individualSeed ? (
+                        <span className="mt-2 inline-block border-2 border-slate-900 bg-violet-200 px-2 py-0.5 font-mono text-[10px] font-black uppercase">
+                            Their value: {task.individualSeed}
+                        </span>
+                    ) : null}
 
                     {task.driveLink ? (
                         <p className="mt-2 font-mono text-[11px] font-bold">
