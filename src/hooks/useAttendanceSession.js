@@ -20,11 +20,16 @@ export function useAttendanceSession(initialTrack = 'software') {
     const [sessionDate, setSessionDateState] = useState(defaultSession.isoDate);
     const [sessionTopic, setSessionTopicState] = useState(defaultSession.title);
 
+    // Combo keeps the software schedule on screen purely to pick the date.
     const scheduleList = useMemo(() => {
-        return getTrackSchedule(track, siteData);
+        return getTrackSchedule(track === 'combo' ? 'software' : track, siteData);
     }, [track, siteData]);
 
-    const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
+    /* A combo session is one room holding both tracks, so it has no per-track
+       session number: the server resolves it by date instead. */
+    const sessionId = track === 'combo'
+        ? `combo-joint-${sessionDate}`
+        : `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
     // Selected session object from schedule if current number/date matches
     const currentScheduleMatch = useMemo(() => {
@@ -40,7 +45,7 @@ export function useAttendanceSession(initialTrack = 'software') {
     const changeTrack = useCallback(
         (newTrack) => {
             setTrackState(newTrack);
-            const def = getDefaultSessionForTrack(newTrack, siteData);
+            const def = getDefaultSessionForTrack(newTrack === 'combo' ? 'software' : newTrack, siteData);
             setSessionNumberState(def.sessionNumber);
             setSessionDateState(def.isoDate);
             setSessionTopicState(def.title);

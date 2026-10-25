@@ -85,11 +85,17 @@ router.get('/session-token', authenticateToken, async (req, res) => {
         const sessionDate = String(req.query.sessionDate || new Date().toISOString().slice(0, 10)).trim();
         const sessionTopic = String(req.query.sessionTopic || '').trim();
 
-        if (!['software', 'powertrain'].includes(track)) {
-            return res.status(400).json({ error: "Invalid track. Must be 'software' or 'powertrain'." });
+        if (!['software', 'powertrain', 'combo'].includes(track)) {
+            return res.status(400).json({ error: "Invalid track. Must be 'software', 'powertrain' or 'combo'." });
         }
 
-        const sessionId = `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
+        /* Industry expert sessions are one room holding both tracks, but the
+           schedule lists them once per track. A combo QR covers that day's
+           session on every track the scanner is enrolled in, so a combo
+           candidate scans once instead of hunting down a second code. */
+        const sessionId = track === 'combo'
+            ? `combo-joint-${sessionDate}`
+            : `${track}-s${String(sessionNumber).padStart(2, '0')}-${sessionDate}`;
 
         const tokenTimeVal = 'static';
         const signature = signToken(track, sessionId, tokenTimeVal);
@@ -181,6 +187,119 @@ router.post('/checkin', async (req, res) => {
             return res.status(403).json({
                 error: `Your registration is currently marked as "${registration.status}". Attendance can only be recorded for confirmed paid candidates.`,
                 status: registration.status
+            });
+        }
+
+        /* 3b. Joint session: credit that date's session on every track this
+           candidate is enrolled in. Each row keeps its own track-specific
+           sessionId so the {rollNo, sessionId} and {deviceId, sessionId}
+           indexes still guard one row per person per session. */
+        if (track === 'combo') {
+            const jointDate = sessionId.replace('combo-joint-', '');
+            const enrolled = Array.isArray(registration.tracksEnrolled) && registration.tracksEnrolled.length > 0
+                ? registration.tracksEnrolled
+                : (registration.package === 'combo'
+                    ? ['software', 'powertrain']
+                    : [registration.package].filter(Boolean));
+
+            const jointSessions = await WorkshopSession.find({
+                track: { $in: enrolled },
+                date: jointDate,
+                countsForAttendance: true
+            }).lean();
+
+            if (jointSessions.length === 0) {
+                return res.status(404).json({
+                    error: `No session on ${jointDate} for your track. Check with the workshop team.`
+                });
+            }
+
+            const credited = [];
+            const already = [];
+            for (const jointSession of jointSessions) {
+                const rowSessionId = `${jointSession.track}-${jointSession.scheduleId}-${jointSession.date}`;
+                const existing = await WorkshopAttendance.findOne({
+                    $or: [
+                        { sessionKey: jointSession.sessionKey, registrationId: registration._id },
+                        { sessionId: rowSessionId, rollNo: registration.rollNo }
+                    ]
+                });
+                if (existing) {
+                    already.push(jointSession.title || jointSession.sessionKey);
+                    continue;
+                }
+
+                // Same anti-proxy rule as a single-track scan, applied per session.
+                const proxy = await WorkshopAttendance.findOne({
+                    sessionId: rowSessionId,
+                    deviceId: cleanDeviceId,
+                    registrationId: { $ne: registration._id }
+                });
+                if (proxy) {
+                    return res.status(403).json({
+                        error: 'Proxy attendance blocked. This device has already recorded attendance for another candidate for this session.',
+                        isProxy: true
+                    });
+                }
+
+                try {
+                    await WorkshopAttendance.create({
+                        registrationId: registration._id,
+                        rollNo: registration.rollNo || cleanRoll.toUpperCase(),
+                        email: registration.email || cleanEmail,
+                        name: registration.name,
+                        department: registration.department,
+                        year: registration.year,
+                        package: registration.package,
+                        track: jointSession.track,
+                        sessionId: rowSessionId,
+                        sessionKey: jointSession.sessionKey,
+                        sessionNumber: jointSession.sessionNumber || 0,
+                        sessionDate: jointSession.date,
+                        sessionTopic: jointSession.title,
+                        deviceId: cleanDeviceId,
+                        ipAddress: Array.isArray(req.headers['x-forwarded-for'])
+                            ? req.headers['x-forwarded-for'][0]
+                            : (req.headers['x-forwarded-for'] || req.socket.remoteAddress || ''),
+                        userAgent: req.headers['user-agent'] || '',
+                        verifiedBy: 'qr-scan',
+                        checkedInAt: new Date()
+                    });
+                    credited.push(jointSession.title || jointSession.sessionKey);
+                } catch (createErr) {
+                    if (createErr.code === 11000) already.push(jointSession.title || jointSession.sessionKey);
+                    else throw createErr;
+                }
+            }
+
+            if (credited.length === 0) {
+                return res.json({
+                    success: true,
+                    alreadyRecorded: true,
+                    message: 'Attendance was already recorded for this session.',
+                    tracksCredited: [],
+                    tracksAlreadyRecorded: already
+                });
+            }
+
+            res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
+            return res.status(201).json({
+                success: true,
+                message: credited.length > 1
+                    ? `Attendance confirmed for both your tracks. One scan was enough.`
+                    : 'Attendance confirmed successfully!',
+                tracksCredited: credited,
+                tracksAlreadyRecorded: already,
+                attendance: {
+                    name: registration.name,
+                    rollNo: registration.rollNo,
+                    track: 'combo',
+                    department: registration.department,
+                    year: registration.year,
+                    package: registration.package,
+                    receiptNo: registration.receiptNo,
+                    checkedInAt: new Date()
+                }
             });
         }
 

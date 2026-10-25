@@ -9,6 +9,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         if (typeof window !== 'undefined' && window.location.hash) {
             if (window.location.hash.includes('track=powertrain')) return 'powertrain';
             if (window.location.hash.includes('track=software')) return 'software';
+            if (window.location.hash.includes('track=combo')) return 'combo';
         }
         return initialTrack;
     })();
@@ -247,6 +248,20 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                                 >
                                     Powertrain
                                 </button>
+                                {/* One code for industry expert sessions, where both tracks
+                                    sit in the same room and should not have to scan twice. */}
+                                <button
+                                    type="button"
+                                    onClick={() => setTrack('combo')}
+                                    title="Joint session: credits every track the scanner is enrolled in"
+                                    className={`cursor-pointer px-2.5 py-1 transition-colors ${
+                                        track === 'combo'
+                                            ? 'shadow-brutal-1-white bg-violet-400 text-slate-950'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
+                                >
+                                    Combo
+                                </button>
                             </div>
 
                             {/* Schedule Selector */}
@@ -312,13 +327,17 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                             className={`border-2 border-slate-900 px-2.5 py-1 text-center text-xs font-black tracking-wider uppercase ${
                                 track === 'software'
                                     ? 'bg-sky-400 text-slate-950'
-                                    : 'bg-amber-400 text-slate-950'
+                                    : track === 'combo'
+                                      ? 'bg-violet-400 text-slate-950'
+                                      : 'bg-amber-400 text-slate-950'
                             }`}
                         >
                             {track === 'software'
                                 ? 'Software & Perception Workshop'
-                                : 'Electronics & Powertrain Workshop'}{' '}
-                            · Session {String(sessionNumber).padStart(2, '0')}
+                                : track === 'combo'
+                                  ? 'Joint Session · Both Tracks · Scan Once'
+                                  : 'Electronics & Powertrain Workshop'}
+                            {track === 'combo' ? '' : ` · Session ${String(sessionNumber).padStart(2, '0')}`}
                         </div>
                     </div>
 
