@@ -56,6 +56,9 @@ function useFetchJson(path) {
     return [state, reload];
 }
 
+// Filter pills shown before the "Show more" toggle (selected pill is always shown).
+const VISIBLE_TAG_COUNT = 8;
+
 const SIDE_TAGS = [
     { label: 'BUILDS', value: 'Builds', match: /build|chassis|suspension|cad|hardware|fab/i },
     { label: 'TECHNOLOGY', value: 'Technology', match: /tech|autonom|telemetry|ai|sensor|software|elec/i },
@@ -69,6 +72,7 @@ export default function CommunityPage({ onBack }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [search, setSearch] = useState('');
+    const [showAllTags, setShowAllTags] = useState(false);
     const searchInputRef = useRef(null);
     const heroTitleRef = useRef(null);
     const [scrolledPastTitle, setScrolledPastTitle] = useState(false);
@@ -125,6 +129,14 @@ export default function CommunityPage({ onBack }) {
         );
         return [...base, ...extras];
     }, [posts]);
+
+    const visibleCategories = useMemo(() => {
+        if (showAllTags || categories.length <= VISIBLE_TAG_COUNT) return categories;
+        const head = categories.slice(0, VISIBLE_TAG_COUNT);
+        const selected = categories.find((c) => c.toLowerCase() === selectedCategory.toLowerCase());
+        // Keep an active tag visible even when it sits in the collapsed part.
+        return selected && !head.includes(selected) ? [...head, selected] : head;
+    }, [categories, showAllTags, selectedCategory]);
 
     const filtered = useMemo(() => {
         return posts.filter((p) => {
@@ -568,7 +580,7 @@ export default function CommunityPage({ onBack }) {
                             <div className="mb-10 flex flex-col gap-4 border-b-2 border-black pb-6 sm:flex-row sm:items-center sm:justify-between">
                                 {/* Categories Filter Pills */}
                                 <div className="flex flex-wrap gap-2">
-                                    {categories.map((cat) => (
+                                    {visibleCategories.map((cat) => (
                                         <button
                                             key={cat}
                                             type="button"
@@ -582,6 +594,18 @@ export default function CommunityPage({ onBack }) {
                                             {cat}
                                         </button>
                                     ))}
+                                    {categories.length > VISIBLE_TAG_COUNT && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAllTags((v) => !v)}
+                                            aria-expanded={showAllTags}
+                                            className="press cursor-pointer border-2 border-dashed border-black bg-transparent px-3.5 py-1.5 font-mono text-xs font-black uppercase text-slate-800 transition-colors hover:bg-slate-100 hover:text-black"
+                                        >
+                                            {showAllTags
+                                                ? 'Show less −'
+                                                : `Show more +${categories.length - visibleCategories.length}`}
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Search Bar */}

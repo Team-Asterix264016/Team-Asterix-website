@@ -1,101 +1,80 @@
-# Team Asterix — Autonomous Mobility & Engineering Portal
+# Team Asterix
 
-Official portal for **Team Asterix**, our institution's autonomous off-road engineering and mobility team. Built with React + Vite on the front end, Express + MongoDB on the back end, and deployed on Vercel.
+**Autonomous off-road engineering, built in the open.**
 
-Live: https://asterix-website.vercel.app
+Team Asterix is a student engineering team building an autonomous off-road vehicle for SAEINDIA a-BAJA. We design, build, test, and race it ourselves, and we share what we learn along the way.
 
----
-
-## Key Features & Portal Modules
-
-- **Interactive 3D Intro & WebGL Scene**: Smooth canvas scroll-scrub sequence transitioning seamlessly into a procedural three.js 3D vehicle canvas (`Car3DCanvas`).
-- **Autonomous Mobility R&D Showcase**: Full showcase of core subsystems (Software & Perception, Powertrain, Mechanical, Leads) with specifications, team galleries, and automated badge generation (`badgeImage.js`).
-- **Workshop Engine & Projector Portal**:
-  - **Live Attendance & Projector View**: Dynamic 12-second cycling QR code display (`WorkshopAttendanceProjector.jsx`) with real-time SSE check-ins and live statistics.
-  - **Project Submissions**: Integrated submission portal for workshop participants with track filtering, project links, and admin review (`WorkshopProjectSubmissionsAdmin.jsx`).
-  - **Analytics & Rush Insights**: Comprehensive breakdown of registrations by department, course, package tier, peak dates, and hourly rush analytics (`WorkshopAnalyticsGraphs.jsx`).
-- **Live MCQ Quiz Engine**:
-  - **Quiz Runner**: Full exam interface (`QuizRunner.jsx`) featuring anti-cheat draft autosave, timed auto-submission, gatekeeper validation, and result lookup.
-  - **Quiz Management**: Admin suite (`QuizAdmin.jsx`) for scheduling quizzes, managing questions, configuring passing thresholds, and releasing scorecards.
-- **Admin Control Center**: Unified brutalist admin dashboard (`AdminDashboard.jsx`) for managing site content, team members, sponsorship tiers, workshop registrations, attendance, project submissions, and quiz deployments.
+**[asterix-website.vercel.app](https://asterix-website.vercel.app)**
 
 ---
 
-## Running locally
+## Who We Are
 
-```bash
-npm install
-npm run dev          # client on :5173 and server on :5000 concurrently
-```
+We are students working across three areas:
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Vite dev server and Express API side by side via `concurrently` |
-| `npm run dev:frontend` | Vite only — site runs with local state and bundled fallback defaults |
-| `npm run dev:backend` | Express API server only |
-| `npm run build` | Production build into `dist/` |
-| `npm run preview` | Serve production build locally |
-| `npm run lint` | Codebase static analysis via `oxlint` |
+- **Software & Perception**: ROS 2 Jazzy, LiDAR and dual-vision sensing, Stanley lateral control.
+- **Powertrain & Electrical**: CVT and a custom reduction gearbox, drive-by-wire, brake and throttle by wire.
+- **Mechanical**: chassis, suspension, and fabrication for a vehicle that survives the track.
 
-The backend uses `server/.env`; set `MONGODB_URI` and `JWT_SECRET`. See [BACKEND.md](./BACKEND.md) for detailed architecture and schema specifications.
+Our portal is where the team and community meet: the story of the build, the people behind it, and the workshops we run.
 
 ---
 
-## Engineering & Architecture
+## What You'll Find Here
 
-### Opening sequence
+### The Build
+Scroll through the vehicle from the rear to the front. It resolves into our team mark and then into a live 3D model you can orbit, inspect in wireframe, and explore subsystem by subsystem.
 
-The landing page opens on the vehicle's rear, scroll-scrubs it round to face the reader, resolves into the team mark, then dissolves into the live 3D scene.
+### The Community Blog
+Engineering write-ups from the team and friends of the team, covering builds, racing, technology, and the people involved.
 
-- Frames live in `public/intro/{desktop,mobile}` as WebP (80 per tier), generated via `scripts/extract-intro-frames.ps1`.
-- The canvas cross-fades frames bracketing a fractional scroll position, eased in a custom rAF loop for fluid rotation.
-- `IntroScrollSequence` paints frames to a fixed canvas synchronized with GSAP ScrollTrigger.
-- `src/lib/introHandoff.js` smoothly blends the final intro frame directly into `Car3DCanvas`.
+- Browse by tag or search across every write-up.
+- Read with callouts, live polls, and a listen mode for audio.
+- Clap, comment, and share posts with branded cards.
+- Subscribe to the newsletter. One click unsubscribes you.
 
-### Background 3D scene
+Want to write for us? Pitch a post to the team and we'll help you shape it.
 
-`Car3DCanvas` builds the vehicle procedurally in three.js and poses it along a keyframe track driven by scroll position with frame-rate independent damping.
+### Workshops
+We run hands-on workshops in ROS 2 autonomy, EV and powertrain, and mechanical design, including joint sessions across tracks.
 
-### Content & Data Layer
-
-`WebsiteDataContext` manages all editable site content. It synchronizes with the MongoDB Express API (`/api/site-data`), falling back to `localStorage` and bundled defaults when offline. Media uploads are stored via ImageKit CDN and server file storage.
-
----
-
-## Design System
-
-- **Palette**: Brutalist light mode. White and `slate-900` structural bases with `sky-400`/`amber-300` accents and hard offset shadows (`shadow-brutal-4`).
-- **Typography**: Plus Jakarta Sans for primary UI typography and Space Grotesk for technical telemetry labels.
-- **Micro-Interactions**: Custom `press` utility classes providing physical button tactile feedback into offset shadows.
-- **Reduced Motion**: Respects `prefers-reduced-motion` to halt ambient loops and WebGL idle animations for accessibility.
+- Check in with a QR code scan.
+- Track your attendance and certificate eligibility from your own profile.
+- Catch up on a missed session with a make-up task.
+- Take live quizzes with a real-time leaderboard.
+- Submit your project for feedback from mentors.
 
 ---
 
-## Deployment & CI/CD
+## Get Involved
 
-- **Production Deployment**: Vercel automatically deploys pushes to `main`.
-- **Automated CI/CD**: GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request:
-  - **Frontend Job**: `npx oxlint` (correctness checks) and `npm run build` static bundle verification.
-  - **Backend Job**: Syntax parsing (`node --check`), MongoDB schema bootstrap, and route import evaluations.
+- **Join a workshop**: watch the portal for upcoming sessions and registration.
+- **Write for the blog**: share a build, a lesson, or a story.
+- **Sponsor or partner with us**: see the sponsorship section on the portal.
+- **Follow along**: subscribe to the newsletter for new write-ups.
 
 ---
 
-## Directory Structure
+## Contributing
 
-```
-src/
-  components/         UI components, 3D canvases, intro sequence, quiz runner
-  components/admin/   Admin control dashboard, analytics graphs, attendance projector, quiz admin
-  context/            WebsiteDataContext state provider
-  data/               Subsystems, recruitment problem statements, static defaults
-  lib/                API client, badge renderer, intro handoff channel
-public/intro/         Desktop & mobile WebP intro frames
-server/
-  src/config/         Workshop package configuration
-  src/db/             MongoDB database client
-  src/models/         Mongoose schemas (SiteData, User, Quiz, Workshop, etc.)
-  src/routes/         REST API endpoints
-```
+We welcome fixes, ideas, and improvements from teammates and the wider community.
 
-Outstanding tasks and roadmap items are tracked in [CHANGES-TO-BE-MADE.md](./CHANGES-TO-BE-MADE.md).
+- Open an issue to report a bug or suggest a feature.
+- Keep changes focused and describe the reason for them.
+- Be respectful and constructive. We are all here to learn.
 
+Technical documentation for contributors lives in [BACKEND.md](./BACKEND.md) and [server/README.md](./server/README.md). Planned work is tracked in [CHANGES-TO-BE-MADE.md](./CHANGES-TO-BE-MADE.md).
+
+---
+
+## Privacy & Respect
+
+Participant information is private. It is never stored in this repository, and the team handles it only for running workshops and issuing certificates.
+
+---
+
+## Acknowledgements
+
+Thank you to our faculty mentors, sponsors, workshop participants, and everyone who has built, tested, written, and cheered with us.
+
+*Team Asterix: build it, break it, race it.*
