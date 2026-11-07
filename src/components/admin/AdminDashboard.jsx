@@ -1500,7 +1500,7 @@ export default function AdminDashboard({ onExit }) {
                                 </div>
 
                                 {/* The address the subsystem page offers for questions.
-                                    The page used to carry a hardcoded contact@teamasterix.org
+                                    The page used to carry a hardcoded asterix@psgitech.ac.in
                                     that nobody reads; it now shows whatever is typed here, and
                                     shows nothing at all while this is blank. */}
                                 <div>
@@ -1515,7 +1515,7 @@ export default function AdminDashboard({ onExit }) {
                                                 contactEmail: e.target.value
                                             })
                                         }
-                                        placeholder="e.g. software.asterix@psgitech.ac.in — leave blank to hide the contact line entirely"
+                                        placeholder="e.g. asterix@psgitech.ac.in — leave blank to hide the contact line entirely"
                                         className="w-full border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-xs"
                                     />
                                     <p className="mt-1 font-mono text-[10px] font-bold text-slate-500">

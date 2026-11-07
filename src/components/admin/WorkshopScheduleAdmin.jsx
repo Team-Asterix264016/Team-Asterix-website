@@ -336,7 +336,7 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                     type="email"
                                     value={currentTrack.leadEmail || ''}
                                     onChange={(e) => patchTrack({ leadEmail: e.target.value })}
-                                    placeholder="e.g. software.asterix@psgitech.ac.in"
+                                    placeholder="e.g. asterix@psgitech.ac.in"
                                     className={input}
                                 />
                             </div>
@@ -459,7 +459,7 @@ export default function WorkshopScheduleAdmin({ showStatus, onImageUpload }) {
                                                     };
                                                     patchTrack({ schedule: newSch });
                                                 }}
-                                                placeholder="e.g. software.asterix@psgitech.ac.in"
+                                                placeholder="e.g. asterix@psgitech.ac.in"
                                                 className={input}
                                             />
                                         </div>

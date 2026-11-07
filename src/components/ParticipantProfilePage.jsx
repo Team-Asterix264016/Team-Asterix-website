@@ -17,7 +17,7 @@ const SUBSYSTEMS_PORTAL_DATA = [
             'ROS 2 Humble/Jazzy Architecture, Cartographer SLAM, YOLOv8 Neural Perception & TEB Path Planning.',
         details:
             'Handles drive-by-wire autonomy algorithms, LiDAR 3D point-cloud clustering, stereo depth perception, and digital twin Gazebo simulation.',
-        officialContact: 'ratheeswar.asterix@gmail.com',
+        officialContact: 'asterix@psgitech.ac.in',
         phone: '+91 86089 44644'
     },
     {
@@ -29,7 +29,7 @@ const SUBSYSTEMS_PORTAL_DATA = [
             '72V High-Voltage Battery Enclosure, Active Cell Balancing BMS, Inverter Drive & LTspice Simulations.',
         details:
             'Architects electric drive motors, high-current busbars, thermal management, and power electronics simulation testbenches.',
-        officialContact: 'rithvik.asterix@gmail.com',
+        officialContact: 'asterix@psgitech.ac.in',
         phone: '+91 94433 87654'
     },
     {

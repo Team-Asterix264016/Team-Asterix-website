@@ -500,7 +500,7 @@ Building autonomous vehicle technology is a mission for Team Asterix—turning a
             ];
 
             const initialContactInfo = {
-                email: "asterix.psgitech@gmail.com",
+                email: "asterix@psgitech.ac.in",
                 address: "PSG iTech, Neelambur, Coimbatore, Tamil Nadu",
                 category: "Autonomous All-Terrain Vehicle Development",
                 instagramUrl: "https://www.instagram.com/asterix_itech/",
@@ -512,7 +512,7 @@ Building autonomous vehicle technology is a mission for Team Asterix—turning a
                 brochureUrl: '',
                 deckUrl: '',
                 contactPerson: 'Ratheeswar & Team Leads',
-                contactEmail: 'software.asterix@psgitech.ac.in',
+                contactEmail: 'asterix@psgitech.ac.in',
                 contactPhone: '+91 86089 44644'
             };
 

@@ -24,7 +24,7 @@ Team Asterix offers hands-on curriculum tracks in Autonomous Software, Perceptio
 - **Community URL**: https://asterix-website.vercel.app/#community
 
 ## Contact & Socials
-- **Email**: asterix.psgitech@gmail.com
+- **Email**: asterix@psgitech.ac.in
 - **Phone**: +91 86089 44644
 - **Instagram**: https://www.instagram.com/asterix_itech/
 - **LinkedIn**: https://www.linkedin.com/company/teamasterix/

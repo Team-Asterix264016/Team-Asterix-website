@@ -163,7 +163,7 @@ const initialUpdates = [
 
 // Initial default contact info
 const initialContactInfo = {
-    email: 'asterix.psgitech@gmail.com',
+    email: 'asterix@psgitech.ac.in',
     phone: '+91 86089 44644',
     address: 'PSG iTech, Neelambur, Coimbatore, Tamil Nadu',
     category: 'Autonomous All-Terrain Vehicle Development',
@@ -208,7 +208,7 @@ const initialSponsorshipData = {
     brochureUrl: '',
     deckUrl: '',
     contactPerson: 'Ratheeswar & Team Leads',
-    contactEmail: 'software.asterix@psgitech.ac.in',
+    contactEmail: 'asterix@psgitech.ac.in',
     contactPhone: '+91 86089 44644'
 };
 

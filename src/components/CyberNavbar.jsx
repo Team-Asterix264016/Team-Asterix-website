@@ -299,14 +299,14 @@ export default function CyberNavbar({
                                                         <span className="tracking-wide">+91 86089 44644</span>
                                                     </a>
                                                     <a
-                                                        href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
+                                                        href={`mailto:${contact.email || 'asterix@psgitech.ac.in'}`}
                                                         className="press group flex items-center gap-2.5 rounded-md border-2 border-slate-900 bg-sky-50 p-2 font-mono text-xs font-bold text-slate-900 no-underline hover:bg-sky-200"
                                                     >
                                                         <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center border-2 border-slate-900 bg-sky-300">
                                                             <Icon name="mail" className="h-3.5 w-3.5" />
                                                         </span>
                                                         <span className="truncate">
-                                                            {contact.email || 'asterix.psgitech@gmail.com'}
+                                                            {contact.email || 'asterix@psgitech.ac.in'}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -514,14 +514,14 @@ export default function CyberNavbar({
                                         <span>+91 86089 44644</span>
                                     </a>
                                     <a
-                                        href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
+                                        href={`mailto:${contact.email || 'asterix@psgitech.ac.in'}`}
                                         className="flex items-center gap-2 truncate border-2 border-slate-900 bg-sky-50 p-2 font-mono text-xs font-bold text-slate-900"
                                     >
                                         <span className="flex h-5 w-5 items-center justify-center border border-slate-900 bg-sky-300">
                                             <Icon name="mail" className="h-3 w-3" />
                                         </span>
                                         <span className="truncate">
-                                            {contact.email || 'asterix.psgitech@gmail.com'}
+                                            {contact.email || 'asterix@psgitech.ac.in'}
                                         </span>
                                     </a>
                                 </div>

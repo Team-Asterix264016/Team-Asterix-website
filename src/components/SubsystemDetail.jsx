@@ -188,7 +188,7 @@ export default function SubsystemDetail({ subsystemId, onBack, onSelectSubsystem
 
                     {/* Mailing line for this subsystem. Rendered only when the admin
                         has set an address for it -- this used to be a fixed
-                        contact@teamasterix.org button that reached nobody. */}
+                        asterix@psgitech.ac.in button that reached nobody. */}
                     {currentSystem.contactEmail && (
                         <div className="flex flex-col justify-between gap-4 border-2 border-t-3 border-slate-900 bg-sky-50/70 p-6 pt-6 sm:flex-row sm:items-center">
                             <p className="text-sm font-black text-slate-900 uppercase sm:text-base">

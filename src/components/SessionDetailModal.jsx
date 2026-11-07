@@ -86,8 +86,8 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                 email:
                     sessionObj.instructorEmail ||
                     (isSoftwareTrack
-                        ? 'software.asterix@psgitech.ac.in'
-                        : 'powertrain.asterix@psgitech.ac.in'),
+                        ? 'asterix@psgitech.ac.in'
+                        : 'asterix@psgitech.ac.in'),
                 phone: phoneStr,
                 whatsapp: cleanPhone ? `https://wa.me/${cleanPhone}` : '#'
             };
@@ -105,8 +105,8 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                 email:
                     activeTrackData.leadEmail ||
                     (isSoftwareTrack
-                        ? 'software.asterix@psgitech.ac.in'
-                        : 'powertrain.asterix@psgitech.ac.in'),
+                        ? 'asterix@psgitech.ac.in'
+                        : 'asterix@psgitech.ac.in'),
                 phone: phoneStr,
                 whatsapp: cleanPhone ? `https://wa.me/${cleanPhone}` : '#'
             };
@@ -117,7 +117,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
         if (name.includes('joel') || name.includes('powertrain')) {
             return {
                 role: 'Powertrain Subsystem Lead',
-                email: 'powertrain.asterix@psgitech.ac.in',
+                email: 'asterix@psgitech.ac.in',
                 phone: '+91 72079 60077',
                 whatsapp: 'https://wa.me/917207960077'
             };
@@ -125,7 +125,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
         if (name.includes('preethika')) {
             return {
                 role: 'Autonomous Perception & Software Co-Lead',
-                email: 'software.asterix@psgitech.ac.in',
+                email: 'asterix@psgitech.ac.in',
                 phone: '+91 86089 44644',
                 whatsapp: 'https://wa.me/918608944644'
             };
@@ -133,7 +133,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
         if (name.includes('mahavishnu')) {
             return {
                 role: 'Computer Vision Specialist & AI Mentor',
-                email: 'software.asterix@psgitech.ac.in',
+                email: 'asterix@psgitech.ac.in',
                 phone: '+91 86089 44644',
                 whatsapp: 'https://wa.me/918608944644'
             };
@@ -141,14 +141,14 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
         if (name.includes('rithvin') || name.includes('ratheeswar')) {
             return {
                 role: 'Team Lead & Autonomous Perception Lead',
-                email: 'software.asterix@psgitech.ac.in',
+                email: 'asterix@psgitech.ac.in',
                 phone: '+91 86089 44644',
                 whatsapp: 'https://wa.me/918608944644'
             };
         }
         return {
             role: isSoftwareTrack ? 'Software & Perception Subsystem Lead' : 'Powertrain Subsystem Lead',
-            email: isSoftwareTrack ? 'software.asterix@psgitech.ac.in' : 'powertrain.asterix@psgitech.ac.in',
+            email: isSoftwareTrack ? 'asterix@psgitech.ac.in' : 'asterix@psgitech.ac.in',
             phone: isSoftwareTrack ? '+91 86089 44644' : '+91 72079 60077',
             whatsapp: isSoftwareTrack ? 'https://wa.me/918608944644' : 'https://wa.me/917207960077'
         };

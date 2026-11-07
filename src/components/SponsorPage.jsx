@@ -75,7 +75,7 @@ TEAM ASTERIX - AUTONOMOUS MOBILITY SPONSORSHIP PROPOSAL
 =====================================================
 Institution: PSG Institute of Technology and Applied Research (PSG iTech)
 Location: Neelambur, Coimbatore, Tamil Nadu - 641062
-Contact: ${contact?.email || 'asterix.psgitech@gmail.com'} | ${contact?.phone || '+91 86089 44644'}
+Contact: ${contact?.email || 'asterix@psgitech.ac.in'} | ${contact?.phone || '+91 86089 44644'}
 
 ABOUT TEAM ASTERIX:
 Team Asterix is the premier collegiate autonomous and all-terrain mobility engineering team of PSG iTech.
@@ -94,7 +94,7 @@ PARTNERSHIP TIERS:
 4. Technical Partner: Material / Component / Dyno support with technical CAD endorsement.
 
 CONTACT DETAILS FOR SPONSORSHIP:
-Email: ${contact?.email || 'asterix.psgitech@gmail.com'}
+Email: ${contact?.email || 'asterix@psgitech.ac.in'}
 Address: ${contact?.address || 'PSG iTech, Neelambur, Coimbatore - 641062'}
 Thank you for powering collegiate automotive innovation!
 =====================================================`;
@@ -617,7 +617,7 @@ PSG iTech Autonomous Mobility Cell
                             Direct Communications
                         </h4>
                         <div className="space-y-1 font-mono text-xs text-slate-300">
-                            <p>✉ {contact.email || 'asterix.psgitech@gmail.com'}</p>
+                            <p>✉ {contact.email || 'asterix@psgitech.ac.in'}</p>
                             <p>📞 {contact.phone || '+91 86089 44644'}</p>
                         </div>
                     </div>

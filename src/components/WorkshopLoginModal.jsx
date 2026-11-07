@@ -165,7 +165,7 @@ export default function WorkshopLoginModal({ isOpen, onClose, onSuccess }) {
                     </a>
                     <div>
                         Or email Team Asterix at{' '}
-                        <strong className="text-slate-800">software.asterix@psgitech.ac.in</strong>
+                        <strong className="text-slate-800">asterix@psgitech.ac.in</strong>
                     </div>
                 </div>
             </div>

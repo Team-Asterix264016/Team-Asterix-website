@@ -103,14 +103,14 @@ export default function CyberFooter({ onOpenAdmin, onOpenSponsor, onOpenWorkshop
                             </a>
 
                             <a
-                                href={`mailto:${contact.email || 'asterix.psgitech@gmail.com'}`}
+                                href={`mailto:${contact.email || 'asterix@psgitech.ac.in'}`}
                                 className="press shadow-brutal-2 flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-900 bg-white p-2 font-bold text-slate-800 transition-colors hover:border-sky-600 hover:bg-sky-50"
                             >
                                 <span className="flex flex-shrink-0 items-center justify-center rounded border border-slate-900 bg-sky-100 p-1 text-slate-900">
                                     <Icon name="mail" className="h-3.5 w-3.5" />
                                 </span>
                                 <span className="truncate text-[11px]">
-                                    {contact.email || 'asterix.psgitech@gmail.com'}
+                                    {contact.email || 'asterix@psgitech.ac.in'}
                                 </span>
                             </a>
 
