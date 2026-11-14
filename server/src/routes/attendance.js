@@ -1491,10 +1491,7 @@ function parseResourceBody(body) {
  */
 router.get('/sessions', authenticateToken, async (req, res) => {
     try {
-        // Sessions that count come first; ones set aside from the percentage sink below them.
-        const sessions = await WorkshopSession.find({})
-            .sort({ countsForAttendance: -1, date: 1, track: 1 })
-            .lean();
+        const sessions = await WorkshopSession.find({}).sort({ date: 1, track: 1 }).lean();
         const counts = await WorkshopAttendance.aggregate([
             { $group: { _id: { track: '$track', date: '$sessionDate' }, rows: { $sum: 1 } } }
         ]);
