@@ -16,7 +16,46 @@ const WORKSHOP_DEPARTMENTS = [
     'Robotics and Artificial Intelligence'
 ];
 
-export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Workshop Registrations' }) {
+/* Colour band for an attendance figure against the certificate threshold. */
+function attendanceTone(pct, threshold) {
+    if (pct === null || pct === undefined) return 'border-slate-300 bg-slate-100 text-slate-600';
+    if (pct >= threshold) return 'border-emerald-600 bg-emerald-100 text-emerald-900';
+    if (pct >= threshold - 15) return 'border-amber-500 bg-amber-100 text-amber-900';
+    return 'border-rose-500 bg-rose-100 text-rose-900';
+}
+
+function AttendanceBadge({ attendance, threshold }) {
+    if (!attendance) return <span className="text-slate-500">—</span>;
+    const tracks = Object.values(attendance.perTrack || {});
+    return (
+        <div className="space-y-1">
+            <span
+                className={`inline-block border px-2 py-0.5 text-[11px] font-black ${attendanceTone(attendance.percentage, threshold)}`}
+                title={`${attendance.totalPresent} of ${attendance.totalConducted} conducted sessions attended`}
+            >
+                {attendance.percentage === null ? 'No sessions yet' : `${attendance.percentage}%`}
+            </span>
+            {tracks.length > 1 &&
+                tracks.map((t) => (
+                    <div key={t.track} className="text-[10px] text-slate-600">
+                        <span className="uppercase">{t.track}</span>: {t.totalPresent}/{t.totalConducted} (
+                        {t.totalConducted > 0 ? `${t.attendancePercentage}%` : '—'})
+                    </div>
+                ))}
+            {tracks.length === 1 && (
+                <div className="text-[10px] text-slate-600">
+                    {attendance.totalPresent}/{attendance.totalConducted} sessions
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function WorkshopRegistrationsAdmin({
+    showStatus,
+    title = 'Workshop Registrations',
+    showAttendance = false
+}) {
     const [registrations, setRegistrations] = useState([]);
     const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, failed: 0, revenue: 0 });
     const [isLoading, setIsLoading] = useState(true);
@@ -102,11 +141,14 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     return;
                 }
 
-                const res = await fetch(apiUrl('/api/workshop/registrations'), {
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                const res = await fetch(
+                    apiUrl(`/api/workshop/registrations${showAttendance ? '?attendance=1' : ''}`),
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
                     }
-                });
+                );
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
@@ -126,7 +168,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                 if (!isSilent) setIsLoading(false);
             }
         },
-        [showStatus]
+        [showStatus, showAttendance]
     );
 
     useEffect(() => {
@@ -746,6 +788,61 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                 </div>
             </div>
 
+            {/* Consolidated attendance across all paid candidates */}
+            {showAttendance && summary.attendance && (
+                <div className="shadow-brutal-4 border-2 border-slate-900 bg-white p-4 font-mono sm:p-5">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                        <span className="text-xs font-black tracking-wider text-slate-900 uppercase">
+                            Consolidated Attendance
+                        </span>
+                        <span className="border border-slate-400 bg-slate-100 px-2 py-0.5 text-[10px] font-black text-slate-700 uppercase">
+                            Certificate at {summary.attendance.threshold}%
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                        <div
+                            className={`border-2 p-3 ${attendanceTone(summary.attendance.percentage, summary.attendance.threshold)}`}
+                        >
+                            <div className="text-[10px] font-black uppercase">Overall</div>
+                            <div className="text-3xl font-black">
+                                {summary.attendance.percentage === null
+                                    ? '—'
+                                    : `${summary.attendance.percentage}%`}
+                            </div>
+                            <div className="mt-1 text-[11px] font-bold">
+                                {summary.attendance.totalPresent} / {summary.attendance.totalConducted} seats
+                                filled
+                            </div>
+                            <div className="text-[11px] font-bold">
+                                {summary.attendance.eligible} of {summary.attendance.candidates} candidates
+                                eligible
+                            </div>
+                        </div>
+                        {['software', 'powertrain'].map((trackId) => {
+                            const t = summary.attendance.tracks?.[trackId];
+                            if (!t) return null;
+                            return (
+                                <div
+                                    key={trackId}
+                                    className={`border-2 p-3 ${attendanceTone(t.percentage, summary.attendance.threshold)}`}
+                                >
+                                    <div className="text-[10px] font-black uppercase">{trackId}</div>
+                                    <div className="text-3xl font-black">
+                                        {t.percentage === null ? '—' : `${t.percentage}%`}
+                                    </div>
+                                    <div className="mt-1 text-[11px] font-bold">
+                                        {t.sessionsConducted} sessions conducted · {t.candidates} enrolled
+                                    </div>
+                                    <div className="text-[11px] font-bold">
+                                        {t.eligible} eligible · {t.candidates - t.eligible} below threshold
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* Visual Analytics Graphs */}
             <WorkshopAnalyticsGraphs registrations={registrations} />
 
@@ -1048,6 +1145,18 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                     </div>
                                 </div>
 
+                                {showAttendance && reg.attendance && (
+                                    <div className="flex items-start justify-between gap-2 border-t border-slate-100 pt-1">
+                                        <span className="text-[10px] font-black text-slate-600 uppercase">
+                                            Attendance
+                                        </span>
+                                        <AttendanceBadge
+                                            attendance={reg.attendance}
+                                            threshold={summary.attendance?.threshold ?? 65}
+                                        />
+                                    </div>
+                                )}
+
                                 <div className="flex items-center justify-between border-t border-slate-100 pt-1 text-[10px] text-slate-500">
                                     <span>
                                         {isPaid
@@ -1107,6 +1216,7 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                             <th className="p-3">Package</th>
                             <th className="p-3">Amount</th>
                             <th className="p-3">Status</th>
+                            {showAttendance && <th className="p-3">Attendance</th>}
                             <th className="p-3">Payment Info</th>
                             <th className="p-3 text-right">Actions</th>
                         </tr>
@@ -1114,7 +1224,10 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                     <tbody className="divide-y border-slate-200">
                         {isLoading && registrations.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="p-8 text-center font-bold text-slate-500">
+                                <td
+                                    colSpan={showAttendance ? 9 : 8}
+                                    className="p-8 text-center font-bold text-slate-500"
+                                >
                                     <div className="flex items-center justify-center gap-2">
                                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-sky-500 border-t-transparent"></span>
                                         <span>Fetching workshop registrations...</span>
@@ -1123,7 +1236,10 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                             </tr>
                         ) : filteredRegistrations.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="p-8 text-center font-bold text-slate-500">
+                                <td
+                                    colSpan={showAttendance ? 9 : 8}
+                                    className="p-8 text-center font-bold text-slate-500"
+                                >
                                     No registrations found matching this filter criteria.
                                 </td>
                             </tr>
@@ -1215,6 +1331,15 @@ export default function WorkshopRegistrationsAdmin({ showStatus, title = 'Worksh
                                                 </div>
                                             )}
                                         </td>
+
+                                        {showAttendance && (
+                                            <td className="p-3 whitespace-nowrap">
+                                                <AttendanceBadge
+                                                    attendance={reg.attendance}
+                                                    threshold={summary.attendance?.threshold ?? 65}
+                                                />
+                                            </td>
+                                        )}
 
                                         {/* Payment IDs */}
                                         <td className="max-w-[140px] truncate p-3 text-[10px]">

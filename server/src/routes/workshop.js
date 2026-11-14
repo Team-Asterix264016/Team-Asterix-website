@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import WorkshopRegistration, { withoutSecrets } from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
+import WorkshopSession from '../models/WorkshopSession.js';
+import { summarizeAttendance, CERTIFICATE_THRESHOLD } from '../lib/workshopSessions.js';
 import { nextSequence } from '../models/Counter.js';
 import { authenticateToken, requireSuperAdmin, JWT_SECRET } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
@@ -951,6 +953,98 @@ router.post('/registrations/:id/reset-password', authenticateToken, requireSuper
  * GET /api/workshop/registrations?package=&track=&status=&format=csv
  * Protected: SuperAdmins, Leads, and Members.
  */
+/* Attendance for the admin attendee list, computed the same way the participant
+   profile computes it: per track, against sessions marked conducted. Records are
+   matched by registration id, roll number or email, since older check-ins carry
+   only some of these. Only paid registrations get a figure; the rest stay null.
+   Returns the consolidated figures for the whole paid cohort. */
+async function attachAttendance(registrations) {
+    const [sessions, records] = await Promise.all([
+        WorkshopSession.find({}).lean(),
+        WorkshopAttendance.find({}, {
+            registrationId: 1, rollNo: 1, email: 1, track: 1,
+            sessionId: 1, sessionKey: 1, sessionDate: 1
+        }).lean()
+    ]);
+
+    const byIdentity = new Map();
+    records.forEach((att) => {
+        [String(att.registrationId), String(att.rollNo || '').toUpperCase(), String(att.email || '').toLowerCase()]
+            .filter(Boolean)
+            .forEach((key) => {
+                if (!byIdentity.has(key)) byIdentity.set(key, []);
+                byIdentity.get(key).push(att);
+            });
+    });
+
+    const tracks = {};
+    let totalPresent = 0;
+    let totalConducted = 0;
+    let candidates = 0;
+    let eligible = 0;
+
+    registrations.forEach((reg) => {
+        reg.attendance = null;
+        if (reg.status !== 'paid') return;
+
+        const tracksEnrolled = Array.isArray(reg.tracksEnrolled) && reg.tracksEnrolled.length > 0
+            ? reg.tracksEnrolled
+            : (reg.package === 'combo' ? ['software', 'powertrain'] : [reg.package]);
+
+        const seen = new Map();
+        [String(reg._id), String(reg.rollNo || '').toUpperCase(), String(reg.email || '').toLowerCase()]
+            .forEach((key) => (byIdentity.get(key) || []).forEach((att) => seen.set(String(att._id), att)));
+
+        const { perTrack } = summarizeAttendance({
+            sessions,
+            attendanceRecords: [...seen.values()],
+            tracksEnrolled
+        });
+
+        const trackList = Object.values(perTrack);
+        const present = trackList.reduce((sum, t) => sum + t.totalPresent, 0);
+        const conducted = trackList.reduce((sum, t) => sum + t.totalConducted, 0);
+        const isEligible = trackList.length > 0 && trackList.every((t) => t.isEligibleForCertificate);
+
+        reg.attendance = {
+            perTrack,
+            totalPresent: present,
+            totalConducted: conducted,
+            percentage: conducted > 0 ? Math.round((present / conducted) * 100) : null,
+            isEligibleForCertificate: isEligible
+        };
+
+        candidates += 1;
+        if (isEligible) eligible += 1;
+        totalPresent += present;
+        totalConducted += conducted;
+
+        trackList.forEach((t) => {
+            const agg = tracks[t.track] || (tracks[t.track] = {
+                candidates: 0, eligible: 0, totalPresent: 0, totalConducted: 0, sessionsConducted: t.totalConducted
+            });
+            agg.candidates += 1;
+            if (t.isEligibleForCertificate) agg.eligible += 1;
+            agg.totalPresent += t.totalPresent;
+            agg.totalConducted += t.totalConducted;
+        });
+    });
+
+    Object.values(tracks).forEach((agg) => {
+        agg.percentage = agg.totalConducted > 0 ? Math.round((agg.totalPresent / agg.totalConducted) * 100) : null;
+    });
+
+    return {
+        threshold: CERTIFICATE_THRESHOLD,
+        candidates,
+        eligible,
+        totalPresent,
+        totalConducted,
+        percentage: totalConducted > 0 ? Math.round((totalPresent / totalConducted) * 100) : null,
+        tracks
+    };
+}
+
 router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
         const { package: pkgId, track, status, format } = req.query;
@@ -1062,6 +1156,10 @@ router.get('/registrations', authenticateToken, requireLeadOrAdmin, requireDb, a
             seatsLeft: Math.max(0, SOFTWARE_MAX_SEATS - totalSoftwarePaid),
             soldOut: totalSoftwarePaid >= SOFTWARE_MAX_SEATS
         };
+
+        if (req.query.attendance === '1') {
+            summary.attendance = await attachAttendance(registrations);
+        }
 
         res.json({ success: true, summary, registrations });
     } catch (err) {
