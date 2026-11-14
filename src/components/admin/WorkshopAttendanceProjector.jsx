@@ -24,11 +24,15 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         sessionTopic,
         setSessionTopic,
         sessionId,
+        sessionKey,
         scheduleList,
         currentScheduleMatch,
         selectScheduleSession
     } = useAttendanceSession(startTrack);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    /* Set when the server issued a QR for the picked session itself; the live
+       counts then come from that session rather than from the label. */
+    const [liveQuery, setLiveQuery] = useState('');
 
     // Dynamic QR state
     const [qrDataUrl, setQrDataUrl] = useState('');
@@ -60,6 +64,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
                 sessionDate,
                 sessionTopic
             });
+            if (sessionKey) query.set('sessionKey', sessionKey);
 
             const res = await fetch(apiUrl(`/api/workshop/attendance/session-token?${query.toString()}`), {
                 headers: { Authorization: `Bearer ${token}` }
@@ -72,6 +77,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
 
             const data = await res.json();
             setScanUrl(data.scanUrl);
+            setLiveQuery(data.liveQuery || '');
 
             // Generate crisp high-resolution permanent QR Code
             const url = await QRCode.toDataURL(data.scanUrl, {
@@ -89,7 +95,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             console.error('Error fetching attendance session token:', err);
             setError(err.message);
         }
-    }, [track, sessionNumber, sessionDate, sessionTopic]);
+    }, [track, sessionNumber, sessionDate, sessionTopic, sessionKey]);
 
     // Poll live attendance numbers every 3 seconds
     const fetchLiveStatus = useCallback(async () => {
@@ -98,7 +104,11 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
             if (!token) return;
 
             const res = await fetch(
-                apiUrl(`/api/workshop/attendance/live-status?sessionId=${encodeURIComponent(sessionId)}`),
+                apiUrl(
+                    liveQuery
+                        ? `/api/workshop/attendance/sessions/live?${liveQuery}`
+                        : `/api/workshop/attendance/live-status?sessionId=${encodeURIComponent(sessionId)}`
+                ),
                 {
                     headers: { Authorization: `Bearer ${token}` }
                 }
@@ -116,7 +126,7 @@ export default function WorkshopAttendanceProjector({ onExit, initialTrack = 'so
         } catch {
             // silent poll error
         }
-    }, [sessionId]);
+    }, [sessionId, liveQuery]);
 
     // Fetch permanent session QR token on mount or parameter changes
     useEffect(() => {

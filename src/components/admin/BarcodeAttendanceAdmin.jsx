@@ -91,10 +91,15 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
         sessionTopic,
         setSessionTopic,
         sessionId,
+        sessionKey,
         scheduleList,
         currentScheduleMatch,
         selectScheduleSession
     } = useAttendanceSession('software');
+    // Sends the picked session along, so the server counts it by session rather than by label.
+    const sessionQuery = `sessionId=${encodeURIComponent(sessionId)}${
+        sessionKey ? `&sessionKey=${encodeURIComponent(sessionKey)}` : ''
+    }`;
 
     // Scanner state
     const [scannedInput, setScannedInput] = useState('');
@@ -130,10 +135,9 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
         setIsLoadingStats(true);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(
-                apiUrl(`/api/workshop/attendance/live-status?sessionId=${encodeURIComponent(sessionId)}`),
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await fetch(apiUrl(`/api/workshop/attendance/live-status?${sessionQuery}`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setStats({
@@ -147,7 +151,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
         } finally {
             setIsLoadingStats(false);
         }
-    }, [sessionId]);
+    }, [sessionQuery]);
 
     useEffect(() => {
         fetchLiveStats();
@@ -174,6 +178,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
                         barcode,
                         track,
                         sessionId,
+                        sessionKey,
                         sessionTopic,
                         sessionNumber,
                         sessionDate
@@ -254,6 +259,7 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
             isProcessingScan,
             track,
             sessionId,
+            sessionKey,
             sessionTopic,
             sessionNumber,
             sessionDate,
@@ -392,10 +398,9 @@ export default function BarcodeAttendanceAdmin({ showStatus }) {
     const handleExportCSV = async () => {
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(
-                apiUrl(`/api/workshop/attendance/export?sessionId=${encodeURIComponent(sessionId)}`),
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const res = await fetch(apiUrl(`/api/workshop/attendance/export?${sessionQuery}`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             if (!res.ok) throw new Error('Failed to generate attendance CSV');
 
             const blob = await res.blob();

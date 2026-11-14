@@ -33,6 +33,8 @@ const router = Router();
    not refused: people do turn up late, but a scan hours in is worth a look. */
 const LATE_SCAN_MINUTES = 45;
 
+const SAME_DAY_REFUSAL = 'There is more than one session today, so this code cannot tell which one you are attending. Please scan the QR code shown for your session.';
+
 const ROTATION_INTERVAL_MS = 12000; // 12 seconds projector rotation
 const TOKEN_EXPIRY_MS = 25000; // 25 seconds validity for scanned token
 const ATTENDANCE_SECRET = process.env.ATTENDANCE_SECRET
@@ -150,6 +152,49 @@ router.get('/session-token', authenticateToken, async (req, res) => {
 
         if (!['software', 'powertrain', 'combo'].includes(track)) {
             return res.status(400).json({ error: "Invalid track. Must be 'software', 'powertrain' or 'combo'." });
+        }
+
+        /* A session picked from the schedule gets its own QR, the same one
+           Manage Sessions shows: it names the session, so a second session on
+           the same date can never collect these scans. Combo uses the picked
+           session's combo pair when it has one. */
+        const picked = await pickedSession(req.query.sessionKey);
+        if (picked) {
+            let tokenTrack = null;
+            let ref = null;
+            let toOpen = [];
+            if (track === 'combo' && picked.jointKey) {
+                tokenTrack = 'combo';
+                ref = picked.jointKey;
+                toOpen = await WorkshopSession.find({ jointKey: picked.jointKey }).lean();
+            } else if (track !== 'combo' && picked.track === track) {
+                tokenTrack = track;
+                ref = picked.scheduleId;
+                toOpen = [picked];
+            }
+            if (ref) {
+                await openSessionRows(toOpen, actorOf(req));
+                const refSessionId = `${SESSION_REF_PREFIX}${ref}`;
+                const refToken = `${tokenTrack}.${refSessionId}.static.${signToken(tokenTrack, refSessionId, 'static')}`;
+                const appUrl = process.env.PUBLIC_APP_URL || req.headers.origin || `http://${req.headers.host}`;
+                return res.json({
+                    token: refToken,
+                    track: tokenTrack,
+                    sessionId: refSessionId,
+                    sessionNumber,
+                    sessionDate: picked.date,
+                    sessionTopic: picked.title,
+                    expiresInMs: ROTATION_INTERVAL_MS,
+                    tokenExpiryMs: TOKEN_EXPIRY_MS,
+                    rotationIntervalMs: ROTATION_INTERVAL_MS,
+                    openedSessionKeys: toOpen.map((s) => s.sessionKey),
+                    // What the projector polls for live counts of this session.
+                    liveQuery: tokenTrack === 'combo'
+                        ? `jointKey=${encodeURIComponent(ref)}`
+                        : `sessionKey=${encodeURIComponent(picked.sessionKey)}`,
+                    scanUrl: `${appUrl}/#attendance?tok=${encodeURIComponent(refToken)}`
+                });
+            }
         }
 
         /* Industry expert sessions are one room holding both tracks, but the
@@ -294,6 +339,12 @@ router.post('/checkin', async (req, res) => {
                 return res.status(404).json({
                     error: `No session on ${jointDate} for your track. Check with the workshop team.`
                 });
+            }
+            // Two sessions on one track that day: a date-only code cannot pick between them.
+            const perTrack = {};
+            jointSessions.forEach((s) => { perTrack[s.track] = (perTrack[s.track] || 0) + 1; });
+            if (Object.values(perTrack).some((n) => n > 1)) {
+                return res.status(409).json({ error: SAME_DAY_REFUSAL });
             }
 
             const credited = [];
@@ -453,7 +504,16 @@ router.post('/checkin', async (req, res) => {
         /* 6b. The session has to be open right now. A token on its own is no
            longer enough, so a forwarded QR link stops working once the session
            closes. Sessions the schedule does not know about are left alone. */
-        const scheduledSession = await WorkshopSession.findOne({ track, date: sessionDate }).lean();
+        /* A code made from a number and a date cannot tell two sessions on the
+           same day apart. Use the number when it picks out exactly one;
+           otherwise refuse rather than credit the wrong session. */
+        const sameDay = await WorkshopSession.find({ track, date: sessionDate }).lean();
+        let scheduledSession = sameDay[0] || null;
+        if (sameDay.length > 1) {
+            const byNumber = sameDay.filter((s) => s.sessionNumber === sessionNumber);
+            if (byNumber.length !== 1) return res.status(409).json({ error: SAME_DAY_REFUSAL });
+            scheduledSession = byNumber[0];
+        }
         const refusal = windowRefusal(scheduledSession);
         if (refusal) return res.status(403).json({ error: refusal, sessionClosed: true });
 
@@ -533,6 +593,25 @@ router.get('/live-status', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'sessionId query parameter is required' });
         }
 
+        // A session picked from the schedule is counted by session, not by label.
+        const picked = await pickedSession(req.query.sessionKey);
+        if (picked) {
+            const { rows, totalEligible: eligibleCount, totalPresent: presentCount } = await sessionRoster(picked);
+            return res.json({
+                sessionId,
+                sessionKey: picked.sessionKey,
+                track: picked.track,
+                totalEligible: eligibleCount,
+                totalPresent: presentCount,
+                percentage: eligibleCount > 0 ? ((presentCount / eligibleCount) * 100).toFixed(1) : 0,
+                recentCheckins: rows
+                    .slice()
+                    .sort((a, b) => new Date(b.checkedInAt) - new Date(a.checkedInAt))
+                    .slice(0, 10)
+                    .map((r) => ({ name: r.name, rollNo: r.rollNo, department: r.department, checkedInAt: r.checkedInAt, verifiedBy: r.verifiedBy }))
+            });
+        }
+
         const track = sessionId.startsWith('powertrain') ? 'powertrain' : 'software';
 
         // Count total eligible candidates enrolled in this track with paid status
@@ -577,6 +656,13 @@ router.get('/records', authenticateToken, async (req, res) => {
         const sessionId = String(req.query.sessionId || '').trim();
         if (!sessionId) {
             return res.status(400).json({ error: 'sessionId query parameter is required' });
+        }
+
+        // A session picked from the schedule is listed by session, not by label.
+        const picked = await pickedSession(req.query.sessionKey);
+        if (picked) {
+            const { roster, totalEligible, totalPresent } = await sessionRoster(picked);
+            return res.json({ sessionId, sessionKey: picked.sessionKey, track: picked.track, totalEligible, totalPresent, roster });
         }
 
         const track = sessionId.startsWith('powertrain') ? 'powertrain' : 'software';
@@ -633,6 +719,10 @@ router.get('/records', authenticateToken, async (req, res) => {
  */
 router.post('/manual-mark', authenticateToken, async (req, res) => {
     try {
+        // A session picked from the schedule is marked by session, not by label.
+        if (await pickedSession(req.body?.sessionKey)) {
+            return await markSessionPresent(req, res, req.body);
+        }
         const { rollNo, sessionId, sessionTopic, reason } = req.body;
         if (!rollNo || !sessionId) {
             return res.status(400).json({ error: 'rollNo and sessionId are required' });
@@ -740,11 +830,15 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
 
         const cleanBarcode = cleanInput.trim();
 
-        // Target track & session ID resolution
-        const track = (inputTrack || 'software').toLowerCase().trim();
-        const targetSessionId = inputSessionId
-            ? String(inputSessionId).trim()
-            : `${track}-s${String(sessionNumber || 1).padStart(2, '0')}-${sessionDate || new Date().toISOString().slice(0, 10)}`;
+        /* Target track & session ID resolution. A session picked from the
+           schedule fixes both, so two sessions on one day stay apart. */
+        const picked = await pickedSession(req.body?.sessionKey);
+        const track = picked ? picked.track : (inputTrack || 'software').toLowerCase().trim();
+        const targetSessionId = picked
+            ? rowLabelFor(picked)
+            : inputSessionId
+              ? String(inputSessionId).trim()
+              : `${track}-s${String(sessionNumber || 1).padStart(2, '0')}-${sessionDate || new Date().toISOString().slice(0, 10)}`;
 
         // 1. Search candidate by register number (rollNo), email, phone, or receipt number
         const registration = await WorkshopRegistration.findOne({
@@ -773,7 +867,9 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
         }
 
         // 3. Verify track eligibility
-        const isTrackEnrolled = (registration.tracksEnrolled || []).includes(track) || registration.package === 'combo';
+        const isTrackEnrolled = picked
+            ? enrolledTracksOf(registration).includes(track)
+            : (registration.tracksEnrolled || []).includes(track) || registration.package === 'combo';
         if (!isTrackEnrolled) {
             const registeredTracks = (registration.tracksEnrolled || []).join(' & ') || registration.package;
             return res.status(403).json({
@@ -788,13 +884,20 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
         }
 
         // 4. Check if already marked present
-        const existing = await WorkshopAttendance.findOne({
-            sessionId: targetSessionId,
-            $or: [
-                { registrationId: registration._id },
-                { rollNo: registration.rollNo }
-            ]
-        });
+        const existing = await WorkshopAttendance.findOne(picked
+            ? {
+                $or: [
+                    { sessionKey: picked.sessionKey, registrationId: registration._id },
+                    { sessionId: targetSessionId, rollNo: registration.rollNo }
+                ]
+            }
+            : {
+                sessionId: targetSessionId,
+                $or: [
+                    { registrationId: registration._id },
+                    { rollNo: registration.rollNo }
+                ]
+            });
 
         if (existing) {
             const checkinTimeFormatted = new Date(existing.checkedInAt).toLocaleTimeString('en-IN', {
@@ -837,9 +940,18 @@ router.post('/barcode-scan', authenticateToken, async (req, res) => {
             package: registration.package,
             track,
             sessionId: targetSessionId,
-            sessionNumber: sessionNumVal,
-            sessionDate: sessionDateVal,
-            sessionTopic: sessionTopic || '',
+            ...(picked
+                ? {
+                    sessionKey: picked.sessionKey,
+                    sessionNumber: picked.sessionNumber || 0,
+                    sessionDate: picked.date,
+                    sessionTopic: picked.title
+                }
+                : {
+                    sessionNumber: sessionNumVal,
+                    sessionDate: sessionDateVal,
+                    sessionTopic: sessionTopic || ''
+                }),
             deviceId: `barcode_scanner_admin_${req.user?.id || 'superadmin'}_${Date.now()}`,
             ipAddress: req.ip || '',
             userAgent: 'Barcode Scanner (Admin Portal)',
@@ -889,14 +1001,24 @@ router.get('/export', authenticateToken, async (req, res) => {
         }
 
         const track = sessionId.startsWith('powertrain') ? 'powertrain' : 'software';
-        const eligibleCandidates = await WorkshopRegistration.find({
-            status: 'paid',
-            $or: [{ tracksEnrolled: track }, { package: 'combo' }]
-        }).sort({ rollNo: 1 }).lean();
-
-        const attendanceRecords = await WorkshopAttendance.find({ sessionId }).lean();
+        const picked = await pickedSession(req.query.sessionKey);
+        let eligibleCandidates;
         const attendanceMap = new Map();
-        attendanceRecords.forEach(att => attendanceMap.set(att.rollNo, att));
+        if (picked) {
+            // Same list the roster shows for a session picked from the schedule.
+            const { roster } = await sessionRoster(picked);
+            eligibleCandidates = roster;
+            roster.forEach((c) => {
+                if (c.isPresent) attendanceMap.set(c.rollNo, { checkedInAt: c.checkedInAt, verifiedBy: c.verifiedBy });
+            });
+        } else {
+            eligibleCandidates = await WorkshopRegistration.find({
+                status: 'paid',
+                $or: [{ tracksEnrolled: track }, { package: 'combo' }]
+            }).sort({ rollNo: 1 }).lean();
+            const attendanceRecords = await WorkshopAttendance.find({ sessionId }).lean();
+            attendanceRecords.forEach(att => attendanceMap.set(att.rollNo, att));
+        }
 
         const csvHeaders = ['S.No', 'Roll Number', 'Name', 'Department', 'Year', 'Package', 'Receipt No', 'Attendance Status', 'Check-in Time (IST)', 'Verified By'];
         const csvRows = eligibleCandidates.map((cand, idx) => {
@@ -2151,6 +2273,138 @@ async function rowsForSession(session, trackSessions) {
 
 const isOpenSession = (session) => Boolean(session.openedAt && !session.closedAt);
 
+/* The session an older admin screen has picked from its schedule dropdown.
+   When one is given, that screen works by session like Manage Sessions does,
+   so two sessions on the same day never share a label or a roster. */
+async function pickedSession(sessionKey) {
+    const key = String(sessionKey || '').trim();
+    if (!key.includes('|')) return null;
+    return WorkshopSession.findOne({ sessionKey: key }).lean();
+}
+
+/* Putting a session's QR up opens it, as the existing projector does. A
+   session already open is left as it is. */
+async function openSessionRows(sessions, actor) {
+    for (const session of sessions) {
+        if (isOpenSession(session)) continue;
+        await WorkshopSession.updateOne({ _id: session._id }, {
+            $set: {
+                status: 'conducted',
+                openedAt: session.openedAt || new Date(),
+                openedBy: session.openedBy || actor,
+                closedAt: null,
+                closedBy: ''
+            }
+        });
+    }
+}
+
+// Label written on new rows for one session; unique per session, even on a shared date.
+const rowLabelFor = (session) => `${session.track}-${session.scheduleId}-${session.date}`;
+
+/* Present/absent list for one session: paid students enrolled in its track,
+   matched to the rows that belong to it. */
+async function sessionRoster(session) {
+    const [trackSessions, paid] = await Promise.all([
+        WorkshopSession.find({ track: session.track }).lean(),
+        WorkshopRegistration.find({ status: 'paid' }).sort({ rollNo: 1 }).lean()
+    ]);
+    const rows = await rowsForSession(session, trackSessions);
+    const byIdentity = new Map();
+    rows.forEach((row) => {
+        [String(row.registrationId), String(row.rollNo || '').toUpperCase(), String(row.email || '').toLowerCase()]
+            .filter(Boolean)
+            .forEach((k) => { if (!byIdentity.has(k)) byIdentity.set(k, row); });
+    });
+    const eligible = paid.filter((reg) => enrolledTracksOf(reg).includes(session.track));
+    const roster = eligible.map((reg) => {
+        const row = byIdentity.get(String(reg._id))
+            || byIdentity.get(String(reg.rollNo || '').toUpperCase())
+            || byIdentity.get(String(reg.email || '').toLowerCase());
+        return {
+            registrationId: reg._id,
+            rollNo: reg.rollNo,
+            name: reg.name,
+            email: reg.email,
+            phone: reg.phone,
+            department: reg.department,
+            year: reg.year,
+            package: reg.package,
+            receiptNo: reg.receiptNo,
+            isPresent: Boolean(row),
+            checkedInAt: row ? row.checkedInAt : null,
+            verifiedBy: row ? row.verifiedBy : null
+        };
+    });
+    return {
+        rows,
+        roster,
+        totalEligible: eligible.length,
+        totalPresent: roster.filter((r) => r.isPresent).length
+    };
+}
+
+/* An admin's manual mark against one session, with a reason. Shared by Manage
+   Sessions and the roster tab when a session is picked from its dropdown. */
+async function markSessionPresent(req, res, { sessionKey, rollNo, reason, verifiedBy = 'manual-admin' }) {
+    const key = String(sessionKey || '').trim();
+    const cleanRoll = String(rollNo || '').trim();
+    const cleanReason = String(reason || '').trim();
+    if (!key || !cleanRoll) return res.status(400).json({ error: 'sessionKey and rollNo are required.' });
+    if (cleanReason.length < 3) return res.status(400).json({ error: 'A reason is required for a manual attendance mark.' });
+
+    const session = await WorkshopSession.findOne({ sessionKey: key }).lean();
+    if (!session) return res.status(404).json({ error: `No session ${key}.` });
+
+    const registration = await WorkshopRegistration.findOne({
+        $or: [
+            { rollNo: cleanRoll.toUpperCase() },
+            { rollNo: new RegExp(`^\\s*${escapeRegex(cleanRoll)}\\s*$`, 'i') },
+            { rollNo: new RegExp(`^\\s*${escapeRegex(normalizeRollNo(cleanRoll))}\\s*$`, 'i') }
+        ],
+        status: 'paid'
+    });
+    if (!registration) return res.status(404).json({ error: `No paid registration found for Roll Number "${cleanRoll}".` });
+    if (!enrolledTracksOf(registration).includes(session.track)) {
+        return res.status(400).json({ error: `${registration.name} is not enrolled in the ${session.track} track.` });
+    }
+
+    const rowSessionId = rowLabelFor(session);
+    const existing = await WorkshopAttendance.findOne({
+        $or: [
+            { sessionKey: key, registrationId: registration._id },
+            { sessionId: rowSessionId, rollNo: registration.rollNo }
+        ]
+    }).lean();
+    if (existing) return res.json({ success: true, message: 'Candidate is already marked present.' });
+
+    await WorkshopAttendance.create({
+        registrationId: registration._id,
+        rollNo: registration.rollNo || cleanRoll.toUpperCase(),
+        email: registration.email,
+        name: registration.name,
+        department: registration.department,
+        year: registration.year,
+        package: registration.package,
+        track: session.track,
+        sessionId: rowSessionId,
+        sessionKey: key,
+        sessionNumber: session.sessionNumber || 0,
+        sessionDate: session.date,
+        sessionTopic: session.title,
+        deviceId: `admin_override_${Date.now()}`,
+        ipAddress: req.ip || '',
+        userAgent: 'Admin Manual Override',
+        verifiedBy,
+        markedBy: actorOf(req),
+        markedReason: cleanReason,
+        checkedInAt: new Date()
+    });
+
+    res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
+    return res.json({ success: true, message: `✓ Marked ${registration.name} (${registration.rollNo}) present.` });
+}
+
 /* Check-in from a portal QR. Mirrors the combo path's per-session rules: the
    session must be open, one row per person, no device serving two people. */
 async function creditSessionRef({ req, res, registration, track, ref, cleanRoll, cleanEmail, cleanDeviceId }) {
@@ -2492,36 +2746,9 @@ router.get('/sessions/roster', authenticateToken, async (req, res) => {
         const sessions = await sessionsForRef(track, ref);
         if (sessions.length === 0) return res.status(404).json({ error: 'Session not found.' });
 
-        const paid = await WorkshopRegistration.find({ status: 'paid' }).sort({ rollNo: 1 }).lean();
         const lists = [];
         for (const session of sessions) {
-            const trackSessions = await WorkshopSession.find({ track: session.track }).lean();
-            const rows = await rowsForSession(session, trackSessions);
-            const byIdentity = new Map();
-            rows.forEach((row) => {
-                [String(row.registrationId), String(row.rollNo || '').toUpperCase(), String(row.email || '').toLowerCase()]
-                    .filter(Boolean)
-                    .forEach((k) => { if (!byIdentity.has(k)) byIdentity.set(k, row); });
-            });
-            const eligible = paid.filter((reg) => enrolledTracksOf(reg).includes(session.track));
-            const roster = eligible.map((reg) => {
-                const row = byIdentity.get(String(reg._id))
-                    || byIdentity.get(String(reg.rollNo || '').toUpperCase())
-                    || byIdentity.get(String(reg.email || '').toLowerCase());
-                return {
-                    registrationId: reg._id,
-                    rollNo: reg.rollNo,
-                    name: reg.name,
-                    email: reg.email,
-                    department: reg.department,
-                    year: reg.year,
-                    package: reg.package,
-                    receiptNo: reg.receiptNo,
-                    isPresent: Boolean(row),
-                    checkedInAt: row ? row.checkedInAt : null,
-                    verifiedBy: row ? row.verifiedBy : null
-                };
-            });
+            const { roster, totalEligible, totalPresent } = await sessionRoster(session);
             lists.push({
                 sessionKey: session.sessionKey,
                 track: session.track,
@@ -2530,8 +2757,8 @@ router.get('/sessions/roster', authenticateToken, async (req, res) => {
                 date: session.date,
                 status: session.status,
                 isOpen: isOpenSession(session),
-                totalEligible: eligible.length,
-                totalPresent: roster.filter((r) => r.isPresent).length,
+                totalEligible,
+                totalPresent,
                 roster
             });
         }
@@ -2623,19 +2850,7 @@ router.get('/sessions/qr', authenticateToken, async (req, res) => {
         const sessions = await sessionsForRef(track, ref);
         if (sessions.length === 0) return res.status(404).json({ error: 'Session not found.' });
 
-        const actor = actorOf(req);
-        for (const session of sessions) {
-            if (isOpenSession(session)) continue;
-            await WorkshopSession.updateOne({ _id: session._id }, {
-                $set: {
-                    status: 'conducted',
-                    openedAt: session.openedAt || new Date(),
-                    openedBy: session.openedBy || actor,
-                    closedAt: null,
-                    closedBy: ''
-                }
-            });
-        }
+        await openSessionRows(sessions, actorOf(req));
 
         const sessionId = `${SESSION_REF_PREFIX}${ref}`;
         const token = `${track}.${sessionId}.static.${signToken(track, sessionId, 'static')}`;
@@ -2660,62 +2875,7 @@ router.get('/sessions/qr', authenticateToken, async (req, res) => {
  */
 router.post('/sessions/manual-mark', authenticateToken, async (req, res) => {
     try {
-        const sessionKey = String(req.body?.sessionKey || '').trim();
-        const cleanRoll = String(req.body?.rollNo || '').trim();
-        const reason = String(req.body?.reason || '').trim();
-        if (!sessionKey || !cleanRoll) return res.status(400).json({ error: 'sessionKey and rollNo are required.' });
-        if (reason.length < 3) return res.status(400).json({ error: 'A reason is required for a manual attendance mark.' });
-
-        const session = await WorkshopSession.findOne({ sessionKey }).lean();
-        if (!session) return res.status(404).json({ error: `No session ${sessionKey}.` });
-
-        const registration = await WorkshopRegistration.findOne({
-            $or: [
-                { rollNo: cleanRoll.toUpperCase() },
-                { rollNo: new RegExp(`^\\s*${escapeRegex(cleanRoll)}\\s*$`, 'i') },
-                { rollNo: new RegExp(`^\\s*${escapeRegex(normalizeRollNo(cleanRoll))}\\s*$`, 'i') }
-            ],
-            status: 'paid'
-        });
-        if (!registration) return res.status(404).json({ error: `No paid registration found for Roll Number "${cleanRoll}".` });
-        if (!enrolledTracksOf(registration).includes(session.track)) {
-            return res.status(400).json({ error: `${registration.name} is not enrolled in the ${session.track} track.` });
-        }
-
-        const rowSessionId = `${session.track}-${session.scheduleId}-${session.date}`;
-        const existing = await WorkshopAttendance.findOne({
-            $or: [
-                { sessionKey, registrationId: registration._id },
-                { sessionId: rowSessionId, rollNo: registration.rollNo }
-            ]
-        }).lean();
-        if (existing) return res.json({ success: true, message: 'Candidate is already marked present.' });
-
-        await WorkshopAttendance.create({
-            registrationId: registration._id,
-            rollNo: registration.rollNo || cleanRoll.toUpperCase(),
-            email: registration.email,
-            name: registration.name,
-            department: registration.department,
-            year: registration.year,
-            package: registration.package,
-            track: session.track,
-            sessionId: rowSessionId,
-            sessionKey,
-            sessionNumber: session.sessionNumber || 0,
-            sessionDate: session.date,
-            sessionTopic: session.title,
-            deviceId: `admin_override_${Date.now()}`,
-            ipAddress: req.ip || '',
-            userAgent: 'Admin Manual Override',
-            verifiedBy: 'manual-admin',
-            markedBy: actorOf(req),
-            markedReason: reason,
-            checkedInAt: new Date()
-        });
-
-        res.locals.whatsappActivity = { type: 'attendance', name: registration.name };
-        return res.json({ success: true, message: `✓ Marked ${registration.name} (${registration.rollNo}) present.` });
+        return await markSessionPresent(req, res, req.body || {});
     } catch (err) {
         console.error('Error manually marking session attendance:', err);
         return res.status(500).json({ error: 'Failed to mark attendance.' });

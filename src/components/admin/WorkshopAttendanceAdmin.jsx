@@ -18,10 +18,15 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         sessionTopic,
         setSessionTopic,
         sessionId,
+        sessionKey,
         scheduleList,
         currentScheduleMatch,
         selectScheduleSession
     } = useAttendanceSession('software');
+    // Sends the picked session along, so the server lists it by session rather than by label.
+    const sessionQuery = `sessionId=${encodeURIComponent(sessionId)}${
+        sessionKey ? `&sessionKey=${encodeURIComponent(sessionKey)}` : ''
+    }`;
 
     const [rosterData, setRosterData] = useState({ totalEligible: 0, totalPresent: 0, roster: [] });
     const [isLoading, setIsLoading] = useState(false);
@@ -41,12 +46,9 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 return;
             }
 
-            const res = await fetch(
-                apiUrl(`/api/workshop/attendance/records?sessionId=${encodeURIComponent(sessionId)}`),
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await fetch(apiUrl(`/api/workshop/attendance/records?${sessionQuery}`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
@@ -61,7 +63,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         } finally {
             setIsLoading(false);
         }
-    }, [sessionId]);
+    }, [sessionQuery]);
 
     useEffect(() => {
         fetchRecords();
@@ -93,6 +95,7 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 body: JSON.stringify({
                     rollNo,
                     sessionId,
+                    sessionKey,
                     sessionTopic,
                     reason: reason.trim()
                 })
@@ -148,12 +151,9 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         setIsExporting(true);
         try {
             const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
-            const res = await fetch(
-                apiUrl(`/api/workshop/attendance/export?sessionId=${encodeURIComponent(sessionId)}`),
-                {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-            );
+            const res = await fetch(apiUrl(`/api/workshop/attendance/export?${sessionQuery}`), {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             if (!res.ok) throw new Error('Failed to generate attendance CSV');
 
@@ -388,11 +388,17 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                         <div className="flex flex-wrap items-center justify-between border-t border-slate-200 pt-2 text-[11px] text-slate-500">
                             <span>
                                 Active Session Key: <strong className="text-slate-900">{sessionId}</strong>
-                                {currentScheduleMatch && (
+                                {currentScheduleMatch ? (
                                     <span className="ml-2 font-bold text-emerald-700">
                                         ✓ Linked to {currentScheduleMatch.label} (
-                                        {currentScheduleMatch.dateStr})
+                                        {currentScheduleMatch.dateStr}) — {currentScheduleMatch.title}
                                     </span>
+                                ) : (
+                                    scheduleList.filter((s) => s.isoDate === sessionDate).length > 1 && (
+                                        <span className="ml-2 font-bold text-amber-700">
+                                            ⚠ More than one session on this date. Pick it from Quick Select.
+                                        </span>
+                                    )
                                 )}
                             </span>
                         </div>

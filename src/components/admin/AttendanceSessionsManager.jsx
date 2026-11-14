@@ -168,6 +168,25 @@ export default function AttendanceSessionsManager({ showStatus }) {
         }
     };
 
+    /* Closing a session stops its QR working, so on a day with two sessions a
+       photo of the morning code cannot be used in the afternoon. */
+    const toggleOpen = async (group) => {
+        const isOpen = group.sessions.some((s) => s.isOpen);
+        const action = isOpen ? 'close' : 'open';
+        if (!isOpen && !window.confirm('Reopen this session for check-in?')) return;
+        try {
+            for (const s of group.sessions) {
+                await call(`/api/workshop/attendance/sessions/${action}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ sessionKey: s.sessionKey })
+                });
+            }
+            afterChange(`"${group.sessions[0].title}" ${isOpen ? 'closed' : 'reopened'} for check-in.`);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     const openProjector = (group) => {
         const param = group.jointKey
             ? `joint=${encodeURIComponent(group.jointKey)}`
@@ -516,6 +535,19 @@ export default function AttendanceSessionsManager({ showStatus }) {
                                                     >
                                                         🖥 QR
                                                     </button>
+                                                    {(anyOpen || s.status === 'conducted') && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleOpen(group)}
+                                                            className={`press cursor-pointer border border-slate-900 px-2 py-1 text-[10px] font-black uppercase ${
+                                                                anyOpen
+                                                                    ? 'bg-rose-300 hover:bg-rose-400'
+                                                                    : 'bg-white hover:bg-slate-100'
+                                                            }`}
+                                                        >
+                                                            {anyOpen ? '■ Close' : '↺ Reopen'}
+                                                        </button>
+                                                    )}
                                                 </>
                                             )}
                                         </div>
