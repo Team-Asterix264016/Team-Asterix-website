@@ -465,15 +465,21 @@ const normalizeWorkshop = (ws) => {
         const canonical = WORKSHOP_TRACKS[key];
         const incoming = tracksSource[key] || {};
 
+        /* The schedule saved in the database is the one admins edit, so its order
+           and entries win. Each entry is laid over the config entry with the same
+           id, which fills in any field the saved copy lacks. A saved schedule
+           with an entry missing its id is malformed, and the config is used. */
         let reconciledSchedule = canonical.schedule;
-        if (Array.isArray(incoming.schedule) && incoming.schedule.length === canonical.schedule.length) {
-            const allMatch = canonical.schedule.every((cItem, i) => incoming.schedule[i]?.id === cItem.id);
-            if (allMatch) {
-                reconciledSchedule = incoming.schedule.map((item, idx) => ({
-                    ...canonical.schedule[idx],
-                    ...item
-                }));
-            }
+        if (
+            Array.isArray(incoming.schedule) &&
+            incoming.schedule.length > 0 &&
+            incoming.schedule.every((item) => item && typeof item.id === 'string' && item.id)
+        ) {
+            const canonicalById = new Map(canonical.schedule.map((cItem) => [cItem.id, cItem]));
+            reconciledSchedule = incoming.schedule.map((item) => ({
+                ...canonicalById.get(item.id),
+                ...item
+            }));
         }
 
         mergedTracks[key] = {
