@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { apiUrl } from '../lib/api';
 import { useWebsiteData } from '../context/WebsiteDataContext';
+import AttendanceViewLockedNotice from './AttendanceViewLockedNotice';
 
 export default function SessionDetailModal({ session, trackName, student, isOpen, onClose, onTakeQuiz }) {
     const { siteData } = useWebsiteData();
     const [attendanceStatus, setAttendanceStatus] = useState(null); // 'present' | 'absent' | 'upcoming' | null
     const [checkInTime, setCheckInTime] = useState(null);
     const [loadingAttendance, setLoadingAttendance] = useState(false);
+    const [attendanceViewLock, setAttendanceViewLock] = useState(null);
 
     const isSoftwareTrack = String(trackName || '')
         .toLowerCase()
@@ -44,6 +46,7 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                     }
                 );
                 const data = await res.json();
+                setAttendanceViewLock(data.attendanceViewLock || null);
                 if (data.success && Array.isArray(data.attendance)) {
                     // Check if candidate checked in for this session ID or session date
                     const matched = data.attendance.find(
@@ -323,6 +326,8 @@ export default function SessionDetailModal({ session, trackName, student, isOpen
                                         <div className="font-mono text-xs font-bold text-slate-600">
                                             Checking attendance records...
                                         </div>
+                                    ) : attendanceViewLock ? (
+                                        <AttendanceViewLockedNotice lock={attendanceViewLock} compact />
                                     ) : attendanceStatus === 'present' ? (
                                         <div className="flex items-center gap-3 border-2 border-emerald-600 bg-emerald-50 p-3 text-emerald-900">
                                             <span className="text-xl">✅</span>

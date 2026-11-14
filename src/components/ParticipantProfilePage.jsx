@@ -4,6 +4,7 @@ import { safeHref } from '../lib/safeHref';
 import { downloadAllIcsFile } from '../utils/calendarUtils';
 import { WORKSHOP_TRACKS, WORKSHOP_DEPARTMENTS } from '../../server/src/config/workshopPackages.js';
 import SessionNotesModal from './SessionNotesModal';
+import AttendanceViewLockedNotice from './AttendanceViewLockedNotice';
 import { resourceBadge } from '../lib/resourceTypes';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
@@ -67,7 +68,8 @@ const SESSION_STATUS_STYLES = {
     ABSENT: { label: '❌ Missed', className: 'bg-rose-500 text-white' },
     OPTIONAL: { label: '💬 Optional', className: 'bg-violet-200 text-violet-950' },
     CANCELLED: { label: '🚫 Not held', className: 'bg-slate-300 text-slate-700' },
-    UPCOMING: { label: '🕒 Upcoming', className: 'bg-sky-200 text-sky-950' }
+    UPCOMING: { label: '🕒 Upcoming', className: 'bg-sky-200 text-sky-950' },
+    LOCKED: { label: '🔒 Attendance hidden', className: 'bg-amber-200 text-amber-950' }
 };
 
 /* How each track's certificate outlook reads on the profile. "alternate" is for
@@ -1065,6 +1067,8 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                     )}
                                 </div>
                             </div>
+
+                            <AttendanceViewLockedNotice lock={profile.attendanceViewLock} />
 
                             <AttendanceSummaryCard summary={profile.attendanceSummary} />
 

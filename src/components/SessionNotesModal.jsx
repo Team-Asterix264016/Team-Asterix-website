@@ -69,7 +69,9 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                     <span
                         className={`border border-slate-900 px-2 py-0.5 font-mono text-[10px] font-black uppercase ${
-                            session.status === 'PRESENT'
+                            session.status === 'LOCKED'
+                                ? 'bg-amber-200 text-amber-950'
+                                : session.status === 'PRESENT'
                                 ? 'bg-emerald-400 text-slate-950'
                                 : session.status === 'ABSENT'
                                   ? 'bg-rose-500 text-white'
@@ -78,7 +80,9 @@ export default function SessionNotesModal({ session, notes = [], onClose }) {
                                     : 'bg-sky-200 text-sky-950'
                         }`}
                     >
-                        {session.status === 'PRESENT'
+                        {session.status === 'LOCKED'
+                            ? '🔒 Attendance hidden'
+                            : session.status === 'PRESENT'
                             ? '✅ Present'
                             : session.status === 'ABSENT'
                               ? '❌ Missed'
