@@ -2554,18 +2554,31 @@ router.get('/sessions/live', authenticateToken, async (req, res) => {
 
         const paid = await WorkshopRegistration.find({ status: 'paid' }, { tracksEnrolled: 1, package: 1 }).lean();
         const perTrack = [];
-        const recent = [];
-        const people = new Set();
         let eligibleAny = 0;
         paid.forEach((reg) => {
             if (enrolledTracksOf(reg).some((t) => sessions.some((s) => s.track === t))) eligibleAny += 1;
         });
+
+        /* A combo student scanning a combo QR gets one row per track, which is
+           right for their per-track percentage but would count them twice
+           here. Everything below counts people: one entry per student, with
+           the tracks they were marked on. */
+        const people = new Map();
         for (const session of sessions) {
             const trackSessions = await WorkshopSession.find({ track: session.track }).lean();
             const rows = await rowsForSession(session, trackSessions);
             rows.forEach((row) => {
-                people.add(String(row.registrationId));
-                recent.push({ name: row.name, rollNo: row.rollNo, department: row.department, track: row.track, checkedInAt: row.checkedInAt });
+                const id = String(row.registrationId || row.rollNo);
+                const person = people.get(id) || {
+                    name: row.name,
+                    rollNo: row.rollNo,
+                    department: row.department,
+                    tracks: [],
+                    checkedInAt: row.checkedInAt
+                };
+                if (!person.tracks.includes(row.track)) person.tracks.push(row.track);
+                if (new Date(row.checkedInAt) > new Date(person.checkedInAt)) person.checkedInAt = row.checkedInAt;
+                people.set(id, person);
             });
             perTrack.push({
                 track: session.track,
@@ -2575,14 +2588,23 @@ router.get('/sessions/live', authenticateToken, async (req, res) => {
                 totalPresent: rows.length
             });
         }
-        recent.sort((a, b) => new Date(b.checkedInAt) - new Date(a.checkedInAt));
+
+        const everyone = [...people.values()];
+        everyone.forEach((p) => p.tracks.sort((a, b) => TRACK_IDS.indexOf(a) - TRACK_IDS.indexOf(b)));
+        const breakdown = {
+            softwareOnly: everyone.filter((p) => p.tracks.join() === 'software').length,
+            powertrainOnly: everyone.filter((p) => p.tracks.join() === 'powertrain').length,
+            bothTracks: everyone.filter((p) => p.tracks.length > 1).length
+        };
+        everyone.sort((a, b) => new Date(b.checkedInAt) - new Date(a.checkedInAt));
         return res.json({
             ok: true,
             perTrack,
+            breakdown,
             totalEligible: eligibleAny,
             totalPresent: people.size,
             percentage: eligibleAny > 0 ? ((people.size / eligibleAny) * 100).toFixed(1) : 0,
-            recentCheckins: recent.slice(0, 10)
+            recentCheckins: everyone.slice(0, 10)
         });
     } catch (err) {
         console.error('Error loading live session status:', err);

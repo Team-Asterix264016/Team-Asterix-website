@@ -217,17 +217,29 @@ export default function SessionQrProjector({ onExit }) {
                         </div>
                     </div>
 
-                    {live.perTrack.length > 1 && (
-                        <div className="grid shrink-0 grid-cols-2 gap-2.5">
-                            {live.perTrack.map((t) => (
-                                <div key={t.track} className="border-2 border-slate-800 bg-slate-900 p-2">
-                                    <span className="block text-[10px] font-black text-slate-300 uppercase">
-                                        {t.track}
-                                    </span>
-                                    <span className="text-lg font-black text-white">{t.totalPresent}</span>
-                                    <span className="text-[10px] text-slate-400"> / {t.totalEligible}</span>
-                                </div>
-                            ))}
+                    {/* Who the people present are. These three add up to the total
+                        above: a combo student is one person, counted once. */}
+                    {live.perTrack.length > 1 && live.breakdown && (
+                        <div className="shrink-0 space-y-1">
+                            <div className="grid grid-cols-3 gap-2">
+                                {[
+                                    ['Software only', live.breakdown.softwareOnly],
+                                    ['Powertrain only', live.breakdown.powertrainOnly],
+                                    ['Combo', live.breakdown.bothTracks]
+                                ].map(([name, count]) => (
+                                    <div key={name} className="border-2 border-slate-800 bg-slate-900 p-2">
+                                        <span className="block text-[10px] font-black text-slate-300 uppercase">
+                                            {name}
+                                        </span>
+                                        <span className="text-lg font-black text-white">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-slate-500">
+                                Track lists:{' '}
+                                {live.perTrack.map((t) => `${t.track} ${t.totalPresent}`).join(' · ')} (combo
+                                students are on both)
+                            </p>
                         </div>
                     )}
 
@@ -249,7 +261,7 @@ export default function SessionQrProjector({ onExit }) {
                             <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
                                 {live.recentCheckins.map((item, idx) => (
                                     <div
-                                        key={`${item.rollNo}-${item.track}-${idx}`}
+                                        key={`${item.rollNo}-${idx}`}
                                         className="flex items-center justify-between border border-slate-800 bg-slate-950 p-1.5 text-xs"
                                     >
                                         <div className="truncate pr-2">
@@ -257,7 +269,8 @@ export default function SessionQrProjector({ onExit }) {
                                                 {item.name}
                                             </div>
                                             <div className="text-[9px] text-slate-400">
-                                                {item.rollNo} · {item.department} · {item.track}
+                                                {item.rollNo} · {item.department} ·{' '}
+                                                {(item.tracks || []).join(' + ')}
                                             </div>
                                         </div>
                                         <span className="shrink-0 text-[9px] text-slate-500">
