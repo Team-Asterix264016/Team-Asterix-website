@@ -40,6 +40,10 @@ const WorkshopSessionSchema = new mongoose.Schema({
     // sessionId strings written by the old check-in routes, e.g.
     // "software-s03-2026-10-15". Kept so existing attendance still resolves here.
     legacySessionIds: { type: [String], default: [] },
+    // Shared by the software and powertrain halves of a combo session created
+    // from the admin portal, so one QR can credit each student on their own
+    // tracks. No default: rows created before this field stay untouched.
+    jointKey: { type: String, trim: true },
     notes: { type: String, default: '', trim: true }
 }, {
     timestamps: true

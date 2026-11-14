@@ -23,6 +23,10 @@ export function getTrackSchedule(trackId = 'software', siteData = null) {
                 sessionNumber = 0;
             } else if (numMatch) {
                 sessionNumber = parseInt(numMatch[1], 10);
+            } else if (item.custom) {
+                // Added in Manage Sessions: found by session, so it takes no
+                // number and leaves the existing entries' numbering alone.
+                sessionNumber = 0;
             } else {
                 sessionNumber = fallbackNum++;
             }

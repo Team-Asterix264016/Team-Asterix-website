@@ -3,9 +3,10 @@ import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import { useAttendanceSession } from '../../hooks/useAttendanceSession';
 import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
+import AttendanceSessionsManager from './AttendanceSessionsManager';
 
 export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector }) {
-    const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'barcode'
+    const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'barcode' | 'sessions'
 
     const {
         track,
@@ -274,9 +275,22 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 >
                     ⚡ Barcode Scanner Mode (College Register No)
                 </button>
+                <button
+                    type="button"
+                    onClick={() => setViewMode('sessions')}
+                    className={`press cursor-pointer border-2 border-slate-900 px-4 py-2 text-xs font-black uppercase transition-all ${
+                        viewMode === 'sessions'
+                            ? 'bg-emerald-400 text-slate-950 shadow-md'
+                            : 'bg-white text-slate-900 hover:bg-slate-100'
+                    }`}
+                >
+                    🗂 Manage Sessions & QR
+                </button>
             </div>
 
-            {viewMode === 'barcode' ? (
+            {viewMode === 'sessions' ? (
+                <AttendanceSessionsManager showStatus={showStatus} />
+            ) : viewMode === 'barcode' ? (
                 <BarcodeAttendanceAdmin showStatus={showStatus} />
             ) : (
                 <>

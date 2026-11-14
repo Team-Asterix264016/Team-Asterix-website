@@ -22,6 +22,7 @@ const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const SponsorPage = lazy(() => import('./components/SponsorPage'));
 const WorkshopPage = lazy(() => import('./components/WorkshopPage'));
 const WorkshopAttendanceProjector = lazy(() => import('./components/admin/WorkshopAttendanceProjector'));
+const SessionQrProjector = lazy(() => import('./components/admin/SessionQrProjector'));
 const WorkshopAttendanceCheckin = lazy(() => import('./components/WorkshopAttendanceCheckin'));
 const WorkshopProjectSubmissionPage = lazy(() => import('./components/WorkshopProjectSubmissionPage'));
 const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
@@ -326,9 +327,15 @@ function MainApp() {
     }
 
     if (isProjectorPage) {
+        // A QR for one session opened from Manage Sessions names it in the hash.
+        const forOneSession = /[?&](session|joint)=/.test(window.location.hash);
         return (
             <Suspense fallback={pageFallback}>
-                <WorkshopAttendanceProjector onExit={handleBackToHome} />
+                {forOneSession ? (
+                    <SessionQrProjector onExit={handleBackToHome} />
+                ) : (
+                    <WorkshopAttendanceProjector onExit={handleBackToHome} />
+                )}
             </Suspense>
         );
     }

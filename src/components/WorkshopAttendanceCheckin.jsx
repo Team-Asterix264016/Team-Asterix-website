@@ -186,7 +186,11 @@ export default function WorkshopAttendanceCheckin({ onGoHome }) {
                                 isSoftware ? 'bg-sky-100 text-sky-900' : 'bg-amber-100 text-amber-900'
                             }`}
                         >
-                            {isSoftware ? 'Software Track' : 'Powertrain Track'}
+                            {isSoftware
+                                ? 'Software Track'
+                                : tokenInfo.track === 'combo'
+                                  ? 'Joint Session'
+                                  : 'Powertrain Track'}
                         </span>
                     )}
                 </div>
