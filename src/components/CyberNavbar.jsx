@@ -158,6 +158,23 @@ export default function CyberNavbar({
                                 <div
                                     className={`flex items-center ${isScrolled ? 'gap-1 lg:gap-1.5' : 'gap-1.5 lg:gap-2'}`}
                                 >
+                                    {/* Intern Recruitment Button: first in the dock and the loudest */}
+                                    <DockTextItem
+                                        mouseX={mouseX}
+                                        onClick={openInternRecruitment}
+                                        className={`flex cursor-pointer items-center gap-1.5 border-slate-900 bg-rose-500 font-black tracking-wide text-white hover:bg-rose-600 ${
+                                            isScrolled
+                                                ? 'shadow-brutal-2 rounded-md border-2 px-2.5 py-1 text-[11px]'
+                                                : 'shadow-brutal-3 hover:shadow-brutal-4 border-2 px-3.5 py-1.5 text-xs'
+                                        }`}
+                                    >
+                                        <span className="relative flex h-2 w-2" aria-hidden="true">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300" />
+                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
+                                        </span>
+                                        <span>RECRUITMENT</span>
+                                    </DockTextItem>
+
                                     {/* The Subsystems Text Item */}
                                     <div className="relative">
                                         <DockTextItem
@@ -358,19 +375,6 @@ export default function CyberNavbar({
                                         }`}
                                     >
                                         <span>HORIZON</span>
-                                    </DockTextItem>
-
-                                    {/* Intern Recruitment Button */}
-                                    <DockTextItem
-                                        mouseX={mouseX}
-                                        onClick={openInternRecruitment}
-                                        className={`cursor-pointer border-slate-900 bg-amber-300 font-black text-slate-900 hover:bg-amber-400 ${
-                                            isScrolled
-                                                ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
-                                                : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
-                                        }`}
-                                    >
-                                        <span>RECRUITMENT</span>
                                     </DockTextItem>
 
                                     {/* Sponsor Team Button */}
