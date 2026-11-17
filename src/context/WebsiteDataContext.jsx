@@ -8,6 +8,7 @@ import {
     MECHANICAL_MYSTERY_DATA
 } from '../data/recruitmentProblemStatements';
 import { WORKSHOP_TRACKS } from '../../server/src/config/workshopPackages.js';
+import { normalizeInternRecruitment } from '../data/internRecruitment';
 
 import imgPaddock from '../assets/gallery/01_team_paddock.jpg';
 import imgWelding from '../assets/gallery/02_workshop_welding.jpg';
@@ -608,6 +609,7 @@ export function WebsiteDataProvider({ children }) {
                     accounts: parsed.accounts || initialAccounts,
                     sponsorship: parsed.sponsorship || initialSponsorshipData,
                     recruitment: normalizeRecruitment(parsed.recruitment),
+                    internRecruitment: normalizeInternRecruitment(parsed.internRecruitment),
                     workshop: normalizeWorkshop(parsed.workshop),
                     lastModified: parsed.lastModified || '1970-01-01T00:00:00.000Z'
                 };
@@ -625,6 +627,7 @@ export function WebsiteDataProvider({ children }) {
             accounts: initialAccounts,
             sponsorship: initialSponsorshipData,
             recruitment: initialRecruitment,
+            internRecruitment: normalizeInternRecruitment(null),
             workshop: normalizeWorkshop(initialWorkshopData),
             lastModified: '1970-01-01T00:00:00.000Z'
         };
@@ -687,6 +690,9 @@ export function WebsiteDataProvider({ children }) {
                             contact: data.contact || prev.contact,
                             sponsorship: data.sponsorship || prev.sponsorship || initialSponsorshipData,
                             recruitment: normalizeRecruitment(data.recruitment || prev.recruitment),
+                            internRecruitment: normalizeInternRecruitment(
+                                data.internRecruitment || prev.internRecruitment
+                            ),
                             workshop: normalizeWorkshop(data.workshop || prev.workshop),
                             lastModified: data.lastModified || prev.lastModified
                         };
@@ -751,6 +757,7 @@ export function WebsiteDataProvider({ children }) {
             contact: dataToSync.contact,
             sponsorship: dataToSync.sponsorship || initialSponsorshipData,
             recruitment: normalizeRecruitment(dataToSync.recruitment),
+            internRecruitment: normalizeInternRecruitment(dataToSync.internRecruitment),
             workshop: normalizeWorkshop(dataToSync.workshop),
             lastModified: new Date().toISOString()
         };
@@ -1056,6 +1063,14 @@ export function WebsiteDataProvider({ children }) {
         }));
     }, []);
 
+    const updateInternRecruitment = useCallback((fields) => {
+        setSiteData((prev) => ({
+            ...prev,
+            internRecruitment: normalizeInternRecruitment({ ...prev.internRecruitment, ...fields }),
+            lastModified: new Date().toISOString()
+        }));
+    }, []);
+
     const resetToDefaults = useCallback(() => {
         const defaults = {
             hero: initialHeroData,
@@ -1067,6 +1082,7 @@ export function WebsiteDataProvider({ children }) {
             accounts: initialAccounts,
             sponsorship: initialSponsorshipData,
             recruitment: initialRecruitment,
+            internRecruitment: normalizeInternRecruitment(null),
             workshop: normalizeWorkshop(initialWorkshopData),
             lastModified: new Date().toISOString()
         };
@@ -1121,6 +1137,7 @@ export function WebsiteDataProvider({ children }) {
             updateSponsorship,
             updateRecruitment,
             updateWorkshop,
+            updateInternRecruitment,
             syncState,
             syncError,
             resetToDefaults,
@@ -1157,6 +1174,7 @@ export function WebsiteDataProvider({ children }) {
             updateSponsorship,
             updateRecruitment,
             updateWorkshop,
+            updateInternRecruitment,
             syncState,
             syncError,
             resetToDefaults,
@@ -1178,6 +1196,7 @@ const fallbackWebsiteData = {
         accounts: initialAccounts,
         sponsorship: initialSponsorshipData,
         recruitment: initialRecruitment,
+        internRecruitment: normalizeInternRecruitment(null),
         workshop: normalizeWorkshop(initialWorkshopData),
         lastModified: '1970-01-01T00:00:00.000Z'
     },
@@ -1208,6 +1227,7 @@ const fallbackWebsiteData = {
     updateSponsorship: () => {},
     updateRecruitment: () => {},
     updateWorkshop: () => {},
+    updateInternRecruitment: () => {},
     syncState: 'idle',
     syncError: null,
     resetToDefaults: () => {},

@@ -1,25 +1,35 @@
 /**
  * First year intern recruitment content.
  *
- * Only Round 1 (quiz) and Round 2 (Expo) are announced. Leave a field as
- * null to show "will be updated soon" on the page. Add portions for a track
- * as an array of { title, topics: [] } sections.
+ * These are the defaults. Admins edit the live copy from the admin portal
+ * (Intern Recruitment tab); it is stored as `internRecruitment` in the site
+ * config and always passed through normalizeInternRecruitment, so a missing
+ * or partial copy falls back to what is here. An empty date shows "will be
+ * updated soon"; portions are an array of { title, topics: [] } sections.
  */
 
-export const INTERN_RECRUITMENT = {
+const INTERN_RECRUITMENT = {
     title: 'Intern Recruitment',
     tagline: 'Your first lap with Team Asterix starts here.',
     eligibilityNote: 'Only for first years',
+    quizFormatNote:
+        'Along with the track-specific questions below, the quiz will also have logical reasoning and aptitude questions.',
     registerUrl: 'https://rb.gy/j9mhx9',
-    registerQr: '/recruitment/register-qr.png'
+    registerQr: '/recruitment/register-qr.png',
+    bannerCatchline: "Don't just watch the race. Build the machine that wins it.",
+    bannerCatchlineShort: 'Build the machine.'
 };
 
-export const INTERN_TRACKS = [
+const INTERN_ROUNDS = [
+    { id: 'round-expo', title: 'Expo', date: '', details: 'Further details will be updated soon.' }
+];
+
+const INTERN_TRACKS = [
     {
         id: 'software-perception',
         label: 'Software & Perception',
         quiz: {
-            date: null,
+            date: '',
             portions: [
                 {
                     title: 'Development Tools',
@@ -52,7 +62,7 @@ export const INTERN_TRACKS = [
         id: 'powertrain',
         label: 'Powertrain',
         quiz: {
-            date: null,
+            date: '',
             portions: [
                 {
                     title: 'Network Analysis',
@@ -103,3 +113,60 @@ export const INTERN_TRACKS = [
         }
     }
 ];
+
+export const INTERN_RECRUITMENT_DEFAULTS = {
+    ...INTERN_RECRUITMENT,
+    tracks: INTERN_TRACKS,
+    rounds: INTERN_ROUNDS
+};
+
+const text = (value, fallback) => (typeof value === 'string' ? value : fallback);
+
+const cleanPortions = (portions) =>
+    portions
+        .filter((section) => section && typeof section === 'object')
+        .map((section) => ({
+            title: text(section.title, ''),
+            topics: Array.isArray(section.topics)
+                ? section.topics.filter((topic) => typeof topic === 'string')
+                : []
+        }));
+
+/* Always returns a complete object. The two tracks are fixed (the page and
+   the admin key off their ids); everything inside them is editable. */
+export function normalizeInternRecruitment(source) {
+    const src = source && typeof source === 'object' ? source : {};
+    const defaults = INTERN_RECRUITMENT_DEFAULTS;
+    const storedTracks = Array.isArray(src.tracks) ? src.tracks : [];
+
+    const result = {};
+    for (const key of Object.keys(INTERN_RECRUITMENT)) {
+        result[key] = text(src[key], defaults[key]);
+    }
+
+    result.tracks = defaults.tracks.map((base) => {
+        const stored = storedTracks.find((track) => track && track.id === base.id) || {};
+        const quiz = stored.quiz && typeof stored.quiz === 'object' ? stored.quiz : {};
+        return {
+            id: base.id,
+            label: text(stored.label, base.label),
+            quiz: {
+                date: text(quiz.date, base.quiz.date),
+                portions: Array.isArray(quiz.portions) ? cleanPortions(quiz.portions) : base.quiz.portions
+            }
+        };
+    });
+
+    result.rounds = Array.isArray(src.rounds)
+        ? src.rounds
+              .filter((round) => round && typeof round === 'object')
+              .map((round, index) => ({
+                  id: text(round.id, `round-${index}`),
+                  title: text(round.title, ''),
+                  date: text(round.date, ''),
+                  details: text(round.details, '')
+              }))
+        : defaults.rounds;
+
+    return result;
+}

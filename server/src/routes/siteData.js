@@ -201,6 +201,7 @@ router.get('/', async (req, res) => {
                 contact: null,
                 sponsorship: null,
                 recruitment: null,
+                internRecruitment: null,
                 lastModified: '1970-01-01T00:00:00.000Z'
             });
         }
@@ -236,6 +237,7 @@ router.get('/', async (req, res) => {
             sponsorship: config?.sponsorship || null,
             recruitment: config?.recruitment || null,
             workshop: config?.workshop || null,
+            internRecruitment: config?.internRecruitment || null,
             lastModified: config?.lastModified || config?.updatedAt?.toISOString() || new Date().toISOString()
         });
     } catch (err) {
@@ -260,7 +262,7 @@ router.put('/', authenticateToken, async (req, res) => {
 
         // 1. Update SiteConfig
         const configFields = { lastModified: now };
-        for (const field of ['hero', 'story', 'contact', 'sponsorship', 'recruitment', 'workshop']) {
+        for (const field of ['hero', 'story', 'contact', 'sponsorship', 'recruitment', 'workshop', 'internRecruitment']) {
             if (payload[field] !== undefined) {
                 configFields[field] = payload[field];
             }

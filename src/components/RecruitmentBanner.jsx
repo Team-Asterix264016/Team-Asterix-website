@@ -1,4 +1,6 @@
-import { INTERN_RECRUITMENT } from '../data/internRecruitment';
+import { useMemo } from 'react';
+import { normalizeInternRecruitment } from '../data/internRecruitment';
+import { useWebsiteData } from '../context/WebsiteDataContext';
 
 /* Fixed strip across the top of the home page. CyberNavbar renders it and
    pushes its own headers down by BANNER_OFFSET while it is showing; it slides
@@ -6,6 +8,12 @@ import { INTERN_RECRUITMENT } from '../data/internRecruitment';
 export const BANNER_OFFSET = 'top-11';
 
 export default function RecruitmentBanner({ hidden, onOpenDetails }) {
+    const { siteData } = useWebsiteData();
+    const INTERN_RECRUITMENT = useMemo(
+        () => normalizeInternRecruitment(siteData.internRecruitment),
+        [siteData.internRecruitment]
+    );
+
     return (
         <div
             className={`fixed inset-x-0 top-0 z-[60] flex h-11 items-center border-b-4 border-slate-900 bg-amber-300 px-3 text-slate-900 transition-all duration-300 ease-out select-none sm:px-8 ${
@@ -25,10 +33,10 @@ export default function RecruitmentBanner({ hidden, onOpenDetails }) {
                         <span className="sm:hidden">Recruiting</span>
                     </span>
                     <p className="truncate text-xs font-black uppercase sm:text-sm">
-                        <span className="hidden md:inline">
-                            Don&apos;t just watch the race. Build the machine that wins it.
+                        <span className="hidden md:inline">{INTERN_RECRUITMENT.bannerCatchline}</span>
+                        <span className="md:hidden">
+                            {INTERN_RECRUITMENT.bannerCatchlineShort || INTERN_RECRUITMENT.bannerCatchline}
                         </span>
-                        <span className="md:hidden">Build the machine.</span>
                         <span className="ml-2 hidden font-mono text-[10px] font-bold tracking-widest text-slate-700 lg:inline">
                             / {INTERN_RECRUITMENT.eligibilityNote}
                         </span>
