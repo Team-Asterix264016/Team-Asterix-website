@@ -55,9 +55,10 @@ export default function InternRecruitmentPage({ onBack }) {
 
             <main>
                 {/* Hero */}
-                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-7 sm:px-8 sm:py-9">
+                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-10 sm:px-8 sm:py-14">
                     <div className="mx-auto max-w-6xl">
-                        <h1 className="text-4xl leading-[0.9] font-black tracking-tight uppercase sm:text-6xl">
+                        {/* Same scale as the subsystem page titles */}
+                        <h1 className="text-4xl leading-none font-black tracking-tight uppercase sm:text-6xl md:text-7xl">
                             {INTERN_RECRUITMENT.title}
                         </h1>
                         <p className="mt-3 max-w-3xl text-base leading-snug font-bold sm:text-lg">
