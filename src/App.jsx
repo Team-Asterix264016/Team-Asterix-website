@@ -29,12 +29,18 @@ const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
 const QuizLeaderboardProjector = lazy(() => import('./components/admin/QuizLeaderboardProjector'));
 const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
 const CommunityPage = lazy(() => import('./components/community/CommunityPage'));
+const InternRecruitmentPage = lazy(() => import('./components/InternRecruitmentPage'));
+
+const INTERN_RECRUITMENT_HASH = '#intern-recruitment';
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
     const [isModelPage, setIsModelPage] = useState(false);
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
+    const [isInternRecruitmentPage, setIsInternRecruitmentPage] = useState(
+        () => window.location.hash === INTERN_RECRUITMENT_HASH
+    );
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
     const [isProfilePage, setIsProfilePage] = useState(
         () =>
@@ -90,6 +96,7 @@ function MainApp() {
             }
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
+            setIsInternRecruitmentPage(hash === INTERN_RECRUITMENT_HASH);
             setIsWorkshopPage(false);
             setIsProfilePage(
                 hash === '#workshop-profile' ||
@@ -132,6 +139,7 @@ function MainApp() {
         scrollToTop();
     }, [
         isSponsorPage,
+        isInternRecruitmentPage,
         isWorkshopPage,
         isProfilePage,
         isCommunityPage,
@@ -200,6 +208,7 @@ function MainApp() {
         setIsModelPage(false);
         setIsAdminOpen(false);
         setIsSponsorPage(false);
+        setIsInternRecruitmentPage(false);
         setIsWorkshopPage(false);
         setIsProfilePage(false);
         setIsCommunityPage(false);
@@ -222,6 +231,13 @@ function MainApp() {
         closeAll();
         setIsSponsorPage(true);
         window.location.hash = '#sponsor';
+        scrollToTop();
+    };
+
+    const handleOpenInternRecruitment = () => {
+        closeAll();
+        setIsInternRecruitmentPage(true);
+        window.location.hash = INTERN_RECRUITMENT_HASH;
         scrollToTop();
     };
 
@@ -264,6 +280,7 @@ function MainApp() {
             pathname.startsWith('/community') ||
             [
                 '#sponsor',
+                INTERN_RECRUITMENT_HASH,
                 '#workshop',
                 '#workshop-profile',
                 '#profile',
@@ -290,6 +307,14 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <AdminDashboard onExit={handleBackToHome} />
+            </Suspense>
+        );
+    }
+
+    if (isInternRecruitmentPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <InternRecruitmentPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
@@ -399,6 +424,7 @@ function MainApp() {
                     onOpenSponsor={handleOpenSponsor}
                     onOpenCommunity={handleOpenCommunity}
                     onOpenProfile={handleOpenProfile}
+                    onOpenInternRecruitment={handleOpenInternRecruitment}
                 />
 
                 {isModelPage ? (

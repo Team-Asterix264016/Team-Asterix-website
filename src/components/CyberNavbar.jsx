@@ -12,8 +12,13 @@ export default function CyberNavbar({
     onBackToHome,
     onOpenSponsor,
     onOpenCommunity,
-    onOpenProfile
+    onOpenProfile,
+    onOpenInternRecruitment
 }) {
+    const openInternRecruitment = () => {
+        if (onOpenInternRecruitment) onOpenInternRecruitment();
+        else window.location.hash = '#intern-recruitment';
+    };
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
     const { contact } = siteData;
@@ -343,7 +348,9 @@ export default function CyberNavbar({
                                             else window.location.hash = '#community';
                                         }}
                                         className={`horizon-gleam cursor-pointer border-slate-900 font-black text-amber-950 ${
-                                            currentPage === 'community' ? 'shadow-[inset_2px_2px_0px_#000]' : ''
+                                            currentPage === 'community'
+                                                ? 'shadow-[inset_2px_2px_0px_#000]'
+                                                : ''
                                         } ${
                                             isScrolled
                                                 ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
@@ -351,6 +358,19 @@ export default function CyberNavbar({
                                         }`}
                                     >
                                         <span>HORIZON</span>
+                                    </DockTextItem>
+
+                                    {/* Intern Recruitment Button */}
+                                    <DockTextItem
+                                        mouseX={mouseX}
+                                        onClick={openInternRecruitment}
+                                        className={`cursor-pointer border-slate-900 bg-amber-300 font-black text-slate-900 hover:bg-amber-400 ${
+                                            isScrolled
+                                                ? 'hover:shadow-brutal-2 rounded-md border px-2.5 py-1 text-[11px]'
+                                                : 'shadow-brutal-2 hover:shadow-brutal-3 border-2 px-3.5 py-1.5 text-xs'
+                                        }`}
+                                    >
+                                        <span>RECRUITMENT</span>
                                     </DockTextItem>
 
                                     {/* Sponsor Team Button */}
@@ -518,9 +538,7 @@ export default function CyberNavbar({
                                         <span className="flex h-5 w-5 items-center justify-center border border-slate-900 bg-sky-300">
                                             <Icon name="mail" className="h-3 w-3" />
                                         </span>
-                                        <span className="truncate">
-                                            {contactEmail(contact)}
-                                        </span>
+                                        <span className="truncate">{contactEmail(contact)}</span>
                                     </a>
                                 </div>
                             )}
@@ -547,6 +565,15 @@ export default function CyberNavbar({
                                 className="horizon-gleam shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 p-2.5 text-center text-xs font-black text-amber-950 uppercase"
                             >
                                 <span>Horizon</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setMobileOpen(false);
+                                    openInternRecruitment();
+                                }}
+                                className="shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
+                            >
+                                <span>Intern Recruitment</span>
                             </button>
                             <button
                                 onClick={() => {
