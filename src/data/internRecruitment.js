@@ -30,60 +30,48 @@ export const INTERN_TRACKS = [
             date: null,
             portions: [
                 {
-                    title: 'Electrical Fundamentals',
+                    title: 'Network Analysis',
                     topics: [
-                        'Voltage, current, resistance and power',
+                        "Kirchhoff's Voltage Law (KVL)",
+                        "Kirchhoff's Current Law (KCL)",
+                        'Mesh Analysis',
+                        'Nodal Analysis',
+                        'Voltage, Current and Resistance',
                         "Ohm's Law",
-                        'AC and DC',
-                        'Series and parallel circuits',
-                        'KCL and KVL',
-                        'Electrical energy and power calculations',
-                        'Conductors and insulators'
+                        'Electrical Power and Energy',
+                        'Series and Parallel Circuits',
+                        'Voltage Divider Rule',
+                        'Current Divider Rule',
+                        'Active and Passive Elements',
+                        'Independent and Dependent Sources',
+                        'Ideal and Practical Voltage and Current Sources',
+                        'Open Circuit and Short Circuit'
                     ]
                 },
                 {
-                    title: 'Basic Electronic Components',
+                    title: 'Electronic Devices',
                     topics: [
-                        'Resistors, capacitors and inductors',
-                        'Diodes and LEDs',
-                        'Transistors (BJT and MOSFET)',
-                        'Relays, switches and fuses',
-                        'Batteries and power supplies',
-                        'Basic circuit symbols'
-                    ]
-                },
-                {
-                    title: 'Sensors & Actuators',
-                    topics: [
-                        'What are sensors and actuators?',
-                        'Analog and digital sensors',
-                        'IR and ultrasonic sensors',
-                        'Temperature and pressure sensors',
-                        'Proximity sensors',
-                        'DC motors and servo motors'
-                    ]
-                },
-                {
-                    title: 'Digital Electronics & Microcontrollers',
-                    topics: [
-                        'Analog vs digital signals',
-                        'Basic logic gates',
-                        'Binary number system',
-                        'Microcontroller basics',
-                        'Arduino and ESP32 basics',
-                        'GPIO and PWM'
-                    ]
-                },
-                {
-                    title: 'Communication Systems',
-                    topics: [
-                        'Basic communication system block diagram',
-                        'Types of communication: Wired and wireless',
-                        'Analog and digital communication',
-                        'Serial and parallel communication',
-                        'UART, SPI and I2C',
-                        'Bluetooth, Wi-Fi and CAN',
-                        'Transmitter, receiver and communication channels'
+                        'Conductors, Insulators and Semiconductors',
+                        'Energy Band Theory',
+                        'Intrinsic and Extrinsic Semiconductors',
+                        'P-type and N-type Semiconductors',
+                        'Majority and Minority Charge Carriers',
+                        'Drift Current and Diffusion Current',
+                        'PN Junction Formation',
+                        'Depletion Region',
+                        'Barrier Potential',
+                        'Forward Bias and Reverse Bias',
+                        'PN Junction Diode',
+                        'V-I Characteristics',
+                        'Forward and Reverse Breakdown',
+                        'Knee Voltage',
+                        'Static and Dynamic Resistance',
+                        'Zener Diode and Its Characteristics',
+                        'Zener Diode as a Voltage Regulator',
+                        'LED (Light Emitting Diode)',
+                        'Photodiode',
+                        'Bipolar Junction Transistor',
+                        'MOSFET'
                     ]
                 }
             ]
