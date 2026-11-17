@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import { useWebsiteData } from '../../context/WebsiteDataContext';
 import { INTERN_RECRUITMENT_DEFAULTS, normalizeInternRecruitment } from '../../data/internRecruitment';
+import ImageField from './ImageField';
+
+// A QR must never be cropped, so the only preview is the square it is shown in.
+const QR_FRAMES = [{ id: 'qr', label: 'Recruitment page', ratio: '1 / 1' }];
 
 const INPUT = 'w-full border-2 border-slate-900 bg-slate-50 px-3 py-2 text-sm font-bold';
 const LABEL = 'mb-1 block font-mono text-xs font-black text-slate-700 uppercase';
@@ -59,7 +63,7 @@ function SectionCard({ title, subtitle, children }) {
     );
 }
 
-export default function InternRecruitmentAdmin() {
+export default function InternRecruitmentAdmin({ onImageUpload }) {
     const { siteData, updateInternRecruitment } = useWebsiteData();
     const data = useMemo(
         () => normalizeInternRecruitment(siteData.internRecruitment),
@@ -136,12 +140,19 @@ export default function InternRecruitmentAdmin() {
                     onChange={setField('registerUrl')}
                     placeholder="https://..."
                 />
-                <TextField
-                    label="QR code image URL"
+                <ImageField
+                    label="QR code"
                     value={data.registerQr}
-                    onChange={setField('registerQr')}
-                    hint="Update this when the registration link changes, so the QR matches."
+                    frames={QR_FRAMES}
+                    folder="/asterix/recruitment"
+                    onUpload={(e, cb, folder) => onImageUpload?.(e, cb, folder, 'intern_recruitment_qr')}
+                    onChange={(fields) => {
+                        if (fields.url !== undefined) updateInternRecruitment({ registerQr: fields.url });
+                    }}
                 />
+                <p className="font-mono text-[11px] font-bold text-slate-500">
+                    Upload a new QR whenever the registration link changes, so the two match.
+                </p>
             </SectionCard>
 
             <SectionCard title="Home page banner" subtitle="Strip across the top of the home page.">

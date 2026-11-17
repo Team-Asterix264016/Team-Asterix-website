@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { normalizeInternRecruitment } from '../data/internRecruitment';
 import { useWebsiteData } from '../context/WebsiteDataContext';
+import { apiUrl } from '../lib/api';
 
 const SOON = 'Will be updated soon';
 
@@ -96,11 +97,11 @@ export default function InternRecruitmentPage({ onBack }) {
                             aria-label="Registration form QR code"
                         >
                             <img
-                                src={INTERN_RECRUITMENT.registerQr}
+                                src={apiUrl(INTERN_RECRUITMENT.registerQr)}
                                 alt="QR code for the intern recruitment registration form"
                                 width="430"
                                 height="430"
-                                className="h-24 w-24 sm:h-32 sm:w-32"
+                                className="h-24 w-24 object-contain sm:h-32 sm:w-32"
                             />
                         </a>
                     </div>

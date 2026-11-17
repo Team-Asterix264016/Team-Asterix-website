@@ -2235,7 +2235,9 @@ export default function AdminDashboard({ onExit }) {
 
                     {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
 
-                    {activeTab === 'intern-recruitment' && <InternRecruitmentAdmin />}
+                    {activeTab === 'intern-recruitment' && (
+                        <InternRecruitmentAdmin onImageUpload={handleImageUpload} />
+                    )}
 
                     {/* TAB 5: GALLERY & MEDIA */}
                     {activeTab === 'gallery' && (

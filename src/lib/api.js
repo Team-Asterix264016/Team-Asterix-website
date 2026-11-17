@@ -11,7 +11,7 @@ export const API_BASE = (
 /* Paths served by the frontend itself, not by the API. Everything in public/
    lands here. Prefixing these with API_BASE sends them to the backend origin,
    which has no such files and answers 404 -- so they are returned untouched. */
-const FRONTEND_PATHS = /^\/(gallery|intro|assets|icons\.svg|favicon\.|asterix-logo)/i;
+const FRONTEND_PATHS = /^\/(gallery|intro|assets|recruitment|icons\.svg|favicon\.|asterix-logo)/i;
 
 /* Records written while the server had no ImageKit credentials point at files
    saved on the Render container's own disk, which is erased by every deploy.
