@@ -4,6 +4,7 @@ import TextDock, { DockTextItem } from './Dock';
 import { useWebsiteData } from '../context/WebsiteDataContext';
 import Icon from './Icon';
 import { socialUrl, contactEmail } from '../config/officialContact';
+import RecruitmentBanner, { BANNER_OFFSET } from './RecruitmentBanner';
 
 export default function CyberNavbar({
     onSelectSubsystem,
@@ -123,8 +124,13 @@ export default function CyberNavbar({
         }
     };
 
+    const showBanner = currentPage === 'home';
+    const headerTop = showBanner && !isScrolled ? BANNER_OFFSET : 'top-0';
+
     return (
         <>
+            {showBanner && <RecruitmentBanner hidden={isScrolled} onOpenDetails={openInternRecruitment} />}
+
             {/* =========================================================================
                 DESKTOP NAVIGATION: Option 2 — Morphing Floating Cyber Island (>= md)
                 ========================================================================= */}
@@ -132,7 +138,7 @@ export default function CyberNavbar({
                 className={`fixed z-50 hidden transition-all duration-300 ease-out select-none md:block ${
                     isScrolled
                         ? 'shadow-brutal-3 top-2.5 left-1/2 w-max max-w-[95vw] -translate-x-1/2 rounded-full border-2 border-slate-900 bg-white/90 px-3.5 py-1 backdrop-blur-md'
-                        : 'inset-x-0 top-0 w-full rounded-none border-b-4 border-slate-900 bg-white/95 px-4 py-2.5 shadow-none backdrop-blur-md sm:px-8'
+                        : `inset-x-0 ${headerTop} w-full rounded-none border-b-4 border-slate-900 bg-white/95 px-4 py-2.5 shadow-none backdrop-blur-md sm:px-8`
                 }`}
             >
                 <div className="relative flex items-center justify-between gap-2.5 lg:gap-4">
@@ -409,7 +415,7 @@ export default function CyberNavbar({
                 Shown on the first page, smoothly slides away on scroll
                 ========================================================================= */}
             <header
-                className={`fixed inset-x-0 top-0 z-50 flex h-[46px] items-center justify-between border-b-2 border-slate-900 bg-white/95 px-3.5 py-1.5 shadow-[0_2px_4px_rgba(15,23,42,0.08)] backdrop-blur-md transition-all duration-300 ease-out select-none md:hidden ${
+                className={`fixed inset-x-0 ${headerTop} z-50 flex h-[46px] items-center justify-between border-b-2 border-slate-900 bg-white/95 px-3.5 py-1.5 shadow-[0_2px_4px_rgba(15,23,42,0.08)] backdrop-blur-md transition-all duration-300 ease-out select-none md:hidden ${
                     isScrolled
                         ? 'pointer-events-none -translate-y-full opacity-0'
                         : 'translate-y-0 opacity-100'
