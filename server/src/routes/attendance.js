@@ -26,7 +26,9 @@ import {
     CERTIFICATE_THRESHOLD,
     TASK_CREDIT_CAP,
     WORKSHOP_SESSIONS_COMPLETE,
-    isOverallEligible
+    isOverallEligible,
+    sessionWeight,
+    weightedCount
 } from '../lib/workshopSessions.js';
 
 const router = Router();
@@ -1197,6 +1199,7 @@ router.post('/profile', async (req, res) => {
                     project: scheduleItem.project || null,
                     subject: scheduleItem.subject || null,
                     countsForAttendance: session.countsForAttendance,
+                    weight: sessionWeight(session),
                     status,
                     checkedInAt: att ? att.checkedInAt : null,
                     isoDate: session.date
@@ -1210,10 +1213,10 @@ router.post('/profile', async (req, res) => {
         const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
         const trackSummaries = tracksEnrolled.map((trackId) => {
             const summary = perTrack[trackId];
-            const remaining = sessions.filter((session) => session.track === trackId
+            const remaining = weightedCount(sessions.filter((session) => session.track === trackId
                 && session.countsForAttendance
                 && session.status === 'scheduled'
-                && (!session.date || session.date >= todayIso)).length;
+                && (!session.date || session.date >= todayIso)));
             const finalTotal = summary.totalConducted + remaining;
             const needed = finalTotal > 0
                 ? Math.ceil((CERTIFICATE_THRESHOLD * finalTotal) / 100) - summary.totalPresent
@@ -1645,6 +1648,7 @@ router.get('/sessions', authenticateToken, async (req, res) => {
             threshold: CERTIFICATE_THRESHOLD,
             sessions: sessions.map((session) => ({
                 ...session,
+                weight: sessionWeight(session),
                 rows: rowsByTrackDate.get(`${session.track}|${session.date}`) || 0,
                 isOpen: Boolean(session.openedAt && !session.closedAt)
             }))
@@ -2556,6 +2560,7 @@ router.get('/sessions/manage', authenticateToken, async (req, res) => {
                         type: session.type,
                         status: session.status,
                         countsForAttendance: session.countsForAttendance,
+                        weight: sessionWeight(session),
                         isOpen: isOpenSession(session),
                         instructor: item.instructor || '',
                         venue: item.venue || '',
@@ -2934,10 +2939,10 @@ router.get('/eligibility', authenticateToken, async (req, res) => {
             countedByTrack[trackId] = sessions
                 .filter((s) => s.track === trackId && s.countsForAttendance && s.status === 'conducted')
                 .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
-            remainingByTrack[trackId] = sessions.filter((s) => s.track === trackId
+            remainingByTrack[trackId] = weightedCount(sessions.filter((s) => s.track === trackId
                 && s.countsForAttendance
                 && s.status === 'scheduled'
-                && (!s.date || s.date >= todayIso)).length;
+                && (!s.date || s.date >= todayIso)));
         });
 
         const pct = (present, conducted) => (conducted > 0 ? Math.round((present / conducted) * 1000) / 10 : 0);
@@ -3035,7 +3040,7 @@ router.get('/eligibility', authenticateToken, async (req, res) => {
             threshold,
             certificateThreshold: CERTIFICATE_THRESHOLD,
             generatedAt: new Date().toISOString(),
-            conductedSessions: Object.fromEntries(TRACK_IDS.map((t) => [t, countedByTrack[t].length])),
+            conductedSessions: Object.fromEntries(TRACK_IDS.map((t) => [t, weightedCount(countedByTrack[t])])),
             remainingSessions: remainingByTrack,
             summary: {
                 total: people.length,

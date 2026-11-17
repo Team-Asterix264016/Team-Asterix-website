@@ -458,6 +458,9 @@ export default function AttendanceSessionsManager({ showStatus }) {
                                                     {s.label}
                                                     {s.instructor ? ` · ${s.instructor}` : ''}
                                                     {s.countsForAttendance ? '' : ' · not counted'}
+                                                    {s.countsForAttendance && s.weight !== undefined && s.weight !== 1
+                                                        ? ` · counts ×${s.weight}`
+                                                        : ''}
                                                     {s.onSchedule ? '' : ' · not on website schedule'}
                                                 </div>
                                             </div>

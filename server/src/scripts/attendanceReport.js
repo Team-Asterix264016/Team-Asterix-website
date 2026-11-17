@@ -3,7 +3,7 @@ import WorkshopRegistration from '../models/WorkshopRegistration.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import WorkshopSession from '../models/WorkshopSession.js';
 import { resolveMongoDbName } from '../db/mongodb.js';
-import { summarizeAttendance, CERTIFICATE_THRESHOLD } from '../lib/workshopSessions.js';
+import { summarizeAttendance, CERTIFICATE_THRESHOLD, weightedCount } from '../lib/workshopSessions.js';
 /*
  * Read-only. Reports every paid candidate's attendance against the sessions
  * marked "conducted" in WorkshopSession, per track, at the certificate
@@ -26,7 +26,7 @@ for (const a of atts) {
   }
 }
 const conducted = sessions.filter(s=>s.status==='conducted'&&s.countsForAttendance);
-console.log(`conducted+counted sessions: software=${conducted.filter(s=>s.track==='software').length} powertrain=${conducted.filter(s=>s.track==='powertrain').length}`);
+console.log(`conducted+counted sessions: software=${weightedCount(conducted.filter(s=>s.track==='software'))} powertrain=${weightedCount(conducted.filter(s=>s.track==='powertrain'))} (weighted)`);
 const buckets = { pass:0, fail:0 };
 const dist = {};
 const perTrackFail = { software:0, powertrain:0 };

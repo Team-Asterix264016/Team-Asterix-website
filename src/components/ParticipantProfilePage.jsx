@@ -1491,6 +1491,16 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                                                     : 'SW'}
                                                                             </span>
                                                                         )}
+                                                                        {session.countsForAttendance &&
+                                                                            typeof session.weight === 'number' &&
+                                                                            session.weight !== 1 && (
+                                                                                <span
+                                                                                    className="border border-slate-900 bg-white px-1.5 py-0.5 font-mono text-[9px] font-black text-slate-700 uppercase"
+                                                                                    title={`Counts as ${session.weight} of a session towards attendance`}
+                                                                                >
+                                                                                    {session.weight === 0.5 ? 'Half weight' : `x${session.weight}`}
+                                                                                </span>
+                                                                            )}
                                                                     </div>
 
                                                                     {/* Title and details */}

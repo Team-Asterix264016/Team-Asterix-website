@@ -10,7 +10,8 @@ import { resolveMongoDbName } from '../db/mongodb.js';
 import {
     summarizeAttendance,
     CERTIFICATE_THRESHOLD,
-    TASK_CREDIT_CAP
+    TASK_CREDIT_CAP,
+    weightedCount
 } from '../lib/workshopSessions.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,10 +73,10 @@ for (const reg of regs) {
 
     for (const trackId of tracksEnrolled) {
         const summary = perTrack[trackId];
-        const remaining = sessions.filter((session) => session.track === trackId
+        const remaining = weightedCount(sessions.filter((session) => session.track === trackId
             && session.countsForAttendance
             && session.status === 'scheduled'
-            && (!session.date || session.date >= todayIso)).length;
+            && (!session.date || session.date >= todayIso)));
         const finalTotal = summary.totalConducted + remaining;
         if (finalTotal === 0) continue;
 

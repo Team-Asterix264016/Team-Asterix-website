@@ -69,7 +69,8 @@ export default function WorkshopSessionsAdmin({ showStatus }) {
         const out = {};
         sessions.forEach((s) => {
             if (!s.countsForAttendance || s.status !== 'conducted') return;
-            out[s.track] = (out[s.track] || 0) + 1;
+            // Weighted: the 14 and 15 Nov sessions count as half a session each.
+            out[s.track] = (out[s.track] || 0) + (typeof s.weight === 'number' ? s.weight : 1);
         });
         return out;
     }, [sessions]);
@@ -152,7 +153,12 @@ export default function WorkshopSessionsAdmin({ showStatus }) {
                                                 { sessionKey: session.sessionKey, countsForAttendance: e.target.checked }
                                             ))}
                                         />
-                                        <span className="text-[10px] uppercase">{session.countsForAttendance ? 'Yes' : 'No'}</span>
+                                        <span className="text-[10px] uppercase">
+                                            {session.countsForAttendance ? 'Yes' : 'No'}
+                                            {session.countsForAttendance && session.weight !== undefined && session.weight !== 1
+                                                ? ` (×${session.weight})`
+                                                : ''}
+                                        </span>
                                     </label>
                                 </td>
                                 <td className="px-3 py-2">

@@ -33,6 +33,25 @@ export function isCountedType(type) {
     return !UNCOUNTED_TYPES.has(String(type || 'lecture').toLowerCase().trim());
 }
 
+/* Sessions held on these IST dates count for half a session, both in what was
+   conducted and in what a candidate attended (Nov 2026 decision: the 14 and 15
+   Nov sessions carry 0.5 weightage). To undo, empty this object; every count,
+   percentage and verdict reads the weight from sessionWeight(). */
+export const SESSION_WEIGHT_BY_DATE = Object.freeze({
+    '2026-11-14': 0.5,
+    '2026-11-15': 0.5
+});
+
+export function sessionWeight(session) {
+    const weight = SESSION_WEIGHT_BY_DATE[session?.date];
+    return typeof weight === 'number' ? weight : 1;
+}
+
+/* Sum of session weights: the weighted number of sessions in a list. */
+export function weightedCount(sessions) {
+    return sessions.reduce((sum, session) => sum + sessionWeight(session), 0);
+}
+
 export function sessionKeyOf(track, scheduleId) {
     return `${track}|${scheduleId}`;
 }
@@ -138,8 +157,9 @@ export function summarizeAttendance({ sessions, attendanceRecords, tracksEnrolle
         const counted = sessions.filter((session) => session.track === trackId
             && session.countsForAttendance
             && session.status === 'conducted');
-        const present = counted.filter((session) => presentKeys.has(session.sessionKey)).length;
-        const totalConducted = counted.length;
+        // Weighted: a half-weight session adds 0.5 to both sides of the fraction.
+        const present = weightedCount(counted.filter((session) => presentKeys.has(session.sessionKey)));
+        const totalConducted = weightedCount(counted);
         const percentage = totalConducted > 0 ? Math.round((present / totalConducted) * 100) : 0;
         perTrack[trackId] = {
             track: trackId,
