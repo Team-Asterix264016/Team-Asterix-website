@@ -49,19 +49,6 @@ export default function InternRecruitmentPage({ onBack }) {
                     </div>
                 </section>
 
-                {/* Quiz format */}
-                <section className="border-b-4 border-slate-900 bg-slate-900 px-4 py-4 text-white sm:px-8">
-                    <div className="mx-auto flex max-w-6xl items-start gap-3 sm:items-center">
-                        <span className="flex-shrink-0 border-2 border-amber-300 px-2 py-0.5 font-mono text-[10px] font-black tracking-widest text-amber-300 uppercase">
-                            Quiz format
-                        </span>
-                        <p className="text-sm leading-snug font-bold sm:text-base">
-                            Along with the track-specific questions below, the quiz will also have{' '}
-                            <span className="text-amber-300">logical reasoning and aptitude</span> questions.
-                        </p>
-                    </div>
-                </section>
-
                 {/* Registration */}
                 <section className="border-b-4 border-slate-900 bg-sky-200 px-4 py-5 sm:px-8 sm:py-6">
                     <div className="mx-auto flex max-w-6xl items-center justify-between gap-5">
@@ -165,6 +152,18 @@ export default function InternRecruitmentPage({ onBack }) {
                                             {track.quiz.date || SOON}
                                         </span>
                                     </div>
+                                </div>
+
+                                {/* Quiz format */}
+                                <div className="mt-4 flex items-start gap-3 border-2 border-slate-900 bg-slate-900 px-3 py-2.5 text-white sm:items-center">
+                                    <span className="flex-shrink-0 border-2 border-amber-300 px-2 py-0.5 font-mono text-[10px] font-black tracking-widest text-amber-300 uppercase">
+                                        Quiz format
+                                    </span>
+                                    <p className="text-sm leading-snug font-bold">
+                                        Along with the track-specific questions below, the quiz will also have{' '}
+                                        <span className="text-amber-300">logical reasoning and aptitude</span>{' '}
+                                        questions.
+                                    </p>
                                 </div>
 
                                 <h4 className="mt-6 border-b-2 border-slate-900 pb-2 font-mono text-xs font-black tracking-widest uppercase">
