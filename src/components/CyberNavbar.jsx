@@ -472,6 +472,21 @@ export default function CyberNavbar({
                             </button>
                         </div>
 
+                        {/* Intern Recruitment: first and loudest, as in the desktop dock */}
+                        <button
+                            onClick={() => {
+                                setMobileOpen(false);
+                                openInternRecruitment();
+                            }}
+                            className="shadow-brutal-3 tap mb-3 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-rose-500 p-2.5 text-center text-xs font-black tracking-wide text-white uppercase hover:bg-rose-600"
+                        >
+                            <span className="relative flex h-2 w-2" aria-hidden="true">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
+                            </span>
+                            <span>Intern Recruitment</span>
+                        </button>
+
                         {/* Subsystems List */}
                         <div className="mb-3">
                             <span className="mb-1.5 block font-mono text-[10px] font-black text-sky-700 uppercase">
@@ -575,15 +590,6 @@ export default function CyberNavbar({
                                 className="horizon-gleam shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 p-2.5 text-center text-xs font-black text-amber-950 uppercase"
                             >
                                 <span>Horizon</span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setMobileOpen(false);
-                                    openInternRecruitment();
-                                }}
-                                className="shadow-brutal-2 tap flex w-full cursor-pointer items-center justify-center gap-1.5 border-2 border-slate-900 bg-amber-300 p-2.5 text-center text-xs font-black text-slate-900 uppercase hover:bg-amber-400"
-                            >
-                                <span>Intern Recruitment</span>
                             </button>
                             <button
                                 onClick={() => {
