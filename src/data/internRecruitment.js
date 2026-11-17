@@ -40,10 +40,6 @@ const INTERN_TRACKS = [
                     ]
                 },
                 {
-                    title: 'System Design',
-                    topics: ['High-Level Design & Low-Level Design']
-                },
-                {
                     title: 'Machine Learning',
                     topics: [
                         'Supervised & Unsupervised learning',
@@ -51,6 +47,10 @@ const INTERN_TRACKS = [
                         'Algorithms',
                         'Evaluation Metrics'
                     ]
+                },
+                {
+                    title: 'System Design',
+                    topics: ['High-Level Design & Low-Level Design']
                 },
                 { title: 'Basics of C', topics: [] },
                 { title: 'Logic Building on any given scenario', topics: [] },
