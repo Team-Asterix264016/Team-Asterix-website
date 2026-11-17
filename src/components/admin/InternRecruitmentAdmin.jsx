@@ -161,11 +161,6 @@ export default function InternRecruitmentAdmin({ onImageUpload }) {
                     value={data.bannerCatchline}
                     onChange={setField('bannerCatchline')}
                 />
-                <TextField
-                    label="Short catchline (phones)"
-                    value={data.bannerCatchlineShort}
-                    onChange={setField('bannerCatchlineShort')}
-                />
             </SectionCard>
 
             <SectionCard title="Round 1: Quiz" subtitle="Each track has its own date and portions.">
