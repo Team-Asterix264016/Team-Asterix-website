@@ -3,6 +3,17 @@ import { INTERN_RECRUITMENT, INTERN_TRACKS } from '../data/internRecruitment';
 
 const SOON = 'Will be updated soon';
 
+/* "Git/GitHub: Clone, add..." renders its lead-in before the colon in bold. */
+function TopicText({ text }) {
+    const split = text.indexOf(': ');
+    if (split <= 0) return <span>{text}</span>;
+    return (
+        <span>
+            <span className="font-black text-slate-900">{text.slice(0, split)}:</span> {text.slice(split + 2)}
+        </span>
+    );
+}
+
 export default function InternRecruitmentPage({ onBack }) {
     const [trackId, setTrackId] = useState(INTERN_TRACKS[0].id);
     const track = INTERN_TRACKS.find((t) => t.id === trackId) || INTERN_TRACKS[0];
@@ -184,20 +195,22 @@ export default function InternRecruitmentPage({ onBack }) {
                                                         {section.title}
                                                     </h5>
                                                 </div>
-                                                <ul className="mt-3 space-y-1.5">
-                                                    {section.topics.map((topic) => (
-                                                        <li
-                                                            key={topic}
-                                                            className="flex gap-2 text-sm leading-snug font-bold text-slate-700"
-                                                        >
-                                                            <span
-                                                                aria-hidden="true"
-                                                                className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 bg-slate-900"
-                                                            />
-                                                            <span>{topic}</span>
-                                                        </li>
-                                                    ))}
-                                                </ul>
+                                                {section.topics.length > 0 && (
+                                                    <ul className="mt-3 space-y-1.5">
+                                                        {section.topics.map((topic) => (
+                                                            <li
+                                                                key={topic}
+                                                                className="flex gap-2 text-sm leading-snug font-bold text-slate-700"
+                                                            >
+                                                                <span
+                                                                    aria-hidden="true"
+                                                                    className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 bg-slate-900"
+                                                                />
+                                                                <TopicText text={topic} />
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

@@ -20,7 +20,32 @@ export const INTERN_TRACKS = [
         label: 'Software & Perception',
         quiz: {
             date: null,
-            portions: null
+            portions: [
+                {
+                    title: 'Development Tools',
+                    topics: [
+                        'Git/GitHub: Clone, add, commit, push, pull, branches, reading a merge conflict',
+                        'VS Code: Workspace structure, file extensions, extensions panel, basic debugging UI',
+                        'Google Colab: Code vs. Markdown cells, runtimes (CPU/GPU), order of execution, installing packages'
+                    ]
+                },
+                {
+                    title: 'System Design',
+                    topics: ['High-Level Design & Low-Level Design']
+                },
+                {
+                    title: 'Machine Learning',
+                    topics: [
+                        'Supervised & Unsupervised learning',
+                        'Data Preprocessing',
+                        'Algorithms',
+                        'Evaluation Metrics'
+                    ]
+                },
+                { title: 'Basics of C', topics: [] },
+                { title: 'Logic Building on any given scenario', topics: [] },
+                { title: 'Coordinate Geometry and Probabilities', topics: [] }
+            ]
         }
     },
     {
