@@ -32,87 +32,107 @@ export default function InternRecruitmentPage({ onBack }) {
 
             <main>
                 {/* Hero */}
-                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-14 sm:px-8 sm:py-20">
+                <section className="border-b-4 border-slate-900 bg-amber-300 px-4 py-7 sm:px-8 sm:py-9">
                     <div className="mx-auto max-w-6xl">
-                        <span className="inline-block border-2 border-slate-900 bg-slate-900 px-3 py-1 font-mono text-xs font-black tracking-widest text-amber-300 uppercase">
-                            Recruitment 2026
-                        </span>
-                        <h1 className="mt-5 text-4xl leading-[0.9] font-black tracking-tight uppercase sm:text-7xl">
+                        <h1 className="text-4xl leading-[0.9] font-black tracking-tight uppercase sm:text-6xl">
                             {INTERN_RECRUITMENT.title}
                         </h1>
-                        <p className="mt-5 max-w-3xl text-base leading-relaxed font-bold sm:text-xl">
+                        <p className="mt-3 max-w-3xl text-base leading-snug font-bold sm:text-lg">
                             {INTERN_RECRUITMENT.tagline}
-                        </p>
-                        <p className="mt-4 text-sm leading-relaxed font-bold sm:text-base">
-                            Register here:{' '}
-                            <a
-                                href={INTERN_RECRUITMENT.registerUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-mono text-xs break-all text-slate-900 underline decoration-2 underline-offset-2 hover:text-sky-700 sm:text-sm"
-                            >
-                                {INTERN_RECRUITMENT.registerUrl}
-                            </a>
                         </p>
                         <p
                             role="note"
-                            className="mt-6 font-mono text-xs font-black tracking-widest uppercase"
+                            className="mt-3 font-mono text-xs font-black tracking-widest uppercase"
                         >
                             <span className="text-rose-600">Note:</span> {INTERN_RECRUITMENT.eligibilityNote}
                         </p>
                     </div>
                 </section>
 
-                {/* Track tabs */}
-                <section className="border-b-4 border-slate-900 bg-sky-100 px-4 py-10 sm:px-8 sm:py-14">
-                    <div className="mx-auto max-w-6xl">
-                        <span className="font-mono text-xs font-black tracking-widest text-sky-700 uppercase">
-                            Select your track
-                        </span>
-                        <div
-                            role="tablist"
-                            aria-label="Recruitment track"
-                            className="mt-4 grid grid-cols-1 gap-3 sm:inline-grid sm:grid-cols-2"
-                        >
-                            {INTERN_TRACKS.map((t) => {
-                                const active = t.id === trackId;
-                                return (
-                                    <button
-                                        key={t.id}
-                                        type="button"
-                                        role="tab"
-                                        id={`tab-${t.id}`}
-                                        aria-selected={active}
-                                        aria-controls={`panel-${t.id}`}
-                                        onClick={() => setTrackId(t.id)}
-                                        className={`press border-2 border-slate-900 px-5 py-3 text-left text-sm font-black uppercase sm:text-base ${
-                                            active
-                                                ? 'bg-slate-900 text-amber-300 shadow-[inset_2px_2px_0px_#000]'
-                                                : 'shadow-brutal-3 bg-white text-slate-900 hover:bg-sky-200'
-                                        }`}
-                                    >
-                                        {t.label}
-                                    </button>
-                                );
-                            })}
+                {/* Registration */}
+                <section className="border-b-4 border-slate-900 bg-sky-200 px-4 py-5 sm:px-8 sm:py-6">
+                    <div className="mx-auto flex max-w-6xl items-center justify-between gap-5">
+                        <div className="min-w-0">
+                            <h2 className="text-2xl font-black uppercase sm:text-3xl">Register here</h2>
+                            <a
+                                href={INTERN_RECRUITMENT.registerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="press shadow-brutal-3 mt-3 inline-flex items-center gap-1.5 border-2 border-slate-900 bg-white px-3 py-1.5 font-mono text-sm font-black break-all text-slate-900 no-underline hover:bg-sky-100"
+                            >
+                                {INTERN_RECRUITMENT.registerUrl.replace(/^https?:\/\//, '')} ↗
+                            </a>
+                            <p className="mt-2 font-mono text-[11px] font-bold tracking-wide text-slate-700 uppercase">
+                                Or scan the QR code
+                            </p>
                         </div>
+                        <a
+                            href={INTERN_RECRUITMENT.registerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shadow-brutal-4 flex-shrink-0 border-2 border-slate-900 bg-white p-1.5"
+                            aria-label="Registration form QR code"
+                        >
+                            <img
+                                src={INTERN_RECRUITMENT.registerQr}
+                                alt="QR code for the intern recruitment registration form"
+                                width="430"
+                                height="430"
+                                className="h-24 w-24 sm:h-32 sm:w-32"
+                            />
+                        </a>
                     </div>
                 </section>
 
-                {/* Rounds for the selected track */}
-                <section
-                    id={`panel-${track.id}`}
-                    role="tabpanel"
-                    aria-labelledby={`tab-${track.id}`}
-                    className="border-b-4 border-slate-900 bg-slate-100 px-4 py-12 sm:px-8 sm:py-16"
-                >
+                {/* Tracks and rounds */}
+                <section className="border-b-4 border-slate-900 bg-white px-4 py-8 sm:px-8 sm:py-10">
                     <div className="mx-auto max-w-6xl">
-                        <span className="font-mono text-xs font-black tracking-widest text-sky-600 uppercase">
-                            {track.label} / Rounds
-                        </span>
-                        <h2 className="mt-2 text-3xl font-black uppercase sm:text-5xl">Recruitment rounds</h2>
+                        <div className="flex flex-wrap items-end justify-between gap-4">
+                            <div>
+                                <span className="font-mono text-xs font-black tracking-widest text-sky-600 uppercase">
+                                    Select your track
+                                </span>
+                                <h2 className="mt-1 text-2xl font-black uppercase sm:text-3xl">
+                                    Recruitment rounds
+                                </h2>
+                            </div>
+                            <div
+                                role="tablist"
+                                aria-label="Recruitment track"
+                                className="shadow-brutal-3 inline-flex border-2 border-slate-900 bg-white"
+                            >
+                                {INTERN_TRACKS.map((t, index) => {
+                                    const active = t.id === trackId;
+                                    return (
+                                        <button
+                                            key={t.id}
+                                            type="button"
+                                            role="tab"
+                                            id={`tab-${t.id}`}
+                                            aria-selected={active}
+                                            aria-controls={`panel-${t.id}`}
+                                            onClick={() => setTrackId(t.id)}
+                                            className={`cursor-pointer px-3 py-2 font-mono text-[11px] font-black tracking-wide uppercase transition-colors sm:px-4 sm:text-xs ${
+                                                index > 0 ? 'border-l-2 border-slate-900' : ''
+                                            } ${
+                                                active
+                                                    ? 'bg-slate-900 text-amber-300'
+                                                    : 'bg-white text-slate-900 hover:bg-sky-100'
+                                            }`}
+                                        >
+                                            {t.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
 
-                        <div className="mt-8 flex flex-col gap-6">
+                        <div
+                            id={`panel-${track.id}`}
+                            role="tabpanel"
+                            aria-labelledby={`tab-${track.id}`}
+                            className="mt-7 flex flex-col gap-6"
+                        >
                             {/* Round 1 */}
                             <article className="shadow-brutal-6 border-4 border-slate-900 bg-white p-5 sm:p-7">
                                 <div className="flex flex-wrap items-start justify-between gap-3">

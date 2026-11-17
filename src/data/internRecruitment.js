@@ -10,8 +10,8 @@ export const INTERN_RECRUITMENT = {
     title: 'Intern Recruitment',
     tagline: 'Your first lap with Team Asterix starts here.',
     eligibilityNote: 'Only for first years',
-    registerUrl:
-        'https://docs.google.com/forms/d/e/1FAIpQLSdqZnVml5cp2VmMXA2EDz12s9FrwlI0z4k21lBloo9i69ebbw/viewform?usp=sharing&ouid=101137440839672520074'
+    registerUrl: 'https://rb.gy/j9mhx9',
+    registerQr: '/recruitment/register-qr.png'
 };
 
 export const INTERN_TRACKS = [
