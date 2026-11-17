@@ -43,17 +43,23 @@ export default function InternRecruitmentPage({ onBack }) {
                         <p className="mt-5 max-w-3xl text-base leading-relaxed font-bold sm:text-xl">
                             {INTERN_RECRUITMENT.tagline}
                         </p>
-                        <div
+                        <p className="mt-4 text-sm leading-relaxed font-bold sm:text-base">
+                            Register here:{' '}
+                            <a
+                                href={INTERN_RECRUITMENT.registerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-xs break-all text-slate-900 underline decoration-2 underline-offset-2 hover:text-sky-700 sm:text-sm"
+                            >
+                                {INTERN_RECRUITMENT.registerUrl}
+                            </a>
+                        </p>
+                        <p
                             role="note"
-                            className="shadow-brutal-4 mt-8 inline-flex items-center gap-3 border-2 border-slate-900 bg-white px-4 py-3"
+                            className="mt-6 font-mono text-xs font-black tracking-widest uppercase"
                         >
-                            <span className="border-2 border-slate-900 bg-rose-500 px-2 py-0.5 font-mono text-[11px] font-black tracking-widest text-white uppercase">
-                                Note
-                            </span>
-                            <span className="text-sm font-black uppercase sm:text-base">
-                                {INTERN_RECRUITMENT.eligibilityNote}
-                            </span>
-                        </div>
+                            <span className="text-rose-600">Note:</span> {INTERN_RECRUITMENT.eligibilityNote}
+                        </p>
                     </div>
                 </section>
 
