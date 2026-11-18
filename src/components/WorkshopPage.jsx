@@ -2024,7 +2024,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                         : 'bg-amber-50 text-amber-950 hover:bg-amber-100'
                                 }`}
                             >
-                                🔄 Bonus &amp; Catch-ups ({counts.bonus})
+                                🎁 Bonus &amp; Complimentary ({counts.bonus})
                             </button>
                         )}
                     </div>

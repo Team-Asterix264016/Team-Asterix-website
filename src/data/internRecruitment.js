@@ -53,7 +53,11 @@ const INTERN_TRACKS = [
                 },
                 { title: 'Basics of C', topics: [] },
                 { title: 'Logic Building on any given scenario', topics: [] },
-                { title: 'Coordinate Geometry and Probabilities', topics: [] }
+                { title: 'Coordinate Geometry and Probabilities', topics: [] },
+                {
+                    title: 'Aptitude',
+                    topics: ['General aptitude questions']
+                }
             ]
         }
     },
@@ -119,6 +123,10 @@ const INTERN_TRACKS = [
                         'Bluetooth, Wi-Fi and CAN',
                         'Transmitter, receiver and communication channels'
                     ]
+                },
+                {
+                    title: 'Aptitude',
+                    topics: ['General aptitude questions']
                 }
             ]
         }

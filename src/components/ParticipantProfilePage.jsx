@@ -1358,7 +1358,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 { id: 'lecture', label: 'Core Lectures' },
                                                 { id: 'handson', label: 'Hands-on Labs' },
                                                 { id: 'expert', label: 'Industry Experts' },
-                                                { id: 'catchup', label: 'Catch-up' }
+                                                { id: 'complimentary', label: 'Complimentary' }
                                             ].map((f) => (
                                                 <button
                                                     key={f.id}

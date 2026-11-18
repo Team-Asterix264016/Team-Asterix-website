@@ -24,17 +24,17 @@ export const WORKSHOP_TRACKS = {
         tagline: 'Learn the software behind an autonomous vehicle.',
         overview:
             'A five-week hands-on workshop covering System Design, Computer Vision, Machine Learning, ROS 2 and Agentic AI, with mini-projects for every session and two larger capstone projects.',
-        dates: '8 Oct – 5 Nov 2026',
+        dates: '6 Oct – 15 Nov 2026',
         startLabel: 'Pre-workshop session Tue 6 Oct 2026 · First core session Thu 8 Oct 2026',
         startDate: '2026-10-06',
-        days: 'Tue & Thu (Core) · Sat (Industry Expert) · Sun (Catch-up)',
-        timing: 'Core: 5:10 PM – 6:50 PM · Sun Catch-up: 6:00 PM',
-        format: '8 core sessions + 1 online pre-workshop + 2 major projects + Saturday industry expert sessions + Sunday catch-ups',
+        days: 'Tue & Thu (Core) · Sat & Sun (Industry Sessions)',
+        timing: 'Core: 5:10 PM – 6:50 PM · Weekend Sessions: Morning & Afternoon slots',
+        format: '8 core sessions + 1 online pre-workshop + 2 major projects + 3 industry expert sessions (5 slots)',
         audience: 'First-year & second-year students welcome. No prior knowledge needed.',
         syllabus: '/workshop/software-perception-syllabus.pdf',
-        venue: 'Autonomous Systems & Robotics Lab (Room 302, PSG iTech)',
+        venue: 'Mechanical Seminar Hall / Robotics Lab',
         reportingInstructions: 'Bring laptops with chargers. Ubuntu 24.04 / WSL2 & Python ready. Arrive 10 minutes prior to session timing.',
-        ongoingWeek: 'Week 1',
+        ongoingWeek: 'Completed',
         topics: [
             {
                 title: 'System Design',
@@ -93,29 +93,9 @@ export const WORKSHOP_TRACKS = {
                 date: '8 Oct',
                 title: 'System Design I: Subsystem Thinking',
                 instructor: 'Rithvin, Preethika',
-                venue: 'Autonomous Systems & Robotics Lab',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
                 project: 'Mini Project 1 (System Design)'
-            },
-            {
-                id: 'sch-sw-ind1',
-                label: 'Industry Session',
-                days: 'Saturday',
-                date: '10 Oct',
-                title: 'Industry Expert Session (Half Day)',
-                instructor: 'Industry Expert (to be notified)',
-                venue: 'To be notified',
-                type: 'expert'
-            },
-            {
-                id: 'sch-sw-cu1',
-                label: 'Catch-up',
-                days: 'Sunday',
-                date: '11 Oct',
-                title: 'Weekly Catch-up (6:00 PM)',
-                instructor: 'Workshop Team',
-                venue: 'Online / Lab',
-                type: 'catchup'
             },
             {
                 id: 'sch-sw-2',
@@ -124,7 +104,7 @@ export const WORKSHOP_TRACKS = {
                 date: '13 Oct',
                 title: 'System Design II: Block Diagramming',
                 instructor: 'Rithvin, Preethika',
-                venue: 'Autonomous Systems & Robotics Lab',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
                 project: 'Mini Project 2 (System Design)'
             },
@@ -135,48 +115,18 @@ export const WORKSHOP_TRACKS = {
                 date: '15 Oct',
                 title: 'Computer Vision: Teaching the Car to See',
                 instructor: 'Mr. Mahavishnu V C',
-                venue: 'Autonomous Systems & Robotics Lab',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
                 project: 'Mini Project 3 (CV) + Project 1 assigned'
-            },
-            {
-                id: 'sch-sw-h1',
-                label: 'Holiday',
-                days: 'Saturday',
-                date: '17 Oct',
-                title: 'No session (Vijayadashami)',
-                instructor: '-',
-                venue: '-',
-                type: 'holiday'
-            },
-            {
-                id: 'sch-sw-cu2',
-                label: 'Catch-up',
-                days: 'Sunday',
-                date: '18 Oct',
-                title: 'Weekly Catch-up (6:00 PM)',
-                instructor: 'Workshop Team',
-                venue: 'Online / Lab',
-                type: 'catchup'
-            },
-            {
-                id: 'sch-sw-h2',
-                label: 'Holiday',
-                days: 'Tuesday',
-                date: '20 Oct',
-                title: 'No session (Vijayadashami)',
-                instructor: '-',
-                venue: '-',
-                type: 'holiday'
             },
             {
                 id: 'sch-sw-4',
                 label: 'Session 4',
                 days: 'Thursday',
                 date: '22 Oct',
-                title: 'ML I: Core Paradigms',
-                instructor: 'Jeevan',
-                venue: 'Autonomous Systems & Robotics Lab',
+                title: 'ML I: Core Paradigms & Unsupervised Learning',
+                instructor: 'Ms. Bavana, Ms. Swethaswini, Ms. Lakshana',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
                 project: 'Mini Project 4 (ML)'
             },
@@ -185,107 +135,102 @@ export const WORKSHOP_TRACKS = {
                 label: 'Industry Session',
                 days: 'Saturday',
                 date: '24 Oct',
-                title: 'Industry Expert Session (Half Day)',
-                instructor: 'Industry Expert (to be notified)',
-                venue: 'To be notified',
-                type: 'expert'
-            },
-            {
-                id: 'sch-sw-cu3',
-                label: 'Catch-up',
-                days: 'Sunday',
-                date: '25 Oct',
-                title: 'Weekly Catch-up (6:00 PM)',
-                instructor: 'Workshop Team',
-                venue: 'Online / Lab',
-                type: 'catchup'
+                title: 'Automotive Functional Safety',
+                instructor: 'Mrs. Sasikala (Robert Bosch)',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Functional Safety in ADAS & EVs'
             },
             {
                 id: 'sch-sw-5',
                 label: 'Session 5',
                 days: 'Tuesday',
                 date: '27 Oct',
-                title: 'ML II: Linear Regression',
-                instructor: 'Jeevan',
-                venue: 'Autonomous Systems & Robotics Lab',
+                title: 'Agentic AI I: Generative AI and Autonomous Agents',
+                instructor: 'Rithvin, Arya',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
-                project: 'Mini Project 5 (ML)'
-            },
-            {
-                id: 'sch-sw-6',
-                label: 'Session 6',
-                days: 'Thursday',
-                date: '29 Oct',
-                title: 'ROS: How Vehicle Software Communicates',
-                instructor: 'Ratheeshwar',
-                venue: 'Autonomous Systems & Robotics Lab',
-                type: 'lecture',
-                project: 'Mini Project 6 (ROS)'
-            },
-            {
-                id: 'sch-sw-ind3',
-                label: 'Industry Session',
-                days: 'Saturday',
-                date: '31 Oct',
-                title: 'Industry Expert Session (Half Day)',
-                instructor: 'Industry Expert (to be notified)',
-                venue: 'To be notified',
-                type: 'expert'
-            },
-            {
-                id: 'sch-sw-cu4',
-                label: 'Catch-up',
-                days: 'Sunday',
-                date: '1 Nov',
-                title: 'Weekly Catch-up (6:00 PM)',
-                instructor: 'Workshop Team',
-                venue: 'Online / Lab',
-                type: 'catchup'
+                project: 'Mini Project 5 (Agentic AI)'
             },
             {
                 id: 'sch-sw-7',
-                label: 'Session 7',
+                label: 'Session 6',
                 days: 'Tuesday',
                 date: '3 Nov',
-                title: 'Agentic AI I: Generative AI and Agents',
-                instructor: 'Arya, Josana',
-                venue: 'Autonomous Systems & Robotics Lab',
+                title: 'Agentic AI II: Tools, Guardrails and Decisions',
+                instructor: 'Josna',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
-                project: 'Mini Project 7 (Agentic AI)'
+                project: 'Mini Project 6 (Agentic AI)'
             },
             {
                 id: 'sch-sw-8',
-                label: 'Session 8',
-                days: 'Thursday',
-                date: '5 Nov',
-                title: 'Agentic AI II: Tools and Decisions',
-                instructor: 'Arya, Josana',
-                venue: 'Autonomous Systems & Robotics Lab',
+                label: 'Session 7',
+                days: 'Tuesday',
+                date: '10 Nov',
+                title: 'Machine Learning: Supervised Learning from Basics',
+                instructor: 'Ratheeswar',
+                venue: 'Mechanical Seminar Hall',
                 type: 'lecture',
-                project: 'Mini Project 8 (Agentic AI) + Project 2 assigned'
+                project: 'Mini Project 7 (Supervised Learning)'
             },
             {
-                id: 'sch-sw-ind4',
-                label: 'Industry Session',
+                id: 'sch-sw-6',
+                label: 'Session 8',
+                days: 'Friday',
+                date: '13 Nov',
+                title: 'Basic Dev Tools & Environment Workflows',
+                instructor: 'Tanishka, Kanishka',
+                venue: 'Mechanical Seminar Hall',
+                type: 'lecture',
+                project: 'Toolchains, CLI, Linux & Git'
+            },
+            {
+                id: 'sch-sw-ind5a',
+                label: 'Industry Session (Slot 1)',
                 days: 'Saturday',
-                date: '7 Nov',
-                title: 'Industry Expert Session: Vehicle Dynamics & Architecture',
-                instructor: 'Mr. Senthil Vel M (VIT) & Mr. Vimal Kumar (MEI)',
-                venue: 'To be notified',
-                type: 'expert'
+                date: '14 Nov',
+                title: 'Fundamentals of Automobiles & EVs (Morning Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Automobiles & EV Architectures (0.5 credit)'
             },
             {
-                id: 'sch-sw-cu5',
-                label: 'Catch-up',
+                id: 'sch-sw-ind5b',
+                label: 'Industry Session (Slot 2)',
+                days: 'Saturday',
+                date: '14 Nov',
+                title: 'Fundamentals of Automobiles & EVs (Afternoon Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Automobiles & EV Subsystems (0.5 credit)'
+            },
+            {
+                id: 'sch-sw-ind6a',
+                label: 'Industry Session (Slot 1)',
                 days: 'Sunday',
-                date: '8 Nov',
-                title: 'Weekly Catch-up (6:00 PM)',
-                instructor: 'Workshop Team',
-                venue: 'Online / Lab',
-                type: 'catchup'
+                date: '15 Nov',
+                title: 'Fundamentals of Autonomous Vehicles (Morning Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Autonomous Vehicle Dynamics (0.5 credit)'
+            },
+            {
+                id: 'sch-sw-ind6b',
+                label: 'Industry Session (Slot 2)',
+                days: 'Sunday',
+                date: '15 Nov',
+                title: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Sensors, Safety & Drive-by-wire (0.5 credit)'
             }
         ],
-        bonus: 'Saturday Industry Expert sessions, Sunday catch-ups, plus Senior/Alumni Guest Sessions on Powertrain & Mechanical Fundamentals.'
+        bonus: 'Saturday & Sunday Industry Expert sessions, plus Senior/Alumni Guest Sessions on Powertrain & Mechanical Fundamentals.'
     },
     powertrain: {
         id: 'powertrain',
@@ -294,19 +239,19 @@ export const WORKSHOP_TRACKS = {
         overview:
             'Build a solid foundation in circuits, electronic components, microcontrollers and motors, ' +
             'and see how they come together in the electrical system of an autonomous vehicle. Includes ' +
-            '4 hands-on lab sessions with circuit simulators, MATLAB and PCB design tools, plus 2 complimentary sessions (21.0 total hours).',
-        dates: '7 Oct – 4 Nov 2026 (Complimentary: 6 & 9 Nov)',
+            '4 hands-on lab sessions with circuit simulators, MATLAB and PCB design tools.',
+        dates: '7 Oct – 7 Nov 2026',
         startLabel: 'First session Wed 7 Oct 2026',
         startDate: '2026-10-07',
         days: 'Mon, Wed & Fri · Saturdays (Industry Sessions during college hours)',
         timing: '5:15 PM – 6:45 PM (1.5 hours per session)',
-        format: '8 talks + 4 hands-on lab sessions + 4 expert sessions + 2 complimentary sessions (21.0 hours total)',
-        highlight: '21.0 hours of learning · less than ₹50 an hour',
+        format: '8 talks + 4 hands-on lab sessions + 4 expert sessions',
+        highlight: '18.0 hours of learning · less than ₹55 an hour',
         audience: 'First-year students welcome. No prior knowledge needed, we start from scratch!',
         syllabus: '/workshop/powertrain-syllabus.pdf',
         venue: 'E6 Mechanical Seminar Hall / E6 CAD Lab / E3 207 EDA Centre & Power Systems Lab',
         reportingInstructions: 'Bring laptop with LTspice, Tinkercad account, Arduino IDE & MATLAB ready for hands-on labs.',
-        ongoingWeek: 'Week 1',
+        ongoingWeek: 'Completed',
         topics: [
             {
                 title: 'Network Analysis & Devices',
@@ -334,12 +279,11 @@ export const WORKSHOP_TRACKS = {
                 ]
             },
             {
-                title: 'PCB Design & Complimentary',
+                title: 'PCB Design & Hardware Architecture',
                 points: [
                     'PCB Design I: Anatomy, through-hole vs surface mount, design journey',
                     'PCB Design II: Laying out a board, design rule checks & vehicle PCB tour',
-                    'Hands-on 4: Design Your First PCB',
-                    'Complimentary: Mechanical Basics, Software Basics & Valedictory'
+                    'Hands-on 4: Design Your First PCB'
                 ]
             }
         ],
@@ -517,17 +461,6 @@ export const WORKSHOP_TRACKS = {
                 subject: 'PCB Design'
             },
             {
-                id: 'sch-pt-c1',
-                label: 'Session C1',
-                days: 'Friday',
-                date: '6 Nov',
-                title: 'Complimentary Session: Mechanical Basics',
-                instructor: 'Team ASTERIX',
-                venue: 'E6 Mechanical Seminar Hall',
-                type: 'complimentary',
-                subject: 'Mechanical Basics'
-            },
-            {
                 id: 'sch-pt-e4',
                 label: 'Session E4',
                 days: 'Saturday',
@@ -536,20 +469,9 @@ export const WORKSHOP_TRACKS = {
                 instructor: 'Industry Expert (to be announced)',
                 venue: 'E8 Seminar Hall',
                 type: 'expert'
-            },
-            {
-                id: 'sch-pt-c2',
-                label: 'Session C2',
-                days: 'Monday',
-                date: '9 Nov',
-                title: 'Complimentary Session: Software Basics + Valedictory',
-                instructor: 'Team ASTERIX',
-                venue: 'E6 Mechanical Seminar Hall',
-                type: 'complimentary',
-                subject: 'Software Basics + Valedictory'
             }
         ],
-        bonus: 'Four Industrial Expert sessions on Saturdays, plus 2 complimentary sessions on Mechanical & Software Basics.'
+        bonus: 'Four Industrial Expert sessions on Saturdays during college hours.'
     }
 };
 
