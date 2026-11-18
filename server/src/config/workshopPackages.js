@@ -311,16 +311,6 @@ export const WORKSHOP_TRACKS = {
                 subject: 'Electronic Devices'
             },
             {
-                id: 'sch-pt-e1',
-                label: 'Session E1',
-                days: 'Saturday',
-                date: '10 Oct',
-                title: 'Industrial Expert Session I (During college hours)',
-                instructor: 'Industry Expert (to be announced)',
-                venue: 'E8 Seminar Hall',
-                type: 'expert'
-            },
-            {
                 id: 'sch-pt-3',
                 label: 'Session 3',
                 days: 'Monday',
@@ -386,14 +376,15 @@ export const WORKSHOP_TRACKS = {
                 subject: 'Analog Circuits'
             },
             {
-                id: 'sch-pt-e2',
-                label: 'Session E2',
+                id: 'sch-pt-ind2',
+                label: 'Industry Session',
                 days: 'Saturday',
                 date: '24 Oct',
-                title: 'Industrial Expert Session II (During college hours)',
-                instructor: 'Industry Expert (to be announced)',
-                venue: 'E8 Seminar Hall',
-                type: 'expert'
+                title: 'Automotive Functional Safety',
+                instructor: 'Mrs. Sasikala (Robert Bosch)',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Functional Safety in ADAS & EVs'
             },
             {
                 id: 'sch-pt-8',
@@ -429,16 +420,6 @@ export const WORKSHOP_TRACKS = {
                 subject: 'PCB Design'
             },
             {
-                id: 'sch-pt-e3',
-                label: 'Session E3',
-                days: 'Saturday',
-                date: '31 Oct',
-                title: 'Industrial Expert Session III (During college hours)',
-                instructor: 'Industry Expert (to be announced)',
-                venue: 'E8 Seminar Hall',
-                type: 'expert'
-            },
-            {
                 id: 'sch-pt-11',
                 label: 'Session 11',
                 days: 'Monday',
@@ -459,16 +440,6 @@ export const WORKSHOP_TRACKS = {
                 venue: 'E6 Mechanical Seminar Hall & E6 CAD Lab',
                 type: 'handson',
                 subject: 'PCB Design'
-            },
-            {
-                id: 'sch-pt-e4',
-                label: 'Session E4',
-                days: 'Saturday',
-                date: '7 Nov',
-                title: 'Industrial Expert Session IV (During college hours)',
-                instructor: 'Industry Expert (to be announced)',
-                venue: 'E8 Seminar Hall',
-                type: 'expert'
             },
             {
                 id: 'sch-pt-ind5a',
@@ -515,7 +486,7 @@ export const WORKSHOP_TRACKS = {
                 project: 'Sensors, Safety & Drive-by-wire (0.5 credit)'
             }
         ],
-        bonus: 'Four Industrial Expert sessions during college hours, plus Saturday & Sunday Industry Expert sessions.'
+        bonus: 'Saturday & Sunday Industry Expert sessions, including Automotive Functional Safety (Robert Bosch) and Autonomous Vehicles.'
     }
 };
 

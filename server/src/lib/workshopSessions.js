@@ -125,6 +125,8 @@ export function buildSessionSeeds(tracks) {
 }
 
 export const SESSION_KEY_ALIASES = Object.freeze({
+    'powertrain|sch-pt-e2': 'powertrain|sch-pt-ind2',
+    'software|sch-sw-e2': 'software|sch-sw-ind2',
     'software|sch-sw-xmwg3ckit': 'software|sch-sw-ind5a',
     'powertrain|sch-pt-xmwg3ckit': 'powertrain|sch-pt-ind5a',
     'software|sch-sw-xmwg8kfmr': 'software|sch-sw-ind5b',

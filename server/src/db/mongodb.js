@@ -691,6 +691,14 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
                 newSessionId: 'powertrain-s16-2026-11-15',
                 newTopic: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
                 regex: /sch-pt-xmwhobsmk|powertrain.*xmwhobsmk/i
+            },
+            // 24 Oct Bosch Session
+            {
+                oldKey: 'powertrain|sch-pt-e2',
+                newKey: 'powertrain|sch-pt-ind2',
+                newSessionId: 'powertrain-s09-2026-10-24',
+                newTopic: 'Automotive Functional Safety',
+                regex: /sch-pt-e2|powertrain.*e2|powertrain.*2026-10-24/i
             }
         ];
 
@@ -736,7 +744,11 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
             'powertrain|sch-pt-xmwg3ckit',
             'powertrain|sch-pt-xmwg8kfmr',
             'powertrain|sch-pt-xmwhf0ba1',
-            'powertrain|sch-pt-xmwhobsmk'
+            'powertrain|sch-pt-xmwhobsmk',
+            'powertrain|sch-pt-e1',
+            'powertrain|sch-pt-e2',
+            'powertrain|sch-pt-e3',
+            'powertrain|sch-pt-e4'
         ];
         const obsoleteIds = obsoleteKeys.map((k) => k.split('|')[1]);
         const removed = await WorkshopSession.deleteMany({
@@ -752,6 +764,8 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
 
         // 3. Upsert canonical sessions for each track
         const legacyIdsMap = {
+            'software|sch-sw-ind2': ['sch-sw-ind2', 'software-sch-sw-ind2-2026-10-24', 'software-s5-2026-10-24'],
+            'powertrain|sch-pt-ind2': ['sch-pt-e2', 'sch-pt-ind2', 'powertrain-sch-pt-e2-2026-10-24', 'powertrain-s09-2026-10-24', 'powertrain-s9-2026-10-24'],
             'software|sch-sw-ind5a': ['sch-sw-xmwg3ckit', 'software-sch-sw-xmwg3ckit-2026-11-14', 'software-s10-2026-11-14', 'xmwg3ckit'],
             'software|sch-sw-ind5b': ['sch-sw-xmwg8kfmr', 'software-sch-sw-xmwg8kfmr-2026-11-14', 'software-s11-2026-11-14', 'xmwg8kfmr'],
             'software|sch-sw-ind6a': ['sch-sw-xmwhf0ba1', 'software-sch-sw-xmwhf0ba1-2026-11-15', 'software-s12-2026-11-15', 'xmwhf0ba1'],
@@ -763,6 +777,8 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
         };
 
         const jointKeyMap = {
+            'software|sch-sw-ind2': 'jt-ind2',
+            'powertrain|sch-pt-ind2': 'jt-ind2',
             'software|sch-sw-ind5a': 'jt-ind5a',
             'powertrain|sch-pt-ind5a': 'jt-ind5a',
             'software|sch-sw-ind5b': 'jt-ind5b',

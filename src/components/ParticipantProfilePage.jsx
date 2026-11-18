@@ -854,7 +854,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
 
     const timetableQuery = timetableSearch.trim().toLowerCase();
     const cleanTimeline = (profile?.sessionTimeline || []).filter(
-        (item) => item.type !== 'catchup' && item.type !== 'holiday' && !/xmwg|xmwh/i.test(item.id || item.sessionKey || '')
+        (item) => item.type !== 'catchup' && item.type !== 'holiday' && !/xmwg|xmwh|sch-pt-e[134]/i.test(item.id || item.sessionKey || '')
     );
     const filteredTimetable = cleanTimeline.filter((item) => {
         if (timetableFilter !== 'all' && item.type !== timetableFilter) return false;
