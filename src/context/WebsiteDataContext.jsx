@@ -609,7 +609,11 @@ export function WebsiteDataProvider({ children }) {
                     accounts: parsed.accounts || initialAccounts,
                     sponsorship: parsed.sponsorship || initialSponsorshipData,
                     recruitment: normalizeRecruitment(parsed.recruitment),
-                    internRecruitment: normalizeInternRecruitment(parsed.internRecruitment),
+                    /* Never restored from this cache. The server is the only source of
+                       saved recruitment content; null means "use the defaults that ship
+                       with this build", so a browser holding an old snapshot cannot keep
+                       showing (or save back) content the code has since changed. */
+                    internRecruitment: null,
                     workshop: normalizeWorkshop(parsed.workshop),
                     lastModified: parsed.lastModified || '1970-01-01T00:00:00.000Z'
                 };
@@ -627,7 +631,7 @@ export function WebsiteDataProvider({ children }) {
             accounts: initialAccounts,
             sponsorship: initialSponsorshipData,
             recruitment: initialRecruitment,
-            internRecruitment: normalizeInternRecruitment(null),
+            internRecruitment: null,
             workshop: normalizeWorkshop(initialWorkshopData),
             lastModified: '1970-01-01T00:00:00.000Z'
         };
@@ -690,9 +694,7 @@ export function WebsiteDataProvider({ children }) {
                             contact: data.contact || prev.contact,
                             sponsorship: data.sponsorship || prev.sponsorship || initialSponsorshipData,
                             recruitment: normalizeRecruitment(data.recruitment || prev.recruitment),
-                            internRecruitment: normalizeInternRecruitment(
-                                data.internRecruitment || prev.internRecruitment
-                            ),
+                            internRecruitment: data.internRecruitment || null,
                             workshop: normalizeWorkshop(data.workshop || prev.workshop),
                             lastModified: data.lastModified || prev.lastModified
                         };
@@ -757,7 +759,9 @@ export function WebsiteDataProvider({ children }) {
             contact: dataToSync.contact,
             sponsorship: dataToSync.sponsorship || initialSponsorshipData,
             recruitment: normalizeRecruitment(dataToSync.recruitment),
-            internRecruitment: normalizeInternRecruitment(dataToSync.internRecruitment),
+            // Left out (undefined) until an admin has edited it, so a save from
+            // any other tab never writes the defaults into the database.
+            internRecruitment: dataToSync.internRecruitment || undefined,
             workshop: normalizeWorkshop(dataToSync.workshop),
             lastModified: new Date().toISOString()
         };
@@ -1063,10 +1067,13 @@ export function WebsiteDataProvider({ children }) {
         }));
     }, []);
 
+    /* `null` resets: it stores an empty object, which the server keeps and the
+       page reads as "use the defaults in this build". */
     const updateInternRecruitment = useCallback((fields) => {
         setSiteData((prev) => ({
             ...prev,
-            internRecruitment: normalizeInternRecruitment({ ...prev.internRecruitment, ...fields }),
+            internRecruitment:
+                fields === null ? {} : { ...normalizeInternRecruitment(prev.internRecruitment), ...fields },
             lastModified: new Date().toISOString()
         }));
     }, []);
@@ -1082,7 +1089,7 @@ export function WebsiteDataProvider({ children }) {
             accounts: initialAccounts,
             sponsorship: initialSponsorshipData,
             recruitment: initialRecruitment,
-            internRecruitment: normalizeInternRecruitment(null),
+            internRecruitment: null,
             workshop: normalizeWorkshop(initialWorkshopData),
             lastModified: new Date().toISOString()
         };
@@ -1196,7 +1203,7 @@ const fallbackWebsiteData = {
         accounts: initialAccounts,
         sponsorship: initialSponsorshipData,
         recruitment: initialRecruitment,
-        internRecruitment: normalizeInternRecruitment(null),
+        internRecruitment: null,
         workshop: normalizeWorkshop(initialWorkshopData),
         lastModified: '1970-01-01T00:00:00.000Z'
     },

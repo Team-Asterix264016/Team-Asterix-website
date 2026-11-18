@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useWebsiteData } from '../../context/WebsiteDataContext';
-import { INTERN_RECRUITMENT_DEFAULTS, normalizeInternRecruitment } from '../../data/internRecruitment';
+import { normalizeInternRecruitment } from '../../data/internRecruitment';
 import ImageField from './ImageField';
 
 // A QR must never be cropped, so the only preview is the square it is shown in.
@@ -89,7 +89,7 @@ export default function InternRecruitmentAdmin({ onImageUpload }) {
                 'Reset all Intern Recruitment content to the defaults that ship with the site? Your edits here will be replaced.'
             )
         ) {
-            updateInternRecruitment(INTERN_RECRUITMENT_DEFAULTS);
+            updateInternRecruitment(null);
         }
     };
 
