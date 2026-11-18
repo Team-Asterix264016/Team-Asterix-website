@@ -651,16 +651,14 @@ export default function CyberNavbar({
                         </span>
                     </button>
 
-                    {/* Quick CTA Pill: Sponsor */}
+                    {/* Quick CTA Pill: Intern Recruitment. Takes over from the floating
+                        bubble once the dock is in view (Sponsor stays in the drawer). */}
                     <button
-                        onClick={() => {
-                            if (onOpenSponsor) onOpenSponsor();
-                            else window.location.hash = '#sponsor';
-                        }}
-                        className="press shadow-brutal-2 tap flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg border-2 border-slate-900 bg-sky-500 px-3 text-xs font-black text-slate-950 uppercase"
+                        onClick={openInternRecruitment}
+                        className="press shadow-brutal-2 tap flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg border-2 border-slate-900 bg-rose-500 px-3 text-xs font-black whitespace-nowrap text-white uppercase hover:bg-rose-600"
                     >
-                        <span>SPONSOR</span>
-                        <span className="text-[10px]">↗</span>
+                        <span>INTERN</span>
+                        <span className="text-[10px]">→</span>
                     </button>
                 </nav>
             </div>
