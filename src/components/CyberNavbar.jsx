@@ -5,6 +5,7 @@ import { useWebsiteData } from '../context/WebsiteDataContext';
 import Icon from './Icon';
 import { socialUrl, contactEmail } from '../config/officialContact';
 import RecruitmentBanner, { BANNER_OFFSET } from './RecruitmentBanner';
+import RecruitmentBubble from './RecruitmentBubble';
 
 export default function CyberNavbar({
     onSelectSubsystem,
@@ -130,6 +131,8 @@ export default function CyberNavbar({
     return (
         <>
             {showBanner && <RecruitmentBanner hidden={isScrolled} onOpenDetails={openInternRecruitment} />}
+
+            <RecruitmentBubble onOpen={openInternRecruitment} dockVisible={isScrolled} hidden={mobileOpen} />
 
             {/* =========================================================================
                 DESKTOP NAVIGATION: Option 2 — Morphing Floating Cyber Island (>= md)

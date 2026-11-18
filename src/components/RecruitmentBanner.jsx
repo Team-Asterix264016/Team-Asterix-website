@@ -48,18 +48,10 @@ export default function RecruitmentBanner({ hidden, onOpenDetails }) {
                     <button
                         type="button"
                         onClick={onOpenDetails}
-                        className="press hidden cursor-pointer border-2 border-slate-900 bg-white px-2.5 py-1 font-mono text-[10px] font-black uppercase hover:bg-sky-100 sm:inline-flex"
+                        className="press shadow-brutal-2 inline-flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-rose-500 px-2.5 py-1 font-mono text-[10px] font-black text-white uppercase hover:bg-rose-600 sm:text-[11px]"
                     >
-                        Rounds &amp; portions →
+                        Register now →
                     </button>
-                    <a
-                        href={INTERN_RECRUITMENT.registerUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="press shadow-brutal-2 inline-flex items-center gap-1 border-2 border-slate-900 bg-rose-500 px-2.5 py-1 font-mono text-[10px] font-black text-white uppercase no-underline hover:bg-rose-600 sm:text-[11px]"
-                    >
-                        Register now ↗
-                    </a>
                 </div>
             </div>
         </div>
