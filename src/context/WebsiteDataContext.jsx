@@ -467,40 +467,45 @@ const normalizeWorkshop = (ws) => {
         const canonical = WORKSHOP_TRACKS[key];
         const incoming = tracksSource[key] || {};
 
-        /* The schedule saved in the database is the one admins edit, so its order
-           and entries win. Each entry is laid over the config entry with the same
-           id, which fills in any field the saved copy lacks. A saved schedule
-           with an entry missing its id is malformed, and the config is used. */
-        let reconciledSchedule = canonical.schedule;
-        if (
-            Array.isArray(incoming.schedule) &&
-            incoming.schedule.length > 0 &&
-            incoming.schedule.every((item) => item && typeof item.id === 'string' && item.id)
-        ) {
-            const canonicalById = new Map(canonical.schedule.map((cItem) => [cItem.id, cItem]));
-            reconciledSchedule = incoming.schedule.map((item) => ({
-                ...canonicalById.get(item.id),
-                ...item
-            }));
-        }
+        /* Start from the canonical schedule as the source of truth for valid sessions.
+           Admin overrides (title, instructor, venue, project) for existing sessions are
+           preserved, but removed/obsolete sessions (catchups, holidays, duplicate/unheld
+           slots) are never resurrected. */
+        const canonicalById = new Map(canonical.schedule.map((cItem) => [cItem.id, cItem]));
+        const incomingList = Array.isArray(incoming.schedule) ? incoming.schedule : [];
+
+        let reconciledSchedule = canonical.schedule.map((cItem) => {
+            const match = incomingList.find((it) => it && it.id === cItem.id);
+            if (!match) return cItem;
+            return {
+                ...cItem,
+                ...match,
+                type: cItem.type || match.type
+            };
+        });
+
+        // Ensure catchups and holidays are strictly excluded
+        reconciledSchedule = reconciledSchedule.filter(
+            (item) => item.type !== 'catchup' && item.type !== 'holiday'
+        );
 
         mergedTracks[key] = {
             ...canonical,
             ...incoming,
             id: canonical.id,
             name: incoming.name || canonical.name,
-            syllabus: incoming.syllabus || canonical.syllabus,
-            timing: incoming.timing || canonical.timing,
-            dates: incoming.dates || canonical.dates,
-            days: incoming.days || canonical.days,
-            startLabel: incoming.startLabel || canonical.startLabel,
-            format: incoming.format || canonical.format,
-            audience: incoming.audience || canonical.audience,
-            venue: incoming.venue || canonical.venue,
-            reportingInstructions: incoming.reportingInstructions || canonical.reportingInstructions,
-            bonus: incoming.bonus || canonical.bonus,
-            ongoingWeek: incoming.ongoingWeek || canonical.ongoingWeek,
-            startDate: incoming.startDate || canonical.startDate,
+            syllabus: canonical.syllabus || incoming.syllabus,
+            timing: canonical.timing || incoming.timing,
+            dates: canonical.dates || incoming.dates,
+            days: canonical.days || incoming.days,
+            startLabel: canonical.startLabel || incoming.startLabel,
+            format: canonical.format || incoming.format,
+            audience: canonical.audience || incoming.audience,
+            venue: canonical.venue || incoming.venue,
+            reportingInstructions: canonical.reportingInstructions || incoming.reportingInstructions,
+            bonus: canonical.bonus || incoming.bonus,
+            ongoingWeek: canonical.ongoingWeek || incoming.ongoingWeek,
+            startDate: canonical.startDate || incoming.startDate,
             leadName: incoming.leadName || canonical.leadName || '',
             leadRole: incoming.leadRole || canonical.leadRole || '',
             leadEmail: incoming.leadEmail || canonical.leadEmail || '',

@@ -853,7 +853,10 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
     const multiTrack = (profile?.candidate?.tracksEnrolled?.length || 0) > 1;
 
     const timetableQuery = timetableSearch.trim().toLowerCase();
-    const filteredTimetable = (profile?.sessionTimeline || []).filter((item) => {
+    const cleanTimeline = (profile?.sessionTimeline || []).filter(
+        (item) => item.type !== 'catchup' && item.type !== 'holiday'
+    );
+    const filteredTimetable = cleanTimeline.filter((item) => {
         if (timetableFilter !== 'all' && item.type !== timetableFilter) return false;
         if (!timetableQuery) return true;
         return (
@@ -1237,7 +1240,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 : 'text-slate-300 hover:text-white'
                                         }`}
                                     >
-                                        🗓️ Timetable ({profile.sessionTimeline?.length || 0})
+                                        🗓️ Timetable ({cleanTimeline.length})
                                     </button>
                                     <button
                                         type="button"
@@ -1358,7 +1361,7 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
                                                 { id: 'lecture', label: 'Core Lectures' },
                                                 { id: 'handson', label: 'Hands-on Labs' },
                                                 { id: 'expert', label: 'Industry Experts' },
-                                                { id: 'complimentary', label: 'Complimentary' }
+                                                { id: 'online', label: 'Pre-Workshop' }
                                             ].map((f) => (
                                                 <button
                                                     key={f.id}

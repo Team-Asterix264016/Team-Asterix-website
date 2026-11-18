@@ -1749,13 +1749,16 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
               }
           ];
 
-    const allSchedule = track.schedule || [];
+    const allSchedule = useMemo(() => {
+        return (track.schedule || []).filter((s) => s.type !== 'catchup' && s.type !== 'holiday');
+    }, [track.schedule]);
+
     const filteredSchedule = useMemo(() => {
         if (activeFilter === 'lecture') return allSchedule.filter((s) => s.type === 'lecture');
         if (activeFilter === 'handson') return allSchedule.filter((s) => s.type === 'handson');
         if (activeFilter === 'expert') return allSchedule.filter((s) => s.type === 'expert');
         if (activeFilter === 'bonus')
-            return allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type));
+            return allSchedule.filter((s) => ['complimentary', 'online'].includes(s.type));
         return allSchedule;
     }, [allSchedule, activeFilter]);
 
@@ -1765,7 +1768,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
             lecture: allSchedule.filter((s) => s.type === 'lecture').length,
             handson: allSchedule.filter((s) => s.type === 'handson').length,
             expert: allSchedule.filter((s) => s.type === 'expert').length,
-            bonus: allSchedule.filter((s) => ['catchup', 'complimentary', 'online'].includes(s.type)).length
+            bonus: allSchedule.filter((s) => ['complimentary', 'online'].includes(s.type)).length
         }),
         [allSchedule]
     );
@@ -2024,7 +2027,7 @@ function TrackDetail({ track, student, onPreviewSyllabus }) {
                                         : 'bg-amber-50 text-amber-950 hover:bg-amber-100'
                                 }`}
                             >
-                                🎁 Bonus &amp; Complimentary ({counts.bonus})
+                                🌐 Pre-Workshop &amp; Bonus ({counts.bonus})
                             </button>
                         )}
                     </div>

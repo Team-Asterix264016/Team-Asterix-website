@@ -6,6 +6,10 @@ import GalleryItem from '../models/GalleryItem.js';
 import TeamUpdate from '../models/TeamUpdate.js';
 import User from '../models/User.js';
 import WorkshopRegistration from '../models/WorkshopRegistration.js';
+import WorkshopSession from '../models/WorkshopSession.js';
+import WorkshopAttendance from '../models/WorkshopAttendance.js';
+import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
+import { sessionIsoDate } from '../config/sessionDates.js';
 
 let isConnected = false;
 
@@ -50,6 +54,7 @@ export async function connectMongoDB() {
         await seedDatabaseIfNeeded();
         await purgeLegacyPlaintextPasswords();
         await verifyRegistrationIntegrity();
+        await syncWorkshopSchedulesAndCleanObsoleteSessions();
         return true;
     } catch (err) {
         // Fallback for environments with custom or system-managed certificates (e.g. Windows Node 24)
@@ -65,6 +70,7 @@ export async function connectMongoDB() {
             await seedDatabaseIfNeeded();
             await purgeLegacyPlaintextPasswords();
             await verifyRegistrationIntegrity();
+            await syncWorkshopSchedulesAndCleanObsoleteSessions();
             return true;
         } catch (retryErr) {
             console.error('❌ Failed to connect to MongoDB Atlas:', retryErr.message);
@@ -614,5 +620,147 @@ Building autonomous vehicle technology is a mission for Team Asterix—turning a
         }
     } catch (seedErr) {
         console.error('Database seeding error:', seedErr);
+    }
+}
+
+/**
+ * Synchronizes WorkshopSession and SiteConfig on startup:
+ * 1. Purges uncounted / catchup / holiday / obsolete sessions from WorkshopSession
+ * 2. Upserts canonical schedule sessions from WORKSHOP_TRACKS
+ * 3. Updates SiteConfig.workshop.tracks with canonical schedules
+ * 4. Ensures all paid software participants receive attendance credit for pre-workshop session
+ */
+export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
+    try {
+        const obsoleteKeys = [
+            'software|sch-sw-cu1',
+            'software|sch-sw-cu2',
+            'software|sch-sw-cu3',
+            'software|sch-sw-cu4',
+            'software|sch-sw-cu5',
+            'software|sch-sw-h1',
+            'software|sch-sw-h2',
+            'software|sch-sw-ind1',
+            'software|sch-sw-ind3',
+            'software|sch-sw-ind4',
+            'powertrain|sch-pt-c1',
+            'powertrain|sch-pt-c2',
+            'powertrain|sch-pt-h1'
+        ];
+        const obsoleteIds = obsoleteKeys.map((k) => k.split('|')[1]);
+        const removed = await WorkshopSession.deleteMany({
+            $or: [
+                { sessionKey: { $in: obsoleteKeys } },
+                { scheduleId: { $in: obsoleteIds } },
+                { type: { $in: ['catchup', 'holiday'] } }
+            ]
+        });
+        if (removed.deletedCount > 0) {
+            console.log(`🧹 Cleaned ${removed.deletedCount} obsolete/catchup/holiday session rows from WorkshopSession.`);
+        }
+
+        // Upsert canonical sessions for each track
+        for (const [trackId, trackConfig] of Object.entries(WORKSHOP_TRACKS)) {
+            if (!Array.isArray(trackConfig.schedule)) continue;
+            for (let idx = 0; idx < trackConfig.schedule.length; idx++) {
+                const item = trackConfig.schedule[idx];
+                const sessionKey = `${trackId}|${item.id}`;
+                const isoDate = sessionIsoDate(item.date, trackConfig);
+                const sessionNumMatch = String(item.id || '').match(/-(\d+)$/);
+                const sessionNumber = sessionNumMatch ? parseInt(sessionNumMatch[1], 10) : idx;
+
+                await WorkshopSession.findOneAndUpdate(
+                    { sessionKey },
+                    {
+                        $set: {
+                            sessionKey,
+                            track: trackId,
+                            scheduleId: item.id,
+                            sessionNumber,
+                            label: item.label || '',
+                            title: item.title || '',
+                            date: isoDate,
+                            type: item.type || 'lecture',
+                            countsForAttendance: true,
+                            status: 'conducted'
+                        }
+                    },
+                    { upsert: true }
+                );
+            }
+        }
+
+        // Synchronize SiteConfig.workshop.tracks with canonical schedules
+        const siteConfig = await SiteConfig.findOne({ key: 'main' });
+        if (siteConfig) {
+            if (!siteConfig.workshop) siteConfig.workshop = {};
+            if (!siteConfig.workshop.tracks) siteConfig.workshop.tracks = {};
+
+            for (const [trackId, trackConfig] of Object.entries(WORKSHOP_TRACKS)) {
+                siteConfig.workshop.tracks[trackId] = {
+                    ...(siteConfig.workshop.tracks[trackId] || {}),
+                    ...trackConfig,
+                    schedule: trackConfig.schedule
+                };
+            }
+            siteConfig.markModified('workshop.tracks');
+            await siteConfig.save();
+            console.log('  ✓ SiteConfig workshop tracks synchronized with canonical schedules.');
+        }
+
+        // Auto-credit pre-workshop session (sch-sw-0) for paid candidates enrolled in software
+        const preWorkshopKey = 'software|sch-sw-0';
+        const preWorkshopSessionId = 'software-s00-2026-10-06';
+        const eligiblePaidCandidates = await WorkshopRegistration.find({
+            status: 'paid',
+            $or: [
+                { tracksEnrolled: 'software' },
+                { package: 'combo' },
+                { package: 'software' }
+            ]
+        }).lean();
+
+        let creditedCount = 0;
+        for (const cand of eligiblePaidCandidates) {
+            const existing = await WorkshopAttendance.findOne({
+                track: 'software',
+                $or: [
+                    { sessionKey: preWorkshopKey, registrationId: cand._id },
+                    { sessionKey: preWorkshopKey, rollNo: cand.rollNo },
+                    { sessionId: preWorkshopSessionId, rollNo: cand.rollNo }
+                ]
+            });
+            if (!existing) {
+                const deviceId = `preworkshop_credit_${cand.rollNo}_${cand._id.toString().slice(-6)}`;
+                await WorkshopAttendance.create({
+                    registrationId: cand._id,
+                    rollNo: cand.rollNo,
+                    email: cand.email,
+                    name: cand.name,
+                    department: cand.department,
+                    year: cand.year,
+                    package: cand.package,
+                    track: 'software',
+                    sessionId: preWorkshopSessionId,
+                    sessionKey: preWorkshopKey,
+                    sessionNumber: 0,
+                    sessionDate: '2026-10-06',
+                    sessionTopic: 'Pre-Workshop Session: Set Up Once, Build All Month',
+                    deviceId,
+                    ipAddress: '127.0.0.1',
+                    userAgent: 'Admin Pre-Workshop Auto Credit',
+                    verifiedBy: 'manual-admin',
+                    markedBy: 'admin',
+                    markedReason: 'All participants credited for online pre-workshop setup session',
+                    checkedInAt: new Date('2026-10-06T18:00:00.000+05:30')
+                });
+                creditedCount++;
+            }
+        }
+        if (creditedCount > 0) {
+            console.log(`  ✓ Auto-credited ${creditedCount} candidates for Pre-Workshop session.`);
+        }
+    } catch (err) {
+        console.error('Failed to sync workshop schedules on startup:', err);
     }
 }

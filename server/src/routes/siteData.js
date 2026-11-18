@@ -8,6 +8,7 @@ import SiteData from '../models/SiteData.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { isMongoConnected } from '../db/mongodb.js';
 import { archiveDocuments, actorOf } from '../lib/recycleBin.js';
+import { loadMergedTracks } from '../lib/workshopSessions.js';
 
 const router = Router();
 
@@ -212,12 +213,13 @@ router.get('/', async (req, res) => {
             await autoMigrateLegacySiteData();
         }
 
-        const [config, subsystems, allMembers, gallery, updates] = await Promise.all([
+        const [config, subsystems, allMembers, gallery, updates, mergedTracks] = await Promise.all([
             SiteConfig.findOne({ key: 'main' }).lean(),
             Subsystem.find().sort({ order: 1 }).lean(),
             TeamMember.find().sort({ order: 1, createdAt: 1 }).lean(),
             GalleryItem.find().sort({ order: 1, createdAt: -1 }).lean(),
-            TeamUpdate.find().sort({ order: 1, createdAt: -1 }).lean()
+            TeamUpdate.find().sort({ order: 1, createdAt: -1 }).lean(),
+            loadMergedTracks()
         ]);
 
         const aggregatedSubsystems = subsystems.map(sub => ({
@@ -236,7 +238,10 @@ router.get('/', async (req, res) => {
             contact: config?.contact || null,
             sponsorship: config?.sponsorship || null,
             recruitment: config?.recruitment || null,
-            workshop: config?.workshop || null,
+            workshop: {
+                ...(config?.workshop || {}),
+                tracks: mergedTracks
+            },
             internRecruitment: config?.internRecruitment || null,
             lastModified: config?.lastModified || config?.updatedAt?.toISOString() || new Date().toISOString()
         });

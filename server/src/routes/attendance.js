@@ -23,6 +23,7 @@ import {
     summarizeAttendance,
     buildSessionIndex,
     resolveSessionKey,
+    loadMergedTracks,
     CERTIFICATE_THRESHOLD,
     TASK_CREDIT_CAP,
     WORKSHOP_SESSIONS_COMPLETE,
@@ -1128,13 +1129,8 @@ router.post('/profile', async (req, res) => {
             ? candidate.tracksEnrolled
             : (candidate.package === 'combo' ? ['software', 'powertrain'] : [candidate.package || 'software']);
 
-        // The schedule admins edit in Workshop Schedule lives in SiteConfig; the config file is the fallback.
-        const siteConfig = await SiteConfig.findOne({ key: 'main' }, { workshop: 1 }).lean();
-        const editedTracks = siteConfig?.workshop?.tracks || {};
-        const tracks = {};
-        tracksEnrolled.forEach((trackId) => {
-            if (WORKSHOP_TRACKS[trackId]) tracks[trackId] = { ...WORKSHOP_TRACKS[trackId], ...editedTracks[trackId] };
-        });
+        // Load tracks schedule with canonical sessions prioritized and obsolete ones pruned
+        const tracks = await loadMergedTracks(tracksEnrolled);
 
         // Search attendance records for candidate across all identifying fields
         const candidateOrConditions = [
@@ -1168,7 +1164,9 @@ router.post('/profile', async (req, res) => {
 
         // One date-ordered timetable across tracks (combo students otherwise saw every
         // software session before any powertrain one). Undated sessions sink to the end.
+        // Catch-ups and holidays are excluded from the student timetable.
         const sessionTimeline = sessions
+            .filter((session) => session.type !== 'catchup' && session.type !== 'holiday')
             .slice()
             .sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'))
             .map((session) => {

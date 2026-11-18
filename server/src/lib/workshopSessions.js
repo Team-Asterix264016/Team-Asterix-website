@@ -67,9 +67,34 @@ export async function loadMergedTracks(trackIds) {
     const editedTracks = siteConfig?.workshop?.tracks || {};
     const tracks = {};
     wanted.forEach((trackId) => {
-        if (WORKSHOP_TRACKS[trackId]) {
-            tracks[trackId] = { ...WORKSHOP_TRACKS[trackId], ...editedTracks[trackId] };
-        }
+        const canonical = WORKSHOP_TRACKS[trackId];
+        if (!canonical) return;
+        const incoming = editedTracks[trackId] || {};
+        const incomingList = Array.isArray(incoming.schedule) ? incoming.schedule : [];
+
+        let schedule = canonical.schedule.map((cItem) => {
+            const match = incomingList.find((it) => it && it.id === cItem.id);
+            if (!match) return cItem;
+            return {
+                ...cItem,
+                ...match,
+                type: cItem.type || match.type
+            };
+        });
+
+        // Strictly exclude catchups and holidays
+        schedule = schedule.filter((s) => s.type !== 'catchup' && s.type !== 'holiday');
+
+        tracks[trackId] = {
+            ...canonical,
+            ...incoming,
+            dates: canonical.dates,
+            timing: canonical.timing,
+            format: canonical.format,
+            bonus: canonical.bonus,
+            ongoingWeek: canonical.ongoingWeek,
+            schedule
+        };
     });
     return tracks;
 }
