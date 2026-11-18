@@ -1144,11 +1144,23 @@ router.post('/profile', async (req, res) => {
             candidateOrConditions.push({ email: candidate.email.toLowerCase() });
         }
 
-        const [attendanceRecords, sessions, tasks] = await Promise.all([
+        const [attendanceRecords, rawSessions, tasks] = await Promise.all([
             WorkshopAttendance.find({ $or: candidateOrConditions }).lean(),
             WorkshopSession.find({ track: { $in: tracksEnrolled } }).lean(),
             WorkshopTask.find({ registrationId: candidate._id }).sort({ createdAt: 1 }).lean()
         ]);
+
+        const obsoleteKeySet = new Set([
+            'software|sch-sw-xmwg3ckit', 'powertrain|sch-pt-xmwg3ckit',
+            'software|sch-sw-xmwg8kfmr', 'powertrain|sch-pt-xmwg8kfmr',
+            'software|sch-sw-xmwhf0ba1', 'powertrain|sch-pt-xmwhf0ba1',
+            'software|sch-sw-xmwhobsmk', 'powertrain|sch-pt-xmwhobsmk',
+            'software|sch-sw-cu1', 'software|sch-sw-cu2', 'software|sch-sw-cu3', 'software|sch-sw-cu4', 'software|sch-sw-cu5',
+            'software|sch-sw-h1', 'software|sch-sw-h2', 'powertrain|sch-pt-h1', 'powertrain|sch-pt-c1', 'powertrain|sch-pt-c2'
+        ]);
+        const sessions = rawSessions.filter(
+            (s) => !obsoleteKeySet.has(s.sessionKey) && s.type !== 'catchup' && s.type !== 'holiday'
+        );
 
         // The denominator comes from WorkshopSession, never from the attendance
         // collection: a session nobody scanned into still has to count against

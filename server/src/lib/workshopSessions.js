@@ -124,13 +124,35 @@ export function buildSessionSeeds(tracks) {
     return seeds;
 }
 
+export const SESSION_KEY_ALIASES = Object.freeze({
+    'software|sch-sw-xmwg3ckit': 'software|sch-sw-ind5a',
+    'powertrain|sch-pt-xmwg3ckit': 'software|sch-sw-ind5a',
+    'software|sch-sw-xmwg8kfmr': 'software|sch-sw-ind5b',
+    'powertrain|sch-pt-xmwg8kfmr': 'software|sch-sw-ind5b',
+    'software|sch-sw-xmwhf0ba1': 'software|sch-sw-ind6a',
+    'powertrain|sch-pt-xmwhf0ba1': 'software|sch-sw-ind6a',
+    'software|sch-sw-xmwhobsmk': 'software|sch-sw-ind6b',
+    'powertrain|sch-pt-xmwhobsmk': 'software|sch-sw-ind6b'
+});
+
 /* Resolves one attendance record to a session. New records carry sessionKey
    outright. Older ones predate the collection, so they fall back to the
    legacy sessionId string and finally to track + date, which is how the
    profile used to match before sessions existed. */
 export function resolveSessionKey(att, index) {
-    if (att.sessionKey && index.byKey.has(att.sessionKey)) return att.sessionKey;
-    if (att.sessionId && index.byLegacyId.has(att.sessionId)) return index.byLegacyId.get(att.sessionId);
+    if (att.sessionKey) {
+        const mapped = SESSION_KEY_ALIASES[att.sessionKey] || att.sessionKey;
+        if (index.byKey.has(mapped)) return mapped;
+    }
+    if (att.sessionId) {
+        if (index.byLegacyId.has(att.sessionId)) return index.byLegacyId.get(att.sessionId);
+        for (const [oldKey, targetKey] of Object.entries(SESSION_KEY_ALIASES)) {
+            const shortId = oldKey.split('|')[1];
+            if (att.sessionId.includes(shortId) && index.byKey.has(targetKey)) {
+                return targetKey;
+            }
+        }
+    }
     const dateKey = `${att.track}|${att.sessionDate}`;
     if (index.byTrackDate.has(dateKey)) return index.byTrackDate.get(dateKey);
     return null;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { summarizeAttendance, sessionWeight, weightedCount } from './workshopSessions.js';
+import { summarizeAttendance, sessionWeight, weightedCount, buildSessionIndex, resolveSessionKey } from './workshopSessions.js';
 
 const session = (track, n, date) => ({
     sessionKey: `${track}|s${n}`,
@@ -41,4 +41,26 @@ test('weighted totals: 10 full + 4 half sessions on 14/15 Nov make 12 credits', 
     assert.equal(passTrack.software.totalPresent, 7.5);
     assert.equal(passTrack.software.attendancePercentage, 63);
     assert.equal(passTrack.software.isEligibleForCertificate, true);
+});
+
+test('resolveSessionKey maps custom Nov 14/15 session keys to canonical keys without loss', () => {
+    const sessions = [
+        { sessionKey: 'software|sch-sw-ind5a', scheduleId: 'sch-sw-ind5a', legacySessionIds: ['sch-sw-xmwg3ckit'] },
+        { sessionKey: 'software|sch-sw-ind5b', scheduleId: 'sch-sw-ind5b', legacySessionIds: ['sch-sw-xmwg8kfmr'] },
+        { sessionKey: 'software|sch-sw-ind6a', scheduleId: 'sch-sw-ind6a', legacySessionIds: ['sch-sw-xmwhf0ba1'] },
+        { sessionKey: 'software|sch-sw-ind6b', scheduleId: 'sch-sw-ind6b', legacySessionIds: ['sch-sw-xmwhobsmk'] }
+    ];
+    const index = buildSessionIndex(sessions);
+
+    // Direct key alias
+    assert.equal(resolveSessionKey({ sessionKey: 'software|sch-sw-xmwg3ckit' }, index), 'software|sch-sw-ind5a');
+    assert.equal(resolveSessionKey({ sessionKey: 'software|sch-sw-xmwg8kfmr' }, index), 'software|sch-sw-ind5b');
+    assert.equal(resolveSessionKey({ sessionKey: 'software|sch-sw-xmwhf0ba1' }, index), 'software|sch-sw-ind6a');
+    assert.equal(resolveSessionKey({ sessionKey: 'software|sch-sw-xmwhobsmk' }, index), 'software|sch-sw-ind6b');
+
+    // Powertrain combo key alias
+    assert.equal(resolveSessionKey({ sessionKey: 'powertrain|sch-pt-xmwg3ckit' }, index), 'software|sch-sw-ind5a');
+
+    // Legacy sessionId substring
+    assert.equal(resolveSessionKey({ sessionId: 'software-sch-sw-xmwg3ckit-2026-11-14' }, index), 'software|sch-sw-ind5a');
 });

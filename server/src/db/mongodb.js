@@ -632,6 +632,61 @@ Building autonomous vehicle technology is a mission for Team Asterix—turning a
  */
 export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
     try {
+        // 1. Remap Nov 14 & 15 attendance rows from custom portal keys to canonical curriculum keys
+        const novAttendanceMigration = [
+            {
+                oldKey: 'software|sch-sw-xmwg3ckit',
+                newKey: 'software|sch-sw-ind5a',
+                newSessionId: 'software-s10-2026-11-14',
+                newTopic: 'Fundamentals of Automobiles & EVs (Morning Slot)',
+                regex: /xmwg3ckit/i
+            },
+            {
+                oldKey: 'software|sch-sw-xmwg8kfmr',
+                newKey: 'software|sch-sw-ind5b',
+                newSessionId: 'software-s11-2026-11-14',
+                newTopic: 'Fundamentals of Automobiles & EVs (Afternoon Slot)',
+                regex: /xmwg8kfmr/i
+            },
+            {
+                oldKey: 'software|sch-sw-xmwhf0ba1',
+                newKey: 'software|sch-sw-ind6a',
+                newSessionId: 'software-s12-2026-11-15',
+                newTopic: 'Fundamentals of Autonomous Vehicles (Morning Slot)',
+                regex: /xmwhf0ba1/i
+            },
+            {
+                oldKey: 'software|sch-sw-xmwhobsmk',
+                newKey: 'software|sch-sw-ind6b',
+                newSessionId: 'software-s13-2026-11-15',
+                newTopic: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
+                regex: /xmwhobsmk/i
+            }
+        ];
+
+        for (const m of novAttendanceMigration) {
+            const ptOldKey = m.oldKey.replace('software|', 'powertrain|');
+            const res = await WorkshopAttendance.updateMany(
+                {
+                    $or: [
+                        { sessionKey: m.oldKey },
+                        { sessionKey: ptOldKey },
+                        { sessionId: m.regex }
+                    ]
+                },
+                {
+                    $set: {
+                        sessionKey: m.newKey,
+                        sessionTopic: m.newTopic
+                    }
+                }
+            );
+            if (res.modifiedCount > 0) {
+                console.log(`  ✓ Migrated ${res.modifiedCount} attendance rows from ${m.oldKey} -> ${m.newKey}`);
+            }
+        }
+
+        // 2. Remove obsolete / catchup / holiday / duplicate custom sessions from WorkshopSession
         const obsoleteKeys = [
             'software|sch-sw-cu1',
             'software|sch-sw-cu2',
@@ -643,9 +698,17 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
             'software|sch-sw-ind1',
             'software|sch-sw-ind3',
             'software|sch-sw-ind4',
+            'software|sch-sw-xmwg3ckit',
+            'software|sch-sw-xmwg8kfmr',
+            'software|sch-sw-xmwhf0ba1',
+            'software|sch-sw-xmwhobsmk',
             'powertrain|sch-pt-c1',
             'powertrain|sch-pt-c2',
-            'powertrain|sch-pt-h1'
+            'powertrain|sch-pt-h1',
+            'powertrain|sch-pt-xmwg3ckit',
+            'powertrain|sch-pt-xmwg8kfmr',
+            'powertrain|sch-pt-xmwhf0ba1',
+            'powertrain|sch-pt-xmwhobsmk'
         ];
         const obsoleteIds = obsoleteKeys.map((k) => k.split('|')[1]);
         const removed = await WorkshopSession.deleteMany({
@@ -656,10 +719,17 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
             ]
         });
         if (removed.deletedCount > 0) {
-            console.log(`🧹 Cleaned ${removed.deletedCount} obsolete/catchup/holiday session rows from WorkshopSession.`);
+            console.log(`🧹 Cleaned ${removed.deletedCount} obsolete/duplicate session rows from WorkshopSession.`);
         }
 
-        // Upsert canonical sessions for each track
+        // 3. Upsert canonical sessions for each track
+        const legacyIdsMap = {
+            'software|sch-sw-ind5a': ['sch-sw-xmwg3ckit', 'sch-pt-xmwg3ckit', 'software-sch-sw-xmwg3ckit-2026-11-14', 'software-s10-2026-11-14', 'xmwg3ckit'],
+            'software|sch-sw-ind5b': ['sch-sw-xmwg8kfmr', 'sch-pt-xmwg8kfmr', 'software-sch-sw-xmwg8kfmr-2026-11-14', 'software-s11-2026-11-14', 'xmwg8kfmr'],
+            'software|sch-sw-ind6a': ['sch-sw-xmwhf0ba1', 'sch-pt-xmwhf0ba1', 'software-sch-sw-xmwhf0ba1-2026-11-15', 'software-s12-2026-11-15', 'xmwhf0ba1'],
+            'software|sch-sw-ind6b': ['sch-sw-xmwhobsmk', 'sch-pt-xmwhobsmk', 'software-sch-sw-xmwhobsmk-2026-11-15', 'software-s13-2026-11-15', 'xmwhobsmk']
+        };
+
         for (const [trackId, trackConfig] of Object.entries(WORKSHOP_TRACKS)) {
             if (!Array.isArray(trackConfig.schedule)) continue;
             for (let idx = 0; idx < trackConfig.schedule.length; idx++) {
@@ -682,7 +752,8 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
                             date: isoDate,
                             type: item.type || 'lecture',
                             countsForAttendance: true,
-                            status: 'conducted'
+                            status: 'conducted',
+                            legacySessionIds: legacyIdsMap[sessionKey] || []
                         }
                     },
                     { upsert: true }
