@@ -1171,7 +1171,15 @@ router.post('/profile', async (req, res) => {
         const attendanceByKey = new Map();
         attendanceRecords.forEach((att) => {
             const key = resolveSessionKey(att, sessionIndex);
-            if (key && !attendanceByKey.has(key)) attendanceByKey.set(key, att);
+            if (key) {
+                if (!attendanceByKey.has(key)) attendanceByKey.set(key, att);
+                const sess = sessionIndex.byKey.get(key);
+                if (sess?.jointKey && sessionIndex.byJointKey?.has(sess.jointKey)) {
+                    sessionIndex.byJointKey.get(sess.jointKey).forEach((siblingKey) => {
+                        if (!attendanceByKey.has(siblingKey)) attendanceByKey.set(siblingKey, att);
+                    });
+                }
+            }
         });
 
         // One date-ordered timetable across tracks (combo students otherwise saw every

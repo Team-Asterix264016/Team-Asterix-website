@@ -240,13 +240,13 @@ export const WORKSHOP_TRACKS = {
             'Build a solid foundation in circuits, electronic components, microcontrollers and motors, ' +
             'and see how they come together in the electrical system of an autonomous vehicle. Includes ' +
             '4 hands-on lab sessions with circuit simulators, MATLAB and PCB design tools.',
-        dates: '7 Oct – 7 Nov 2026',
+        dates: '7 Oct – 15 Nov 2026',
         startLabel: 'First session Wed 7 Oct 2026',
         startDate: '2026-10-07',
-        days: 'Mon, Wed & Fri · Saturdays (Industry Sessions during college hours)',
-        timing: '5:15 PM – 6:45 PM (1.5 hours per session)',
-        format: '8 talks + 4 hands-on lab sessions + 4 expert sessions',
-        highlight: '18.0 hours of learning · less than ₹55 an hour',
+        days: 'Mon, Wed & Fri · Saturdays & Sundays (Industry Sessions)',
+        timing: 'Core: 5:15 PM – 6:45 PM · Weekend Sessions: Morning & Afternoon slots',
+        format: '8 talks + 4 hands-on lab sessions + 4 college-hour expert sessions + 4 weekend expert slots',
+        highlight: '20.0 hours of learning · less than ₹50 an hour',
         audience: 'First-year students welcome. No prior knowledge needed, we start from scratch!',
         syllabus: '/workshop/powertrain-syllabus.pdf',
         venue: 'E6 Mechanical Seminar Hall / E6 CAD Lab / E3 207 EDA Centre & Power Systems Lab',
@@ -469,9 +469,53 @@ export const WORKSHOP_TRACKS = {
                 instructor: 'Industry Expert (to be announced)',
                 venue: 'E8 Seminar Hall',
                 type: 'expert'
+            },
+            {
+                id: 'sch-pt-ind5a',
+                label: 'Industry Session (Slot 1)',
+                days: 'Saturday',
+                date: '14 Nov',
+                title: 'Fundamentals of Automobiles & EVs (Morning Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Automobiles & EV Architectures (0.5 credit)'
+            },
+            {
+                id: 'sch-pt-ind5b',
+                label: 'Industry Session (Slot 2)',
+                days: 'Saturday',
+                date: '14 Nov',
+                title: 'Fundamentals of Automobiles & EVs (Afternoon Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Automobiles & EV Subsystems (0.5 credit)'
+            },
+            {
+                id: 'sch-pt-ind6a',
+                label: 'Industry Session (Slot 1)',
+                days: 'Sunday',
+                date: '15 Nov',
+                title: 'Fundamentals of Autonomous Vehicles (Morning Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Autonomous Vehicle Dynamics (0.5 credit)'
+            },
+            {
+                id: 'sch-pt-ind6b',
+                label: 'Industry Session (Slot 2)',
+                days: 'Sunday',
+                date: '15 Nov',
+                title: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
+                instructor: 'Dr. M. Senthilvel, Dr. A. R. Vimal Kumar',
+                venue: 'Mechanical Seminar Hall',
+                type: 'expert',
+                project: 'Sensors, Safety & Drive-by-wire (0.5 credit)'
             }
         ],
-        bonus: 'Four Industrial Expert sessions on Saturdays during college hours.'
+        bonus: 'Four Industrial Expert sessions during college hours, plus Saturday & Sunday Industry Expert sessions.'
     }
 };
 

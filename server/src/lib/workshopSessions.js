@@ -126,13 +126,13 @@ export function buildSessionSeeds(tracks) {
 
 export const SESSION_KEY_ALIASES = Object.freeze({
     'software|sch-sw-xmwg3ckit': 'software|sch-sw-ind5a',
-    'powertrain|sch-pt-xmwg3ckit': 'software|sch-sw-ind5a',
+    'powertrain|sch-pt-xmwg3ckit': 'powertrain|sch-pt-ind5a',
     'software|sch-sw-xmwg8kfmr': 'software|sch-sw-ind5b',
-    'powertrain|sch-pt-xmwg8kfmr': 'software|sch-sw-ind5b',
+    'powertrain|sch-pt-xmwg8kfmr': 'powertrain|sch-pt-ind5b',
     'software|sch-sw-xmwhf0ba1': 'software|sch-sw-ind6a',
-    'powertrain|sch-pt-xmwhf0ba1': 'software|sch-sw-ind6a',
+    'powertrain|sch-pt-xmwhf0ba1': 'powertrain|sch-pt-ind6a',
     'software|sch-sw-xmwhobsmk': 'software|sch-sw-ind6b',
-    'powertrain|sch-pt-xmwhobsmk': 'software|sch-sw-ind6b'
+    'powertrain|sch-pt-xmwhobsmk': 'powertrain|sch-pt-ind6b'
 });
 
 /* Resolves one attendance record to a session. New records carry sessionKey
@@ -164,6 +164,7 @@ export function resolveSessionKey(att, index) {
 export function buildSessionIndex(sessions) {
     const byKey = new Map();
     const byLegacyId = new Map();
+    const byJointKey = new Map();
     const trackDateHits = new Map();
 
     sessions.forEach((session) => {
@@ -171,6 +172,9 @@ export function buildSessionIndex(sessions) {
         (session.legacySessionIds || []).forEach((legacyId) => {
             byLegacyId.set(legacyId, session.sessionKey);
         });
+        if (session.jointKey) {
+            byJointKey.set(session.jointKey, [...(byJointKey.get(session.jointKey) || []), session.sessionKey]);
+        }
         if (session.date) {
             const dateKey = `${session.track}|${session.date}`;
             trackDateHits.set(dateKey, [...(trackDateHits.get(dateKey) || []), session.sessionKey]);
@@ -182,7 +186,7 @@ export function buildSessionIndex(sessions) {
         if (keys.length === 1) byTrackDate.set(dateKey, keys[0]);
     });
 
-    return { byKey, byLegacyId, byTrackDate };
+    return { byKey, byLegacyId, byJointKey, byTrackDate };
 }
 
 /* Per-track attendance, counted against sessions that were actually conducted.
@@ -195,8 +199,15 @@ export function summarizeAttendance({ sessions, attendanceRecords, tracksEnrolle
     const unresolved = [];
     attendanceRecords.forEach((att) => {
         const key = resolveSessionKey(att, index);
-        if (key) presentKeys.add(key);
-        else unresolved.push(att);
+        if (key) {
+            presentKeys.add(key);
+            const sess = index.byKey.get(key);
+            if (sess?.jointKey && index.byJointKey?.has(sess.jointKey)) {
+                index.byJointKey.get(sess.jointKey).forEach((siblingKey) => presentKeys.add(siblingKey));
+            }
+        } else {
+            unresolved.push(att);
+        }
     });
 
     const perTrack = {};

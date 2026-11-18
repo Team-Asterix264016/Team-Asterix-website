@@ -48,7 +48,8 @@ test('resolveSessionKey maps custom Nov 14/15 session keys to canonical keys wit
         { sessionKey: 'software|sch-sw-ind5a', scheduleId: 'sch-sw-ind5a', legacySessionIds: ['sch-sw-xmwg3ckit'] },
         { sessionKey: 'software|sch-sw-ind5b', scheduleId: 'sch-sw-ind5b', legacySessionIds: ['sch-sw-xmwg8kfmr'] },
         { sessionKey: 'software|sch-sw-ind6a', scheduleId: 'sch-sw-ind6a', legacySessionIds: ['sch-sw-xmwhf0ba1'] },
-        { sessionKey: 'software|sch-sw-ind6b', scheduleId: 'sch-sw-ind6b', legacySessionIds: ['sch-sw-xmwhobsmk'] }
+        { sessionKey: 'software|sch-sw-ind6b', scheduleId: 'sch-sw-ind6b', legacySessionIds: ['sch-sw-xmwhobsmk'] },
+        { sessionKey: 'powertrain|sch-pt-ind5a', scheduleId: 'sch-pt-ind5a', legacySessionIds: ['sch-pt-xmwg3ckit'] }
     ];
     const index = buildSessionIndex(sessions);
 
@@ -59,8 +60,37 @@ test('resolveSessionKey maps custom Nov 14/15 session keys to canonical keys wit
     assert.equal(resolveSessionKey({ sessionKey: 'software|sch-sw-xmwhobsmk' }, index), 'software|sch-sw-ind6b');
 
     // Powertrain combo key alias
-    assert.equal(resolveSessionKey({ sessionKey: 'powertrain|sch-pt-xmwg3ckit' }, index), 'software|sch-sw-ind5a');
+    assert.equal(resolveSessionKey({ sessionKey: 'powertrain|sch-pt-xmwg3ckit' }, index), 'powertrain|sch-pt-ind5a');
 
     // Legacy sessionId substring
     assert.equal(resolveSessionKey({ sessionId: 'software-sch-sw-xmwg3ckit-2026-11-14' }, index), 'software|sch-sw-ind5a');
+});
+
+test('powertrain weighted totals: 16 full + 4 half sessions on 14/15 Nov make 18 credits', () => {
+    const sessions = [
+        ...Array.from({ length: 16 }, (_, i) => session('powertrain', i, `2026-10-${String(i + 10).padStart(2, '0')}`)),
+        session('powertrain', 16, '2026-11-14'),
+        session('powertrain', 17, '2026-11-14'),
+        session('powertrain', 18, '2026-11-15'),
+        session('powertrain', 19, '2026-11-15')
+    ];
+    assert.equal(weightedCount(sessions), 18);
+
+    // Present at 10 full sessions + 1 half session: 10.5 / 18 = 58% (not eligible)
+    const records = [
+        ...Array.from({ length: 10 }, (_, i) => ({ sessionKey: `powertrain|s${i}` })),
+        { sessionKey: 'powertrain|s16' }
+    ];
+    const { perTrack } = summarizeAttendance({ sessions, attendanceRecords: records, tracksEnrolled: ['powertrain'] });
+    assert.equal(perTrack.powertrain.totalConducted, 18);
+    assert.equal(perTrack.powertrain.totalPresent, 10.5);
+    assert.equal(perTrack.powertrain.attendancePercentage, 58);
+    assert.equal(perTrack.powertrain.isEligibleForCertificate, false);
+
+    // With 1 more half session: 11.0 / 18 = 61% -> passes 60% threshold
+    const passingRecords = [...records, { sessionKey: 'powertrain|s17' }];
+    const { perTrack: passTrack } = summarizeAttendance({ sessions, attendanceRecords: passingRecords, tracksEnrolled: ['powertrain'] });
+    assert.equal(passTrack.powertrain.totalPresent, 11);
+    assert.equal(passTrack.powertrain.attendancePercentage, 61);
+    assert.equal(passTrack.powertrain.isEligibleForCertificate, true);
 });

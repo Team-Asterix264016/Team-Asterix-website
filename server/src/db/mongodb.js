@@ -634,43 +634,71 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
     try {
         // 1. Remap Nov 14 & 15 attendance rows from custom portal keys to canonical curriculum keys
         const novAttendanceMigration = [
+            // Software
             {
                 oldKey: 'software|sch-sw-xmwg3ckit',
                 newKey: 'software|sch-sw-ind5a',
                 newSessionId: 'software-s10-2026-11-14',
                 newTopic: 'Fundamentals of Automobiles & EVs (Morning Slot)',
-                regex: /xmwg3ckit/i
+                regex: /sch-sw-xmwg3ckit|software.*xmwg3ckit/i
             },
             {
                 oldKey: 'software|sch-sw-xmwg8kfmr',
                 newKey: 'software|sch-sw-ind5b',
                 newSessionId: 'software-s11-2026-11-14',
                 newTopic: 'Fundamentals of Automobiles & EVs (Afternoon Slot)',
-                regex: /xmwg8kfmr/i
+                regex: /sch-sw-xmwg8kfmr|software.*xmwg8kfmr/i
             },
             {
                 oldKey: 'software|sch-sw-xmwhf0ba1',
                 newKey: 'software|sch-sw-ind6a',
                 newSessionId: 'software-s12-2026-11-15',
                 newTopic: 'Fundamentals of Autonomous Vehicles (Morning Slot)',
-                regex: /xmwhf0ba1/i
+                regex: /sch-sw-xmwhf0ba1|software.*xmwhf0ba1/i
             },
             {
                 oldKey: 'software|sch-sw-xmwhobsmk',
                 newKey: 'software|sch-sw-ind6b',
                 newSessionId: 'software-s13-2026-11-15',
                 newTopic: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
-                regex: /xmwhobsmk/i
+                regex: /sch-sw-xmwhobsmk|software.*xmwhobsmk/i
+            },
+            // Powertrain
+            {
+                oldKey: 'powertrain|sch-pt-xmwg3ckit',
+                newKey: 'powertrain|sch-pt-ind5a',
+                newSessionId: 'powertrain-s13-2026-11-14',
+                newTopic: 'Fundamentals of Automobiles & EVs (Morning Slot)',
+                regex: /sch-pt-xmwg3ckit|powertrain.*xmwg3ckit/i
+            },
+            {
+                oldKey: 'powertrain|sch-pt-xmwg8kfmr',
+                newKey: 'powertrain|sch-pt-ind5b',
+                newSessionId: 'powertrain-s14-2026-11-14',
+                newTopic: 'Fundamentals of Automobiles & EVs (Afternoon Slot)',
+                regex: /sch-pt-xmwg8kfmr|powertrain.*xmwg8kfmr/i
+            },
+            {
+                oldKey: 'powertrain|sch-pt-xmwhf0ba1',
+                newKey: 'powertrain|sch-pt-ind6a',
+                newSessionId: 'powertrain-s15-2026-11-15',
+                newTopic: 'Fundamentals of Autonomous Vehicles (Morning Slot)',
+                regex: /sch-pt-xmwhf0ba1|powertrain.*xmwhf0ba1/i
+            },
+            {
+                oldKey: 'powertrain|sch-pt-xmwhobsmk',
+                newKey: 'powertrain|sch-pt-ind6b',
+                newSessionId: 'powertrain-s16-2026-11-15',
+                newTopic: 'Fundamentals of Autonomous Vehicles (Afternoon Slot)',
+                regex: /sch-pt-xmwhobsmk|powertrain.*xmwhobsmk/i
             }
         ];
 
         for (const m of novAttendanceMigration) {
-            const ptOldKey = m.oldKey.replace('software|', 'powertrain|');
             const res = await WorkshopAttendance.updateMany(
                 {
                     $or: [
                         { sessionKey: m.oldKey },
-                        { sessionKey: ptOldKey },
                         { sessionId: m.regex }
                     ]
                 },
@@ -724,10 +752,25 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
 
         // 3. Upsert canonical sessions for each track
         const legacyIdsMap = {
-            'software|sch-sw-ind5a': ['sch-sw-xmwg3ckit', 'sch-pt-xmwg3ckit', 'software-sch-sw-xmwg3ckit-2026-11-14', 'software-s10-2026-11-14', 'xmwg3ckit'],
-            'software|sch-sw-ind5b': ['sch-sw-xmwg8kfmr', 'sch-pt-xmwg8kfmr', 'software-sch-sw-xmwg8kfmr-2026-11-14', 'software-s11-2026-11-14', 'xmwg8kfmr'],
-            'software|sch-sw-ind6a': ['sch-sw-xmwhf0ba1', 'sch-pt-xmwhf0ba1', 'software-sch-sw-xmwhf0ba1-2026-11-15', 'software-s12-2026-11-15', 'xmwhf0ba1'],
-            'software|sch-sw-ind6b': ['sch-sw-xmwhobsmk', 'sch-pt-xmwhobsmk', 'software-sch-sw-xmwhobsmk-2026-11-15', 'software-s13-2026-11-15', 'xmwhobsmk']
+            'software|sch-sw-ind5a': ['sch-sw-xmwg3ckit', 'software-sch-sw-xmwg3ckit-2026-11-14', 'software-s10-2026-11-14', 'xmwg3ckit'],
+            'software|sch-sw-ind5b': ['sch-sw-xmwg8kfmr', 'software-sch-sw-xmwg8kfmr-2026-11-14', 'software-s11-2026-11-14', 'xmwg8kfmr'],
+            'software|sch-sw-ind6a': ['sch-sw-xmwhf0ba1', 'software-sch-sw-xmwhf0ba1-2026-11-15', 'software-s12-2026-11-15', 'xmwhf0ba1'],
+            'software|sch-sw-ind6b': ['sch-sw-xmwhobsmk', 'software-sch-sw-xmwhobsmk-2026-11-15', 'software-s13-2026-11-15', 'xmwhobsmk'],
+            'powertrain|sch-pt-ind5a': ['sch-pt-xmwg3ckit', 'powertrain-sch-pt-xmwg3ckit-2026-11-14', 'xmwg3ckit'],
+            'powertrain|sch-pt-ind5b': ['sch-pt-xmwg8kfmr', 'powertrain-sch-pt-xmwg8kfmr-2026-11-14', 'xmwg8kfmr'],
+            'powertrain|sch-pt-ind6a': ['sch-pt-xmwhf0ba1', 'powertrain-sch-pt-xmwhf0ba1-2026-11-15', 'xmwhf0ba1'],
+            'powertrain|sch-pt-ind6b': ['sch-pt-xmwhobsmk', 'powertrain-sch-pt-xmwhobsmk-2026-11-15', 'xmwhobsmk']
+        };
+
+        const jointKeyMap = {
+            'software|sch-sw-ind5a': 'jt-ind5a',
+            'powertrain|sch-pt-ind5a': 'jt-ind5a',
+            'software|sch-sw-ind5b': 'jt-ind5b',
+            'powertrain|sch-pt-ind5b': 'jt-ind5b',
+            'software|sch-sw-ind6a': 'jt-ind6a',
+            'powertrain|sch-pt-ind6a': 'jt-ind6a',
+            'software|sch-sw-ind6b': 'jt-ind6b',
+            'powertrain|sch-pt-ind6b': 'jt-ind6b'
         };
 
         for (const [trackId, trackConfig] of Object.entries(WORKSHOP_TRACKS)) {
@@ -739,23 +782,26 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
                 const sessionNumMatch = String(item.id || '').match(/-(\d+)$/);
                 const sessionNumber = sessionNumMatch ? parseInt(sessionNumMatch[1], 10) : idx;
 
+                const updateDoc = {
+                    sessionKey,
+                    track: trackId,
+                    scheduleId: item.id,
+                    sessionNumber,
+                    label: item.label || '',
+                    title: item.title || '',
+                    date: isoDate,
+                    type: item.type || 'lecture',
+                    countsForAttendance: true,
+                    status: 'conducted',
+                    legacySessionIds: legacyIdsMap[sessionKey] || []
+                };
+                if (jointKeyMap[sessionKey]) {
+                    updateDoc.jointKey = jointKeyMap[sessionKey];
+                }
+
                 await WorkshopSession.findOneAndUpdate(
                     { sessionKey },
-                    {
-                        $set: {
-                            sessionKey,
-                            track: trackId,
-                            scheduleId: item.id,
-                            sessionNumber,
-                            label: item.label || '',
-                            title: item.title || '',
-                            date: isoDate,
-                            type: item.type || 'lecture',
-                            countsForAttendance: true,
-                            status: 'conducted',
-                            legacySessionIds: legacyIdsMap[sessionKey] || []
-                        }
-                    },
+                    { $set: updateDoc },
                     { upsert: true }
                 );
             }
