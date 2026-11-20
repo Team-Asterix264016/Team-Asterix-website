@@ -110,6 +110,95 @@ export default function InternRecruitmentPage({ onBack }) {
                     </div>
                 </section>
 
+                {/* Safe Exam Browser (SEB) Download */}
+                <section className="border-b-4 border-slate-900 bg-emerald-100 px-4 py-7 sm:px-8 sm:py-9">
+                    <div className="mx-auto max-w-6xl">
+                        <div className="shadow-brutal-6 border-4 border-slate-900 bg-white p-5 sm:p-8">
+                            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                                <div className="max-w-2xl">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="border-2 border-slate-900 bg-emerald-400 px-2.5 py-0.5 font-mono text-xs font-black tracking-widest text-slate-900 uppercase">
+                                            Round 1 Online Exam
+                                        </span>
+                                        <span className="border-2 border-slate-900 bg-slate-900 px-2 py-0.5 font-mono text-[11px] font-black tracking-wide text-amber-300 uppercase">
+                                            Safe Exam Browser (.seb)
+                                        </span>
+                                    </div>
+                                    <h2 className="mt-3 text-2xl font-black uppercase text-slate-900 sm:text-3xl md:text-4xl">
+                                        Safe Exam Browser Configuration
+                                    </h2>
+                                    <p className="mt-2 text-sm font-bold leading-relaxed text-slate-700 sm:text-base">
+                                        The recruitment quiz is conducted through Safe Exam Browser (SEB). Download the official{' '}
+                                        <code className="border border-slate-900 bg-amber-200 px-1.5 py-0.5 font-mono text-xs font-bold text-slate-900">
+                                            {INTERN_RECRUITMENT.sebFileName || 'config-trial pg.seb'}
+                                        </code>{' '}
+                                        configuration file below to launch the test.
+                                    </p>
+
+                                    {/* 3 Quick Steps */}
+                                    <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                                        <div className="border-2 border-slate-900 bg-slate-50 p-3">
+                                            <span className="block font-mono text-[10px] font-black tracking-wider text-sky-600 uppercase">
+                                                Step 01
+                                            </span>
+                                            <strong className="block text-xs font-black uppercase text-slate-900">
+                                                Install SEB
+                                            </strong>
+                                            <p className="mt-0.5 text-[11px] font-bold text-slate-600">
+                                                Get Safe Exam Browser for your laptop
+                                            </p>
+                                        </div>
+                                        <div className="border-2 border-slate-900 bg-slate-50 p-3">
+                                            <span className="block font-mono text-[10px] font-black tracking-wider text-sky-600 uppercase">
+                                                Step 02
+                                            </span>
+                                            <strong className="block text-xs font-black uppercase text-slate-900">
+                                                Download .seb
+                                            </strong>
+                                            <p className="mt-0.5 text-[11px] font-bold text-slate-600">
+                                                Click the green button to download
+                                            </p>
+                                        </div>
+                                        <div className="border-2 border-slate-900 bg-slate-50 p-3">
+                                            <span className="block font-mono text-[10px] font-black tracking-wider text-sky-600 uppercase">
+                                                Step 03
+                                            </span>
+                                            <strong className="block text-xs font-black uppercase text-slate-900">
+                                                Launch Exam
+                                            </strong>
+                                            <p className="mt-0.5 text-[11px] font-bold text-slate-600">
+                                                Double-click the .seb file to open
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col items-start gap-3 sm:items-end">
+                                    <a
+                                        href={apiUrl(INTERN_RECRUITMENT.sebFileUrl || '/recruitment/config-trial pg.seb')}
+                                        download={INTERN_RECRUITMENT.sebFileName || 'config-trial pg.seb'}
+                                        className="press shadow-brutal-4 inline-flex items-center gap-2 border-2 border-slate-900 bg-emerald-400 px-5 py-3.5 text-center font-mono text-sm font-black uppercase text-slate-900 no-underline transition-all hover:bg-emerald-300"
+                                    >
+                                        <span>Download SEB File</span>
+                                        <span className="text-base font-black">↓</span>
+                                    </a>
+                                    <span className="font-mono text-[11px] font-bold text-slate-600">
+                                        {INTERN_RECRUITMENT.sebFileName || 'config-trial pg.seb'}
+                                    </span>
+                                    <a
+                                        href="https://safeexambrowser.org/download_en.html"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-mono text-xs font-bold text-sky-700 underline hover:text-sky-900"
+                                    >
+                                        Need Safe Exam Browser? Download here ↗
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* Tracks and rounds */}
                 <section className="border-b-4 border-slate-900 bg-white px-4 py-8 sm:px-8 sm:py-10">
                     <div className="mx-auto max-w-6xl">
@@ -275,6 +364,35 @@ export default function InternRecruitmentPage({ onBack }) {
                                         <p className="text-sm leading-snug font-bold">
                                             {INTERN_RECRUITMENT.quizFormatNote}
                                         </p>
+                                    </div>
+
+                                    {/* SEB Config Download */}
+                                    <div className="mt-4 flex flex-col justify-between gap-3 border-2 border-slate-900 bg-emerald-50 p-3.5 sm:flex-row sm:items-center">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="border border-slate-900 bg-emerald-400 px-1.5 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900">
+                                                    Exam Client
+                                                </span>
+                                                <strong className="text-xs font-black uppercase text-slate-900 sm:text-sm">
+                                                    Safe Exam Browser Configuration (.seb)
+                                                </strong>
+                                            </div>
+                                            <p className="mt-1 text-xs font-bold text-slate-600">
+                                                Download{' '}
+                                                <span className="font-mono font-black text-slate-900">
+                                                    {INTERN_RECRUITMENT.sebFileName || 'config-trial pg.seb'}
+                                                </span>{' '}
+                                                to launch into the online exam portal.
+                                            </p>
+                                        </div>
+                                        <a
+                                            href={apiUrl(INTERN_RECRUITMENT.sebFileUrl || '/recruitment/config-trial pg.seb')}
+                                            download={INTERN_RECRUITMENT.sebFileName || 'config-trial pg.seb'}
+                                            className="press shadow-brutal-2 inline-flex flex-shrink-0 items-center gap-1.5 border-2 border-slate-900 bg-emerald-400 px-3.5 py-2 font-mono text-xs font-black uppercase text-slate-900 no-underline hover:bg-emerald-300"
+                                        >
+                                            <span>Download .seb</span>
+                                            <span>↓</span>
+                                        </a>
                                     </div>
 
                                     <h4 className="mt-6 border-b-2 border-slate-900 pb-2 font-mono text-xs font-black tracking-widest uppercase">

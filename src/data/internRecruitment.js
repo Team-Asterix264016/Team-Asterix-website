@@ -16,7 +16,9 @@ const INTERN_RECRUITMENT = {
         'Along with the track-specific questions below, the quiz will also have logical reasoning and aptitude questions.',
     registerUrl: 'https://rb.gy/j9mhx9',
     registerQr: '/recruitment/register-qr.png',
-    bannerCatchline: "Don't just watch the race. Build the machine that wins it."
+    bannerCatchline: "Don't just watch the race. Build the machine that wins it.",
+    sebFileUrl: '/recruitment/config-trial pg.seb',
+    sebFileName: 'config-trial pg.seb'
 };
 
 const INTERN_ROUNDS = [

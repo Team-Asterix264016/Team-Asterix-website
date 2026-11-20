@@ -163,6 +163,26 @@ export default function InternRecruitmentAdmin({ onImageUpload }) {
                 />
             </SectionCard>
 
+            <SectionCard
+                title="Safe Exam Browser (SEB)"
+                subtitle="Downloadable configuration file (.seb) for Round 1 Online Exam."
+            >
+                <TextField
+                    label="SEB File URL / Path"
+                    value={data.sebFileUrl || ''}
+                    onChange={setField('sebFileUrl')}
+                    placeholder="/recruitment/config-trial pg.seb"
+                    hint="URL or path to the .seb configuration file served statically or hosted online."
+                />
+                <TextField
+                    label="Download Filename"
+                    value={data.sebFileName || ''}
+                    onChange={setField('sebFileName')}
+                    placeholder="config-trial pg.seb"
+                    hint="Filename shown to candidates when downloading the .seb file."
+                />
+            </SectionCard>
+
             <SectionCard title="Round 1: Quiz" subtitle="Each track has its own date and portions.">
                 <TextField
                     label="Quiz format note (both tracks)"

@@ -48,6 +48,9 @@ media/
 # Local Claude Code settings (may hold connection strings)
 .claude/settings.local.json
 
+# Temporary root files
+/config-trial pg.seb
+
 # Participant data dumps: PII, never commit
 server/data/backups/
 
