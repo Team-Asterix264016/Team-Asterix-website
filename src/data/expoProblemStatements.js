@@ -13,8 +13,8 @@ export const EXPO_TEAM_COUNT = 49;
 export const EXPO_PS_CAP = 20;
 
 /* Shown on the Expo page. Update these when the date is confirmed. */
-export const EXPO_DATE_LABEL = '5 December 2026';
-export const EXPO_DATE_CONFIRMED = false;
+export const EXPO_DATE_LABEL = '5th December 2026';
+export const EXPO_DATE_CONFIRMED = true;
 
 /* Served from public/expo/. */
 export const EXPO_PS_PDF_URL = '/expo/Team_Asterix_Expo_Problem_Statements.pdf';
