@@ -961,7 +961,7 @@ router.post('/registrations/reset-password-by-identifier', authenticateToken, re
             return res.status(400).json({ error: 'Please enter a roll number, phone number, or email.' });
         }
 
-        const cleanPhone = rawIdentifier.replace(/[\s\-\(\)\+]/g, '');
+        const cleanPhone = rawIdentifier.replace(/[\s\-()+]/g, '');
         const conditions = [];
 
         if (mongoose.isValidObjectId(rawIdentifier)) {
