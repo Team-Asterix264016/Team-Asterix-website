@@ -228,7 +228,6 @@ export const EXPO_PS_CAP = 20;
 
 /* Must match the ids in src/data/expoProblemStatements.js. */
 export const EXPO_PROBLEM_STATEMENTS = {
-    'ps1-parking-auto-brake': 'Parking Sensor with Auto-Brake',
     'ps2-smart-toll-gate': 'FASTag-Style Smart Toll Gate',
     'ps3-serving-robot': 'Restaurant Serving Robot',
     'ps4-parking-lot-guide': 'Smart Parking Lot Guide',

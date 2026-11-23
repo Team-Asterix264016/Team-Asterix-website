@@ -1,5 +1,7 @@
 /**
  * Expo round problem statements (from Team_Asterix_Expo_Problem_Statements.pdf).
+ * Problem statement 1 (Parking Sensor with Auto-Brake) was dropped; the rest keep
+ * their original numbers (2 to 6) to match the PDF.
  * The ids must match EXPO_PROBLEM_STATEMENTS in server/src/config/expoTeams.js,
  * which the server checks submissions against.
  */
@@ -57,53 +59,6 @@ export const EXPO_GROUND_RULES = [
 ];
 
 export const EXPO_PROBLEM_STATEMENTS = [
-    {
-        id: 'ps1-parking-auto-brake',
-        number: 1,
-        category: 'Smart Cars',
-        title: 'Parking Sensor with Auto-Brake',
-        tagline: "A toy car that warns you as it nears an obstacle, and brakes by itself if you don't.",
-        seenIn: 'Reverse parking sensors, rear auto-brake in cars',
-        power: '9 V battery (on the car)',
-        hardware: 'ESP32, 2WD chassis with BO motors, L9110S motor driver, HC-SR04, buzzer, 3 LEDs',
-        cost: '₹850–950',
-        problem: [
-            'Low-speed parking bumps are among the most common accidents in cities. A driver reversing into a tight spot cannot see a pillar, a bike or a child behind the car. Cars solve this with ultrasonic parking sensors that beep faster as an obstacle gets closer, and newer cars add rear automatic braking, which stops the car even if the driver keeps pressing the accelerator.',
-            "The team must build a small car that does exactly this. The car is driven from a phone over Wi-Fi, but a safety layer on the ESP32 keeps measuring the distance behind the car, warns the driver with sound and lights, and overrides the driver's command when a collision is about to happen. The key autonomous idea: when safety is at stake, the machine, not the human, has the final say.",
-            'A simple version brakes at a fixed distance. A smarter version brakes based on how fast the gap is closing: if the car approaches quickly it must brake earlier than if it creeps in slowly. The ESP32 works this out from consecutive distance readings, with no extra sensor.'
-        ],
-        realLife: [
-            'Reverse parking sensors are standard on most cars sold in India today; rear auto-brake comes with many newer cars that have ADAS features.',
-            "The same 'sense → warn → intervene' idea is used in factory forklifts, warehouse robots and in Automatic Emergency Braking (AEB) at higher speeds.",
-            'In the Team ASTERIX autonomous buggy, a safety supervisor works the same way: it can stop the vehicle no matter what the driving software commands.'
-        ],
-        mustDo: [
-            'Drive forward, reverse, left and right from a phone web page served by the ESP32.',
-            'Measure the distance behind the car with an ultrasonic sensor, smoothed to remove noisy readings.',
-            'Warn in zones: above 50 cm green and silent; 20–50 cm yellow with a slow beep; 10–20 cm red with a fast beep; below 10 cm a continuous tone.',
-            'Block any reverse command inside the danger zone, even if the user keeps pressing the button, while still allowing the car to drive forward away from the obstacle.',
-            'Show live distance, closing speed and warning zone on the phone page.'
-        ],
-        electrical: [
-            "Power: a 9 V battery through an on/off (kill) switch feeds both the L9110S motor driver and the ESP32's VIN pin; the ESP32's on-board regulator makes its own 3.3 V. All grounds are joined.",
-            "Motor drive: the L9110S's four inputs connect to ESP32 pins; PWM on these pins controls speed and direction of both BO motors.",
-            'Distance sensing: the HC-SR04 is mounted at the back of the car. Its ECHO pin outputs 5 V, so it goes through a simple two-resistor divider (1 kΩ and 2 kΩ) to bring it down to a safe 3.3 V for the ESP32.',
-            "Warnings: green, yellow and red LEDs, each with a 220 Ω resistor; a buzzer switched through a small transistor (BC547) so the ESP32 pin isn't overloaded.",
-            'Build: sensor firmly fixed at bumper height, wires tied down so nothing drags on the floor.'
-        ],
-        software: [
-            'Distance reading: trigger the sensor about 20 times a second and take the median of the last 5 readings to reject spikes.',
-            'Closing speed: closing speed = change in distance ÷ time between readings. Time to collision = distance ÷ closing speed.',
-            'Braking rule: brake if the distance is below 10 cm or the time to collision is under 1 second, so a fast approach brakes earlier than a slow one.',
-            "State machine: IDLE → DRIVING → WARNING → BRAKING → BLOCKED, plus a FAILSAFE state that stops the motors if the sensor stops replying or the phone hasn't sent a command for more than half a second.",
-            'Phone interface: an ESP32 web page with drive buttons and a live panel showing distance, closing speed, zone and state.'
-        ],
-        targets: [
-            'Test track: a 2 m straight run ending at a wall, driven in reverse at slow, medium and full speed.',
-            'The car stops 10 ± 3 cm from the wall at all three speeds, over 10 runs each.',
-            "Show on the poster how the 'closing speed' rule compares with a plain fixed-distance rule."
-        ]
-    },
     {
         id: 'ps2-smart-toll-gate',
         number: 2,

@@ -216,9 +216,9 @@ function ProblemStatementsSection({ chosenId, onRegisterWith, slots }) {
         <section id="expo-problem-statements" ref={sectionRef} className="scroll-mt-4 border-b-4 border-slate-900 bg-amber-50 px-4 py-14 sm:px-8">
             <div className="mx-auto max-w-6xl">
                 <SectionHeading kicker="02 · Choose your build" title="Problem statements">
-                    Six real-world systems to recreate. Every team picks one, and each one takes at most {slots.cap}{' '}
-                    teams, first come first served. Click a problem statement to read the full brief, or download all
-                    six as a PDF.
+                    {EXPO_PROBLEM_STATEMENTS.length} real-world systems to recreate. Every team picks one, and each one
+                    takes at most {slots.cap} teams, first come first served. Click a problem statement to read the
+                    full brief, or download them all as a PDF.
                 </SectionHeading>
                 <div className="mb-6">
                     <DownloadPdfButton />
