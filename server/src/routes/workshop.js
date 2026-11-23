@@ -1078,13 +1078,26 @@ router.post('/attendance/reset-participant', authenticateToken, requireLeadOrAdm
    only some of these. Only paid registrations get a figure; the rest stay null.
    Returns the consolidated figures for the whole paid cohort. */
 async function attachAttendance(registrations) {
-    const [sessions, records] = await Promise.all([
+    const [rawSessions, records] = await Promise.all([
         WorkshopSession.find({}).lean(),
         WorkshopAttendance.find({}, {
             registrationId: 1, rollNo: 1, email: 1, track: 1,
             sessionId: 1, sessionKey: 1, sessionDate: 1
         }).lean()
     ]);
+
+    const obsoleteKeySet = new Set([
+        'software|sch-sw-xmwg3ckit', 'powertrain|sch-pt-xmwg3ckit',
+        'software|sch-sw-xmwg8kfmr', 'powertrain|sch-pt-xmwg8kfmr',
+        'software|sch-sw-xmwhf0ba1', 'powertrain|sch-pt-xmwhf0ba1',
+        'software|sch-sw-xmwhobsmk', 'powertrain|sch-pt-xmwhobsmk',
+        'software|sch-sw-cu1', 'software|sch-sw-cu2', 'software|sch-sw-cu3', 'software|sch-sw-cu4', 'software|sch-sw-cu5',
+        'software|sch-sw-h1', 'software|sch-sw-h2', 'powertrain|sch-pt-h1', 'powertrain|sch-pt-c1', 'powertrain|sch-pt-c2',
+        'powertrain|sch-pt-e1', 'powertrain|sch-pt-e3', 'powertrain|sch-pt-e4'
+    ]);
+    const sessions = rawSessions.filter(
+        (s) => !obsoleteKeySet.has(s.sessionKey) && s.type !== 'catchup' && s.type !== 'holiday'
+    );
 
     const byIdentity = new Map();
     records.forEach((att) => {

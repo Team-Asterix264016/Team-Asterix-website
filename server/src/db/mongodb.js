@@ -10,6 +10,7 @@ import WorkshopSession from '../models/WorkshopSession.js';
 import WorkshopAttendance from '../models/WorkshopAttendance.js';
 import { WORKSHOP_TRACKS } from '../config/workshopPackages.js';
 import { sessionIsoDate } from '../config/sessionDates.js';
+import { isCountedType } from '../lib/workshopSessions.js';
 
 let isConnected = false;
 
@@ -793,6 +794,7 @@ export async function syncWorkshopSchedulesAndCleanObsoleteSessions() {
             if (!Array.isArray(trackConfig.schedule)) continue;
             for (let idx = 0; idx < trackConfig.schedule.length; idx++) {
                 const item = trackConfig.schedule[idx];
+                if (!isCountedType(item.type)) continue;
                 const sessionKey = `${trackId}|${item.id}`;
                 const isoDate = sessionIsoDate(item.date, trackConfig);
                 const sessionNumMatch = String(item.id || '').match(/-(\d+)$/);

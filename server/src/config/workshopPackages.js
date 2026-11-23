@@ -344,16 +344,6 @@ export const WORKSHOP_TRACKS = {
                 subject: 'Analog Circuits'
             },
             {
-                id: 'sch-pt-h1',
-                label: 'Holiday',
-                days: 'Monday',
-                date: '19 Oct',
-                title: 'Pooja Holidays: Students work on assigned mini projects',
-                instructor: 'Self-guided',
-                venue: 'Home / Online',
-                type: 'holiday'
-            },
-            {
                 id: 'sch-pt-6',
                 label: 'Session 6',
                 days: 'Wednesday',

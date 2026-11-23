@@ -332,44 +332,40 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                         <button
                             type="button"
                             onClick={() => setFilterCategory('all')}
-                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${
-                                filterCategory === 'all'
+                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${filterCategory === 'all'
                                     ? 'shadow-brutal-2 border-2 border-slate-900 bg-slate-900 text-amber-300'
                                     : 'border border-slate-900 bg-white text-slate-700 hover:bg-slate-100'
-                            }`}
+                                }`}
                         >
                             All ({auditList.length})
                         </button>
                         <button
                             type="button"
                             onClick={() => setFilterCategory('loggedin')}
-                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${
-                                filterCategory === 'loggedin'
+                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${filterCategory === 'loggedin'
                                     ? 'shadow-brutal-2 border-2 border-slate-900 bg-emerald-400 text-slate-950'
                                     : 'border border-slate-900 bg-white text-slate-700 hover:bg-slate-100'
-                            }`}
+                                }`}
                         >
                             Logged In ({summary.hasLoggedIn})
                         </button>
                         <button
                             type="button"
                             onClick={() => setFilterCategory('custom')}
-                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${
-                                filterCategory === 'custom'
+                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${filterCategory === 'custom'
                                     ? 'shadow-brutal-2 border-2 border-slate-900 bg-sky-400 text-slate-950'
                                     : 'border border-slate-900 bg-white text-slate-700 hover:bg-slate-100'
-                            }`}
+                                }`}
                         >
                             Custom Pwd ({summary.customPasswordSet})
                         </button>
                         <button
                             type="button"
                             onClick={() => setFilterCategory('default')}
-                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${
-                                filterCategory === 'default'
+                            className={`press px-3 py-2 font-mono text-xs font-black uppercase transition-all ${filterCategory === 'default'
                                     ? 'shadow-brutal-2 border-2 border-slate-900 bg-amber-300 text-slate-950'
                                     : 'border border-slate-900 bg-white text-slate-700 hover:bg-slate-100'
-                            }`}
+                                }`}
                         >
                             Default Pwd ({summary.usingDefaultPassword})
                         </button>

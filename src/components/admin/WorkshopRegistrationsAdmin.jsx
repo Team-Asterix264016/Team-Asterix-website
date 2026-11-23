@@ -740,11 +740,10 @@ export default function WorkshopRegistrationsAdmin({
                             </span>
                             {summary.powertrainCapacity && (
                                 <span
-                                    className={`border px-2 py-0.5 font-mono text-[10px] font-black ${
-                                        summary.powertrainCapacity.soldOut
+                                    className={`border px-2 py-0.5 font-mono text-[10px] font-black ${summary.powertrainCapacity.soldOut
                                             ? 'shadow-brutal-1 border-rose-700 bg-rose-600 text-white'
                                             : 'shadow-brutal-1 border-amber-600 bg-amber-400 text-slate-950'
-                                    }`}
+                                        }`}
                                 >
                                     {summary.powertrainCapacity.soldOut
                                         ? 'SOLD OUT'
@@ -766,16 +765,15 @@ export default function WorkshopRegistrationsAdmin({
                         {summary.powertrainCapacity && (
                             <div className="my-2 h-2.5 w-full overflow-hidden border border-slate-900 bg-slate-200 shadow-inner">
                                 <div
-                                    className={`h-full transition-all duration-500 ${
-                                        summary.powertrainCapacity.soldOut ? 'bg-rose-600' : 'bg-amber-500'
-                                    }`}
+                                    className={`h-full transition-all duration-500 ${summary.powertrainCapacity.soldOut ? 'bg-rose-600' : 'bg-amber-500'
+                                        }`}
                                     style={{
                                         width: `${Math.min(
                                             100,
                                             Math.round(
                                                 (summary.powertrainCapacity.totalPowertrainPaid /
                                                     summary.powertrainCapacity.maxSeats) *
-                                                    100
+                                                100
                                             )
                                         )}%`
                                     }}
@@ -801,19 +799,18 @@ export default function WorkshopRegistrationsAdmin({
                             </span>
                             {summary.softwareCapacity && (
                                 <span
-                                    className={`border px-2 py-0.5 font-mono text-[10px] font-black ${
-                                        summary.softwareCapacity.soldOut
+                                    className={`border px-2 py-0.5 font-mono text-[10px] font-black ${summary.softwareCapacity.soldOut
                                             ? 'shadow-brutal-1 border-rose-700 bg-rose-600 text-slate-950'
                                             : summary.softwareCapacity.seatsLeft <= 25
-                                              ? 'shadow-brutal-1 border-amber-600 bg-amber-400 text-slate-950'
-                                              : 'shadow-brutal-1 border-sky-600 bg-sky-400 text-slate-950'
-                                    }`}
+                                                ? 'shadow-brutal-1 border-amber-600 bg-amber-400 text-slate-950'
+                                                : 'shadow-brutal-1 border-sky-600 bg-sky-400 text-slate-950'
+                                        }`}
                                 >
                                     {summary.softwareCapacity.soldOut
                                         ? 'SOLD OUT'
                                         : summary.softwareCapacity.seatsLeft <= 25
-                                          ? `${summary.softwareCapacity.seatsLeft} SEATS LEFT`
-                                          : 'AVAILABLE'}
+                                            ? `${summary.softwareCapacity.seatsLeft} SEATS LEFT`
+                                            : 'AVAILABLE'}
                                 </span>
                             )}
                         </div>
@@ -831,16 +828,15 @@ export default function WorkshopRegistrationsAdmin({
                         {summary.softwareCapacity && (
                             <div className="my-2 h-2.5 w-full overflow-hidden border border-slate-900 bg-slate-200 shadow-inner">
                                 <div
-                                    className={`h-full transition-all duration-500 ${
-                                        summary.softwareCapacity.soldOut ? 'bg-rose-600' : 'bg-sky-500'
-                                    }`}
+                                    className={`h-full transition-all duration-500 ${summary.softwareCapacity.soldOut ? 'bg-rose-600' : 'bg-sky-500'
+                                        }`}
                                     style={{
                                         width: `${Math.min(
                                             100,
                                             Math.round(
                                                 (summary.softwareCapacity.totalSoftwarePaid /
                                                     summary.softwareCapacity.maxSeats) *
-                                                    100
+                                                100
                                             )
                                         )}%`
                                     }}
@@ -930,15 +926,14 @@ export default function WorkshopRegistrationsAdmin({
                             setDeptFilter('all');
                             setYearFilter('all');
                         }}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            packageFilter === 'all' &&
-                            enrolledTrackFilter === 'all' &&
-                            deptFilter === 'all' &&
-                            yearFilter === 'all' &&
-                            statusFilter === 'paid'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${packageFilter === 'all' &&
+                                enrolledTrackFilter === 'all' &&
+                                deptFilter === 'all' &&
+                                yearFilter === 'all' &&
+                                statusFilter === 'paid'
                                 ? 'shadow-brutal-1 border-slate-900 bg-slate-900 text-white'
                                 : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
-                        }`}
+                            }`}
                     >
                         All Paid Candidates
                     </button>
@@ -948,11 +943,10 @@ export default function WorkshopRegistrationsAdmin({
                             setPackageFilter('software');
                             setEnrolledTrackFilter('all');
                         }}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            packageFilter === 'software'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${packageFilter === 'software'
                                 ? 'shadow-brutal-1 border-sky-900 bg-sky-400 text-slate-950'
                                 : 'border-sky-300 bg-sky-50 text-sky-900 hover:bg-sky-100'
-                        }`}
+                            }`}
                     >
                         💻 Software Track
                     </button>
@@ -962,11 +956,10 @@ export default function WorkshopRegistrationsAdmin({
                             setPackageFilter('powertrain');
                             setEnrolledTrackFilter('all');
                         }}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            packageFilter === 'powertrain'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${packageFilter === 'powertrain'
                                 ? 'shadow-brutal-1 border-amber-900 bg-amber-400 text-slate-950'
                                 : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
-                        }`}
+                            }`}
                     >
                         ⚡ Powertrain Track
                     </button>
@@ -976,33 +969,30 @@ export default function WorkshopRegistrationsAdmin({
                             setPackageFilter('combo');
                             setEnrolledTrackFilter('all');
                         }}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            packageFilter === 'combo'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${packageFilter === 'combo'
                                 ? 'shadow-brutal-1 border-purple-900 bg-purple-400 text-slate-950'
                                 : 'border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100'
-                        }`}
+                            }`}
                     >
                         📦 Combo (Both Tracks)
                     </button>
                     <button
                         type="button"
                         onClick={() => setYearFilter(yearFilter === '1' ? 'all' : '1')}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            yearFilter === '1'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${yearFilter === '1'
                                 ? 'shadow-brutal-1 border-indigo-900 bg-indigo-400 text-slate-950'
                                 : 'border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100'
-                        }`}
+                            }`}
                     >
                         🎓 1st Year
                     </button>
                     <button
                         type="button"
                         onClick={() => setYearFilter(yearFilter === '2' ? 'all' : '2')}
-                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${
-                            yearFilter === '2'
+                        className={`press border px-2.5 py-1 font-mono text-xs font-bold uppercase transition-all ${yearFilter === '2'
                                 ? 'shadow-brutal-1 border-teal-900 bg-teal-400 text-slate-950'
                                 : 'border-teal-300 bg-teal-50 text-teal-900 hover:bg-teal-100'
-                        }`}
+                            }`}
                     >
                         🎓 2nd Year
                     </button>
@@ -1131,20 +1121,20 @@ export default function WorkshopRegistrationsAdmin({
                         deptFilter !== 'all' ||
                         yearFilter !== 'all' ||
                         searchQuery) && (
-                        <button
-                            onClick={() => {
-                                setStatusFilter('paid');
-                                setPackageFilter('all');
-                                setEnrolledTrackFilter('all');
-                                setDeptFilter('all');
-                                setYearFilter('all');
-                                setSearchQuery('');
-                            }}
-                            className="cursor-pointer font-black text-sky-700 hover:underline"
-                        >
-                            ✕ Reset All Filters
-                        </button>
-                    )}
+                            <button
+                                onClick={() => {
+                                    setStatusFilter('paid');
+                                    setPackageFilter('all');
+                                    setEnrolledTrackFilter('all');
+                                    setDeptFilter('all');
+                                    setYearFilter('all');
+                                    setSearchQuery('');
+                                }}
+                                className="cursor-pointer font-black text-sky-700 hover:underline"
+                            >
+                                ✕ Reset All Filters
+                            </button>
+                        )}
                 </div>
             </div>
 
@@ -1181,13 +1171,12 @@ export default function WorkshopRegistrationsAdmin({
 
                                     <div className="flex items-center gap-1.5">
                                         <span
-                                            className={`border px-2 py-0.5 text-[10px] font-black uppercase ${
-                                                reg.package === 'combo'
+                                            className={`border px-2 py-0.5 text-[10px] font-black uppercase ${reg.package === 'combo'
                                                     ? 'border-purple-400 bg-purple-100 text-purple-900'
                                                     : reg.package === 'software'
-                                                      ? 'border-sky-400 bg-sky-100 text-sky-900'
-                                                      : 'border-amber-400 bg-amber-100 text-amber-900'
-                                            }`}
+                                                        ? 'border-sky-400 bg-sky-100 text-sky-900'
+                                                        : 'border-amber-400 bg-amber-100 text-amber-900'
+                                                }`}
                                         >
                                             {reg.package}
                                         </span>
@@ -1359,13 +1348,12 @@ export default function WorkshopRegistrationsAdmin({
                                         {/* Package / Tracks */}
                                         <td className="p-3 whitespace-nowrap">
                                             <span
-                                                className={`inline-block border px-2 py-0.5 text-[10px] font-black uppercase ${
-                                                    reg.package === 'combo'
+                                                className={`inline-block border px-2 py-0.5 text-[10px] font-black uppercase ${reg.package === 'combo'
                                                         ? 'border-purple-400 bg-purple-100 text-purple-900'
                                                         : reg.package === 'software'
-                                                          ? 'border-sky-400 bg-sky-100 text-sky-900'
-                                                          : 'border-amber-400 bg-amber-100 text-amber-900'
-                                                }`}
+                                                            ? 'border-sky-400 bg-sky-100 text-sky-900'
+                                                            : 'border-amber-400 bg-amber-100 text-amber-900'
+                                                    }`}
                                             >
                                                 {reg.package}
                                             </span>
@@ -1531,11 +1519,10 @@ export default function WorkshopRegistrationsAdmin({
                                     </span>
                                 </div>
                                 <span
-                                    className={`border border-slate-900 px-2 py-1 text-xs font-black uppercase ${
-                                        selectedRegistration.status === 'paid'
+                                    className={`border border-slate-900 px-2 py-1 text-xs font-black uppercase ${selectedRegistration.status === 'paid'
                                             ? 'bg-emerald-400 text-slate-950'
                                             : 'bg-amber-300 text-slate-950'
-                                    }`}
+                                        }`}
                                 >
                                     {selectedRegistration.status}
                                 </span>

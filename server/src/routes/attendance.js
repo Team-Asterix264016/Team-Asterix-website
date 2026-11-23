@@ -2921,7 +2921,7 @@ router.get('/eligibility', authenticateToken, async (req, res) => {
         const requested = Number(req.query.threshold);
         const threshold = Number.isFinite(requested) && requested > 0 && requested <= 100 ? requested : CERTIFICATE_THRESHOLD;
 
-        const [registrations, sessions, records] = await Promise.all([
+        const [registrations, rawSessions, records] = await Promise.all([
             WorkshopRegistration.find({ status: 'paid' })
                 .select('name rollNo email phone department year package tracksEnrolled')
                 .lean(),
@@ -2930,6 +2930,19 @@ router.get('/eligibility', authenticateToken, async (req, res) => {
                 .select('registrationId rollNo email track sessionId sessionKey sessionDate checkedInAt')
                 .lean()
         ]);
+
+        const obsoleteKeySet = new Set([
+            'software|sch-sw-xmwg3ckit', 'powertrain|sch-pt-xmwg3ckit',
+            'software|sch-sw-xmwg8kfmr', 'powertrain|sch-pt-xmwg8kfmr',
+            'software|sch-sw-xmwhf0ba1', 'powertrain|sch-pt-xmwhf0ba1',
+            'software|sch-sw-xmwhobsmk', 'powertrain|sch-pt-xmwhobsmk',
+            'software|sch-sw-cu1', 'software|sch-sw-cu2', 'software|sch-sw-cu3', 'software|sch-sw-cu4', 'software|sch-sw-cu5',
+            'software|sch-sw-h1', 'software|sch-sw-h2', 'powertrain|sch-pt-h1', 'powertrain|sch-pt-c1', 'powertrain|sch-pt-c2',
+            'powertrain|sch-pt-e1', 'powertrain|sch-pt-e3', 'powertrain|sch-pt-e4'
+        ]);
+        const sessions = rawSessions.filter(
+            (s) => !obsoleteKeySet.has(s.sessionKey) && s.type !== 'catchup' && s.type !== 'holiday'
+        );
 
         // Attach each record to one participant: by registration id, then roll number, then email.
         const byId = new Map();
