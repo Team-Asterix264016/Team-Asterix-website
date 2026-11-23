@@ -1,28 +1,24 @@
-import { useMemo } from 'react';
-import { normalizeInternRecruitment } from '../data/internRecruitment';
-import { useWebsiteData } from '../context/WebsiteDataContext';
+import { EXPO_TEAM_COUNT } from '../data/expoProblemStatements';
 
 /* Fixed strip across the top of the home page. CyberNavbar renders it and
    pushes its own headers down by BANNER_OFFSET while it is showing; it slides
    away with the mobile header once the page scrolls. On phones it is taller
    so the catchline can wrap onto a second line instead of being cut off;
-   BANNER_OFFSET must track the heights set below. */
+   BANNER_OFFSET must track the heights set below.
+
+   Intern recruitment round 2: the button opens the Expo page (ExpoPage). */
 export const BANNER_OFFSET = 'top-19 sm:top-11';
 
-export default function RecruitmentBanner({ hidden, onOpenDetails }) {
-    const { siteData } = useWebsiteData();
-    const INTERN_RECRUITMENT = useMemo(
-        () => normalizeInternRecruitment(siteData.internRecruitment),
-        [siteData.internRecruitment]
-    );
+const CATCHLINE = `Round 1 is done: ${EXPO_TEAM_COUNT} teams are through to the Expo. Captains, register your team.`;
 
+export default function RecruitmentBanner({ hidden, onRegister }) {
     return (
         <div
             className={`fixed inset-x-0 top-0 z-[60] flex h-19 items-center border-b-4 border-slate-900 bg-amber-300 px-3 text-slate-900 transition-all duration-300 ease-out select-none sm:h-11 sm:px-8 ${
                 hidden ? 'pointer-events-none -translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             }`}
             role="region"
-            aria-label="Intern recruitment"
+            aria-label="Expo registration"
         >
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-2.5">
@@ -31,26 +27,24 @@ export default function RecruitmentBanner({ hidden, onOpenDetails }) {
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500" />
                             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
                         </span>
-                        <span>Intern Recruitment</span>
+                        <span>Expo Round</span>
                     </span>
                     {/* Phones: wraps onto a second line. Wider: one line. */}
-                    <p className="line-clamp-2 text-[11px] leading-tight font-black uppercase sm:hidden">
-                        {INTERN_RECRUITMENT.bannerCatchline}
-                    </p>
+                    <p className="line-clamp-2 text-[11px] leading-tight font-black uppercase sm:hidden">{CATCHLINE}</p>
                     <p className="hidden min-w-0 truncate text-sm font-black uppercase sm:block">
-                        {INTERN_RECRUITMENT.bannerCatchline}
+                        {CATCHLINE}
                         <span className="ml-2 hidden font-mono text-[10px] font-bold tracking-widest text-slate-700 lg:inline">
-                            / {INTERN_RECRUITMENT.eligibilityNote}
+                            / Shortlisted teams only
                         </span>
                     </p>
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-2">
                     <button
                         type="button"
-                        onClick={onOpenDetails}
+                        onClick={onRegister}
                         className="press shadow-brutal-2 inline-flex cursor-pointer items-center gap-1 border-2 border-slate-900 bg-rose-500 px-2.5 py-1 font-mono text-[10px] font-black text-white uppercase hover:bg-rose-600 sm:text-[11px]"
                     >
-                        Register now →
+                        Register team →
                     </button>
                 </div>
             </div>

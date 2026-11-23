@@ -15,11 +15,12 @@ export default function CyberNavbar({
     onOpenSponsor,
     onOpenCommunity,
     onOpenProfile,
-    onOpenInternRecruitment
+    onOpenExpo
 }) {
-    const openInternRecruitment = () => {
-        if (onOpenInternRecruitment) onOpenInternRecruitment();
-        else window.location.hash = '#intern-recruitment';
+    /* Every Expo button (banner, dock, menu, bubble) opens the Expo page. */
+    const openExpoForm = () => {
+        if (onOpenExpo) onOpenExpo();
+        else window.location.hash = '#expo';
     };
     const { siteData } = useWebsiteData();
     const subsystems = siteData.subsystems;
@@ -130,9 +131,9 @@ export default function CyberNavbar({
 
     return (
         <>
-            {showBanner && <RecruitmentBanner hidden={isScrolled} onOpenDetails={openInternRecruitment} />}
+            {showBanner && <RecruitmentBanner hidden={isScrolled} onRegister={openExpoForm} />}
 
-            <RecruitmentBubble onOpen={openInternRecruitment} dockVisible={isScrolled} hidden={mobileOpen} />
+            <RecruitmentBubble onOpen={openExpoForm} dockVisible={isScrolled} hidden={mobileOpen} />
 
             {/* =========================================================================
                 DESKTOP NAVIGATION: Option 2 — Morphing Floating Cyber Island (>= md)
@@ -167,10 +168,10 @@ export default function CyberNavbar({
                                 <div
                                     className={`flex items-center ${isScrolled ? 'gap-1 lg:gap-1.5' : 'gap-1.5 lg:gap-2'}`}
                                 >
-                                    {/* Intern Recruitment Button: first in the dock and the loudest */}
+                                    {/* Expo registration: first in the dock and the loudest */}
                                     <DockTextItem
                                         mouseX={mouseX}
-                                        onClick={openInternRecruitment}
+                                        onClick={openExpoForm}
                                         className={`flex cursor-pointer items-center gap-1.5 border-slate-900 bg-rose-500 font-black tracking-wide text-white hover:bg-rose-600 ${
                                             isScrolled
                                                 ? 'shadow-brutal-2 rounded-md border-2 px-2.5 py-1 text-[11px]'
@@ -181,7 +182,7 @@ export default function CyberNavbar({
                                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300" />
                                             <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
                                         </span>
-                                        <span>RECRUITMENT</span>
+                                        <span>EXPO FORM</span>
                                     </DockTextItem>
 
                                     {/* The Subsystems Text Item */}
@@ -475,11 +476,11 @@ export default function CyberNavbar({
                             </button>
                         </div>
 
-                        {/* Intern Recruitment: first and loudest, as in the desktop dock */}
+                        {/* Expo registration: first and loudest, as in the desktop dock */}
                         <button
                             onClick={() => {
                                 setMobileOpen(false);
-                                openInternRecruitment();
+                                openExpoForm();
                             }}
                             className="shadow-brutal-3 tap mb-3 flex w-full cursor-pointer items-center justify-center gap-2 border-2 border-slate-900 bg-rose-500 p-2.5 text-center text-xs font-black tracking-wide text-white uppercase hover:bg-rose-600"
                         >
@@ -487,7 +488,7 @@ export default function CyberNavbar({
                                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300" />
                                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-300" />
                             </span>
-                            <span>Intern Recruitment</span>
+                            <span>Expo Registration</span>
                         </button>
 
                         {/* Subsystems List */}
@@ -651,13 +652,13 @@ export default function CyberNavbar({
                         </span>
                     </button>
 
-                    {/* Quick CTA Pill: Intern Recruitment. Takes over from the floating
+                    {/* Quick CTA Pill: Expo registration. Takes over from the floating
                         bubble once the dock is in view (Sponsor stays in the drawer). */}
                     <button
-                        onClick={openInternRecruitment}
+                        onClick={openExpoForm}
                         className="press shadow-brutal-2 tap flex flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg border-2 border-slate-900 bg-rose-500 px-3 text-xs font-black whitespace-nowrap text-white uppercase hover:bg-rose-600"
                     >
-                        <span>INTERN</span>
+                        <span>EXPO</span>
                         <span className="text-[10px]">→</span>
                     </button>
                 </nav>

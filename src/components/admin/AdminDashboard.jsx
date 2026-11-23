@@ -17,7 +17,7 @@ import ParticipantPasswordsAdmin from './ParticipantPasswordsAdmin';
 import CommunityBlogAdmin from './CommunityBlogAdmin';
 import BlogCommentsAdmin from './BlogCommentsAdmin';
 import MailClusterAdmin from './MailClusterAdmin';
-import InternRecruitmentAdmin from './InternRecruitmentAdmin';
+import ExpoRegistrationsAdmin from './ExpoRegistrationsAdmin';
 import teamLogo from '../../assets/Screenshot 2026-08-26 232320.png';
 
 export default function AdminDashboard({ onExit }) {
@@ -64,7 +64,10 @@ export default function AdminDashboard({ onExit }) {
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [activeTab, setActiveTab] = useState(() => {
         try {
-            return sessionStorage.getItem('admin_active_tab') || 'overview';
+            const saved = sessionStorage.getItem('admin_active_tab');
+            // The Intern Recruitment tab was retired for Expo Registrations.
+            if (saved === 'intern-recruitment') return 'expo-registrations';
+            return saved || 'overview';
         } catch {
             return 'overview';
         }
@@ -658,7 +661,7 @@ export default function AdminDashboard({ onExit }) {
             icon: 'edit',
             children: [
                 { id: 'overview', label: 'Overview', icon: 'overview' },
-                { id: 'intern-recruitment', label: 'Intern Recruitment', icon: 'clipboard' },
+                { id: 'expo-registrations', label: 'Expo Registrations', icon: 'clipboard' },
                 { id: 'hero', label: 'Hero & Branding', icon: 'edit' },
                 { id: 'story', label: 'Our Story', icon: 'book' },
                 { id: 'subsystems', label: 'Subsystems & Squad', icon: 'vehicle' },
@@ -2223,9 +2226,7 @@ export default function AdminDashboard({ onExit }) {
 
                     {activeTab === 'mail-cluster' && <MailClusterAdmin showStatus={showStatus} />}
 
-                    {activeTab === 'intern-recruitment' && (
-                        <InternRecruitmentAdmin onImageUpload={handleImageUpload} />
-                    )}
+                    {activeTab === 'expo-registrations' && <ExpoRegistrationsAdmin />}
 
                     {/* TAB 5: GALLERY & MEDIA */}
                     {activeTab === 'gallery' && (

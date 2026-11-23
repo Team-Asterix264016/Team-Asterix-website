@@ -20,6 +20,11 @@ import ErrorBoundary from './components/ErrorBoundary';
 const BajaModelPage = lazy(() => import('./components/BajaModelPage'));
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard'));
 const SponsorPage = lazy(() => import('./components/SponsorPage'));
+const ExpoPage = lazy(() => import('./components/ExpoPage'));
+
+/* The Expo page. #expo-register opens it at the form; #intern-recruitment is the
+   retired recruitment page, so old shared links land on the Expo instead. */
+const EXPO_HASHES = ['#expo', '#expo-register', '#intern-recruitment'];
 const WorkshopPage = lazy(() => import('./components/WorkshopPage'));
 const WorkshopAttendanceProjector = lazy(() => import('./components/admin/WorkshopAttendanceProjector'));
 const SessionQrProjector = lazy(() => import('./components/admin/SessionQrProjector'));
@@ -29,18 +34,13 @@ const QuizRunner = lazy(() => import('./components/quiz/QuizRunner'));
 const QuizLeaderboardProjector = lazy(() => import('./components/admin/QuizLeaderboardProjector'));
 const ParticipantProfilePage = lazy(() => import('./components/ParticipantProfilePage'));
 const CommunityPage = lazy(() => import('./components/community/CommunityPage'));
-const InternRecruitmentPage = lazy(() => import('./components/InternRecruitmentPage'));
-
-const INTERN_RECRUITMENT_HASH = '#intern-recruitment';
 
 function MainApp() {
     const [selectedSubsystem, setSelectedSubsystem] = useState(null);
     const [isModelPage, setIsModelPage] = useState(false);
     const [isAdminOpen, setIsAdminOpen] = useState(() => window.location.hash.startsWith('#admin'));
     const [isSponsorPage, setIsSponsorPage] = useState(() => window.location.hash === '#sponsor');
-    const [isInternRecruitmentPage, setIsInternRecruitmentPage] = useState(
-        () => window.location.hash === INTERN_RECRUITMENT_HASH
-    );
+    const [isExpoPage, setIsExpoPage] = useState(() => EXPO_HASHES.includes(window.location.hash));
     const [isWorkshopPage, setIsWorkshopPage] = useState(() => window.location.hash === '#workshop');
     const [isProfilePage, setIsProfilePage] = useState(
         () =>
@@ -96,7 +96,7 @@ function MainApp() {
             }
             setIsAdminOpen(hash.startsWith('#admin'));
             setIsSponsorPage(hash === '#sponsor');
-            setIsInternRecruitmentPage(hash === INTERN_RECRUITMENT_HASH);
+            setIsExpoPage(EXPO_HASHES.includes(hash));
             setIsWorkshopPage(false);
             setIsProfilePage(
                 hash === '#workshop-profile' ||
@@ -139,7 +139,7 @@ function MainApp() {
         scrollToTop();
     }, [
         isSponsorPage,
-        isInternRecruitmentPage,
+        isExpoPage,
         isWorkshopPage,
         isProfilePage,
         isCommunityPage,
@@ -208,7 +208,7 @@ function MainApp() {
         setIsModelPage(false);
         setIsAdminOpen(false);
         setIsSponsorPage(false);
-        setIsInternRecruitmentPage(false);
+        setIsExpoPage(false);
         setIsWorkshopPage(false);
         setIsProfilePage(false);
         setIsCommunityPage(false);
@@ -234,10 +234,10 @@ function MainApp() {
         scrollToTop();
     };
 
-    const handleOpenInternRecruitment = () => {
+    const handleOpenExpo = () => {
         closeAll();
-        setIsInternRecruitmentPage(true);
-        window.location.hash = INTERN_RECRUITMENT_HASH;
+        setIsExpoPage(true);
+        window.location.hash = '#expo';
         scrollToTop();
     };
 
@@ -280,7 +280,7 @@ function MainApp() {
             pathname.startsWith('/community') ||
             [
                 '#sponsor',
-                INTERN_RECRUITMENT_HASH,
+                ...EXPO_HASHES,
                 '#workshop',
                 '#workshop-profile',
                 '#profile',
@@ -307,14 +307,6 @@ function MainApp() {
         return (
             <Suspense fallback={pageFallback}>
                 <AdminDashboard onExit={handleBackToHome} />
-            </Suspense>
-        );
-    }
-
-    if (isInternRecruitmentPage) {
-        return (
-            <Suspense fallback={pageFallback}>
-                <InternRecruitmentPage onBack={handleBackToHome} />
             </Suspense>
         );
     }
@@ -399,6 +391,15 @@ function MainApp() {
             ? 'subsystem'
             : 'home';
 
+    // Expo round: event details, problem statements and team registration
+    if (isExpoPage) {
+        return (
+            <Suspense fallback={pageFallback}>
+                <ExpoPage onBack={handleBackToHome} startAtForm={window.location.hash === '#expo-register'} />
+            </Suspense>
+        );
+    }
+
     // Dedicated Full-Screen Sponsorship & Pitch Deck Portal
     if (isSponsorPage) {
         return (
@@ -424,7 +425,7 @@ function MainApp() {
                     onOpenSponsor={handleOpenSponsor}
                     onOpenCommunity={handleOpenCommunity}
                     onOpenProfile={handleOpenProfile}
-                    onOpenInternRecruitment={handleOpenInternRecruitment}
+                    onOpenExpo={handleOpenExpo}
                 />
 
                 {isModelPage ? (
