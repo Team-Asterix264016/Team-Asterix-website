@@ -383,6 +383,74 @@ export default function WorkshopRegistrationsAdmin({
         }
     };
 
+    // Reset participant password to default "asterix"
+    const handleResetPassword = async (reg) => {
+        if (!reg) return;
+        if (!window.confirm(`Reset ${reg.name} (${reg.rollNo}) password to default "asterix"?`)) return;
+
+        setActionBusyId(`pwd-${reg._id}`);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl(`/api/workshop/registrations/${reg._id}/reset-password`), {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+
+            if (showStatus) showStatus(data.message || `✓ Reset password to "asterix" for ${reg.name}`);
+            alert(data.message || `✓ Password reset to "asterix" for ${reg.name}`);
+        } catch (err) {
+            alert('Reset password error: ' + err.message);
+        } finally {
+            setActionBusyId(null);
+        }
+    };
+
+    // Reset attendance records for participant
+    const handleResetAttendance = async (reg) => {
+        if (!reg) return;
+        const reason = window.prompt(
+            `Are you sure you want to CLEAR all attendance check-ins for ${reg.name} (${reg.rollNo})?\nEnter a reason:`
+        );
+        if (reason === null) return;
+        if (!reason.trim()) {
+            alert('A reason is required to reset attendance.');
+            return;
+        }
+
+        setActionBusyId(`att-${reg._id}`);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl('/api/workshop/attendance/reset-participant'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    registrationId: reg._id,
+                    rollNo: reg.rollNo,
+                    email: reg.email,
+                    reason: reason.trim()
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to reset attendance');
+
+            if (showStatus) showStatus(data.message || `✓ Reset attendance for ${reg.name}`);
+            alert(data.message || `✓ Attendance reset for ${reg.name}`);
+            if (selectedRegistration?._id === reg._id) {
+                handleViewParticipant(reg);
+            }
+            await fetchRegistrations(true);
+        } catch (err) {
+            alert('Reset attendance error: ' + err.message);
+        } finally {
+            setActionBusyId(null);
+        }
+    };
+
     // Save new participant manually
     const handleSaveNewParticipant = async (event) => {
         event.preventDefault();
@@ -1381,6 +1449,17 @@ export default function WorkshopRegistrationsAdmin({
                                                 )}
                                                 <button
                                                     type="button"
+                                                    onClick={() => handleResetPassword(reg)}
+                                                    disabled={actionBusyId === `pwd-${reg._id}`}
+                                                    className="press cursor-pointer border border-amber-900 bg-amber-300 px-2 py-1 font-mono text-[10px] font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
+                                                    title="Reset password to default 'asterix'"
+                                                >
+                                                    {actionBusyId === `pwd-${reg._id}`
+                                                        ? 'Resetting…'
+                                                        : '🔑 Reset Pwd'}
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     onClick={() => handleViewParticipant(reg)}
                                                     className="press cursor-pointer border border-slate-900 bg-slate-100 px-2.5 py-1 font-mono text-[10px] font-black text-slate-900 uppercase hover:bg-sky-100"
                                                 >
@@ -1503,15 +1582,30 @@ export default function WorkshopRegistrationsAdmin({
 
                             {/* Participant Attendance History Section */}
                             <div className="space-y-2 border-2 border-slate-900 bg-sky-50/50 p-3">
-                                <div className="flex items-center justify-between border-b border-slate-300 pb-1.5">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-300 pb-1.5">
                                     <span className="font-mono text-xs font-black text-slate-900 uppercase">
                                         📅 Attendance History ({candidateAttendance.length} Sessions)
                                     </span>
-                                    {isLoadingAttendance && (
-                                        <span className="animate-pulse font-mono text-[10px] font-bold text-sky-700">
-                                            Loading...
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                        {candidateAttendance.length > 0 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleResetAttendance(selectedRegistration)}
+                                                disabled={actionBusyId === `att-${selectedRegistration._id}`}
+                                                className="press cursor-pointer border border-rose-600 bg-rose-50 px-2 py-0.5 font-mono text-[10px] font-black text-rose-700 uppercase hover:bg-rose-100 disabled:opacity-50"
+                                                title="Reset all attendance sessions for this participant"
+                                            >
+                                                {actionBusyId === `att-${selectedRegistration._id}`
+                                                    ? 'Resetting…'
+                                                    : '🔄 Reset Attendance'}
+                                            </button>
+                                        )}
+                                        {isLoadingAttendance && (
+                                            <span className="animate-pulse font-mono text-[10px] font-bold text-sky-700">
+                                                Loading...
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {isLoadingAttendance ? (
@@ -1599,6 +1693,17 @@ export default function WorkshopRegistrationsAdmin({
                                             : '⚡ Upgrade to Combo'}
                                     </button>
                                 )}
+                                <button
+                                    type="button"
+                                    onClick={() => handleResetPassword(selectedRegistration)}
+                                    disabled={actionBusyId === `pwd-${selectedRegistration._id}`}
+                                    className="press cursor-pointer border-2 border-slate-900 bg-amber-300 px-3.5 py-1.5 font-mono text-xs font-black text-slate-950 uppercase hover:bg-amber-400 disabled:opacity-50"
+                                    title="Reset student password to default 'asterix'"
+                                >
+                                    {actionBusyId === `pwd-${selectedRegistration._id}`
+                                        ? 'Resetting to asterix...'
+                                        : '🔑 Reset to "asterix"'}
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => {

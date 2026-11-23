@@ -147,6 +147,35 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
         }
     };
 
+    // Reset password to default "asterix"
+    const handleResetPassword = async (cand) => {
+        if (!cand) return;
+        const rollOrName = cand.name || cand.rollNo;
+        if (!window.confirm(`Reset password for ${rollOrName} (${cand.rollNo}) to default "asterix"?`)) return;
+
+        setActionBusyRoll(`pwd-${cand.rollNo}`);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl('/api/workshop/registrations/reset-password-by-identifier'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ identifier: cand.rollNo || cand.email })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+
+            if (showStatus) showStatus(data.message || `✓ Reset password to "asterix" for ${rollOrName}`);
+            alert(data.message || `✓ Password reset to "asterix" for ${rollOrName}`);
+        } catch (err) {
+            alert('Reset password error: ' + err.message);
+        } finally {
+            setActionBusyRoll(null);
+        }
+    };
+
     // CSV Export handler
     const handleExportCSV = async () => {
         setIsExporting(true);
@@ -625,6 +654,15 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                                                 </td>
                                                 <td className="p-2.5 text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            disabled={actionBusyRoll === `pwd-${cand.rollNo}`}
+                                                            onClick={() => handleResetPassword(cand)}
+                                                            className="press cursor-pointer border border-amber-900 bg-amber-200 px-2 py-1 text-[10px] font-black text-slate-950 uppercase hover:bg-amber-300 disabled:opacity-50"
+                                                            title="Reset participant password to default 'asterix'"
+                                                        >
+                                                            {actionBusyRoll === `pwd-${cand.rollNo}` ? 'Resetting…' : '🔑 Reset Pwd'}
+                                                        </button>
                                                         {cand.package !== 'combo' && (
                                                             <button
                                                                 type="button"

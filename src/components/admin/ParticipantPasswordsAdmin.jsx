@@ -14,6 +14,8 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
     const [error, setError] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState('all'); // 'all' | 'loggedin' | 'custom' | 'default'
+    const [quickResetInput, setQuickResetInput] = useState('');
+    const [isQuickResetting, setIsQuickResetting] = useState(false);
 
     const fetchAudit = useCallback(
         async (isSilent = false) => {
@@ -101,6 +103,39 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
         }
     };
 
+    const handleQuickReset = async () => {
+        const val = quickResetInput.trim();
+        if (!val) {
+            alert('Please enter a phone number, roll number, or email.');
+            return;
+        }
+        if (!window.confirm(`Reset password to default "asterix" for "${val}"?`)) return;
+
+        setIsQuickResetting(true);
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            const res = await fetch(apiUrl('/api/workshop/registrations/reset-password-by-identifier'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ identifier: val })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to reset password');
+
+            if (showStatus) showStatus(data.message || `✓ Password reset to "asterix" for ${val}`);
+            alert(data.message || `✓ Password reset to "asterix" for ${val}`);
+            setQuickResetInput('');
+            await fetchAudit(true);
+        } catch (err) {
+            alert('Reset error: ' + err.message);
+        } finally {
+            setIsQuickResetting(false);
+        }
+    };
+
     const handleUpgradeToCombo = async (item) => {
         if (!item) return;
         if (item.package === 'combo') {
@@ -177,7 +212,7 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                     <div>
                         <div className="flex items-center gap-2">
                             <span className="border-2 border-slate-900 bg-slate-950 px-2.5 py-0.5 font-mono text-xs font-black text-amber-300 uppercase">
-                                🔒 RESTRICTED • SUPERADMIN ONLY
+                                🔐 WORKSHOP ACCESS • ADMIN SECURITY
                             </span>
                             <span className="border-2 border-slate-900 bg-white px-2.5 py-0.5 font-mono text-xs font-black text-slate-900 uppercase">
                                 Real-Time Security Audit
@@ -189,7 +224,7 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                         <p className="mt-1 font-mono text-xs font-bold text-slate-900">
                             Paid participants who logged into their profile, when and how often, and whether
                             they set their own password. Passwords are stored only as one-way hashes and
-                            cannot be viewed; reset a participant to the default if they forget theirs.
+                            cannot be viewed; reset any participant to default &quot;asterix&quot; anytime.
                         </p>
                     </div>
 
@@ -200,6 +235,46 @@ export default function ParticipantPasswordsAdmin({ showStatus }) {
                     >
                         🔄 Refresh Audit Data
                     </button>
+                </div>
+            </div>
+
+            {/* Quick Reset to asterix Bar */}
+            <div className="shadow-brutal-4 border-3 border-slate-900 bg-amber-100 p-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="border border-slate-900 bg-amber-400 px-2 py-0.5 font-mono text-[10px] font-black uppercase text-slate-900">
+                                🔑 Instant Reset
+                            </span>
+                            <strong className="text-sm font-black uppercase text-slate-900">
+                                Reset Participant Password to &quot;asterix&quot;
+                            </strong>
+                        </div>
+                        <p className="mt-1 font-mono text-xs font-bold text-slate-700">
+                            Participant forgot password or locked out? Enter their Phone Number, Roll No, or Email to instantly restore their login password to <code>asterix</code>.
+                        </p>
+                    </div>
+
+                    <div className="flex w-full md:w-auto items-center gap-2">
+                        <input
+                            type="text"
+                            placeholder="e.g. 9361960509 or 715524..."
+                            value={quickResetInput}
+                            onChange={(e) => setQuickResetInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleQuickReset();
+                            }}
+                            className="border-2 border-slate-900 bg-white px-3 py-2 font-mono text-xs font-black text-slate-900 placeholder:text-slate-400 focus:bg-amber-50 focus:outline-none w-full md:w-64"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleQuickReset}
+                            disabled={isQuickResetting || !quickResetInput.trim()}
+                            className="press shadow-brutal-2 cursor-pointer border-2 border-slate-900 bg-emerald-400 px-4 py-2 font-mono text-xs font-black uppercase text-slate-950 hover:bg-emerald-300 disabled:opacity-50 whitespace-nowrap"
+                        >
+                            {isQuickResetting ? 'Resetting…' : 'Reset to asterix'}
+                        </button>
+                    </div>
                 </div>
             </div>
 

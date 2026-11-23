@@ -866,11 +866,11 @@ function csvCell(value) {
 
 /**
  * GET /api/workshop/registrations/superadmin-security
- * Strictly Protected: SuperAdmin only.
+ * Protected: Admin/Lead/SuperAdmin.
  * Returns participant login history and whether each participant has set their
  * own password. Passwords are stored only as bcrypt hashes and are never returned.
  */
-router.get('/registrations/superadmin-security', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+router.get('/registrations/superadmin-security', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
         const registrations = await WorkshopRegistration.find({ status: 'paid' })
             .sort({ lastLoginAt: -1, passwordUpdatedAt: -1, receiptNo: -1, createdAt: -1 })
@@ -919,10 +919,10 @@ router.get('/registrations/superadmin-security', authenticateToken, requireSuper
 
 /**
  * POST /api/workshop/registrations/:id/reset-password
- * SuperAdmin only: puts a participant who has forgotten their password back on
+ * Admin only: puts a participant who has forgotten their password back on
  * the default one. Only the hash is stored, so there is nothing to read back.
  */
-router.post('/registrations/:id/reset-password', authenticateToken, requireSuperAdmin, requireDb, async (req, res) => {
+router.post('/registrations/:id/reset-password', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
         const { id } = req.params;
         if (!mongoose.isValidObjectId(id)) {
@@ -946,6 +946,125 @@ router.post('/registrations/:id/reset-password', authenticateToken, requireSuper
     } catch (err) {
         console.error('Error resetting participant password:', err);
         return res.status(500).json({ error: 'Failed to reset the password.' });
+    }
+});
+
+/**
+ * POST /api/workshop/registrations/reset-password-by-identifier
+ * Admin only: Resets a participant's password to the default "asterix" by their
+ * roll number, phone number, email, or registration id.
+ */
+router.post('/registrations/reset-password-by-identifier', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const rawIdentifier = String(req.body?.identifier || '').trim();
+        if (!rawIdentifier) {
+            return res.status(400).json({ error: 'Please enter a roll number, phone number, or email.' });
+        }
+
+        const cleanPhone = rawIdentifier.replace(/[\s\-\(\)\+]/g, '');
+        const conditions = [];
+
+        if (mongoose.isValidObjectId(rawIdentifier)) {
+            conditions.push({ _id: rawIdentifier });
+        }
+
+        // Phone match
+        if (cleanPhone.length >= 6) {
+            conditions.push({ phone: cleanPhone });
+            if (cleanPhone.length > 10) {
+                conditions.push({ phone: cleanPhone.slice(-10) });
+            }
+            conditions.push({ phone: rawIdentifier });
+        }
+
+        // Roll number match (case-insensitive)
+        conditions.push({ rollNo: new RegExp(`^${escapeRegex(rawIdentifier)}$`, 'i') });
+
+        // Email match (case-insensitive)
+        conditions.push({ email: rawIdentifier.toLowerCase() });
+
+        const registration = await WorkshopRegistration.findOne({ $or: conditions });
+        if (!registration) {
+            return res.status(404).json({
+                error: `No workshop registration found matching "${rawIdentifier}". Check the roll number, phone number, or email.`
+            });
+        }
+
+        registration.passwordHash = '';
+        registration.passwordUpdatedAt = new Date();
+        await registration.save();
+
+        console.log(`[ADMIN PASSWORD RESET] ${req.user.username} reset ${registration.rollNo} (${registration.phone}) to default password asterix`);
+
+        return res.json({
+            success: true,
+            message: `${registration.name} (${registration.rollNo}) password reset to default "asterix".`,
+            registration: {
+                id: registration._id,
+                name: registration.name,
+                rollNo: registration.rollNo,
+                email: registration.email,
+                phone: registration.phone,
+                package: registration.package
+            }
+        });
+    } catch (err) {
+        console.error('Error resetting participant password by identifier:', err);
+        return res.status(500).json({ error: 'Failed to reset password.' });
+    }
+});
+
+/**
+ * POST /api/workshop/attendance/reset-participant
+ * Admin only: clears attendance records for a specific participant (archived in recycle bin).
+ */
+router.post('/attendance/reset-participant', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { registrationId, rollNo, email, reason = 'Admin reset' } = req.body;
+        const orConditions = [];
+        if (registrationId && mongoose.isValidObjectId(registrationId)) {
+            orConditions.push({ registrationId });
+        }
+        if (rollNo) {
+            orConditions.push({ rollNo: normalizeRollNo(rollNo) });
+        }
+        if (email) {
+            orConditions.push({ email: email.toLowerCase().trim() });
+        }
+
+        if (orConditions.length === 0) {
+            return res.status(400).json({ error: 'A registration ID, roll number, or email is required.' });
+        }
+
+        const query = orConditions.length === 1 ? orConditions[0] : { $or: orConditions };
+        const records = await WorkshopAttendance.find(query).lean();
+        if (records.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No attendance records found for this participant.',
+                deletedCount: 0
+            });
+        }
+
+        await archiveDocuments(WorkshopAttendance, records, {
+            deletedBy: actorOf(req),
+            reason: `Participant attendance reset: ${reason}`
+        });
+
+        const deleteResult = await WorkshopAttendance.deleteMany({
+            _id: { $in: records.map((r) => r._id) }
+        });
+
+        console.log(`[PARTICIPANT ATTENDANCE RESET] ${actorOf(req)} reset attendance for ${rollNo || registrationId}. Deleted ${deleteResult.deletedCount} record(s).`);
+
+        return res.json({
+            success: true,
+            message: `Successfully reset attendance for ${records[0].name || rollNo}. Cleared ${deleteResult.deletedCount} session record(s).`,
+            deletedCount: deleteResult.deletedCount
+        });
+    } catch (err) {
+        console.error('Error resetting participant attendance:', err);
+        return res.status(500).json({ error: 'Failed to reset participant attendance.' });
     }
 });
 

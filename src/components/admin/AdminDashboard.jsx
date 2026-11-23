@@ -683,15 +683,11 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
                 { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
-                ...(isSuperAdmin
-                    ? [
-                          {
-                              id: 'participant-passwords',
-                              label: 'Participant Passwords & Logins 🔐',
-                              icon: 'users'
-                          }
-                      ]
-                    : [])
+                {
+                    id: 'participant-passwords',
+                    label: 'Participant Passwords & Logins 🔐',
+                    icon: 'users'
+                }
             ]
         },
         {
@@ -2218,7 +2214,7 @@ export default function AdminDashboard({ onExit }) {
 
                     {activeTab === 'quiz-manager' && <QuizAdmin showStatus={showStatus} />}
 
-                    {activeTab === 'participant-passwords' && isSuperAdmin && (
+                    {activeTab === 'participant-passwords' && (
                         <ParticipantPasswordsAdmin showStatus={showStatus} />
                     )}
 
