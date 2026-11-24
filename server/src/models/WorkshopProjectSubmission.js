@@ -6,6 +6,12 @@ const AnswerSchema = new mongoose.Schema({
     answer: { type: String, default: '' }
 }, { _id: false });
 
+const LinkOpenLogSchema = new mongoose.Schema({
+    adminUsername: { type: String, required: true, trim: true },
+    adminName: { type: String, default: '', trim: true },
+    openedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const WorkshopProjectSubmissionSchema = new mongoose.Schema({
     registrationId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +32,8 @@ const WorkshopProjectSubmissionSchema = new mongoose.Schema({
     driveLink: { type: String, required: true, trim: true },
     feedback: { type: String, default: '', trim: true, maxlength: 3000 },
     answers: { type: [AnswerSchema], default: [] },
+    openCount: { type: Number, default: 0 },
+    linkOpens: { type: [LinkOpenLogSchema], default: [] },
     submittedAt: { type: Date, default: Date.now, index: true }
 }, { timestamps: true });
 

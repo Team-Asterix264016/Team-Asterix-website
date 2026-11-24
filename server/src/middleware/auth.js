@@ -35,7 +35,10 @@ export const JWT_SECRET = resolveSecret();
 
 export function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    let token = authHeader && authHeader.split(' ')[1];
+    if (!token && req.query?.token) {
+        token = req.query.token;
+    }
 
     if (!token) {
         return res.status(401).json({ error: 'Access denied. No authorization token provided.' });

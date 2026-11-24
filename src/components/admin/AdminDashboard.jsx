@@ -2204,7 +2204,7 @@ export default function AdminDashboard({ onExit }) {
                     {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}
 
                     {activeTab === 'workshop-project-submissions' && (
-                        <WorkshopProjectSubmissionsAdmin showStatus={showStatus} />
+                        <WorkshopProjectSubmissionsAdmin showStatus={showStatus} currentUser={currentUser} />
                     )}
 
                     {activeTab === 'quiz-manager' && <QuizAdmin showStatus={showStatus} />}

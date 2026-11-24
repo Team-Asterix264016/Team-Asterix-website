@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiUrl } from '../../lib/api';
-import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
+import { AUTH_TOKEN_KEY, AUTH_SESSION_KEY } from '../../context/WebsiteDataContext';
 
 const FIELD_CLASS =
     'w-full min-h-10 border-2 border-slate-300 bg-white px-2.5 py-2 text-sm font-bold text-slate-900 focus:border-sky-600 focus:outline-none';
@@ -17,6 +17,42 @@ function formatSubmissionTime(submission) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+function formatOpenTime(timestamp) {
+    if (!timestamp) return '—';
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+}
+
+function resolveIsSuperAdmin(currentUser) {
+    const username = currentUser?.username || (() => {
+        try {
+            const session = JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY));
+            if (session?.username) return session.username;
+        } catch {}
+        try {
+            const token = sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('admin_token');
+            if (token) {
+                const parts = token.split('.');
+                if (parts[1]) {
+                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    return payload.username;
+                }
+            }
+        } catch {}
+        return null;
+    })();
+
+    return String(username || '').trim().toLowerCase() === 'admin1';
 }
 
 function adminHeaders(json = false) {
@@ -106,7 +142,7 @@ const FEEDBACK_STOP_WORDS = new Set([
     'your'
 ]);
 
-function getFeedbackAnalytics(registrations) {
+function getFeedbackAnalytics(registrations, isSuperAdmin = false) {
     const submissions = registrations.map((registration) => registration.projectSubmission).filter(Boolean);
     const feedbackItems = submissions
         .map((submission) => ({
@@ -135,6 +171,36 @@ function getFeedbackAnalytics(registrations) {
         }
     }
 
+    const adminStats = [];
+    let totalOpens = 0;
+    let openedProjectsCount = 0;
+
+    if (isSuperAdmin) {
+        const adminMap = new Map();
+        for (const sub of submissions) {
+            const count = sub.openCount || sub.linkOpens?.length || 0;
+            if (count > 0) openedProjectsCount += 1;
+            totalOpens += count;
+
+            for (const log of (sub.linkOpens || [])) {
+                const uname = log.adminUsername || 'unknown';
+                const cur = adminMap.get(uname) || {
+                    username: uname,
+                    name: log.adminName || uname,
+                    opens: 0,
+                    latestAt: log.openedAt
+                };
+                cur.opens += 1;
+                if (new Date(log.openedAt) > new Date(cur.latestAt)) {
+                    cur.latestAt = log.openedAt;
+                }
+                adminMap.set(uname, cur);
+            }
+        }
+        adminStats.push(...adminMap.values());
+        adminStats.sort((a, b) => b.opens - a.opens);
+    }
+
     return {
         projectCount: submissions.length,
         feedbackCount: feedbackItems.length,
@@ -142,12 +208,15 @@ function getFeedbackAnalytics(registrations) {
         averageWords: feedbackItems.length ? Math.round(totalWords / feedbackItems.length) : 0,
         sentiment,
         topTerms: [...termCounts.entries()].sort((left, right) => right[1] - left[1]).slice(0, 10),
-        feedbackItems
+        feedbackItems,
+        totalOpens,
+        openedProjectsCount,
+        adminStats
     };
 }
 
-function FeedbackAnalytics({ registrations }) {
-    const analytics = getFeedbackAnalytics(registrations);
+function FeedbackAnalytics({ registrations, isSuperAdmin = false }) {
+    const analytics = getFeedbackAnalytics(registrations, isSuperAdmin);
     const toneRows = [
         ['Positive signals', analytics.sentiment.positive, 'bg-emerald-500'],
         ['Mixed comments', analytics.sentiment.mixed, 'bg-amber-400'],
@@ -177,6 +246,61 @@ function FeedbackAnalytics({ registrations }) {
                     </div>
                 ))}
             </div>
+
+            {isSuperAdmin && (
+                <section className="border-t-4 border-amber-500 bg-white p-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h4 className="text-sm font-black uppercase text-slate-900">
+                                🔒 Superadmin Drive Link Access Audit
+                            </h4>
+                            <p className="mt-0.5 text-xs font-bold text-slate-500">
+                                Project links opened {analytics.totalOpens} times across {analytics.openedProjectsCount} of {analytics.projectCount} submitted projects.
+                            </p>
+                        </div>
+                        <span className="inline-block border border-slate-900 bg-amber-300 px-2 py-0.5 text-[10px] font-black uppercase">
+                            admin1 only
+                        </span>
+                    </div>
+
+                    {analytics.adminStats.length > 0 ? (
+                        <div className="mt-4 overflow-x-auto">
+                            <table className="w-full text-left text-xs">
+                                <thead className="bg-slate-100 text-[10px] font-black text-slate-700 uppercase">
+                                    <tr>
+                                        <th className="p-2">Admin Account</th>
+                                        <th className="p-2">Username</th>
+                                        <th className="p-2">Drive Links Opened</th>
+                                        <th className="p-2">Most Recent Access</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {analytics.adminStats.map((admin) => (
+                                        <tr key={admin.username} className="hover:bg-slate-50">
+                                            <td className="p-2 font-black">{admin.name}</td>
+                                            <td className="p-2 font-mono text-[11px] text-slate-600">
+                                                @{admin.username}
+                                            </td>
+                                            <td className="p-2">
+                                                <span className="rounded bg-sky-100 px-2 py-0.5 font-bold text-sky-800">
+                                                    {admin.opens} times
+                                                </span>
+                                            </td>
+                                            <td className="p-2 font-mono text-[10px] text-slate-500">
+                                                {formatOpenTime(admin.latestAt)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <p className="mt-4 text-xs font-bold text-slate-500">
+                            No project links have been opened by any admin yet.
+                        </p>
+                    )}
+                </section>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <section className="border-t-4 border-sky-600 bg-white p-4">
@@ -259,7 +383,8 @@ function FeedbackAnalytics({ registrations }) {
     );
 }
 
-export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
+export default function WorkshopProjectSubmissionsAdmin({ showStatus, currentUser }) {
+    const isSuperAdmin = resolveIsSuperAdmin(currentUser);
     const [view, setView] = useState('students');
     const [config, setConfig] = useState(null);
     const [registrations, setRegistrations] = useState([]);
@@ -269,6 +394,36 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
+
+    const handleTrackLinkOpen = (registration) => {
+        const submission = registration.projectSubmission;
+        if (!submission?._id) return;
+
+        request(`/api/workshop/projects/admin/submissions/${submission._id}/open`, {
+            method: 'POST'
+        })
+            .then((data) => {
+                if (data?.success && data?.submission && isSuperAdmin) {
+                    setRegistrations((prev) =>
+                        prev.map((reg) =>
+                            reg._id === registration._id
+                                ? {
+                                      ...reg,
+                                      projectSubmission: {
+                                          ...reg.projectSubmission,
+                                          openCount: data.submission.openCount,
+                                          linkOpens: data.submission.linkOpens
+                                      }
+                                  }
+                                : reg
+                        )
+                    );
+                }
+            })
+            .catch((trackErr) => {
+                console.error('Failed to log drive link open:', trackErr);
+            });
+    };
 
     const loadData = async () => {
         setIsLoading(true);
@@ -605,7 +760,7 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                     </form>
                 )
             ) : view === 'analytics' ? (
-                <FeedbackAnalytics registrations={registrations} />
+                <FeedbackAnalytics registrations={registrations} isSuperAdmin={isSuperAdmin} />
             ) : (
                 <section>
                     <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -688,15 +843,82 @@ export default function WorkshopProjectSubmissionsAdmin({ showStatus }) {
                                             </td>
                                             <td className="p-3">
                                                 {registration.projectSubmission ? (
-                                                    <div className="space-y-1.5">
-                                                        <a
-                                                            href={registration.projectSubmission.driveLink}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="font-black text-sky-700 underline"
-                                                        >
-                                                            Open project link ↗
-                                                        </a>
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <a
+                                                                href={registration.projectSubmission.driveLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={() => handleTrackLinkOpen(registration)}
+                                                                className="inline-flex items-center gap-1 font-black text-sky-700 underline hover:text-sky-900"
+                                                            >
+                                                                Open project link ↗
+                                                            </a>
+                                                        </div>
+
+                                                        {isSuperAdmin && (
+                                                            <div className="border border-amber-300 bg-amber-50/90 p-2 text-[11px] text-slate-800">
+                                                                <div className="flex items-center justify-between gap-1">
+                                                                    <span className="font-black text-amber-950 uppercase">
+                                                                        👁️ Opened:{' '}
+                                                                        <span className="text-sky-800 font-extrabold">
+                                                                            {registration.projectSubmission.openCount ||
+                                                                                registration.projectSubmission.linkOpens?.length ||
+                                                                                0}{' '}
+                                                                            {(registration.projectSubmission.openCount ||
+                                                                                registration.projectSubmission.linkOpens?.length ||
+                                                                                0) === 1
+                                                                                ? 'time'
+                                                                                : 'times'}
+                                                                        </span>
+                                                                    </span>
+                                                                    {registration.projectSubmission.linkOpens?.length > 0 && (
+                                                                        <span className="font-mono text-[9px] font-bold text-amber-800">
+                                                                            Latest:{' '}
+                                                                            {formatOpenTime(
+                                                                                registration.projectSubmission.linkOpens[
+                                                                                    registration.projectSubmission.linkOpens.length - 1
+                                                                                ]?.openedAt
+                                                                            )}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {registration.projectSubmission.linkOpens?.length > 0 ? (
+                                                                    <details className="mt-1.5">
+                                                                        <summary className="cursor-pointer text-[10px] font-black text-amber-900 uppercase hover:underline">
+                                                                            View open logs ({registration.projectSubmission.linkOpens.length})
+                                                                        </summary>
+                                                                        <div className="mt-1.5 max-h-36 space-y-1 overflow-y-auto border-t border-amber-200 pt-1 text-[10px]">
+                                                                            {registration.projectSubmission.linkOpens
+                                                                                .slice()
+                                                                                .reverse()
+                                                                                .map((openLog, logIdx) => (
+                                                                                    <div
+                                                                                        key={logIdx}
+                                                                                        className="flex items-center justify-between gap-2 border-b border-amber-100 pb-0.5 text-slate-700 last:border-0"
+                                                                                    >
+                                                                                        <span className="font-bold text-slate-900">
+                                                                                            👤 {openLog.adminName || openLog.adminUsername}{' '}
+                                                                                            <span className="text-slate-500 font-normal">
+                                                                                                (@{openLog.adminUsername})
+                                                                                            </span>
+                                                                                        </span>
+                                                                                        <span className="font-mono text-[9px] text-slate-500 whitespace-nowrap">
+                                                                                            {formatOpenTime(openLog.openedAt)}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                ))}
+                                                                        </div>
+                                                                    </details>
+                                                                ) : (
+                                                                    <p className="mt-0.5 text-[10px] italic text-amber-700/70">
+                                                                        Never opened by any admin yet
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        )}
+
                                                         <details className="max-w-sm">
                                                             <summary className="cursor-pointer text-[10px] font-black text-slate-600 uppercase">
                                                                 Feedback &amp; answers

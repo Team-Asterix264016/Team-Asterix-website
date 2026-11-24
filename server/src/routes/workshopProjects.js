@@ -220,24 +220,40 @@ router.put('/admin/config', authenticateToken, requireLeadOrAdmin, requireDb, as
     }
 });
 
-router.get('/admin/submissions', authenticateToken, requireLeadOrAdmin, requireDb, async (_req, res) => {
+export function isSuperAdminAdmin1(user) {
+    return String(user?.username || '').trim().toLowerCase() === 'admin1';
+}
+
+router.get('/admin/submissions', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
+        const isSuperAdmin = isSuperAdminAdmin1(req.user);
         const submissions = await WorkshopProjectSubmission.find({}).sort({ updatedAt: -1 }).lean();
-        res.json({ success: true, submissions });
+        const payload = isSuperAdmin
+            ? submissions
+            : submissions.map(({ openCount: _oc, linkOpens: _lo, ...rest }) => rest);
+        res.json({ success: true, submissions: payload });
     } catch (error) {
         console.error('Error loading workshop project submissions:', error);
         res.status(500).json({ error: 'Could not load project submissions.' });
     }
 });
 
-router.get('/admin/registrations', authenticateToken, requireLeadOrAdmin, requireDb, async (_req, res) => {
+router.get('/admin/registrations', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
     try {
+        const isSuperAdmin = isSuperAdminAdmin1(req.user);
         const registrations = await WorkshopRegistration.find({})
             .sort({ paidAt: -1, createdAt: -1 })
             .lean();
         const registrationIds = registrations.map(registration => registration._id);
         const submissions = await WorkshopProjectSubmission.find({ registrationId: { $in: registrationIds } }).lean();
-        const submissionByRegistration = new Map(submissions.map(submission => [String(submission.registrationId), submission]));
+        const submissionByRegistration = new Map(
+            submissions.map(submission => {
+                const sanitized = isSuperAdmin
+                    ? submission
+                    : (({ openCount: _oc, linkOpens: _lo, ...rest }) => rest)(submission);
+                return [String(submission.registrationId), sanitized];
+            })
+        );
 
         res.json({
             success: true,
@@ -249,6 +265,91 @@ router.get('/admin/registrations', authenticateToken, requireLeadOrAdmin, requir
     } catch (error) {
         console.error('Error loading workshop student roster:', error);
         res.status(500).json({ error: 'Could not load workshop student records.' });
+    }
+});
+
+router.post('/admin/submissions/:id/open', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminUsername = req.user?.username || 'unknown';
+        const adminName = req.user?.name || adminUsername;
+
+        let submission = null;
+        if (id && /^[0-9a-fA-F]{24}$/.test(id)) {
+            submission = await WorkshopProjectSubmission.findById(id);
+            if (!submission) {
+                submission = await WorkshopProjectSubmission.findOne({ registrationId: id });
+            }
+        }
+
+        if (!submission) {
+            return res.status(404).json({ error: 'Project submission not found.' });
+        }
+
+        const openLog = {
+            adminUsername,
+            adminName,
+            openedAt: new Date()
+        };
+
+        submission.openCount = (submission.openCount || 0) + 1;
+        if (!Array.isArray(submission.linkOpens)) {
+            submission.linkOpens = [];
+        }
+        submission.linkOpens.push(openLog);
+        await submission.save();
+
+        const isSuperAdmin = isSuperAdminAdmin1(req.user);
+        const subData = submission.toObject();
+
+        res.json({
+            success: true,
+            driveLink: submission.driveLink,
+            submission: isSuperAdmin
+                ? subData
+                : (({ openCount: _oc, linkOpens: _lo, ...rest }) => rest)(subData)
+        });
+    } catch (error) {
+        console.error('Error logging project drive link open:', error);
+        res.status(500).json({ error: 'Could not log drive link open.' });
+    }
+});
+
+router.get('/admin/submissions/:id/open', authenticateToken, requireLeadOrAdmin, requireDb, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const adminUsername = req.user?.username || 'unknown';
+        const adminName = req.user?.name || adminUsername;
+
+        let submission = null;
+        if (id && /^[0-9a-fA-F]{24}$/.test(id)) {
+            submission = await WorkshopProjectSubmission.findById(id);
+            if (!submission) {
+                submission = await WorkshopProjectSubmission.findOne({ registrationId: id });
+            }
+        }
+
+        if (!submission) {
+            return res.status(404).send('Project submission not found.');
+        }
+
+        const openLog = {
+            adminUsername,
+            adminName,
+            openedAt: new Date()
+        };
+
+        submission.openCount = (submission.openCount || 0) + 1;
+        if (!Array.isArray(submission.linkOpens)) {
+            submission.linkOpens = [];
+        }
+        submission.linkOpens.push(openLog);
+        await submission.save();
+
+        res.redirect(submission.driveLink);
+    } catch (error) {
+        console.error('Error opening project drive link:', error);
+        res.status(500).send('Could not open drive link.');
     }
 });
 
