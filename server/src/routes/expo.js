@@ -7,6 +7,7 @@ import {
     EXPO_TEAM_COUNT,
     EXPO_PROBLEM_STATEMENTS,
     EXPO_PS_CAP,
+    EXPO_MAX_SUBMISSIONS,
     findTeamMember
 } from '../config/expoTeams.js';
 
@@ -74,6 +75,14 @@ router.post('/registrations', registerLimit, async (req, res) => {
         }
 
         const existing = await ExpoRegistration.findOne({ teamNo }).lean();
+        const lockedError = {
+            error: `Team ${teamNo}'s registration can no longer be changed. If something needs correcting, please contact Team Asterix.`,
+            locked: true
+        };
+        if (existing && (existing.submissions || 1) >= EXPO_MAX_SUBMISSIONS) {
+            return res.status(403).json(lockedError);
+        }
+
         // A team resubmitting with the problem statement it already holds keeps its slot.
         const keepsSlot = Boolean(existing && existing.problemStatement === problemStatement);
         const psTitle = EXPO_PROBLEM_STATEMENTS[problemStatement];
@@ -89,11 +98,21 @@ router.post('/registrations', registerLimit, async (req, res) => {
 
         const fields = { teamName, problemStatement, captainName, captainRollNo, captainPhone, captainEmail };
         if (!keepsSlot) fields.problemStatementAt = new Date();
-        await ExpoRegistration.updateOne(
-            { teamNo },
-            { $set: fields, $inc: { submissions: 1 }, $setOnInsert: { teamNo } },
-            { upsert: true }
-        );
+        if (existing) {
+            /* Only counts while the team is under the limit, so two changes sent
+               at the same moment cannot both slip past the check above. */
+            const saved = await ExpoRegistration.updateOne(
+                { teamNo, submissions: { $lt: EXPO_MAX_SUBMISSIONS } },
+                { $set: fields, $inc: { submissions: 1 } }
+            );
+            if (saved.matchedCount === 0) return res.status(403).json(lockedError);
+        } else {
+            await ExpoRegistration.updateOne(
+                { teamNo },
+                { $set: fields, $inc: { submissions: 1 }, $setOnInsert: { teamNo } },
+                { upsert: true }
+            );
+        }
 
         /* Two teams can pass the count above at the same moment for the last
            slot. Slots go by who took the problem statement first, so if this
@@ -134,6 +153,7 @@ router.get('/registrations', authenticateToken, async (_req, res) => {
         return res.json({
             totalTeams: EXPO_TEAM_COUNT,
             cap: EXPO_PS_CAP,
+            maxSubmissions: EXPO_MAX_SUBMISSIONS,
             counts: await problemStatementCounts(),
             missingTeams,
             registrations: rows.map((r) => ({

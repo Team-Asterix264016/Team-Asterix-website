@@ -67,7 +67,9 @@ export default function ExpoRegistrationsAdmin() {
                 <div>
                     <h2 className="text-2xl font-black text-slate-900 uppercase">Expo Registrations</h2>
                     <p className="text-sm text-slate-500">
-                        Team captains register from the banner on the home page. A team that submits again replaces its earlier details.
+                        Team captains register from the Expo page. A team that submits again replaces its earlier
+                        details, up to {data?.maxSubmissions ?? 4} submissions in all; after that its entry is locked.
+                        Teams are not told on the site that they can resubmit.
                     </p>
                 </div>
                 <div className="flex gap-2">
@@ -162,7 +164,16 @@ export default function ExpoRegistrationsAdmin() {
                                         <td className="p-2.5 text-xs text-slate-600">{r.members.join(', ')}</td>
                                         <td className="p-2.5 text-xs text-slate-500">
                                             {new Date(r.updatedAt).toLocaleString('en-IN')}
-                                            {r.submissions > 1 && <div>Submitted {r.submissions}×</div>}
+                                            {r.submissions > 1 && (
+                                                <div>
+                                                    Submitted {r.submissions} of {data.maxSubmissions}
+                                                </div>
+                                            )}
+                                            {r.submissions >= data.maxSubmissions && (
+                                                <div className="mt-0.5 inline-block bg-slate-700 px-1 font-mono text-[10px] font-black text-white uppercase">
+                                                    Locked
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

@@ -317,8 +317,7 @@ function RegistrationSection({ form, setForm, slots }) {
         <section id="expo-register" className="scroll-mt-4 border-b-4 border-slate-900 bg-white px-4 py-14 sm:px-8">
             <div className="mx-auto max-w-3xl">
                 <SectionHeading kicker="03 · Team registration" title="Register your team">
-                    One person per team (the captain) fills this in. To change anything later, such as your problem
-                    statement, just submit again for the same team.
+                    One person per team (the captain) fills this in. Check your details carefully before submitting.
                 </SectionHeading>
 
                 {result ? (
@@ -344,13 +343,6 @@ function RegistrationSection({ form, setForm, slots }) {
                                 </div>
                             ))}
                         </dl>
-                        <button
-                            type="button"
-                            onClick={() => setResult(null)}
-                            className="press cursor-pointer border-2 border-slate-900 bg-white px-4 py-2 font-mono text-xs font-black uppercase hover:bg-slate-100"
-                        >
-                            Edit and resubmit
-                        </button>
                     </div>
                 ) : (
                     <form
@@ -406,8 +398,7 @@ function RegistrationSection({ form, setForm, slots }) {
                                 </div>
                                 <p className="mb-2 border-l-4 border-amber-400 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-slate-700">
                                     <strong>Each problem statement is capped at {slots.cap} teams</strong>, first come
-                                    first served. Once one fills up it is greyed out and can no longer be picked. A
-                                    team that already holds a slot keeps it.
+                                    first served. Once one fills up it is greyed out and can no longer be picked.
                                 </p>
                                 <select id="expo-ps" value={form.problemStatement} onChange={set('problemStatement')} className={inputClass}>
                                     <option value="">Select a problem statement</option>

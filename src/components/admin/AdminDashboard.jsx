@@ -8,8 +8,6 @@ import WorkshopRegistrationsAdmin from './WorkshopRegistrationsAdmin';
 import WorkshopAttendeeDetailsAdmin from './WorkshopAttendeeDetailsAdmin';
 import WorkshopAttendanceAdmin from './WorkshopAttendanceAdmin';
 import WorkshopSessionsAdmin from './WorkshopSessionsAdmin';
-import WorkshopTasksAdmin from './WorkshopTasksAdmin';
-import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 import WorkshopProjectSubmissionsAdmin from './WorkshopProjectSubmissionsAdmin';
 import WorkshopNotesAdmin from './WorkshopNotesAdmin';
 import QuizAdmin from './QuizAdmin';
@@ -67,6 +65,10 @@ export default function AdminDashboard({ onExit }) {
             const saved = sessionStorage.getItem('admin_active_tab');
             // The Intern Recruitment tab was retired for Expo Registrations.
             if (saved === 'intern-recruitment') return 'expo-registrations';
+            // The Barcode Attendance Scanner tab was retired.
+            if (saved === 'barcode-attendance') return 'workshop-attendance';
+            // The Make-up Tasks tab was retired.
+            if (saved === 'workshop-tasks') return 'workshop-attendance';
             return saved || 'overview';
         } catch {
             return 'overview';
@@ -681,8 +683,6 @@ export default function AdminDashboard({ onExit }) {
                 { id: 'workshop-registrations', label: 'Workshop Registrations & Paid', icon: 'users' },
                 { id: 'workshop-attendance', label: 'Workshop Attendance', icon: 'users' },
                 { id: 'workshop-sessions', label: 'Sessions & Certificate Rule 📊', icon: 'calendar' },
-                { id: 'workshop-tasks', label: 'Make-up Tasks 🛠️', icon: 'clipboard' },
-                { id: 'barcode-attendance', label: 'Barcode Attendance Scanner ⚡', icon: 'camera' },
                 { id: 'workshop-notes', label: 'Workshop Notes', icon: 'book' },
                 { id: 'workshop-project-submissions', label: 'Workshop Project Submissions', icon: 'folder' },
                 { id: 'quiz-manager', label: 'MCQ Quiz Engine', icon: 'clipboard' },
@@ -2197,9 +2197,7 @@ export default function AdminDashboard({ onExit }) {
 
                     {activeTab === 'workshop-sessions' && <WorkshopSessionsAdmin showStatus={showStatus} />}
 
-                    {activeTab === 'workshop-tasks' && <WorkshopTasksAdmin showStatus={showStatus} />}
 
-                    {activeTab === 'barcode-attendance' && <BarcodeAttendanceAdmin showStatus={showStatus} />}
 
                     {activeTab === 'workshop-notes' && <WorkshopNotesAdmin showStatus={showStatus} />}
 

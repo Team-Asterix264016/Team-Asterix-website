@@ -226,6 +226,11 @@ export const EXPO_TEAM_COUNT = EXPO_TEAMS.size;
    EXPO_PS_CAP in src/data/expoProblemStatements.js. */
 export const EXPO_PS_CAP = 20;
 
+/* How many times a team's form is accepted: the first registration plus 3
+   changes. After that the team's entry is locked and further submissions are
+   refused. The page never tells teams they can resubmit. */
+export const EXPO_MAX_SUBMISSIONS = 4;
+
 /* Must match the ids in src/data/expoProblemStatements.js. */
 export const EXPO_PROBLEM_STATEMENTS = {
     'ps2-smart-toll-gate': 'FASTag-Style Smart Toll Gate',

@@ -8,6 +8,13 @@ import AttendanceViewLockedNotice from './AttendanceViewLockedNotice';
 import { resourceBadge } from '../lib/resourceTypes';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
+/* Make-up tasks are hidden from participants for now (their admin tab was
+   retired). Only the display is switched off: the tasks and their records stay
+   in the database untouched. Set this back to true to show everything again:
+   the tasks card, the "second route to your certificate" note and the line
+   pointing at assigned tasks. */
+const SHOW_MAKEUP_TASKS = false;
+
 const SUBSYSTEMS_PORTAL_DATA = [
     {
         id: 'software-perception',
@@ -302,14 +309,14 @@ function AttendanceSummaryCard({ summary }) {
                                 {outlook.note
                                     || (track.outlook === 'at-risk'
                                         ? `You are below ${threshold}%. ${track.remaining} session${track.remaining === 1 ? '' : 's'} left on this track — attend all ${track.remaining}. Every one of them counts now.`
-                                        : `Even by attending all ${track.remaining} remaining session${track.remaining === 1 ? '' : 's'}, attendance tops out at ${track.maxPossiblePercentage}% here. Your certificate now runs through assigned tasks instead — and you should still attend.`)}
+                                        : `Even by attending all ${track.remaining} remaining session${track.remaining === 1 ? '' : 's'}, attendance tops out at ${track.maxPossiblePercentage}% here.${SHOW_MAKEUP_TASKS ? ' Your certificate now runs through assigned tasks instead — and you should still attend.' : ''}`)}
                             </p>
                         </div>
                     );
                 })}
             </div>
 
-            {summary.needsAlternatePath ? (
+            {SHOW_MAKEUP_TASKS && summary.needsAlternatePath ? (
                 <div className="shadow-brutal-2 mt-4 border-2 border-slate-900 bg-violet-100 p-4">
                     <strong className="block font-mono text-xs font-black text-violet-950 uppercase">
                         🛠️ There is a second route to your certificate
@@ -1221,12 +1228,14 @@ export default function ParticipantProfilePage({ onBack, onSelectSubsystem }) {
 
                             <AttendanceSummaryCard summary={profile.attendanceSummary} />
 
-                            <MakeupTasksCard
-                                tasks={profile.makeupTasks}
-                                cap={profile.taskCreditCap}
-                                onSubmit={handleSubmitTask}
-                                busyTaskId={busyTaskId}
-                            />
+                            {SHOW_MAKEUP_TASKS && (
+                                <MakeupTasksCard
+                                    tasks={profile.makeupTasks}
+                                    cap={profile.taskCreditCap}
+                                    onSubmit={handleSubmitTask}
+                                    busyTaskId={busyTaskId}
+                                />
+                            )}
 
                             {/* Main Navigation Tabs */}
                             <div className="border-b-4 border-slate-900 bg-white">

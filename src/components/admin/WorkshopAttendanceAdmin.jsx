@@ -2,12 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiUrl } from '../../lib/api';
 import { AUTH_TOKEN_KEY } from '../../context/WebsiteDataContext';
 import { useAttendanceSession } from '../../hooks/useAttendanceSession';
-import BarcodeAttendanceAdmin from './BarcodeAttendanceAdmin';
 import AttendanceSessionsManager from './AttendanceSessionsManager';
 import AttendanceEligibility from './AttendanceEligibility';
 
 export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector }) {
-    const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'barcode' | 'sessions' | 'eligibility'
+    const [viewMode, setViewMode] = useState('roster'); // 'roster' | 'sessions' | 'eligibility'
 
     const {
         track,
@@ -296,17 +295,6 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 </button>
                 <button
                     type="button"
-                    onClick={() => setViewMode('barcode')}
-                    className={`press cursor-pointer border-2 border-slate-900 px-4 py-2 text-xs font-black uppercase transition-all ${
-                        viewMode === 'barcode'
-                            ? 'bg-sky-500 text-slate-950 shadow-md'
-                            : 'bg-white text-slate-900 hover:bg-slate-100'
-                    }`}
-                >
-                    ⚡ Barcode Scanner Mode (College Register No)
-                </button>
-                <button
-                    type="button"
                     onClick={() => setViewMode('sessions')}
                     className={`press cursor-pointer border-2 border-slate-900 px-4 py-2 text-xs font-black uppercase transition-all ${
                         viewMode === 'sessions'
@@ -333,8 +321,6 @@ export default function WorkshopAttendanceAdmin({ showStatus, onOpenProjector })
                 <AttendanceEligibility showStatus={showStatus} />
             ) : viewMode === 'sessions' ? (
                 <AttendanceSessionsManager showStatus={showStatus} />
-            ) : viewMode === 'barcode' ? (
-                <BarcodeAttendanceAdmin showStatus={showStatus} />
             ) : (
                 <>
                     {/* Session Settings & Selector Bar */}
